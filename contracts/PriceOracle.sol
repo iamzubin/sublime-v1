@@ -4,6 +4,7 @@ pragma solidity ^0.7.0;
 import '@chainlink/contracts/src/v0.7/interfaces/AggregatorV3Interface.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
 import './interfaces/IPriceOracle.sol';
 
@@ -33,8 +34,8 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         int256 price2;
         (, price1, , , ) = AggregatorV3Interface(_feedData1.oracle).latestRoundData();
         (, price2, , , ) = AggregatorV3Interface(_feedData2.oracle).latestRoundData();
-
-        uint256 price = uint256(price1).mul(10**_feedData2.decimals).mul(10**30).div(uint256(price2)).div(10**_feedData1.decimals);
+        // TODO: Store token decimals when adding and don't query for every price get
+        uint256 price = uint256(price1).mul(10**_feedData2.decimals).mul(10**30).div(uint256(price2)).div(10**_feedData1.decimals).mul(10**ERC20(den).decimals()).div(10**ERC20(num).decimals());
         return (price, 30);
     }
 
