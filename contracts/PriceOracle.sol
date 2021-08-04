@@ -35,7 +35,14 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         (, price1, , , ) = AggregatorV3Interface(_feedData1.oracle).latestRoundData();
         (, price2, , , ) = AggregatorV3Interface(_feedData2.oracle).latestRoundData();
         // TODO: Store token decimals when adding and don't query for every price get
-        uint256 price = uint256(price1).mul(10**_feedData2.decimals).mul(10**30).div(uint256(price2)).div(10**_feedData1.decimals).mul(10**ERC20(den).decimals()).div(10**ERC20(num).decimals());
+        uint256 price =
+            uint256(price1)
+                .mul(10**_feedData2.decimals)
+                .mul(10**30)
+                .div(uint256(price2))
+                .div(10**_feedData1.decimals)
+                .mul(10**ERC20(den).decimals())
+                .div(10**ERC20(num).decimals());
         return (price, 30);
     }
 

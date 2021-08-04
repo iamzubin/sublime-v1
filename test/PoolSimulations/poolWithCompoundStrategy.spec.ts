@@ -47,7 +47,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 
-describe.only('Pool With Compound Strategy', async () => {
+describe('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
 
@@ -329,7 +329,6 @@ describe.only('Pool With Compound Strategy', async () => {
         await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
         await collateralToken.connect(borrower).approve(generatedPoolAddress, _collateralAmount.mul(2));
 
-        console.log({ generatedPoolAddress });
         await expect(
             poolFactory
                 .connect(borrower)
@@ -385,24 +384,37 @@ describe.only('Pool With Compound Strategy', async () => {
             let deployHelper = new DeployHelper(borrower);
             let token: PoolToken = await deployHelper.pool.getPoolToken(DaiTokenContract.address);
             let decimals = await token.decimals();
-            let numberOfTokens = 10;
-            let expDecimals = BigNumber.from(numberOfTokens).pow(decimals);
+            let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
 
             let { _minborrowAmount } = createPoolParams;
-
             let borrowTokens = _minborrowAmount.sub(oneToken);
             await lenderLendsTokens(borrowTokens);
 
             const { loanStartTime } = await pool.poolConstants();
             await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
+
+            let balanceBefore = await DaiTokenContract.balanceOf(borrower.address);
             await pool.connect(borrower).withdrawBorrowedAmount();
 
             let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(Contracts.WBTC, Contracts.DAI);
+            let token1: PoolToken = await deployHelper.pool.getPoolToken(Contracts.WBTC);
+            let token1Exp = BigNumber.from(10).pow(await token1.decimals());
+
+            let token2: PoolToken = await deployHelper.pool.getPoolToken(Contracts.DAI);
+            let token2Exp = BigNumber.from(10).pow(await token2.decimals());
+
             let ratio = await pool.callStatic['getCurrentCollateralRatio()']();
 
-            expectApproxEqual(pricePerToken[0], ratio.mul(numberOfTokens), BigNumber.from(10).pow(30).div(1000)); // 0.1 percent deviation
-            expect(await DaiTokenContract.balanceOf(borrower.address)).to.eq(_minborrowAmount);
+            let expectedRatio = pricePerToken[0]
+                .mul(token1Exp)
+                .div(token2Exp)
+                .div(BigNumber.from(10).pow(pricePerToken[1]))
+                .div(_minborrowAmount.div(expDecimals));
+            let calculatedRatio = ratio.div(BigNumber.from(10).pow(30));
+            expectApproxEqual(expectedRatio, calculatedRatio, 1);
+            let balanceAfter = await DaiTokenContract.balanceOf(borrower.address);
+            expect(balanceAfter.sub(balanceBefore)).to.eq(_minborrowAmount);
         });
 
         it('User cannot borrow if lender/s has not supplied minimum number of tokens', async () => {
