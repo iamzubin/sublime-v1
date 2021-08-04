@@ -186,16 +186,18 @@ describe.skip('Template For Test cases', async () => {
 
                 await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
 
-                await poolFactory.connect(admin).setImplementations(
-                    poolImpl.address, 
-                    repaymentImpl.address, 
-                    poolTokenImpl.address,
-                    verification.address,
-                    strategyRegistry.address,
-                    priceOracle.address,
-                    savingsAccount.address,
-                    extenstion.address
-                );
+                await poolFactory
+                    .connect(admin)
+                    .setImplementations(
+                        poolImpl.address,
+                        repaymentImpl.address,
+                        poolTokenImpl.address,
+                        verification.address,
+                        strategyRegistry.address,
+                        priceOracle.address,
+                        savingsAccount.address,
+                        extenstion.address
+                    );
 
                 let deployHelper: DeployHelper = new DeployHelper(borrower);
                 let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.LINK);
@@ -208,7 +210,8 @@ describe.skip('Template For Test cases', async () => {
                     poolFactory.address,
                     sha256(Buffer.from('borrower')),
                     poolImpl.address,
-                    false
+                    false,
+                    {}
                 );
 
                 const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;

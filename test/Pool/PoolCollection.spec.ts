@@ -187,16 +187,18 @@ describe('Pool Collection stage', async () => {
                 savingsAccount.address
             );
 
-        await poolFactory.connect(admin).setImplementations(
-            poolImpl.address, 
-            repaymentImpl.address, 
-            poolTokenImpl.address,
-            verification.address,
-            strategyRegistry.address,
-            priceOracle.address,
-            savingsAccount.address,
-            extenstion.address
-        );
+        await poolFactory
+            .connect(admin)
+            .setImplementations(
+                poolImpl.address,
+                repaymentImpl.address,
+                poolTokenImpl.address,
+                verification.address,
+                strategyRegistry.address,
+                priceOracle.address,
+                savingsAccount.address,
+                extenstion.address
+            );
     });
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
@@ -223,7 +225,8 @@ describe('Pool Collection stage', async () => {
                 poolFactory.address,
                 salt,
                 poolImpl.address,
-                false
+                false,
+                {}
             );
 
             const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;

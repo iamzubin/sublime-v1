@@ -253,6 +253,7 @@ contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGu
         return _interestOverdue;
     }
 
+    // only interest
     function repayAmount(address _poolID, uint256 _amount) public payable nonReentrant isPoolInitialized(_poolID) {
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
@@ -324,9 +325,12 @@ contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGu
                 (bool success, ) = payable(address(msg.sender)).call{value: msg.value.sub(_amountRequired)}('');
                 require(success, 'Transfer failed');
             }
+        } else {
+            IERC20(_asset).transferFrom(msg.sender, _poolID, _amountRequired);
         }
     }
 
+    // only principle
     function repayPrincipal(address payable _poolID, uint256 _amount) public payable nonReentrant isPoolInitialized(_poolID) {
         IPool _pool = IPool(_poolID);
         uint256 _loanStatus = _pool.getLoanStatus();

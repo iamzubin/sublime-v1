@@ -110,7 +110,7 @@ describe('Pool Active stage', async () => {
         await LinkTokenContract.connect(Binance7).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 LINK tokens
 
         DaiTokenContract = await deployHelper.mock.getMockERC20(Contracts.DAI);
-        await DaiTokenContract.connect(WhaleAccount).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 DAI
+        await DaiTokenContract.connect(WhaleAccount).transfer(admin.address, BigNumber.from('10').pow(24)); // 100,000 DAI
 
         aaveYield = await deployHelper.core.deployAaveYield();
         await aaveYield
@@ -188,16 +188,18 @@ describe('Pool Active stage', async () => {
                 savingsAccount.address
             );
 
-        await poolFactory.connect(admin).setImplementations(
-            poolImpl.address, 
-            repaymentImpl.address, 
-            poolTokenImpl.address,
-            verification.address,
-            strategyRegistry.address,
-            priceOracle.address,
-            savingsAccount.address,
-            extenstion.address
-        );
+        await poolFactory
+            .connect(admin)
+            .setImplementations(
+                poolImpl.address,
+                repaymentImpl.address,
+                poolTokenImpl.address,
+                verification.address,
+                strategyRegistry.address,
+                priceOracle.address,
+                savingsAccount.address,
+                extenstion.address
+            );
     });
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
@@ -227,7 +229,8 @@ describe('Pool Active stage', async () => {
                     poolFactory.address,
                     salt,
                     poolImpl.address,
-                    false
+                    false,
+                    {}
                 );
 
                 const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
@@ -272,6 +275,7 @@ describe('Pool Active stage', async () => {
 
                 amount = createPoolParams._minborrowAmount.add(100).mul(2).div(3);
                 amount1 = createPoolParams._minborrowAmount.add(100).div(3);
+                // console.log({amount: amount.toString(), amount1: amount1.toString()});
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
                 await pool.connect(lender).lend(lender.address, amount, false);
@@ -478,6 +482,7 @@ describe('Pool Active stage', async () => {
                             collateralToken.address,
                             poolStrategy.address
                         );
+
                         let collateralTokens = await poolStrategy.callStatic.getTokensForShares(
                             collateralShares.sub(2),
                             collateralToken.address

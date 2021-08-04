@@ -186,27 +186,24 @@ describe('Credit Lines', async () => {
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction
                 );
-                
+
             const poolImpl = await deployHelper.pool.deployPool();
             const poolTokenImpl = await deployHelper.pool.deployPoolToken();
             const repaymentImpl = await deployHelper.pool.deployRepayments();
-            await poolFactory.connect(admin).setImplementations(
-                poolImpl.address, 
-                repaymentImpl.address, 
-                poolTokenImpl.address,
-                verification.address,
-                strategyRegistry.address,
-                priceOracle.address,
-                savingsAccount.address,
-                extenstion.address
-            );
+            await poolFactory
+                .connect(admin)
+                .setImplementations(
+                    poolImpl.address,
+                    repaymentImpl.address,
+                    poolTokenImpl.address,
+                    verification.address,
+                    strategyRegistry.address,
+                    priceOracle.address,
+                    savingsAccount.address,
+                    extenstion.address
+                );
 
-            await creditLine.connect(admin).initialize(
-                yearnYield.address, 
-                poolFactory.address, 
-                strategyRegistry.address,
-                admin.address
-            );
+            await creditLine.connect(admin).initialize(yearnYield.address, poolFactory.address, strategyRegistry.address, admin.address);
         });
 
         it('Check global variables', async () => {
@@ -394,27 +391,26 @@ describe('Credit Lines', async () => {
                         _liquidatorRewardFraction,
                         _poolCancelPenalityFraction
                     );
-                
+
                 const poolImpl = await deployHelper.pool.deployPool();
                 const poolTokenImpl = await deployHelper.pool.deployPoolToken();
                 const repaymentImpl = await deployHelper.pool.deployRepayments();
-                await poolFactory.connect(admin).setImplementations(
-                    poolImpl.address, 
-                    repaymentImpl.address, 
-                    poolTokenImpl.address,
-                    verification.address,
-                    strategyRegistry.address,
-                    priceOracle.address,
-                    savingsAccount.address,
-                    extenstion.address
-                );
-                    
-                await creditLine.connect(admin).initialize(
-                    yearnYield.address, 
-                    poolFactory.address, 
-                    strategyRegistry.address,
-                    admin.address
-                );
+                await poolFactory
+                    .connect(admin)
+                    .setImplementations(
+                        poolImpl.address,
+                        repaymentImpl.address,
+                        poolTokenImpl.address,
+                        verification.address,
+                        strategyRegistry.address,
+                        priceOracle.address,
+                        savingsAccount.address,
+                        extenstion.address
+                    );
+
+                await creditLine
+                    .connect(admin)
+                    .initialize(yearnYield.address, poolFactory.address, strategyRegistry.address, admin.address);
             });
 
             it('Check global variables', async () => {

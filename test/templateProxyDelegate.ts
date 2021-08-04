@@ -245,16 +245,18 @@ describe('Template 2', async () => {
             await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
         }
 
-        await poolFactory.connect(admin).setImplementations(
-            poolLogic.address, 
-            repaymentLogic.address, 
-            poolTokenLogic.address,
-            verification.address,
-            strategyRegistry.address,
-            priceOracle.address,
-            savingsAccount.address,
-            extenstion.address
-        );
+        await poolFactory
+            .connect(admin)
+            .setImplementations(
+                poolLogic.address,
+                repaymentLogic.address,
+                poolTokenLogic.address,
+                verification.address,
+                strategyRegistry.address,
+                priceOracle.address,
+                savingsAccount.address,
+                extenstion.address
+            );
 
         if (network.name === 'hardhat') {
             deployHelper = new DeployHelper(borrower);
@@ -268,7 +270,8 @@ describe('Template 2', async () => {
                 poolFactory.address,
                 sha256(Buffer.from('borrower')),
                 poolLogic.address,
-                false
+                false,
+                {}
             );
 
             const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
@@ -354,7 +357,8 @@ describe('Template 2', async () => {
                 poolFactory.address,
                 salt,
                 poolLogic.address,
-                false
+                false,
+                {}
             );
 
             const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;

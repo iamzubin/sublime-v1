@@ -172,6 +172,9 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 maxPossible =
             _totalCollateralToken.mul(_ratioOfPrices).div(creditLineInfo[_creditLineHash].idealCollateralRatio).div(10**_decimals);
 
+        if (maxPossible > creditLineInfo[_creditLineHash].borrowLimit) {
+            maxPossible = creditLineInfo[_creditLineHash].borrowLimit;
+        }
         if (maxPossible > _currentDebt) {
             return maxPossible.sub(_currentDebt);
         }
@@ -438,7 +441,6 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
 
         uint256 collateralRatioIfAmountIsWithdrawn =
             _ratioOfPrices.mul(_totalCollateralToken).div((_currentDebt.add(borrowAmount)).mul(10**_decimals));
-
         require(
             collateralRatioIfAmountIsWithdrawn > creditLineInfo[creditLineHash].idealCollateralRatio,
             "CreditLine::borrowFromCreditLine - The current collateral ratio doesn't allow to withdraw the amount"
@@ -624,10 +626,9 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) > _amountInTokens) {
                 _tokensToTransfer = _amountInTokens.sub(_activeAmount);
-
                 liquidityShares = liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy);
-            }
-            _activeAmount = _activeAmount.add(_tokensToTransfer);
+            } // 0
+            _activeAmount = _activeAmount.add(_tokensToTransfer); //64753966145743327485
             collateralShareInStrategy[creditLineHash][_strategyList[index]] = collateralShareInStrategy[creditLineHash][
                 _strategyList[index]
             ]

@@ -1,7 +1,7 @@
 import { ethers, network } from 'hardhat';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
-import { assert, expect } from 'chai';
+import { expect, assert } from 'chai';
 
 import {
     aaveYieldParams,
@@ -187,16 +187,18 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 savingsAccount.address
             );
 
-        await poolFactory.connect(admin).setImplementations(
-            poolImpl.address, 
-            repaymentImpl.address, 
-            poolTokenImpl.address,
-            verification.address,
-            strategyRegistry.address,
-            priceOracle.address,
-            savingsAccount.address,
-            extenstion.address
-        );
+        await poolFactory
+            .connect(admin)
+            .setImplementations(
+                poolImpl.address,
+                repaymentImpl.address,
+                poolTokenImpl.address,
+                verification.address,
+                strategyRegistry.address,
+                priceOracle.address,
+                savingsAccount.address,
+                extenstion.address
+            );
     });
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
@@ -225,7 +227,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     poolFactory.address,
                     salt,
                     poolImpl.address,
-                    false
+                    false,
+                    {}
                 );
 
                 const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
@@ -356,7 +359,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     poolFactory.address,
                     salt,
                     poolImpl.address,
-                    false
+                    false,
+                    {}
                 );
 
                 const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
@@ -594,11 +598,13 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     borrowTokensForCollateral.mul(testPoolFactoryParams._liquidatorRewardFraction).div(BigNumber.from(10).pow(30))
                 );
 
-                expect(borrowTokenRandom.sub(borrowTokenRandomAfter).toNumber()).to.be.closeTo(borrowTokensToDeposit.toNumber(), 1000);
-                expect(borrowTokenPoolAfter.sub(borrowTokenPool).toNumber()).to.be.closeTo(borrowTokensToDeposit.toNumber(), 1000);
+                expect(borrowTokenRandom.sub(borrowTokenRandomAfter)).to.be.gte(borrowTokensToDeposit.sub(500));
+                expect(borrowTokenRandom.sub(borrowTokenRandomAfter)).to.be.lte(borrowTokensToDeposit.add(500));
+                expect(borrowTokenPoolAfter.sub(borrowTokenPool)).to.be.gte(borrowTokensToDeposit.sub(500));
+                expect(borrowTokenPoolAfter.sub(borrowTokenPool)).to.be.lte(borrowTokensToDeposit.add(500));
             });
 
-            it('Once pool is cancelled anyone can liquidate penality, peanlity direct LP share', async () => {
+            it('Once pool is cancelled anyone can liquidate penality, penality direct LP share', async () => {
                 await pool.connect(borrower).cancelPool();
                 let deployHelper: DeployHelper = new DeployHelper(borrower);
                 const yToken: ERC20 = await deployHelper.mock.getMockERC20(await poolStrategy.liquidityToken(collateralToken.address));
@@ -652,16 +658,14 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const borrowTokensToDeposit = borrowTokensForCollateral.sub(
                     borrowTokensForCollateral.mul(testPoolFactoryParams._liquidatorRewardFraction).div(BigNumber.from(10).pow(30))
                 );
-                assert(
-                    borrowTokenRandom.sub(borrowTokenRandomAfter).toString() == borrowTokensToDeposit.toString(),
-                    `Borrow token not pulled correctly from liquidator. Actual: ${borrowTokenRandom
-                        .sub(borrowTokenRandomAfter)
-                        .toString()} Expected: ${borrowTokensToDeposit.toString()}`
-                );
-                assert(
-                    borrowTokenPoolAfter.sub(borrowTokenPool).toString() == borrowTokensToDeposit.toString(),
-                    `Borrow token not deposited to pool correctly`
-                );
+
+                expect(borrowTokenRandom.sub(borrowTokenRandomAfter)).to.be.gte(borrowTokensToDeposit.sub(10));
+
+                expect(borrowTokenRandom.sub(borrowTokenRandomAfter)).to.be.lte(borrowTokensToDeposit.add(10));
+
+                expect(borrowTokenPoolAfter.sub(borrowTokenPool)).to.be.gte(borrowTokensToDeposit.sub(10));
+
+                expect(borrowTokenPoolAfter.sub(borrowTokenPool)).to.be.lte(borrowTokensToDeposit.add(10));
             });
 
             // Note: _receiveLiquidityShares doesn't matter when sending to savings account
@@ -729,8 +733,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     borrowTokensForCollateral.mul(testPoolFactoryParams._liquidatorRewardFraction).div(BigNumber.from(10).pow(30))
                 );
 
-                expect(borrowTokenRandom.sub(borrowTokenRandomAfter).toNumber()).to.be.closeTo(borrowTokensToDeposit.toNumber(), 1000);
-                expect(borrowTokenPoolAfter.sub(borrowTokenPool).toNumber()).to.be.closeTo(borrowTokensToDeposit.toNumber(), 1000);
+                expect(borrowTokenRandom.sub(borrowTokenRandomAfter)).to.be.gte(borrowTokensToDeposit.sub(500));
+                expect(borrowTokenRandom.sub(borrowTokenRandomAfter)).to.be.lte(borrowTokensToDeposit.add(500));
+
+                expect(borrowTokenPoolAfter.sub(borrowTokenPool)).to.be.gte(borrowTokensToDeposit.sub(500));
+                expect(borrowTokenPoolAfter.sub(borrowTokenPool)).to.be.lte(borrowTokensToDeposit.add(500));
             });
 
             it('Pool cancellation once liquidated cannot be liquidated again', async () => {
@@ -996,8 +1003,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const borrowTokensToDeposit = borrowTokensForCollateral.sub(
                     borrowTokensForCollateral.mul(testPoolFactoryParams._liquidatorRewardFraction).div(BigNumber.from(10).pow(30))
                 );
-                expect(borrowTokenRandom.sub(borrowTokenRandomAfter).toNumber()).to.be.closeTo(borrowTokensToDeposit.toNumber(), 1000);
-                expect(borrowTokenPoolAfter.sub(borrowTokenPool).toNumber()).to.be.closeTo(borrowTokensToDeposit.toNumber(), 1000);
+                expect(borrowTokenRandom.sub(borrowTokenRandomAfter)).to.be.gte(borrowTokensToDeposit.sub(500));
+                expect(borrowTokenRandom.sub(borrowTokenRandomAfter)).to.be.lte(borrowTokensToDeposit.add(500));
+
+                expect(borrowTokenPoolAfter.sub(borrowTokenPool)).to.be.gte(borrowTokensToDeposit.sub(500));
+                expect(borrowTokenPoolAfter.sub(borrowTokenPool)).to.be.lte(borrowTokensToDeposit.add(500));
             });
 
             it('Non withdrawal Cancel - Before penality Liquidation, no rewards for lender', async () => {
@@ -1129,7 +1139,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     poolFactory.address,
                     salt,
                     poolImpl.address,
-                    false
+                    false,
+                    {}
                 );
 
                 const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
@@ -1258,7 +1269,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     poolFactory.address,
                     salt,
                     poolImpl.address,
-                    false
+                    false,
+                    {}
                 );
 
                 const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
@@ -1310,12 +1322,16 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
                 await pool.connect(lender).lend(lender.address, amount, false);
-
-                const { loanStartTime } = await pool.poolConstants();
-                await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
             });
 
+            async function subject() {
+                const { loanStartTime } = await pool.poolConstants();
+                await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
+                return;
+            }
+
             it('Lender pool tokens should be transferrable', async () => {
+                await subject();
                 const balance = await poolToken.balanceOf(lender.address);
                 const balanceBefore = await poolToken.balanceOf(lender1.address);
                 await poolToken.connect(lender).transfer(lender1.address, balance);
@@ -1329,6 +1345,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Lender cannot withdraw tokens', async () => {
+                await subject();
                 await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('24');
             });
 
@@ -1341,6 +1358,13 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     zeroAddress
                 );
                 const tokensLent = await poolToken.totalSupply();
+                let amount = createPoolParams._poolSize.sub(tokensLent);
+
+                await borrowToken.connect(admin).transfer(lender.address, amount);
+                await borrowToken.connect(lender).approve(pool.address, amount);
+                await pool.connect(lender).lend(lender.address, amount, false);
+                await subject();
+
                 await pool.connect(borrower).withdrawBorrowedAmount();
                 const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
@@ -1351,13 +1375,17 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 );
                 const tokensLentAfter = await poolToken.totalSupply();
 
-                assert(tokensLent.toString() == tokensLentAfter.toString(), 'Tokens lent changing while withdrawing borrowed amount');
                 assert(
-                    borrowAssetBalanceBorrower.add(tokensLent).toString() == borrowAssetBalanceBorrowerAfter.toString(),
-                    'Borrower not receiving correct lent amount'
+                    tokensLent.add(amount).toString() == tokensLentAfter.toString(),
+                    'Tokens lent changing while withdrawing borrowed amount'
                 );
                 assert(
-                    borrowAssetBalancePool.toString() == borrowAssetBalancePoolAfter.add(tokensLentAfter).toString(),
+                    borrowAssetBalanceBorrower.add(tokensLent).add(amount).toString() == borrowAssetBalanceBorrowerAfter.toString(),
+                    'Borrower not receiving correct lent amount'
+                );
+
+                assert(
+                    borrowAssetBalancePool.add(amount).toString() == borrowAssetBalancePoolAfter.add(tokensLentAfter).toString(),
                     'Pool token balance is changing instead of savings account balance'
                 );
                 assert(
