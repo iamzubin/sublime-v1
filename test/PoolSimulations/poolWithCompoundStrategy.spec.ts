@@ -47,7 +47,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 
-describe('Pool With Compound Strategy', async () => {
+describe.only('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
 
@@ -329,6 +329,7 @@ describe('Pool With Compound Strategy', async () => {
         await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
         await collateralToken.connect(borrower).approve(generatedPoolAddress, _collateralAmount.mul(2));
 
+        console.log({ generatedPoolAddress });
         await expect(
             poolFactory
                 .connect(borrower)

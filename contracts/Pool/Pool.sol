@@ -893,7 +893,8 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _amount
     ) public view returns (uint256) {
         (uint256 _price, uint256 _decimals) = IPriceOracle(IPoolFactory(PoolFactory).priceOracle()).getLatestPrice(_source, _target);
-        return _amount.mul(_price).div(10**_decimals);
+        uint256 _temp = _amount.mul(_price).div(10**_decimals).mul(10**ERC20(_target).decimals()).div(10**ERC20(_source).decimals());
+        return _temp;
     }
 
     function borrower() external view override returns (address) {
