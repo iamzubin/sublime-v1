@@ -41,9 +41,19 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
                 .mul(10**30)
                 .div(uint256(price2))
                 .div(10**_feedData1.decimals)
-                .mul(10**ERC20(den).decimals())
-                .div(10**ERC20(num).decimals());
+                .mul(10**getDecimals(den))
+                .div(10**getDecimals(num));
         return (price, 30);
+    }
+
+    function getDecimals(address _token) view internal returns (uint8) {
+        try ERC20(_token).decimals() returns (uint8 v) {
+            return v;
+        } catch Error(string memory) {
+            return 0;
+        } catch (bytes memory) {
+            return 0;
+        }
     }
 
     function doesFeedExist(address[] calldata tokens) external view override returns (bool) {
