@@ -11,6 +11,7 @@ export const aaveYieldParams = {
 };
 
 export const ETH_Yearn_Protocol_Address = '0xe1237aa7f535b0cc33fd973d66cbf830354d16c7'; // TODO: To be upgraded to v2
+export const WBTC_Yearn_Protocol_address = '0xcb550a6d4c8e3517a939bc79d0c7093eb7cf56b5';
 
 export const Binance7 = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8';
 export const WhaleAccount = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503';
@@ -86,4 +87,9 @@ export const ChainLinkAggregators = {
     'DAI/USD': '0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9',
     'ETH/USD': '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419',
     'BTC/USD': '0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c',
+    'INCH/USD': '0xc929ad75b72593967de83e7f7cda0493458261d9',
+    'COMP/USD': '0xdbd020caef83efd542f4de03e3cf0c28a4428bd5',
+    'UNI/USD': '0x553303d460ee0afb37edff9be42922d8ff63220e',
+    'HEGIC/USD': '0xbfc189ac214e6a4a35ebc281ad15669619b75534',
+    'YFI/USD': '0xa027702dbb89fbd58938e4324ac03b58d812b0e1',
 };
