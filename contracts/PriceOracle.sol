@@ -46,7 +46,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         return (price, 30);
     }
 
-    function getDecimals(address _token) view internal returns (uint8) {
+    function getDecimals(address _token) internal view returns (uint8) {
         try ERC20(_token).decimals() returns (uint8 v) {
             return v;
         } catch Error(string memory) {

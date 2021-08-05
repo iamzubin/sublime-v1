@@ -44,7 +44,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { BytesLike } from '@ethersproject/bytes';
 
-describe('Credit Lines', async () => {
+describe.only('WBTC-DAI Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
     let strategyRegistry: StrategyRegistry;
 
@@ -245,9 +245,14 @@ describe('Credit Lines', async () => {
 
             lenderCreditLine = values;
         });
+
         it('Check Credit Line Info', async () => {
             let creditLineInfo = await creditLine.creditLineInfo(lenderCreditLine);
             print(creditLineInfo);
+        });
+
+        it('Accept Credit Line Borrower', async () => {
+            await creditLine.connect(borrower).acceptCreditLineBorrower(lenderCreditLine);
         });
     });
 });

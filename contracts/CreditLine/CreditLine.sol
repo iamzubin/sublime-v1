@@ -61,6 +61,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     event CreditLineAccepted(bytes32 creditLineHash);
     event CreditLineReset(bytes32 creditLineHash);
     event PartialCreditLineRepaid(bytes32 creditLineHash, uint256 repayAmount);
+    event CompleteCreditLineRepaid(bytes32 creditLineHash, uint256 repayAmount);
     event CreditLineClosed(bytes32 creditLineHash);
 
     event DefaultStrategyUpdated(address defaultStrategy);
@@ -516,7 +517,13 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             (creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate).add(_interestSincePrincipalUpdate);
         uint256 _totalDebt = _totalInterestAccrued.add(creditLineUsage[creditLineHash].principal);
         uint256 _totalRepaidNow = creditLineUsage[creditLineHash].totalInterestRepaid.add(repayAmount);
-        require(_totalDebt >= repayAmount, 'CreditLine: Repay amount is greater than debt.');
+
+        bool _totalRemainingIsRepaid = false;
+
+        if (repayAmount > _totalDebt) {
+            _totalRemainingIsRepaid = true;
+            repayAmount = _totalDebt;
+        }
 
         if (_totalRepaidNow > _totalInterestAccrued) {
             creditLineUsage[creditLineHash].principal = (creditLineUsage[creditLineHash].principal).add(_totalInterestAccrued).sub(
@@ -531,7 +538,12 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         if (creditLineUsage[creditLineHash].principal == 0) {
             _resetCreditLine(creditLineHash);
         }
-        emit PartialCreditLineRepaid(creditLineHash, repayAmount);
+
+        if (_totalRemainingIsRepaid) {
+            emit CompleteCreditLineRepaid(creditLineHash, repayAmount);
+        } else {
+            emit PartialCreditLineRepaid(creditLineHash, repayAmount);
+        }
     }
 
     function _resetCreditLine(bytes32 creditLineHash) internal {
