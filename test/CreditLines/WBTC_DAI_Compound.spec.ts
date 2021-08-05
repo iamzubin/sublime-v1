@@ -16,6 +16,7 @@ import {
     ChainLinkAggregators,
     OperationalAmounts,
     extensionParams,
+    WBTCWhale as wbtcwhale,
 } from '../../utils/constants';
 import DeployHelper from '../../utils/deploys';
 
@@ -73,11 +74,18 @@ describe.only('WBTC-DAI Credit Lines', async () => {
     let poolFactory: PoolFactory;
     let extenstion: Extension;
 
+    let WBTCTokenContract: ERC20;
+    let WBTCWhale: any;
+
     let borrowerCreditLine: BytesLike;
     let lenderCreditLine: BytesLike;
 
+    let extraAccounts: SignerWithAddress[];
+
     before(async () => {
-        [proxyAdmin, admin, mockCreditLines, borrower, lender, extraAccount] = await ethers.getSigners();
+        [proxyAdmin, admin, mockCreditLines, borrower, lender] = await ethers.getSigners();
+        extraAccounts = await (await ethers.getSigners()).slice(-100);
+
         let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
         savingsAccount = await deployHelper.core.deploySavingsAccount();
         strategyRegistry = await deployHelper.core.deployStrategyRegistry();
@@ -96,13 +104,24 @@ describe.only('WBTC-DAI Credit Lines', async () => {
             params: [whaleAccount],
         });
 
+        await network.provider.request({
+            method: 'hardhat_impersonateAccount',
+            params: [wbtcwhale],
+        });
+
         await admin.sendTransaction({
             to: whaleAccount,
             value: ethers.utils.parseEther('100'),
         });
 
+        await admin.sendTransaction({
+            to: wbtcwhale,
+            value: ethers.utils.parseEther('100'),
+        });
+
         Binance7 = await ethers.provider.getSigner(binance7);
         WhaleAccount = await ethers.provider.getSigner(whaleAccount);
+        WBTCWhale = await ethers.provider.getSigner(wbtcwhale);
 
         BatTokenContract = await deployHelper.mock.getMockERC20(Contracts.BAT);
         await BatTokenContract.connect(Binance7).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 BAT tokens
@@ -112,6 +131,9 @@ describe.only('WBTC-DAI Credit Lines', async () => {
 
         DaiTokenContract = await deployHelper.mock.getMockERC20(Contracts.DAI);
         await DaiTokenContract.connect(WhaleAccount).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 DAI
+
+        WBTCTokenContract = await deployHelper.mock.getMockERC20(Contracts.WBTC);
+        await WBTCTokenContract.connect(WBTCWhale).transfer(admin.address, BigNumber.from('10').pow(10)); // 100 BTC
 
         aaveYield = await deployHelper.core.deployAaveYield();
         await aaveYield
@@ -139,6 +161,7 @@ describe.only('WBTC-DAI Credit Lines', async () => {
         await compoundYield.initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
+        await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
@@ -148,6 +171,7 @@ describe.only('WBTC-DAI Credit Lines', async () => {
         await priceOracle.connect(admin).initialize(admin.address);
         await priceOracle.connect(admin).setfeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
         await priceOracle.connect(admin).setfeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
+        await priceOracle.connect(admin).setfeedAddress(Contracts.WBTC, ChainLinkAggregators['BTC/USD']);
 
         deployHelper = new DeployHelper(proxyAdmin);
         creditLine = await deployHelper.core.deployCreditLines();
@@ -199,7 +223,7 @@ describe.only('WBTC-DAI Credit Lines', async () => {
                 extenstion.address
             );
 
-        await creditLine.connect(admin).initialize(yearnYield.address, poolFactory.address, strategyRegistry.address, admin.address);
+        await creditLine.connect(admin).initialize(compoundYield.address, poolFactory.address, strategyRegistry.address, admin.address);
     });
 
     describe('Create Credit Lines - Lender', async () => {
@@ -211,7 +235,7 @@ describe.only('WBTC-DAI Credit Lines', async () => {
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(200);
             let _borrowAsset: string = Contracts.DAI;
-            let _collateralAsset: string = Contracts.LINK;
+            let _collateralAsset: string = Contracts.WBTC;
 
             let values = await creditLine
                 .connect(lender)
@@ -251,8 +275,27 @@ describe.only('WBTC-DAI Credit Lines', async () => {
             print(creditLineInfo);
         });
 
-        it('Accept Credit Line Borrower', async () => {
+        it('Borrow From Credit Line only borrower', async () => {
+            let lenderAmount = BigNumber.from(10).pow(20); // 100 DAI
+            let borrowerCollateral = BigNumber.from(10).pow(8); // 1WBTC
+            let borrowAmount = BigNumber.from(10).pow(19); //10 DAI
+
+            let unlimited = BigNumber.from(10).pow(60);
+
             await creditLine.connect(borrower).acceptCreditLineBorrower(lenderCreditLine);
+
+            await DaiTokenContract.connect(admin).transfer(lender.address, lenderAmount);
+            await DaiTokenContract.connect(lender).approve(compoundYield.address, lenderAmount);
+
+            await WBTCTokenContract.connect(admin).transfer(borrower.address, borrowerCollateral);
+            await WBTCTokenContract.connect(borrower).approve(creditLine.address, borrowerCollateral);
+
+            await creditLine.connect(borrower).depositCollateral(Contracts.WBTC, borrowerCollateral, lenderCreditLine, false);
+
+            await savingsAccount.connect(lender).depositTo(lenderAmount, DaiTokenContract.address, compoundYield.address, lender.address);
+            await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, unlimited);
+
+            await creditLine.connect(borrower).borrowFromCreditLine(borrowAmount, lenderCreditLine);
         });
     });
 });
