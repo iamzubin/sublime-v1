@@ -459,19 +459,26 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         creditLineUsage[creditLineHash].lastPrincipalUpdateTime = block.timestamp;
 
         //transferFromSavingAccount(_borrowAsset,borrowAmount,_lender,address(this)); // 10000000000000000000
+        
         // @ TO-DO
-        uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
-        _withdrawBorrowAmount(_borrowAsset, borrowAmount, _lender);
-        uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
+        uint256 _tokenDiffBalance;
+        if (_borrowAsset != address(0)) {
+            uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
+            _withdrawBorrowAmount(_borrowAsset, borrowAmount, _lender);
+            uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
+            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
+        } else {
+            _withdrawBorrowAmount(_borrowAsset, borrowAmount, _lender);
+        }
+
         if (_borrowAsset == address(0)) {
             (bool success, ) = msg.sender.call{value: borrowAmount}('');
             require(success, 'Transfer fail');
+            emit BorrowedFromCreditLine(borrowAmount, creditLineHash);
         } else {
-            IERC20(_borrowAsset).safeTransfer(msg.sender, _balanceAfter.sub(_balanceBefore));
+            IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
+            emit BorrowedFromCreditLine(_tokenDiffBalance, creditLineHash);
         }
-
-        // emit BorrowedFromCreditLine(borrowAmount, creditLineHash);
-        emit BorrowedFromCreditLine(_balanceAfter.sub(_balanceBefore), creditLineHash);
     }
 
     //TODO:- Make the function to accept ether as well
