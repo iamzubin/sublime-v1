@@ -50,7 +50,7 @@ import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { contracts } from 'scripts/contractsToVerify';
 
-describe.only('Pool With Compound Strategy', async () => {
+describe('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
 
@@ -306,7 +306,7 @@ describe.only('Pool With Compound Strategy', async () => {
 
     async function createPool() {
         let deployHelper = new DeployHelper(borrower);
-        let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(zeroAddress);
+        let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.UNI);
         let iyield: IYield = await deployHelper.mock.getYield(compoundYield.address);
 
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -316,8 +316,8 @@ describe.only('Pool With Compound Strategy', async () => {
 
         let generatedPoolAddress: Address = await getPoolAddress(
             borrower.address,
+            Contracts.DAI,
             Contracts.UNI,
-            zeroAddress,
             iyield.address,
             poolFactory.address,
             salt,
@@ -355,8 +355,8 @@ describe.only('Pool With Compound Strategy', async () => {
                 .createPool(
                     _poolSize,
                     _minborrowAmount,
+                    Contracts.DAI,
                     Contracts.UNI,
-                    zeroAddress,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -386,8 +386,8 @@ describe.only('Pool With Compound Strategy', async () => {
     describe('Check ratios', async () => {
         async function lenderLendsTokens(amount: BigNumberish, fromSavingsAccount = false): Promise<void> {
             //UNITokenContract
-            await UNITokenContract.connect(admin).transfer(lender.address, amount);
-            await UNITokenContract.connect(lender).approve(pool.address, amount);
+            await DaiTokenContract.connect(admin).transfer(lender.address, amount);
+            await DaiTokenContract.connect(lender).approve(pool.address, amount);
             await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount);
             return;
         }
@@ -398,7 +398,7 @@ describe.only('Pool With Compound Strategy', async () => {
             let deployHelper = new DeployHelper(borrower);
             
             //UNITokenContract
-            let token: PoolToken = await deployHelper.pool.getPoolToken(UNITokenContract.address);
+            let token: PoolToken = await deployHelper.pool.getPoolToken(DaiTokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -409,7 +409,7 @@ describe.only('Pool With Compound Strategy', async () => {
             let deployHelper = new DeployHelper(borrower);
             
             //UNITokenContract
-            let token: PoolToken = await deployHelper.pool.getPoolToken(UNITokenContract.address);
+            let token: PoolToken = await deployHelper.pool.getPoolToken(DaiTokenContract.address);
             let decimals = await token.decimals();
             let numberOfTokens = 10;
             let expDecimals = BigNumber.from(numberOfTokens).pow(decimals);
@@ -424,10 +424,10 @@ describe.only('Pool With Compound Strategy', async () => {
             await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
             await pool.connect(borrower).withdrawBorrowedAmount();
 
-            let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(zeroAddress, Contracts.UNI);
+            let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(Contracts.UNI, Contracts.DAI);
             let ratio = await pool.callStatic['getCurrentCollateralRatio()']();
             expectApproxEqual(pricePerToken[0], ratio.mul(numberOfTokens), BigNumber.from(10).pow(30).div(1000)); // 0.1 percent deviation
-            expect(await UNITokenContract.balanceOf(borrower.address)).to.eq(_minborrowAmount);
+            expect(await DaiTokenContract.balanceOf(borrower.address)).to.eq(_minborrowAmount);
         });
 
         it('User cannot borrow if lender/s has not supplied minimum number of tokens', async () => {
@@ -443,8 +443,8 @@ describe.only('Pool With Compound Strategy', async () => {
             await createPool();
             
             //UNITokenContract
-            await UNITokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
-            await UNITokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
+            await DaiTokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
+            await DaiTokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
             await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false);
         });
 
