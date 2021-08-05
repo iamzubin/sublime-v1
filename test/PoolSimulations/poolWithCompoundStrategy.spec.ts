@@ -59,6 +59,7 @@ describe('Pool With Compound Strategy', async () => {
     let admin: SignerWithAddress;
     let borrower: SignerWithAddress;
     let lender: SignerWithAddress;
+    let protocolFeeCollector: SignerWithAddress;
     let extraLenders: SignerWithAddress[];
 
     let aaveYield: AaveYield;
@@ -102,7 +103,7 @@ describe('Pool With Compound Strategy', async () => {
     let poolToken: PoolToken;
 
     before(async () => {
-        [proxyAdmin, admin, mockCreditLines, borrower, lender] = await ethers.getSigners();
+        [proxyAdmin, admin, mockCreditLines, borrower, lender, protocolFeeCollector] = await ethers.getSigners();
         extraLenders = await (await ethers.getSigners()).slice(-100);
 
         let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -211,9 +212,9 @@ describe('Pool With Compound Strategy', async () => {
         priceOracle = await deployHelper.helper.getPriceOracle(priceOracleProxy.address);
         await priceOracle.connect(admin).initialize(admin.address);
 
-        await priceOracle.connect(admin).setfeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
-        await priceOracle.connect(admin).setfeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
-        await priceOracle.connect(admin).setfeedAddress(Contracts.WBTC, ChainLinkAggregators['BTC/USD']);
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.WBTC, ChainLinkAggregators['BTC/USD']);
 
         poolFactoryLogic = await deployHelper.pool.deployPoolFactory();
         let poolFactoryProxy = await deployHelper.helper.deploySublimeProxy(poolFactoryLogic.address, proxyAdmin.address);
@@ -246,6 +247,7 @@ describe('Pool With Compound Strategy', async () => {
             _poolInitFuncSelector,
             _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
+            _protocolFeeFraction,
         } = testPoolFactoryParams;
 
         await poolFactory
@@ -255,12 +257,13 @@ describe('Pool With Compound Strategy', async () => {
                 _collectionPeriod,
                 _matchCollateralRatioInterval,
                 _marginCallDuration,
-                _collateralVolatilityThreshold,
                 _gracePeriodPenaltyFraction,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
-                _poolCancelPenalityFraction
+                _poolCancelPenalityFraction,
+                _protocolFeeFraction,
+                protocolFeeCollector.address
             );
 
         poolLogic = await deployHelper.pool.deployPool();

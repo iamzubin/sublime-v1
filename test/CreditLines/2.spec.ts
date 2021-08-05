@@ -68,9 +68,10 @@ describe('Credit Lines', async () => {
 
     let Binance7: any;
     let WhaleAccount: any;
+    let protocolFeeCollector: any;
 
     before(async () => {
-        [proxyAdmin, admin, mockCreditLines, borrower, lender, extraAccount] = await ethers.getSigners();
+        [proxyAdmin, admin, mockCreditLines, borrower, lender, protocolFeeCollector] = await ethers.getSigners();
         const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
         savingsAccount = await deployHelper.core.deploySavingsAccount();
         strategyRegistry = await deployHelper.core.deployStrategyRegistry();
@@ -139,8 +140,8 @@ describe('Credit Lines', async () => {
 
         priceOracle = await deployHelper.helper.deployPriceOracle();
         await priceOracle.connect(admin).initialize(admin.address);
-        await priceOracle.connect(admin).setfeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
-        await priceOracle.connect(admin).setfeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
     });
 
     describe('Create Credit Lines Contract Amount Checks', async () => {
@@ -176,6 +177,7 @@ describe('Credit Lines', async () => {
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _poolCancelPenalityFraction,
+                _protocolFeeFraction,
             } = testPoolFactoryParams;
 
             await poolFactory
@@ -185,12 +187,13 @@ describe('Credit Lines', async () => {
                     _collectionPeriod,
                     _matchCollateralRatioInterval,
                     _marginCallDuration,
-                    _collateralVolatilityThreshold,
                     _gracePeriodPenaltyFraction,
                     _poolInitFuncSelector,
                     _poolTokenInitFuncSelector,
                     _liquidatorRewardFraction,
-                    _poolCancelPenalityFraction
+                    _poolCancelPenalityFraction,
+                    _protocolFeeFraction,
+                    protocolFeeCollector.address
                 );
             const poolImpl = await deployHelper.pool.deployPool();
             const poolTokenImpl = await deployHelper.pool.deployPoolToken();
@@ -208,7 +211,17 @@ describe('Credit Lines', async () => {
                     extenstion.address
                 );
 
-            await creditLine.connect(admin).initialize(yearnYield.address, poolFactory.address, strategyRegistry.address, admin.address);
+            await creditLine
+                .connect(admin)
+                .initialize(
+                    yearnYield.address,
+                    priceOracle.address,
+                    savingsAccount.address,
+                    strategyRegistry.address,
+                    admin.address,
+                    _protocolFeeFraction,
+                    protocolFeeCollector.address
+                );
         });
 
         it('Request Credit Line to borrower', async () => {

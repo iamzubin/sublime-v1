@@ -45,7 +45,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { BytesLike } from '@ethersproject/bytes';
 
-describe.only('WBTC-DAI Credit Lines', async () => {
+describe('WBTC-DAI Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
     let strategyRegistry: StrategyRegistry;
 
@@ -54,6 +54,7 @@ describe.only('WBTC-DAI Credit Lines', async () => {
     let admin: SignerWithAddress;
     let borrower: SignerWithAddress;
     let lender: SignerWithAddress;
+    let protocolFeeCollector: SignerWithAddress;
     let extraAccount: SignerWithAddress;
 
     let aaveYield: AaveYield;
@@ -83,7 +84,7 @@ describe.only('WBTC-DAI Credit Lines', async () => {
     let extraAccounts: SignerWithAddress[];
 
     before(async () => {
-        [proxyAdmin, admin, mockCreditLines, borrower, lender] = await ethers.getSigners();
+        [proxyAdmin, admin, mockCreditLines, borrower, lender, protocolFeeCollector] = await ethers.getSigners();
         extraAccounts = await (await ethers.getSigners()).slice(-100);
 
         let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -150,13 +151,6 @@ describe.only('WBTC-DAI Credit Lines', async () => {
 
         await strategyRegistry.connect(admin).addStrategy(aaveYield.address);
 
-        yearnYield = await deployHelper.core.deployYearnYield();
-        await yearnYield.initialize(admin.address, savingsAccount.address);
-        await strategyRegistry.connect(admin).addStrategy(yearnYield.address);
-        await yearnYield.connect(admin).updateProtocolAddresses(DaiTokenContract.address, DAI_Yearn_Protocol_Address);
-
-        await yearnYield.connect(admin).updateProtocolAddresses(LinkTokenContract.address, LINK_Yearn_Protocol_Address);
-
         compoundYield = await deployHelper.core.deployCompoundYield();
         await compoundYield.initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
@@ -169,9 +163,9 @@ describe.only('WBTC-DAI Credit Lines', async () => {
 
         priceOracle = await deployHelper.helper.deployPriceOracle();
         await priceOracle.connect(admin).initialize(admin.address);
-        await priceOracle.connect(admin).setfeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
-        await priceOracle.connect(admin).setfeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
-        await priceOracle.connect(admin).setfeedAddress(Contracts.WBTC, ChainLinkAggregators['BTC/USD']);
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.WBTC, ChainLinkAggregators['BTC/USD']);
 
         deployHelper = new DeployHelper(proxyAdmin);
         creditLine = await deployHelper.core.deployCreditLines();
@@ -191,6 +185,7 @@ describe.only('WBTC-DAI Credit Lines', async () => {
             _poolInitFuncSelector,
             _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
+            _protocolFeeFraction,
         } = testPoolFactoryParams;
 
         await poolFactory
@@ -200,13 +195,15 @@ describe.only('WBTC-DAI Credit Lines', async () => {
                 _collectionPeriod,
                 _matchCollateralRatioInterval,
                 _marginCallDuration,
-                _collateralVolatilityThreshold,
                 _gracePeriodPenaltyFraction,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
-                _poolCancelPenalityFraction
+                _poolCancelPenalityFraction,
+                _protocolFeeFraction,
+                protocolFeeCollector.address
             );
+
         const poolImpl = await deployHelper.pool.deployPool();
         const poolTokenImpl = await deployHelper.pool.deployPoolToken();
         const repaymentImpl = await deployHelper.pool.deployRepayments();
@@ -223,7 +220,17 @@ describe.only('WBTC-DAI Credit Lines', async () => {
                 extenstion.address
             );
 
-        await creditLine.connect(admin).initialize(compoundYield.address, poolFactory.address, strategyRegistry.address, admin.address);
+        await creditLine
+            .connect(admin)
+            .initialize(
+                compoundYield.address,
+                priceOracle.address,
+                savingsAccount.address,
+                strategyRegistry.address,
+                admin.address,
+                _protocolFeeFraction,
+                protocolFeeCollector.address
+            );
     });
 
     describe('Create Credit Lines - Lender', async () => {

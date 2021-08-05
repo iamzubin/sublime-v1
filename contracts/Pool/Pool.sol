@@ -336,13 +336,22 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     function withdrawBorrowedAmount() external override OnlyBorrower(msg.sender) nonReentrant {
         LoanStatus _poolStatus = poolVars.loanStatus;
         uint256 _tokensLent = poolToken.totalSupply();
-        require(_poolStatus == LoanStatus.COLLECTION && poolConstants.loanStartTime < block.timestamp, '12');
+        require(
+            _poolStatus == LoanStatus.COLLECTION &&
+                poolConstants.loanStartTime < block.timestamp &&
+                block.timestamp < poolConstants.loanWithdrawalDeadline,
+            '12'
+        );
         require(_tokensLent >= poolConstants.minborrowAmount, '13');
 
         poolVars.loanStatus = LoanStatus.ACTIVE;
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
         IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
-        require(_currentCollateralRatio >= poolConstants.idealCollateralRatio.sub(_poolFactory.collateralVolatilityThreshold()), '13');
+        require(
+            _currentCollateralRatio >=
+                poolConstants.idealCollateralRatio.sub(_poolFactory.volatilityThreshold(poolConstants.collateralAsset)),
+            '14'
+        );
 
         uint256 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
         uint256 _repaymentInterval = poolConstants.repaymentInterval;
@@ -354,7 +363,12 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
             poolConstants.borrowAsset
         );
         IExtension(_poolFactory.extension()).initializePoolExtension(_repaymentInterval);
-        SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _tokensLent, address(this), msg.sender);
+
+        address _borrowAsset = poolConstants.borrowAsset;
+        (uint256 _protocolFeeFraction, address _collector) = _poolFactory.getProtocolFeeData();
+        uint256 _protocolFee = _tokensLent.mul(_protocolFeeFraction).div(10**30);
+        SavingsAccountUtil.transferTokens(_borrowAsset, _protocolFee, address(this), _collector);
+        SavingsAccountUtil.transferTokens(_borrowAsset, _tokensLent.sub(_protocolFee), address(this), msg.sender);
 
         delete poolConstants.loanWithdrawalDeadline;
         emit AmountBorrowed(_tokensLent);
@@ -453,7 +467,9 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         }
         uint256 _cancelPenalityMultiple = IPoolFactory(PoolFactory).poolCancelPenalityFraction();
         uint256 penality =
-            _cancelPenalityMultiple.mul(poolConstants.borrowRate).mul(poolToken.totalSupply()).mul(_penalityTime).div(365 days).div(10**60);
+            _cancelPenalityMultiple.mul(poolConstants.borrowRate).mul(_collateralLiquidityShare).mul(_penalityTime).div(365 days).div(
+                10**60
+            );
         _cancelPool(penality);
     }
 
@@ -582,7 +598,11 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
         require(getMarginCallEndTime(msg.sender) == 0, 'RMC1');
         uint256 _idealCollateralRatio = poolConstants.idealCollateralRatio;
-        require(_idealCollateralRatio > getCurrentCollateralRatio(msg.sender).add(_poolFactory.collateralVolatilityThreshold()), '26');
+        require(
+            _idealCollateralRatio >
+                getCurrentCollateralRatio(msg.sender).add(_poolFactory.volatilityThreshold(poolConstants.collateralAsset)),
+            '26'
+        );
 
         lenders[msg.sender].marginCallEndTime = block.timestamp.add(_poolFactory.marginCallDuration());
 
@@ -702,7 +722,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         require(_marginCallEndTime < block.timestamp, '28');
 
         require(
-            poolConstants.idealCollateralRatio.sub(IPoolFactory(PoolFactory).collateralVolatilityThreshold()) >
+            poolConstants.idealCollateralRatio.sub(IPoolFactory(PoolFactory).volatilityThreshold(poolConstants.collateralAsset)) >
                 getCurrentCollateralRatio(_lender),
             '29'
         );

@@ -40,11 +40,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     uint256 public override collectionPeriod;
     uint256 public override matchCollateralRatioInterval;
     uint256 public override marginCallDuration;
-    uint256 public override collateralVolatilityThreshold;
+    mapping(address => uint256) public override volatilityThreshold;
     uint256 public override gracePeriodPenaltyFraction;
     uint256 public override liquidatorRewardFraction;
     uint256 public override votingPassRatio;
     uint256 public override poolCancelPenalityFraction;
+    uint256 protocolFeeFraction;
+    address protocolFeeCollector;
 
     /*
      * @notice Used to mark assets supported for borrowing
@@ -160,10 +162,11 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     event MarginCallDurationUpdated(uint256 updatedMarginCallDuration);
 
     /*
-     * @notice emitted when collateralVolatilityThreshold variable is updated
-     * @param updatedCollateralVolatilityThreshold Updated value of collateralVolatilityThreshold
+     * @notice emitted when volatilityThreshold variable of a token is updated
+     * @param token is the token for which the volatilityThreshold is being changed
+     * @param updatedVolatilityThreshold Updated value of volatilityThreshold
      */
-    event CollateralVolatilityThresholdUpdated(uint256 updatedCollateralVolatilityThreshold);
+    event VolatilityThresholdUpdated(address indexed token, uint256 updatedVolatilityThreshold);
 
     /*
      * @notice emitted when gracePeriodPenaltyFraction variable is updated
@@ -182,6 +185,18 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param updatedPoolCancelPenalityFraction updated value of poolCancelPenalityFraction
      */
     event PoolCancelPenalityFractionUpdated(uint256 updatedPoolCancelPenalityFraction);
+
+    /*
+     * @notice emitted when fee that protocol changes for pools is updated
+     * @param updatedProtocolFee updated value of protocolFeeFraction
+     */
+    event ProtocolFeeFractionUpdated(uint256 updatedProtocolFee);
+
+    /*
+     * @notice emitted when address which receives fee that protocol changes for pools is updated
+     * @param updatedProtocolFeeCollector updated value of protocolFeeCollector
+     */
+    event ProtocolFeeCollectorUpdated(address updatedProtocolFeeCollector);
 
     /*
      * @notice emitted when threhsolds for one of the parameters (poolSizeLimit, collateralRatioLimit, borrowRateLimit, repaymentIntervalLimit, noOfRepaymentIntervalsLimit) is updated
@@ -236,7 +251,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _collectionPeriod
      * @param _matchCollateralRatioInterval
      * @param _marginCallDuration
-     * @param _collateralVolatilityThreshold
      * @param _gracePeriodPenaltyFraction
      * @param _poolInitFuncSelector
      * @param _poolTokenInitFuncSelector
@@ -252,12 +266,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _collectionPeriod,
         uint256 _matchCollateralRatioInterval,
         uint256 _marginCallDuration,
-        uint256 _collateralVolatilityThreshold,
         uint256 _gracePeriodPenaltyFraction,
         bytes4 _poolInitFuncSelector,
         bytes4 _poolTokenInitFuncSelector,
         uint256 _liquidatorRewardFraction,
-        uint256 _poolCancelPenalityFraction
+        uint256 _poolCancelPenalityFraction,
+        uint256 _protocolFeeFraction,
+        address _protocolFeeCollector
     ) external initializer {
         {
             OwnableUpgradeable.__Ownable_init();
@@ -266,12 +281,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updateCollectionPeriod(_collectionPeriod);
         _updateMatchCollateralRatioInterval(_matchCollateralRatioInterval);
         _updateMarginCallDuration(_marginCallDuration);
-        _updateCollateralVolatilityThreshold(_collateralVolatilityThreshold);
         _updateGracePeriodPenaltyFraction(_gracePeriodPenaltyFraction);
         _updatepoolInitFuncSelector(_poolInitFuncSelector);
         _updatePoolTokenInitFuncSelector(_poolTokenInitFuncSelector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
         _updatePoolCancelPenalityFraction(_poolCancelPenalityFraction);
+        _updateProtocolFeeFraction(_protocolFeeFraction);
+        _updateProtocolFeeCollector(_protocolFeeCollector);
     }
 
     /*
@@ -332,13 +348,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt
     ) external payable onlyBorrower {
         require(_minBorrowAmount <= _poolSize, 'PoolFactory::createPool - invalid min borrow amount');
-        require(collateralVolatilityThreshold <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
+        require(volatilityThreshold[_collateralTokenType] <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
         require(isBorrowToken[_borrowTokenType], 'PoolFactory::createPool - Invalid borrow token type');
         require(isCollateralToken[_collateralTokenType], 'PoolFactory::createPool - Invalid collateral token type');
-        address[] memory tokens = new address[](2);
-        tokens[0] = _collateralTokenType;
-        tokens[1] = _borrowTokenType;
-        require(IPriceOracle(priceOracle).doesFeedExist(tokens), "PoolFactory::createPool - Price feed doesn't support token pair");
+        require(
+            IPriceOracle(priceOracle).doesFeedExist(_collateralTokenType, _borrowTokenType),
+            "PoolFactory::createPool - Price feed doesn't support token pair"
+        );
         require(IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy), 'PoolFactory::createPool - Invalid strategy');
         require(isWithinLimits(_poolSize, poolSizeLimit.min, poolSizeLimit.max), 'PoolFactory::createPool - PoolSize not within limits');
         require(
@@ -438,10 +454,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         }
     }
 
-    function destroyPool() public onlyPool {
-        delete openBorrowPoolRegistry[msg.sender];
-    }
-
     function updateSupportedBorrowTokens(address _borrowToken, bool _isSupported) external onlyOwner {
         _updateSupportedBorrowTokens(_borrowToken, _isSupported);
     }
@@ -460,7 +472,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit CollateralTokenUpdated(_collateralToken, _isSupported);
     }
 
-    function updatepoolInitFuncSelector(bytes4 _functionId) public onlyOwner {
+    function updatepoolInitFuncSelector(bytes4 _functionId) external onlyOwner {
         _updatepoolInitFuncSelector(_functionId);
     }
 
@@ -469,7 +481,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit PoolInitSelectorUpdated(_functionId);
     }
 
-    function updatePoolTokenInitFuncSelector(bytes4 _functionId) public onlyOwner {
+    function updatePoolTokenInitFuncSelector(bytes4 _functionId) external onlyOwner {
         _updatePoolTokenInitFuncSelector(_functionId);
     }
 
@@ -478,7 +490,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit PoolTokenInitFuncSelector(_functionId);
     }
 
-    function updatePoolLogic(address _poolLogic) public onlyOwner {
+    function updatePoolLogic(address _poolLogic) external onlyOwner {
         _updatePoolLogic(_poolLogic);
     }
 
@@ -487,7 +499,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit PoolLogicUpdated(_poolLogic);
     }
 
-    function updateUserRegistry(address _userRegistry) public onlyOwner {
+    function updateUserRegistry(address _userRegistry) external onlyOwner {
         _updateUserRegistry(_userRegistry);
     }
 
@@ -496,7 +508,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit UserRegistryUpdated(_userRegistry);
     }
 
-    function updateStrategyRegistry(address _strategyRegistry) public onlyOwner {
+    function updateStrategyRegistry(address _strategyRegistry) external onlyOwner {
         _updateStrategyRegistry(_strategyRegistry);
     }
 
@@ -505,7 +517,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit StrategyRegistryUpdated(_strategyRegistry);
     }
 
-    function updateRepaymentImpl(address _repaymentImpl) public onlyOwner {
+    function updateRepaymentImpl(address _repaymentImpl) external onlyOwner {
         _updateRepaymentImpl(_repaymentImpl);
     }
 
@@ -514,7 +526,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit RepaymentImplUpdated(_repaymentImpl);
     }
 
-    function updatePoolTokenImpl(address _poolTokenImpl) public onlyOwner {
+    function updatePoolTokenImpl(address _poolTokenImpl) external onlyOwner {
         _updatePoolTokenImpl(_poolTokenImpl);
     }
 
@@ -523,7 +535,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit PoolTokenImplUpdated(_poolTokenImpl);
     }
 
-    function updatePriceoracle(address _priceOracle) public onlyOwner {
+    function updatePriceoracle(address _priceOracle) external onlyOwner {
         _updatePriceoracle(_priceOracle);
     }
 
@@ -532,7 +544,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit PriceOracleUpdated(_priceOracle);
     }
 
-    function updatedExtension(address _extension) public onlyOwner {
+    function updatedExtension(address _extension) external onlyOwner {
         _updatedExtension(_extension);
     }
 
@@ -541,7 +553,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit ExtensionImplUpdated(_extension);
     }
 
-    function updateSavingsAccount(address _savingsAccount) public onlyOwner {
+    function updateSavingsAccount(address _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
 
@@ -550,7 +562,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit SavingsAccountUpdated(_savingsAccount);
     }
 
-    function updateCollectionPeriod(uint256 _collectionPeriod) public onlyOwner {
+    function updateCollectionPeriod(uint256 _collectionPeriod) external onlyOwner {
         _updateCollectionPeriod(_collectionPeriod);
     }
 
@@ -559,7 +571,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit CollectionPeriodUpdated(_collectionPeriod);
     }
 
-    function updateMatchCollateralRatioInterval(uint256 _matchCollateralRatioInterval) public onlyOwner {
+    function updateMatchCollateralRatioInterval(uint256 _matchCollateralRatioInterval) external onlyOwner {
         _updateMatchCollateralRatioInterval(_matchCollateralRatioInterval);
     }
 
@@ -568,7 +580,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit MatchCollateralRatioIntervalUpdated(_matchCollateralRatioInterval);
     }
 
-    function updateMarginCallDuration(uint256 _marginCallDuration) public onlyOwner {
+    function updateMarginCallDuration(uint256 _marginCallDuration) external onlyOwner {
         _updateMarginCallDuration(_marginCallDuration);
     }
 
@@ -577,16 +589,16 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit MarginCallDurationUpdated(_marginCallDuration);
     }
 
-    function updateCollateralVolatilityThreshold(uint256 _collateralVolatilityThreshold) public onlyOwner {
-        _updateCollateralVolatilityThreshold(_collateralVolatilityThreshold);
+    function updateVolatilityThreshold(address _token, uint256 _volatilityThreshold) public onlyOwner {
+        _updateVolatilityThreshold(_token, _volatilityThreshold);
     }
 
-    function _updateCollateralVolatilityThreshold(uint256 _collateralVolatilityThreshold) internal {
-        collateralVolatilityThreshold = _collateralVolatilityThreshold;
-        emit CollateralVolatilityThresholdUpdated(_collateralVolatilityThreshold);
+    function _updateVolatilityThreshold(address _token, uint256 _volatilityThreshold) internal {
+        volatilityThreshold[_token] = _volatilityThreshold;
+        emit VolatilityThresholdUpdated(_token, _volatilityThreshold);
     }
 
-    function updateGracePeriodPenaltyFraction(uint256 _gracePeriodPenaltyFraction) public onlyOwner {
+    function updateGracePeriodPenaltyFraction(uint256 _gracePeriodPenaltyFraction) external onlyOwner {
         _updateGracePeriodPenaltyFraction(_gracePeriodPenaltyFraction);
     }
 
@@ -595,7 +607,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit GracePeriodPenaltyFractionUpdated(_gracePeriodPenaltyFraction);
     }
 
-    function updateLiquidatorRewardFraction(uint256 _liquidatorRewardFraction) public onlyOwner {
+    function updateLiquidatorRewardFraction(uint256 _liquidatorRewardFraction) external onlyOwner {
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
     }
 
@@ -604,13 +616,31 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit LiquidatorRewardFractionUpdated(_liquidatorRewardFraction);
     }
 
-    function updatePoolCancelPenalityFraction(uint256 _poolCancelPenalityFraction) public onlyOwner {
+    function updatePoolCancelPenalityFraction(uint256 _poolCancelPenalityFraction) external onlyOwner {
         _updatePoolCancelPenalityFraction(_poolCancelPenalityFraction);
     }
 
     function _updatePoolCancelPenalityFraction(uint256 _poolCancelPenalityFraction) internal {
         poolCancelPenalityFraction = _poolCancelPenalityFraction;
         emit PoolCancelPenalityFractionUpdated(_poolCancelPenalityFraction);
+    }
+
+    function updateProtocolFeeFraction(uint256 _protocolFee) external onlyOwner {
+        _updateProtocolFeeFraction(_protocolFee);
+    }
+
+    function _updateProtocolFeeFraction(uint256 _protocolFee) internal {
+        protocolFeeFraction = _protocolFee;
+        emit ProtocolFeeFractionUpdated(_protocolFee);
+    }
+
+    function updateProtocolFeeCollector(address _protocolFeeCollector) external onlyOwner {
+        _updateProtocolFeeCollector(_protocolFeeCollector);
+    }
+
+    function _updateProtocolFeeCollector(address _protocolFeeCollector) internal {
+        protocolFeeCollector = _protocolFeeCollector;
+        emit ProtocolFeeCollectorUpdated(_protocolFeeCollector);
     }
 
     function updatePoolSizeLimit(uint256 _min, uint256 _max) external onlyOwner {
@@ -636,5 +666,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function updateNoOfRepaymentIntervalsLimit(uint256 _min, uint256 _max) external onlyOwner {
         noOfRepaymentIntervalsLimit = Limits(_min, _max);
         emit LimitsUpdated('NoOfRepaymentIntervals', _min, _max);
+    }
+
+    function getProtocolFeeData() external view override returns (uint256, address) {
+        return (protocolFeeFraction, protocolFeeCollector);
     }
 }
