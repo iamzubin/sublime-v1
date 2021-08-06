@@ -1,5 +1,16 @@
 import { createEnvironment } from '../../utils/createEnv';
-import { CompoundPair, CreditLineDefaultStrategy, Environment, PriceOracleSource, YearnPair } from '../../utils/types';
+import {
+    CompoundPair,
+    CreditLineDefaultStrategy,
+    CreditLineInitParams,
+    Environment,
+    ExtensionInitParams,
+    PoolCreateParams,
+    PoolFactoryInitParams,
+    PriceOracleSource,
+    RepaymentsInitParams,
+    YearnPair,
+} from '../../utils/types';
 import hre from 'hardhat';
 import { Contracts } from '../../existingContracts/compound.json';
 
@@ -30,8 +41,11 @@ describe.only('Pool With Compound Strategy 2', async () => {
             ] as PriceOracleSource[],
             {
                 votingPassRatio: extensionParams.votingPassRatio,
-            },
-            { gracePenalityRate: repaymentParams.gracePenalityRate, gracePeriodFraction: repaymentParams.gracePeriodFraction },
+            } as ExtensionInitParams,
+            {
+                gracePenalityRate: repaymentParams.gracePenalityRate,
+                gracePeriodFraction: repaymentParams.gracePeriodFraction,
+            } as RepaymentsInitParams,
             {
                 admin: '',
                 _collectionPeriod: testPoolFactoryParams._collectionPeriod,
@@ -44,9 +58,9 @@ describe.only('Pool With Compound Strategy 2', async () => {
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
-            },
+            } as PoolFactoryInitParams,
             CreditLineDefaultStrategy.Compound,
-            { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction }
+            { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
         );
     });
 
