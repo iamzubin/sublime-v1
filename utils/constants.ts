@@ -3,6 +3,7 @@ import { Address } from 'hardhat-deploy/dist/types';
 
 export const depositValueToTest: BigNumber = BigNumber.from('1000000000000000000'); // 1 ETH (or) 10^18 Tokens
 export const zeroAddress: Address = '0x0000000000000000000000000000000000000000';
+export const randomAddress: Address = '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef';
 
 export const aaveYieldParams = {
     _wethGateway: '0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04',

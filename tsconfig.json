@@ -12,6 +12,7 @@
       "baseUrl": ".",
       "moduleResolution": "node",
       "paths": {
+          "@utils": ["utils"],
           "@utils/*": ["utils/*"],
           "@typechain/*": ["typechain/*"]
       }

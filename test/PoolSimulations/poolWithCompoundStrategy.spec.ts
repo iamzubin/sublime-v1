@@ -1,6 +1,8 @@
-import { ethers, network } from 'hardhat';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import hre from 'hardhat';
+const { ethers, network } = hre;
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+
 import { expect } from 'chai';
 import { blockTravel, timeTravel } from '../../utils/time';
 
@@ -417,7 +419,7 @@ describe('Pool With Compound Strategy', async () => {
             let calculatedRatio = ratio.div(BigNumber.from(10).pow(30));
             expectApproxEqual(expectedRatio, calculatedRatio, 1);
             let balanceAfter = await DaiTokenContract.balanceOf(borrower.address);
-            expect(balanceAfter.sub(balanceBefore)).to.eq(_minborrowAmount);
+            expectApproxEqual(balanceAfter.sub(balanceBefore), _minborrowAmount, BigNumber.from('2000000000000000'));
         });
 
         it('User cannot borrow if lender/s has not supplied minimum number of tokens', async () => {
