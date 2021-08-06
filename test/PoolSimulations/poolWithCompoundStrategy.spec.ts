@@ -49,7 +49,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 
-describe.only('Pool With Compound Strategy', async () => {
+describe('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
 

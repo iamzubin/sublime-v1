@@ -49,7 +49,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 
-describe.only('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
+describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
 

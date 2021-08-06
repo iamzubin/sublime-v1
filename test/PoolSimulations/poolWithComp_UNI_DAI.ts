@@ -22,22 +22,24 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
-} from '../../utils/constants';
+    // zeroAddress,
+} from '../../utils/constants-Additions';
+import { zeroAddress } from '@utils/constants';
 
-describe('Pool With Compound Strategy 2', async () => {
+describe.only('Pool using Compound Strategy for UNI/DAI', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
             [
+                { asset: Contracts.UNI, liquidityToken: Contracts.cUNI },
                 { asset: Contracts.DAI, liquidityToken: Contracts.cDAI },
-                { asset: Contracts.WBTC, liquidityToken: Contracts.cWBTC2 },
             ] as CompoundPair[],
             [] as YearnPair[],
             [
+                { tokenAddress: Contracts.UNI, feedAggregator: ChainLinkAggregators['UNI/USD'] },
                 { tokenAddress: Contracts.DAI, feedAggregator: ChainLinkAggregators['DAI/USD'] },
-                { tokenAddress: Contracts.WBTC, feedAggregator: ChainLinkAggregators['BTC/USD'] },
             ] as PriceOracleSource[],
             {
                 votingPassRatio: extensionParams.votingPassRatio,
