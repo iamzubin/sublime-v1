@@ -50,7 +50,7 @@ import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { contracts } from 'scripts/contractsToVerify';
 
-describe('Pool With Compound Strategy', async () => {
+describe.only('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
 
@@ -395,6 +395,7 @@ describe('Pool With Compound Strategy', async () => {
         beforeEach(async () => {
             // lender supplies 1 DAI to the pool and lender.address is lender
             await createPool();
+            console.log("Test: Create pool function worked!");
             let deployHelper = new DeployHelper(borrower);
             
             //UNITokenContract
@@ -441,7 +442,7 @@ describe('Pool With Compound Strategy', async () => {
         beforeEach(async () => {
             // lender supplies minimum DAI to the pool and lender.address is lender
             await createPool();
-            
+            console.log("Test: Create pool function worked!");
             //UNITokenContract
             await DaiTokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
             await DaiTokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);

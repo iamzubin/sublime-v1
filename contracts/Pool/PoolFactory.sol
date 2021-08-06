@@ -398,14 +398,14 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes memory bytecode
     ) internal returns (address addr) {
         require(bytecode.length != 0, 'Create2: bytecode length is zero');
-        console.log("Create2 bytecode length is not zero");
+        console.log("PoolFactory: Create2 bytecode length is not zero");
         // solhint-disable-next-line no-inline-assembly
         assembly {
             addr := create2(amount, add(bytecode, 0x20), mload(bytecode), salt)
         }
-        console.log("Create2 address check!");
+        console.log(addr);
         require(addr != address(0), 'Create2: Failed on deploy');
-        console.log("Create2 address is not zero");
+        console.log("PoolFactory: Create2 address is not zero");
     }
 
     /*
