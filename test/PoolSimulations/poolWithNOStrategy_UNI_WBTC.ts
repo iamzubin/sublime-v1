@@ -20,7 +20,7 @@ import {
     OperationalAmounts,
     extensionParams,
     repaymentParams,
-} from '../../utils/constants';
+} from '../../utils/constants-Additions';
 import DeployHelper from '../../utils/deploys';
 
 import { SavingsAccount } from '@typechain/SavingsAccount';
@@ -49,7 +49,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 
-describe.only('Pool With Compound Strategy', async () => {
+describe.only('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
 
@@ -77,6 +77,7 @@ describe.only('Pool With Compound Strategy', async () => {
     let LinkTokenContract: ERC20;
     let DaiTokenContract: ERC20;
     let WBTCTokenContract: ERC20;
+    let UNITokenContract: ERC20;
 
     let verificationLogic: Verification;
     let verification: Verification;
@@ -156,14 +157,18 @@ describe.only('Pool With Compound Strategy', async () => {
         WhaleAccount = await ethers.provider.getSigner(whaleAccount);
         WBTCWhale = await ethers.provider.getSigner(wbtcwhale);
 
-        BatTokenContract = await deployHelper.mock.getMockERC20(Contracts.BAT);
-        await BatTokenContract.connect(Binance7).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 BAT tokens
+        // BatTokenContract = await deployHelper.mock.getMockERC20(Contracts.BAT);
+        // await BatTokenContract.connect(Binance7).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 BAT tokens
 
-        LinkTokenContract = await deployHelper.mock.getMockERC20(Contracts.LINK);
-        await LinkTokenContract.connect(Binance7).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 LINK tokens
+        // LinkTokenContract = await deployHelper.mock.getMockERC20(Contracts.LINK);
+        // await LinkTokenContract.connect(Binance7).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 LINK tokens
 
-        DaiTokenContract = await deployHelper.mock.getMockERC20(Contracts.DAI);
-        await DaiTokenContract.connect(WhaleAccount).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 DAI
+        // DaiTokenContract = await deployHelper.mock.getMockERC20(Contracts.DAI);
+        // await DaiTokenContract.connect(WhaleAccount).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 DAI
+
+        //Used Tokens
+        UNITokenContract = await deployHelper.mock.getMockERC20(Contracts.UNI);
+        await UNITokenContract.connect(WhaleAccount).transfer(admin.address, BigNumber.from('10').pow(23)); // 10,000 UNI
 
         WBTCTokenContract = await deployHelper.mock.getMockERC20(Contracts.WBTC);
         await WBTCTokenContract.connect(WBTCWhale).transfer(admin.address, BigNumber.from('10').pow(10)); // 100 BTC
@@ -190,7 +195,7 @@ describe.only('Pool With Compound Strategy', async () => {
 
         await yearnYield.connect(admin).initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(yearnYield.address);
-        await yearnYield.connect(admin).updateProtocolAddresses(DaiTokenContract.address, DAI_Yearn_Protocol_Address);
+        // await yearnYield.connect(admin).updateProtocolAddresses(UNITokenContract.address, DAI_Yearn_Protocol_Address);
 
         compoundYieldLogic = await deployHelper.core.deployCompoundYield();
         let compoundYieldProxy = await deployHelper.helper.deploySublimeProxy(compoundYieldLogic.address, proxyAdmin.address);
@@ -198,7 +203,8 @@ describe.only('Pool With Compound Strategy', async () => {
 
         await compoundYield.connect(admin).initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
-        await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
+        // await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
+        await compoundYield.connect(admin).updateProtocolAddresses(Contracts.UNI, Contracts.cUNI);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
 
         await strategyRegistry.connect(admin).addStrategy(zeroAddress);
@@ -214,8 +220,10 @@ describe.only('Pool With Compound Strategy', async () => {
         priceOracle = await deployHelper.helper.getPriceOracle(priceOracleProxy.address);
         await priceOracle.connect(admin).initialize(admin.address);
 
-        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
-        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
+        // await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
+        // await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.DAI, ChainLinkAggregators['DAI/USD']);
+
+        await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.UNI, ChainLinkAggregators['UNI/USD']);
         await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.WBTC, ChainLinkAggregators['BTC/USD']);
 
         poolFactoryLogic = await deployHelper.pool.deployPoolFactory();
@@ -271,13 +279,17 @@ describe.only('Pool With Compound Strategy', async () => {
         poolLogic = await deployHelper.pool.deployPool();
         poolTokenLogic = await deployHelper.pool.deployPoolToken();
 
-        await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
-        await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
+        // await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
+        // await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
+
+        await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.UNI, true);
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.WBTC, true);
         await poolFactory.connect(admin).updateSupportedCollateralTokens(zeroAddress, true);
 
-        await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
-        await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.LINK, true);
+        // await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
+        // await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.LINK, true);
+
+        await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.UNI, true);
         await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.WBTC, true);
         await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true);
 
@@ -298,14 +310,14 @@ describe.only('Pool With Compound Strategy', async () => {
     async function createPool() {
         let deployHelper = new DeployHelper(borrower);
         let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-        let iyield: IYield = await deployHelper.mock.getYield(compoundYield.address);
+        let iyield: IYield = await deployHelper.mock.getYield(zeroAddress);
 
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
         // let salt = sha256(Buffer.from(`borrower}`));
 
         let generatedPoolAddress: Address = await getPoolAddress(
             borrower.address,
-            Contracts.DAI,
+            Contracts.UNI,
             Contracts.WBTC,
             iyield.address,
             poolFactory.address,
@@ -340,7 +352,7 @@ describe.only('Pool With Compound Strategy', async () => {
                 .createPool(
                     _poolSize,
                     _minborrowAmount,
-                    Contracts.DAI,
+                    Contracts.UNI,
                     Contracts.WBTC,
                     _collateralRatio,
                     _borrowRate,
@@ -368,8 +380,8 @@ describe.only('Pool With Compound Strategy', async () => {
 
     describe('Check ratios', async () => {
         async function lenderLendsTokens(amount: BigNumberish, fromSavingsAccount = false): Promise<void> {
-            await DaiTokenContract.connect(admin).transfer(lender.address, amount);
-            await DaiTokenContract.connect(lender).approve(pool.address, amount);
+            await UNITokenContract.connect(admin).transfer(lender.address, amount);
+            await UNITokenContract.connect(lender).approve(pool.address, amount);
             await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount);
             return;
         }
@@ -378,16 +390,16 @@ describe.only('Pool With Compound Strategy', async () => {
             // lender supplies 1 DAI to the pool and lender.address is lender
             await createPool();
             let deployHelper = new DeployHelper(borrower);
-            let token: PoolToken = await deployHelper.pool.getPoolToken(DaiTokenContract.address);
+            let token: PoolToken = await deployHelper.pool.getPoolToken(UNITokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
             await lenderLendsTokens(oneToken);
         });
 
-        it('Check Ratio after borrowing borrow total 10 DAI with 1 WBTC Collateral', async () => {
+        it('Check Ratio after borrowing borrow total 10 UNI with 1 WBTC Collateral', async () => {
             let deployHelper = new DeployHelper(borrower);
-            let token: PoolToken = await deployHelper.pool.getPoolToken(DaiTokenContract.address);
+            let token: PoolToken = await deployHelper.pool.getPoolToken(UNITokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -399,14 +411,14 @@ describe.only('Pool With Compound Strategy', async () => {
             const { loanStartTime } = await pool.poolConstants();
             await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
 
-            let balanceBefore = await DaiTokenContract.balanceOf(borrower.address);
+            let balanceBefore = await UNITokenContract.balanceOf(borrower.address);
             await pool.connect(borrower).withdrawBorrowedAmount();
 
-            let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(Contracts.WBTC, Contracts.DAI);
+            let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(Contracts.WBTC, Contracts.UNI);
             let token1: PoolToken = await deployHelper.pool.getPoolToken(Contracts.WBTC);
             let token1Exp = BigNumber.from(10).pow(await token1.decimals());
 
-            let token2: PoolToken = await deployHelper.pool.getPoolToken(Contracts.DAI);
+            let token2: PoolToken = await deployHelper.pool.getPoolToken(Contracts.UNI);
             let token2Exp = BigNumber.from(10).pow(await token2.decimals());
 
             let ratio = await pool.callStatic['getCurrentCollateralRatio()']();
@@ -418,7 +430,7 @@ describe.only('Pool With Compound Strategy', async () => {
                 .div(_minborrowAmount.div(expDecimals));
             let calculatedRatio = ratio.div(BigNumber.from(10).pow(30));
             expectApproxEqual(expectedRatio, calculatedRatio, 1);
-            let balanceAfter = await DaiTokenContract.balanceOf(borrower.address);
+            let balanceAfter = await UNITokenContract.balanceOf(borrower.address);
             expectApproxEqual(balanceAfter.sub(balanceBefore), _minborrowAmount, BigNumber.from('2000000000000000'));
         });
 
@@ -433,8 +445,8 @@ describe.only('Pool With Compound Strategy', async () => {
         beforeEach(async () => {
             // lender supplies minimum DAI to the pool and lender.address is lender
             await createPool();
-            await DaiTokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
-            await DaiTokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
+            await UNITokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
+            await UNITokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
             await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false);
         });
 
