@@ -22,7 +22,9 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
-} from '../../utils/constants';
+    DAI_Yearn_Protocol_Address,
+    WBTC_Yearn_Protocol_Address,
+} from '../../utils/constants-Additions';
 
 import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -30,17 +32,17 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
 
-describe('Pool With Compound Strategy 2', async () => {
+describe.only('Pool using Yearn Strategy with DAI (Borrow Token) and WBTC (Collateral Token)', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
+            [] as CompoundPair[],
             [
-                { asset: Contracts.DAI, liquidityToken: Contracts.cDAI },
-                { asset: Contracts.WBTC, liquidityToken: Contracts.cWBTC2 },
-            ] as CompoundPair[],
-            [] as YearnPair[],
+                { asset: Contracts.DAI, liquidityToken: DAI_Yearn_Protocol_Address },
+                { asset: Contracts.WBTC, liquidityToken: WBTC_Yearn_Protocol_Address },
+            ] as YearnPair[],
             [
                 { tokenAddress: Contracts.DAI, feedAggregator: ChainLinkAggregators['DAI/USD'] },
                 { tokenAddress: Contracts.WBTC, feedAggregator: ChainLinkAggregators['BTC/USD'] },
@@ -65,7 +67,7 @@ describe('Pool With Compound Strategy 2', async () => {
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
             } as PoolFactoryInitParams,
-            CreditLineDefaultStrategy.Compound,
+            CreditLineDefaultStrategy.Yearn,
             { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
         );
     });
@@ -76,7 +78,7 @@ describe('Pool With Compound Strategy 2', async () => {
         let deployHelper: DeployHelper = new DeployHelper(admin);
         let DAI: ERC20 = await deployHelper.mock.getMockERC20(Contracts.DAI);
         let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-        let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
+        let iyield: IYield = await deployHelper.mock.getYield(env.yields.yearnYield.address);
 
         let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),

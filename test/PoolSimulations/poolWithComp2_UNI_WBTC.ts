@@ -22,7 +22,7 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
-} from '../../utils/constants';
+} from '../../utils/constants-Additions';
 
 import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -30,19 +30,19 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
 
-describe('Pool With Compound Strategy 2', async () => {
+describe('Pool using Compound Strategy with UNI (Borrow Token) and WBTC (Collateral Token)', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
             [
-                { asset: Contracts.DAI, liquidityToken: Contracts.cDAI },
+                { asset: Contracts.UNI, liquidityToken: Contracts.cUNI },
                 { asset: Contracts.WBTC, liquidityToken: Contracts.cWBTC2 },
             ] as CompoundPair[],
             [] as YearnPair[],
             [
-                { tokenAddress: Contracts.DAI, feedAggregator: ChainLinkAggregators['DAI/USD'] },
+                { tokenAddress: Contracts.UNI, feedAggregator: ChainLinkAggregators['UNI/USD'] },
                 { tokenAddress: Contracts.WBTC, feedAggregator: ChainLinkAggregators['BTC/USD'] },
             ] as PriceOracleSource[],
             {
@@ -74,11 +74,11 @@ describe('Pool With Compound Strategy 2', async () => {
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
         let { admin, borrower, lender } = env.entities;
         let deployHelper: DeployHelper = new DeployHelper(admin);
-        let DAI: ERC20 = await deployHelper.mock.getMockERC20(Contracts.DAI);
+        let UNI: ERC20 = await deployHelper.mock.getMockERC20(Contracts.UNI);
         let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
         let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
-        let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, iyield, salt, false, {
+        let poolAddress = await calculateNewPoolAddress(env, UNI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
@@ -97,7 +97,7 @@ describe('Pool With Compound Strategy 2', async () => {
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, '100000000');
 
-        let pool = await createNewPool(env, DAI, WBTC, iyield, salt, false, {
+        let pool = await createNewPool(env, UNI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
