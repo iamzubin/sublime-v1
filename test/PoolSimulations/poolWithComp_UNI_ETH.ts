@@ -26,7 +26,7 @@ import {
 } from '../../utils/constants-Additions';
 // import { zeroAddress } from '@utils/constants';
 
-describe.only('Pool using Compound Strategy for UNI/ETH', async () => {
+describe('Pool using Compound Strategy for UNI/ETH', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(

@@ -26,20 +26,20 @@ import {
 } from '../../utils/constants-Additions';
 import { zeroAddress } from '@utils/constants';
 
-describe.only('Pool using Compound Strategy for UNI/DAI', async () => {
+describe.only('Pool using Compound Strategy CREATE ENV with DAI as borrow token and UNI as collateral', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
             [
-                { asset: Contracts.UNI, liquidityToken: Contracts.cUNI },
                 { asset: Contracts.DAI, liquidityToken: Contracts.cDAI },
+                { asset: Contracts.UNI, liquidityToken: Contracts.cUNI },
             ] as CompoundPair[],
             [] as YearnPair[],
             [
-                { tokenAddress: Contracts.UNI, feedAggregator: ChainLinkAggregators['UNI/USD'] },
                 { tokenAddress: Contracts.DAI, feedAggregator: ChainLinkAggregators['DAI/USD'] },
+                { tokenAddress: Contracts.UNI, feedAggregator: ChainLinkAggregators['UNI/USD'] },
             ] as PriceOracleSource[],
             {
                 votingPassRatio: extensionParams.votingPassRatio,
