@@ -11,12 +11,14 @@ import { Address } from 'hardhat-deploy/dist/types';
 import { aaveYieldParams } from '../../utils/constants';
 import { SavingsAccount } from '@typechain/SavingsAccount';
 import { CompoundPair, YearnPair } from '../../utils/types';
+import { IYield } from '@typechain/IYield';
+import { IYield__factory } from '../../typechain/factories/IYield__factory';
 
 export async function createAaveYieldWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount
-): Promise<AaveYield> {
+): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
 
     let aaveYieldLogic: AaveYield = await deployHelper.core.deployAaveYield();
@@ -33,7 +35,7 @@ export async function createAaveYieldWithInit(
             aaveYieldParams._lendingPoolAddressesProvider
         );
 
-    return aaveYield;
+    return IYield__factory.connect(aaveYield.address, admin);
 }
 
 export async function createCompoundYieldWithInit(
@@ -41,7 +43,7 @@ export async function createCompoundYieldWithInit(
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount,
     pairs: CompoundPair[]
-): Promise<CompoundYield> {
+): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
     let compoundYieldLogic: CompoundYield = await deployHelper.core.deployCompoundYield();
     let compoundYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(compoundYieldLogic.address, proxyAdmin.address);
@@ -54,7 +56,7 @@ export async function createCompoundYieldWithInit(
         await compoundYield.connect(admin).updateProtocolAddresses(pair.asset, pair.liquidityToken);
     }
 
-    return compoundYield;
+    return IYield__factory.connect(compoundYield.address, admin);
 }
 
 export async function createYearnYieldWithInit(
@@ -62,7 +64,7 @@ export async function createYearnYieldWithInit(
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount,
     pairs: YearnPair[]
-): Promise<YearnYield> {
+): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
     let yearnYieldLogic: YearnYield = await deployHelper.core.deployYearnYield();
     let yearnYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(yearnYieldLogic.address, proxyAdmin.address);
@@ -74,6 +76,5 @@ export async function createYearnYieldWithInit(
         const pair = pairs[index];
         await yearnYield.connect(admin).updateProtocolAddresses(pair.asset, pair.liquidityToken);
     }
-
-    return yearnYield;
+    return IYield__factory.connect(yearnYield.address, admin);
 }
