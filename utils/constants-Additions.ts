@@ -48,6 +48,8 @@ export const createPoolParams = {
     _repaymentInterval: BigNumber.from(1000),
     _noOfRepaymentIntervals: BigNumber.from(25),
     _collateralAmount: BigNumber.from('3000000000000000000000'), // 3000e18
+    _collateralAmountForETH: BigNumber.from('10000000000000000000'), // 10 ETH
+    _collateralAmountForUNI: BigNumber.from('10000000000000000000'), // 1 UNI
     _collateralAmountForWBTC: BigNumber.from('100000000'), // 1 BTC
     _loanWithdrawalDuration: BigNumber.from(15000000),
     _collectionPeriod: BigNumber.from(5000000),
