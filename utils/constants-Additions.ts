@@ -17,13 +17,12 @@ export const USDC_Yearn_Protocol_Address = '0x597aD1e0c13Bfe8025993D9e79C69E1c02
 export const USDT_Yearn_Protocol_Address = '0x2f08119C6f07c006695E079AAFc638b8789FAf18';
 export const DAI_Yearn_Protocol_Address = '0xACd43E627e64355f1861cEC6d3a6688B31a6F952'; // TODO: To be upgraded to v2
 export const INCH_Yearn_Protocol_Address = '0xB8C3B7A2A618C552C23B1E4701109a9E756Bab67';
-export const WETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7';
 export const YFI_Yearn_Protocol_Address = '0xBA2E7Fed597fd0E3e70f5130BcDbbFE06bB94fe1';
 export const HEGIC_Yearn_Protocol_Address = '0xe11ba472F74869176652C35D30dB89854b5ae84D';
 export const COMP_Yearn_Protocol_Address = '0x629c759D1E83eFbF63d84eb3868B564d9521C129'; //yvCurve-Compound
 //WETH = ETH
 //WBTC = BTC
-export const ETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7'; // TODO: To be upgraded to v2
+export const WETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7'; // TODO: To be upgraded to v2
 export const WBTC_Yearn_Protocol_Address = '0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5';
 
 

@@ -22,8 +22,7 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
-    DAI_Yearn_Protocol_Address,
-    WBTC_Yearn_Protocol_Address,
+    zeroAddress,
 } from '../../utils/constants-Additions';
 
 import DeployHelper from '../../utils/deploys';
@@ -31,20 +30,21 @@ import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
+// import { zeroAddress } from '@utils/constants';
 
-describe('Pool using Yearn Strategy with DAI (Borrow Token) and WBTC (Collateral Token)', async () => {
+describe.only('Pool using Compound Strategy with ETH (Borrow Token) and WBTC (Collateral Token)', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
-            [] as CompoundPair[],
             [
-                { asset: Contracts.DAI, liquidityToken: DAI_Yearn_Protocol_Address },
-                { asset: Contracts.WBTC, liquidityToken: WBTC_Yearn_Protocol_Address },
-            ] as YearnPair[],
+                { asset: zeroAddress, liquidityToken: Contracts.cETH },
+                { asset: Contracts.WBTC, liquidityToken: Contracts.cWBTC2 },
+            ] as CompoundPair[],
+            [] as YearnPair[],
             [
-                { tokenAddress: Contracts.DAI, feedAggregator: ChainLinkAggregators['DAI/USD'] },
+                { tokenAddress: zeroAddress, feedAggregator: ChainLinkAggregators['ETH/USD'] },
                 { tokenAddress: Contracts.WBTC, feedAggregator: ChainLinkAggregators['BTC/USD'] },
             ] as PriceOracleSource[],
             {
@@ -67,7 +67,7 @@ describe('Pool using Yearn Strategy with DAI (Borrow Token) and WBTC (Collateral
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
             } as PoolFactoryInitParams,
-            CreditLineDefaultStrategy.Yearn,
+            CreditLineDefaultStrategy.Compound,
             { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
         );
     });
@@ -76,11 +76,11 @@ describe('Pool using Yearn Strategy with DAI (Borrow Token) and WBTC (Collateral
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
         let { admin, borrower, lender } = env.entities;
         let deployHelper: DeployHelper = new DeployHelper(admin);
-        let DAI: ERC20 = await deployHelper.mock.getMockERC20(Contracts.DAI);
+        let ETH: ERC20 = await deployHelper.mock.getMockERC20(zeroAddress);
         let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-        let iyield: IYield = await deployHelper.mock.getYield(env.yields.yearnYield.address);
+        let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
-        let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, iyield, salt, false, {
+        let poolAddress = await calculateNewPoolAddress(env, ETH, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
@@ -94,12 +94,13 @@ describe('Pool using Yearn Strategy with DAI (Borrow Token) and WBTC (Collateral
 
         console.log({ calculatedPoolAddress: poolAddress });
 
+        console.log(env.mockTokenContracts[0].name);
         console.log(env.mockTokenContracts[1].name);
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, '100000000');
 
-        let pool = await createNewPool(env, DAI, WBTC, iyield, salt, false, {
+        let pool = await createNewPool(env, ETH, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
