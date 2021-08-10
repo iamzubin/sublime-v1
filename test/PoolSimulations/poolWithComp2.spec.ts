@@ -28,14 +28,9 @@ import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
-<<<<<<< HEAD
 import { IYield } from '@typechain/IYield';
 
 describe('Pool With Compound Strategy 2', async () => {
-=======
-
-describe.only('Pool With Compound Strategy 2', async () => {
->>>>>>> e02f11acaae1f8ce3195f7f90ae190e07a93bdf9
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
@@ -81,14 +76,9 @@ describe.only('Pool With Compound Strategy 2', async () => {
         let deployHelper: DeployHelper = new DeployHelper(admin);
         let DAI: ERC20 = await deployHelper.mock.getMockERC20(Contracts.DAI);
         let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-<<<<<<< HEAD
         let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
         let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, iyield, salt, false, {
-=======
-
-        let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, env.yields.compoundYield, salt, false, {
->>>>>>> e02f11acaae1f8ce3195f7f90ae190e07a93bdf9
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
@@ -107,11 +97,7 @@ describe.only('Pool With Compound Strategy 2', async () => {
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, '100000000');
 
-<<<<<<< HEAD
         let pool = await createNewPool(env, DAI, WBTC, iyield, salt, false, {
-=======
-        let pool = await createNewPool(env, DAI, WBTC, env.yields.compoundYield, salt, false, {
->>>>>>> e02f11acaae1f8ce3195f7f90ae190e07a93bdf9
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
