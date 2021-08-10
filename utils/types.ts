@@ -1,9 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { AaveYield } from '@typechain/AaveYield';
-import { CompoundYield } from '@typechain/CompoundYield';
 import { SavingsAccount } from '@typechain/SavingsAccount';
 import { StrategyRegistry } from '@typechain/StrategyRegistry';
-import { YearnYield } from '@typechain/YearnYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Extension } from '@typechain/Extension';
 import { Repayments } from '@typechain/Repayments';
@@ -15,6 +12,7 @@ import { PriceOracle } from '@typechain/PriceOracle';
 import { Pool } from '@typechain/Pool';
 import { PoolToken } from '@typechain/PoolToken';
 import { BigNumberish, BytesLike } from 'ethers';
+import { IYield } from '@typechain/IYield';
 
 export interface Environment {
     savingsAccount: SavingsAccount;
@@ -44,9 +42,9 @@ export interface Entities {
 }
 
 export interface Yields {
-    aaveYield: AaveYield;
-    yearnYield: YearnYield;
-    compoundYield: CompoundYield;
+    aaveYield: IYield;
+    yearnYield: IYield;
+    compoundYield: IYield;
     noStrategy: Address;
 }
 
