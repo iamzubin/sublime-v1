@@ -29,20 +29,22 @@ import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
+import { zeroAddress } from '../../utils/constants-Additions';
 
-describe('Pool using Compound Strategy with UNI (Borrow Token) and WBTC (Collateral Token)', async () => {
+
+describe('Pool using Compound Strategy with USDC (Borrow Token) and WBTC (Collateral Token)', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
             [
-                { asset: Contracts.UNI, liquidityToken: Contracts.cUNI },
+                { asset: Contracts.USDC, liquidityToken: Contracts.cUSDC },
                 { asset: Contracts.WBTC, liquidityToken: Contracts.cWBTC2 },
             ] as CompoundPair[],
             [] as YearnPair[],
             [
-                { tokenAddress: Contracts.UNI, feedAggregator: ChainLinkAggregators['UNI/USD'] },
+                { tokenAddress: Contracts.USDC, feedAggregator: ChainLinkAggregators['USDC/USD'] },
                 { tokenAddress: Contracts.WBTC, feedAggregator: ChainLinkAggregators['BTC/USD'] },
             ] as PriceOracleSource[],
             {
@@ -74,13 +76,13 @@ describe('Pool using Compound Strategy with UNI (Borrow Token) and WBTC (Collate
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
         let { admin, borrower, lender } = env.entities;
         let deployHelper: DeployHelper = new DeployHelper(admin);
-        let UNI: ERC20 = await deployHelper.mock.getMockERC20(Contracts.UNI);
+        let USDC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.USDC);
         let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
         let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
-        let poolAddress = await calculateNewPoolAddress(env, UNI, WBTC, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
+        let poolAddress = await calculateNewPoolAddress(env, USDC, WBTC, iyield, salt, false, {
+            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)),
+            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -98,9 +100,9 @@ describe('Pool using Compound Strategy with UNI (Borrow Token) and WBTC (Collate
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, '100000000');
 
-        let pool = await createNewPool(env, UNI, WBTC, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
+        let pool = await createNewPool(env, USDC, WBTC, iyield, salt, false, {
+            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)),
+            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -111,34 +113,5 @@ describe('Pool using Compound Strategy with UNI (Borrow Token) and WBTC (Collate
         });
 
         console.log({ actualPoolAddress: pool.address });
-    });
-
-    it('Deposit Collateral from savings account', async () => {
-        let { admin, borrower, lender } = env.entities;
-        let deployHelper: DeployHelper = new DeployHelper(borrower);
-        let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-        let amount = BigNumber.from('100000000');
-        let amountUsedForDeposit = BigNumber.from('1');
-
-        let liquidityShares = await env.yields.compoundYield.getTokensForShares(amountUsedForDeposit, Contracts.WBTC);
-        console.log({liquidityShares: liquidityShares.value});
-
-        await WBTC.connect(admin).transfer(borrower.address, amount);
-        await WBTC.connect(borrower).approve(env.yields.compoundYield.address, BigNumber.from(liquidityShares.toString()).mul(2));
-
-        await env.savingsAccount.connect(borrower).approve(Contracts.WBTC, env.poolLogic.address, BigNumber.from(liquidityShares.toString()).mul(2));
-        await env.savingsAccount
-            .connect(borrower)
-            .depositTo(amountUsedForDeposit.mul(10), Contracts.WBTC, env.yields.compoundYield.address, borrower.address);
-        // console.log({aaveYield: aaveYield.address, yearnYield: yearnYield.address, compoundYield: compoundYield.address});
-        // console.log({poolConstants: await pool.poolConstants()})
-        // console.log({allowance1: await savingsAccount.allowance(borrower.address, Contracts.LINK, pool.address)})
-
-        await env.poolLogic.connect(borrower).depositCollateral(amountUsedForDeposit, true);
-    });
-
-    it("Deposit Collateral directly without using savings account", async () => {
-        let { admin, borrower, lender } = env.entities;
-        await env.poolLogic.connect(borrower).depositCollateral(BigNumber.from('1'), false);
     });
 });
