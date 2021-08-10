@@ -3,7 +3,7 @@ pragma solidity 0.7.0;
 import '../interfaces/ISavingsAccount.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-
+import 'hardhat/console.sol';
 library SavingsAccountUtil {
     using SafeERC20 for IERC20;
 
@@ -34,8 +34,10 @@ library SavingsAccountUtil {
         address _strategy
     ) internal returns (uint256) {
         if (_toSavingsAccount) {
+            console.log("Savings account util true");
             return directSavingsAccountDeposit(_savingsAccount, _from, _to, _amount, _asset, _strategy);
         } else {
+            console.log("Savings account util false");
             return transferTokens(_asset, _amount, _from, _to);
         }
     }
