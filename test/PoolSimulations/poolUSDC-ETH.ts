@@ -29,8 +29,9 @@ import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
+import { zeroAddress } from '../../utils/constants';
 
-describe.only('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', async () => {
+describe.only('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
@@ -38,12 +39,12 @@ describe.only('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WB
             [WBTCWhale, WhaleAccount, Binance7],
             [
                 { asset: Contracts.USDT, liquidityToken: Contracts.cUSDT },
-                { asset: Contracts.WBTC, liquidityToken: Contracts.cWBTC2 },
+                { asset: zeroAddress, liquidityToken: Contracts.cETH },
             ] as CompoundPair[],
             [] as YearnPair[],
             [
+                { tokenAddress: zeroAddress, feedAggregator: ChainLinkAggregators['ETH/USD'] },
                 { tokenAddress: Contracts.USDT, feedAggregator: ChainLinkAggregators['USDT/USD'] },
-                { tokenAddress: Contracts.WBTC, feedAggregator: ChainLinkAggregators['BTC/USD'] },
             ] as PriceOracleSource[],
             {
                 votingPassRatio: extensionParams.votingPassRatio,
@@ -75,14 +76,14 @@ describe.only('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WB
         let { admin, borrower, lender } = env.entities;
         let deployHelper: DeployHelper = new DeployHelper(admin);
         let USDT: ERC20 = await deployHelper.mock.getMockERC20(Contracts.USDT);
-        let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
+        let ETH: ERC20 = await deployHelper.mock.getMockERC20(zeroAddress); // this is made into type only for matching the signature
         let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
-        let poolAddress = await calculateNewPoolAddress(env, USDT, WBTC, iyield, salt, false, {
+        let poolAddress = await calculateNewPoolAddress(env, USDT, ETH, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)), // 10 usdt
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
-            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)), // 1 wbtc
+            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
             _collectionPeriod: 10000,
             _matchCollateralRatioInterval: 200,
@@ -97,11 +98,11 @@ describe.only('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WB
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, '100000000');
 
-        let pool = await createNewPool(env, USDT, WBTC, iyield, salt, false, {
+        let pool = await createNewPool(env, USDT, ETH, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)), // 10 usdt
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
-            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)), // 1 wbtc
+            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
             _collectionPeriod: 10000,
             _matchCollateralRatioInterval: 200,
