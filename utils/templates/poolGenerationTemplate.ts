@@ -41,7 +41,7 @@ import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { create } from "underscore";
 
-export async function astaYami(
+export async function poolCreationTest(
     BorrowTokenParam: Address,
     CollateralTokenParam: Address,
     liquidityBorrowTokenParam: Address,

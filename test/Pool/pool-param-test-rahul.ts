@@ -1,4 +1,4 @@
-import { astaYami } from '../../utils/templates/poolGenerationTemplate';
+import { poolCreationTest } from '../../utils/templates/poolGenerationTemplate';
 
 import {Contracts} from '../../existingContracts/compound.json'
 
@@ -7,7 +7,7 @@ import {
 } from '../../utils/constants-rahul';
 
 describe("Testing", async () => {
-    await astaYami(
+    await poolCreationTest(
         Contracts.DAI,
         Contracts.LINK,
         Contracts.cDAI,
