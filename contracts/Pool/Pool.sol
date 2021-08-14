@@ -16,6 +16,8 @@ import '../interfaces/IPool.sol';
 import '../interfaces/IExtension.sol';
 import '../interfaces/IPoolToken.sol';
 
+import 'hardhat/console.sol';
+
 contract Pool is Initializable, IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -159,6 +161,8 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     }
 
     modifier onlyOwner {
+        console.log(msg.sender);
+        console.log(IPoolFactory(PoolFactory).owner());
         require(msg.sender == IPoolFactory(PoolFactory).owner(), '3');
         _;
     }
@@ -222,6 +226,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      */
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) public payable override {
         require(_amount != 0, '7');
+        // console.log("Checkpoint1");
         _depositCollateral(msg.sender, _amount, _transferFromSavingsAccount);
     }
 
@@ -253,6 +258,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _amount,
         bool _transferFromSavingsAccount
     ) internal nonReentrant {
+        // console.log("Checkpoint2");
         uint256 _sharesReceived =
             _deposit(
                 _transferFromSavingsAccount,
@@ -277,6 +283,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         address _depositTo
     ) internal returns (uint256 _sharesReceived) {
         if (_fromSavingsAccount) {
+            // console.log("Checkpoint2_if");
             _sharesReceived = SavingsAccountUtil.depositFromSavingsAccount(
                 ISavingsAccount(IPoolFactory(PoolFactory).savingsAccount()),
                 _depositFrom,
@@ -288,6 +295,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
                 _toSavingsAccount
             );
         } else {
+            // console.log("Checkpoint2_else");
             _sharesReceived = SavingsAccountUtil.directDeposit(
                 ISavingsAccount(IPoolFactory(PoolFactory).savingsAccount()),
                 _depositFrom,
