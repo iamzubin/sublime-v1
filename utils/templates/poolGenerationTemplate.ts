@@ -18,6 +18,7 @@ import {
     WBTCWhale,
     WhaleAccount,
     Binance7,
+    DAIWhale,
     ChainLinkAggregators,
     extensionParams,
     repaymentParams,
@@ -86,22 +87,21 @@ export async function poolCreationTest(
                 CreditLineDefaultStrategy.Compound,
                 { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
             );
-            // poolFactory is already initialized as env.poolFactory
-
-            //poolImpl = await deployHelper.pool.deployPool(); //env.poolLogic  (implemented by function createPool)
-            //poolTokenImpl = await deployHelper.pool.deployPoolToken(); //env.poolTokenLogic (implemented by function createPoolToken)
-            //repaymentImpl = await deployHelper.pool.deployRepayments();  // env.repayments (Already done by the function createRepaymentsWithInit)
+            
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[0]).transfer(env.entities.admin.address, BigNumber.from('10').pow(23)); // 50,000 DAI  tokens    
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[2]).transfer(env.entities.admin.address, BigNumber.from('10').pow(23)); // 50,000 LINK tokens
+        
         });    
         it('create pools', async() => {
             console.log("createEnvironment() executed successfully.")
             let {admin, borrower, lender} = env.entities;
 
-            await env.poolFactory
-                .connect(admin)
-                .updateVolatilityThreshold(env.mockTokenContracts[0].contract.address, testPoolFactoryParams._collateralVolatilityThreshold);
-            await env.poolFactory
-                .connect(admin)
-                .updateVolatilityThreshold(env.mockTokenContracts[1].contract.address, testPoolFactoryParams._collateralVolatilityThreshold);
+            // await env.poolFactory
+            //     .connect(admin)
+            //     .updateVolatilityThreshold(env.mockTokenContracts[0].contract.address, testPoolFactoryParams._collateralVolatilityThreshold);
+            // await env.poolFactory
+            //     .connect(admin)
+            //     .updateVolatilityThreshold(env.mockTokenContracts[1].contract.address, testPoolFactoryParams._collateralVolatilityThreshold);
             
             console.log("Volatility Threshold updated.")
 
@@ -140,30 +140,38 @@ export async function poolCreationTest(
                 _collateralAmount,
             } = createPoolParams;
 
-            await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
+            console.log(await collateralToken.balanceOf(admin.address));
+            console.log(_collateralAmount);
+            console.log(await collateralToken.balanceOf(borrower.address));
+            await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2));
             await collateralToken.approve(generatedPoolAddress, _collateralAmount.mul(2));
+            console.log(await collateralToken.balanceOf(borrower.address));
+
             console.log("collateralToken transfers took place.");
 
             await expect(
                 env.poolFactory
                     .connect(borrower)
                     .createPool(
-                        _poolSize,
-                        _minborrowAmount,
+                        BigNumber.from(1000).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in DAI pool
+                        BigNumber.from(10).mul(BigNumber.from(10).pow(18)), // 10 DAI
+                        //env.mockTokenContracts[0].contract.address,
+                        //env.mockTokenContracts[1].contract.address,
                         Contracts.DAI,
                         Contracts.LINK,
-                        _collateralRatio,
-                        _borrowRate,
+                        BigNumber.from(200).mul(BigNumber.from(10).pow(28)),
+                        BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
-                        env.yields.aaveYield.address,
-                        _collateralAmount,
+                        env.yields.compoundYield.address,
+                        BigNumber.from(1).mul(BigNumber.from(10).pow(18)), //1 LINK
                         false,
-                        sha256(Buffer.from('borrower'))
+                        sha256(Buffer.from('borrower')),
                     )
             )
-                .to.emit(env.poolFactory, 'PoolCreated')
-                .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
+            .to.emit(env.poolFactory, 'PoolCreated')
+            .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
+            console.log("Borrower pool created.")
 
             let deployHelper: DeployHelper = new DeployHelper(borrower);
             let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
