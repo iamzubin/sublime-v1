@@ -18,7 +18,7 @@ import {
     Entities,
     MockTokenContract,
     PoolCreateParams,
-} from '../types';
+} from '../types'; //types are just interfaces defining the structure of various objects
 
 import { createSavingsAccount, initSavingsAccount } from './savingsAccount';
 import { createStrategyRegistry, initStrategyRegistry } from './strategyRegistry';

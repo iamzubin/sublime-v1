@@ -90,7 +90,11 @@ describe.only('Pool With Compound Strategy 2', async () => {
 
         console.log({ calculatedPoolAddress: poolAddress });
 
+        console.log(env.mockTokenContracts[0]);
         console.log(env.mockTokenContracts[1].name);
+        // console.log(env.mockTokenContracts[2]); -> UNDEFINED
+        // console.log(env.mockTokenContracts[3].name); -> UNDEFINED
+
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, '100000000');

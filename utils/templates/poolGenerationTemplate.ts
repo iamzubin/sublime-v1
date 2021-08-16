@@ -47,11 +47,10 @@ export async function poolCreationTest(
     liquidityBorrowTokenParam: Address,
     liquidityCollateralTokenParam: Address,
     chainlinkBorrowParam: Address,
-    ChainlinkCollateralParam: Address
+    chainlinkCollateralParam: Address
 ): Promise<any> {
     describe("Pool", async() => {
         let env:Environment;
-        let iyield: IYield;
         before(async () => {
             env = await createEnvironment(
                 hre,
@@ -63,7 +62,7 @@ export async function poolCreationTest(
                 [] as YearnPair[],
                 [
                     { tokenAddress: BorrowTokenParam, feedAggregator: chainlinkBorrowParam },
-                    { tokenAddress: CollateralTokenParam, feedAggregator: ChainlinkCollateralParam },
+                    { tokenAddress: CollateralTokenParam, feedAggregator: chainlinkCollateralParam },
                 ] as PriceOracleSource[],                {
                     votingPassRatio: extensionParams.votingPassRatio,
                 } as ExtensionInitParams,
@@ -94,22 +93,23 @@ export async function poolCreationTest(
             //repaymentImpl = await deployHelper.pool.deployRepayments();  // env.repayments (Already done by the function createRepaymentsWithInit)
         });    
         it('create pools', async() => {
-            console.log("Checkpoint 6")
-            await env.poolFactory.connect(env.entities.admin).updateSupportedBorrowTokens(BorrowTokenParam, true);
+            console.log("createEnvironment() executed successfully.")
+            let {admin, borrower, lender} = env.entities;
 
-            await env.poolFactory.connect(env.entities.admin).updateSupportedCollateralTokens(CollateralTokenParam, true);
-            await env.poolFactory.connect(env.entities.admin).updateVolatilityThreshold(CollateralTokenParam, testPoolFactoryParams._collateralVolatilityThreshold);
             await env.poolFactory
-                .connect(env.entities.admin)
-                .updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
-            console.log("Checkpoint 7")
+                .connect(admin)
+                .updateVolatilityThreshold(env.mockTokenContracts[0].contract.address, testPoolFactoryParams._collateralVolatilityThreshold);
+            await env.poolFactory
+                .connect(admin)
+                .updateVolatilityThreshold(env.mockTokenContracts[1].contract.address, testPoolFactoryParams._collateralVolatilityThreshold);
+            
+            console.log("Volatility Threshold updated.")
 
-            let deployHelper: DeployHelper = new DeployHelper(env.entities.borrower);
-            let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.LINK); //Compare this with CollateralTokenParam. Which should go in generatePoolAddress parameters
-            let borrowToken: ERC20 = await deployHelper.mock.getMockERC20(BorrowTokenParam)
+            let borrowToken: ERC20 = env.mockTokenContracts[0].contract //DAI
+            let collateralToken: ERC20 = env.mockTokenContracts[1].contract; //LINK 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
 
-            console.log("Checkpoint 5")
+            console.log("Params for calculateNewPoolAddress generated.")
 
             let generatedPoolAddress: Address = await calculateNewPoolAddress(
                 env,
@@ -121,22 +121,14 @@ export async function poolCreationTest(
                 createPoolParams
             );
             
-            console.log("Checkpoint 3")
+            console.log("calculateNewPoolAddress() is executed successfully.")
+            
             const nonce = (await env.poolFactory.provider.getTransactionCount(env.poolFactory.address)) + 1;
             let newPoolToken: string = getContractAddress({
                 from: env.poolFactory.address,
                 nonce,
             });
-            console.log("Checkpoint 4")
-
-            // console.log({
-            //   generatedPoolAddress,
-            //   msgSender: borrower.address,
-            //   newPoolToken,
-            //   savingsAccountFromPoolFactory: await poolFactory.savingsAccount(),
-            //   savingsAccount: savingsAccount.address,
-            //   "nonce": nonce
-            // });
+            console.log("getContractAddress() is executed successfully.")
 
             let {
                 _poolSize,
@@ -148,15 +140,13 @@ export async function poolCreationTest(
                 _collateralAmount,
             } = createPoolParams;
 
-            console.log("Checkpoint 1");
-            await collateralToken.connect(env.entities.admin).transfer(env.entities.borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
-
+            await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
             await collateralToken.approve(generatedPoolAddress, _collateralAmount.mul(2));
-            console.log("Checkpoint 2");
+            console.log("collateralToken transfers took place.");
 
             await expect(
                 env.poolFactory
-                    .connect(env.entities.borrower)
+                    .connect(borrower)
                     .createPool(
                         _poolSize,
                         _minborrowAmount,
@@ -173,8 +163,9 @@ export async function poolCreationTest(
                     )
             )
                 .to.emit(env.poolFactory, 'PoolCreated')
-                .withArgs(generatedPoolAddress, env.entities.borrower.address, newPoolToken);
+                .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
 
+            let deployHelper: DeployHelper = new DeployHelper(borrower);
             let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
             expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
