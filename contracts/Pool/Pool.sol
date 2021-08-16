@@ -270,6 +270,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
                 address(this)
             );
         poolVars.baseLiquidityShares = poolVars.baseLiquidityShares.add(_sharesReceived);
+        // console.log(_sharesReceived);
         emit CollateralAdded(_depositor, _amount, _sharesReceived);
     }
 
