@@ -15,10 +15,6 @@ import {
 } from '../types';
 
 import {
-    WBTCWhale,
-    WhaleAccount,
-    Binance7,
-    DAIWhale,
     ChainLinkAggregators,
     extensionParams,
     repaymentParams,
@@ -43,6 +39,8 @@ import { Pool } from '@typechain/Pool';
 import { create } from "underscore";
 
 export async function poolCreationTest(
+    Whale1: Address,
+    Whale2: Address,
     BorrowTokenParam: Address,
     CollateralTokenParam: Address,
     liquidityBorrowTokenParam: Address,
@@ -55,7 +53,7 @@ export async function poolCreationTest(
         before(async () => {
             env = await createEnvironment(
                 hre,
-                [WBTCWhale, WhaleAccount, Binance7],
+                [Whale1, Whale2],
                 [
                     { asset: BorrowTokenParam, liquidityToken: liquidityBorrowTokenParam},
                     { asset: CollateralTokenParam, liquidityToken: liquidityCollateralTokenParam },
@@ -89,7 +87,7 @@ export async function poolCreationTest(
             );
             
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[0]).transfer(env.entities.admin.address, BigNumber.from('10').pow(23)); // 50,000 DAI  tokens    
-            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[2]).transfer(env.entities.admin.address, BigNumber.from('10').pow(23)); // 50,000 LINK tokens
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[1]).transfer(env.entities.admin.address, BigNumber.from('10').pow(23)); // 50,000 LINK tokens
         
         });    
         it('create pools', async() => {
@@ -155,10 +153,10 @@ export async function poolCreationTest(
                     .createPool(
                         BigNumber.from(1000).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in DAI pool
                         BigNumber.from(10).mul(BigNumber.from(10).pow(18)), // 10 DAI
-                        //env.mockTokenContracts[0].contract.address,
-                        //env.mockTokenContracts[1].contract.address,
-                        Contracts.DAI,
-                        Contracts.LINK,
+                        env.mockTokenContracts[0].contract.address,
+                        env.mockTokenContracts[1].contract.address,
+                        // Contracts.DAI,
+                        // Contracts.LINK,
                         BigNumber.from(200).mul(BigNumber.from(10).pow(28)),
                         BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,
                         _repaymentInterval,

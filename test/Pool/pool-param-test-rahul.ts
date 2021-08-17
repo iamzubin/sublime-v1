@@ -3,11 +3,15 @@ import { poolCreationTest } from '../../utils/templates/poolGenerationTemplate';
 import {Contracts} from '../../existingContracts/compound.json'
 
 import {
+    DAIWhale,
+    LINKWhale,
     ChainLinkAggregators,
 } from '../../utils/constants-rahul';
 
 describe("Testing", async () => {
     await poolCreationTest(
+        DAIWhale,
+        LINKWhale,
         Contracts.DAI,
         Contracts.LINK,
         Contracts.cDAI,
