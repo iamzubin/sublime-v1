@@ -31,7 +31,7 @@ import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { zeroAddress } from '../../utils/constants';
 
-describe.only('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
+describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(

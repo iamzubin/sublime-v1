@@ -30,7 +30,7 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
 
-describe.only('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', async () => {
+describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
