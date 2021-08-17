@@ -338,6 +338,9 @@ export async function poolCollectionStage(
             )} Actual: ${poolTokenTotalSupplyBefore}`
         );
 
+        await poolToken.connect(lender)['burn(address,uint256)'](lender.address,amount);
+        console.log("Checkpoint 2");
+
         //borrower cancels the pool
         await pool.connect(borrower).cancelPool();
 
@@ -346,8 +349,7 @@ export async function poolCollectionStage(
         // lender should be able to burn tokens
         // await poolToken.allowance(admin.address, lender.address)
         // await poolToken.connect(lender).burnFrom(lender.address, amount);
-        await poolToken.connect(lender)['burn(address,uint256)'](lender.address,amount);
-        console.log("Checkpoint 2");
+        
 
         const poolTokenBalanceAfterCancel = await poolToken.balanceOf(lender.address);
         const poolTokenTotalSupplyAfterCancel = await poolToken.totalSupply();
