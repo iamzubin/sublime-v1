@@ -37,6 +37,7 @@ import { Context } from 'mocha';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { create } from "underscore";
+import { OperationalAmounts } from "@utils/constants";
 
 export async function poolLendingTest(
     Whale1: Address,
@@ -178,6 +179,18 @@ export async function poolLendingTest(
         });    
         it('Deposit collateral (not from savings account)', async() => {
             await env.poolLogic.connect(env.entities.borrower).depositCollateral(BigNumber.from('1'), false);
+        });
+        it("Test Lending", async() => {
+            await env.poolLogic.connect(env.entities.borrower).depositCollateral(createPoolParams._collateralAmount, false);
+            let borrowToken: ERC20 = env.mockTokenContracts[0].contract //DAI
+            await borrowToken.transfer(env.entities.lender.address, OperationalAmounts._amountLent);
+            await borrowToken.connect(env.entities.lender).approve(env.poolLogic.address, OperationalAmounts._amountLent);
+
+            await expect(env.poolLogic.connect(env.entities.lender).lend(env.entities.lender.address,
+                                                                    OperationalAmounts._amountLent,
+                                                                    false))
+                                                                    .to.emit(env.poolLogic, 'LiquiditySupplied')
+                                                                    .withArgs(OperationalAmounts._amountLent, env.entities.lender.address);
         });
     });
 
