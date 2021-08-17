@@ -12,14 +12,10 @@ import {
     YearnPair,
 } from '../types';
 import hre from 'hardhat';
-import { Contracts } from '../../existingContracts/compound.json';
+const { ethers, network } = hre;
 import { expect, assert } from 'chai';
 
 import {
-    WBTCWhale,
-    WhaleAccount,
-    Binance7,
-    ChainLinkAggregators,
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
@@ -29,14 +25,17 @@ import {
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
-import { BigNumber, ethers } from 'ethers';
+import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { PoolToken } from '@typechain/PoolToken';
 import { CompoundYield } from '@typechain/CompoundYield';
+import { expectApproxEqual } from '../../utils/helpers';
 
 export async function poolCollectionStage(
+    WhaleAccount1: Address,
+    WhaleAccount2: Address,
     BorrowToken: Address, 
     CollateralToken: Address,
     liquidityBorrowToken: Address,
@@ -59,7 +58,7 @@ export async function poolCollectionStage(
     before(async () => {
         env = await createEnvironment(
             hre,
-            [WBTCWhale, WhaleAccount, Binance7],
+            [WhaleAccount1, WhaleAccount2],
             [
                 { asset: BorrowToken, liquidityToken: liquidityBorrowToken},
                 { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
@@ -115,7 +114,7 @@ export async function poolCollectionStage(
             _repaymentInterval: 1000,
         });
 
-        console.log({ calculatedPoolAddress: poolAddress });
+        // console.log({ calculatedPoolAddress: poolAddress });
 
         console.log("Borrow Token: ", env.mockTokenContracts[0].name);
         console.log("Collateral Token: ", env.mockTokenContracts[1].name);
@@ -136,7 +135,7 @@ export async function poolCollectionStage(
             _repaymentInterval: 1000,
         });
 
-        console.log({ actualPoolAddress: pool.address });
+        // console.log({ actualPoolAddress: pool.address });
         
         let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
 
@@ -160,46 +159,62 @@ export async function poolCollectionStage(
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, depositAmount);
         await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, depositAmount);
 
+        // Checking balance before deposit
         let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
 
-        let CheckCollateralAddress = await ethers.utils.getAddress(Collateral);
+        // Direct Collateral deposit 
+        await pool.connect(borrower).depositCollateral(depositAmount,false);
 
-        await expect(pool.connect(borrower).depositCollateral(depositAmount,false))
-            .to.emit(env.savingsAccount, 'Deposited')
-            .withArgs(pool.address,depositAmount,CheckCollateralAddress,env.yields.compoundYield.address);
-
+        // Checking balance after deposit
         let SharesAfter = (await pool.poolVars()).baseLiquidityShares;
 
+        // Getting additional Shares
         let SharesReceived = SharesAfter.sub(SharesBefore);
-        console.log({SharesReceived: SharesReceived.toNumber()});
+        // console.log({SharesReceived: SharesReceived.toNumber()});
 
         // Checking shares received and matching with the deposited amount
-        // let liquidityShares = await env.yields.compoundYield.getSharesForTokens(depositAmount,Collateral);
-        // let value = liquidityShares.value;
-        // console.log(value.toString());
+        let liquidityShares = await env.yields.compoundYield.callStatic.getSharesForTokens(depositAmount,Collateral);
+        // console.log({ LiquidityShares: liquidityShares.toNumber() });
+        expectApproxEqual(liquidityShares.toNumber(), SharesReceived, 50);
     });
 
     it('Borrower should be able to deposit Collateral to the pool using Savings Account', async function () {
         let { admin, borrower, lender } = env.entities;
         let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
-        let CTAddress = await env.mockTokenContracts[1].contract.address;
+        let Collateral = await env.mockTokenContracts[1].contract;
         let depositAmount = BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals));
+        let AmountForDeposit = depositAmount.div(100);
 
-        let liquidityShares = await env.yields.compoundYield.connect(borrower).getSharesForTokens(depositAmount,CTAddress);
-        console.log({ LiquidityShares: (liquidityShares.value).toString()}); // Value is zero
+        let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(depositAmount,Collateral.address);
+        // console.log({ LiquidityShares: liquidityShares.toString() }); 
+        // console.log({ DepositAmount: depositAmount.toString() }); 
         
         // Transfering again as the initial amount was used for initial deposit
-        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, depositAmount);
-        await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, depositAmount);
-        await env.mockTokenContracts[1].contract.connect(borrower).approve(env.yields.compoundYield.address, depositAmount);
+        await Collateral.connect(env.impersonatedAccounts[0]).transfer(admin.address, depositAmount);
+        await Collateral.connect(admin).transfer(borrower.address, depositAmount);
+        await Collateral.connect(borrower).approve(env.yields.compoundYield.address, liquidityShares);
 
-        // console.log("Using SavingsAccount now!");
-        await env.savingsAccount.connect(borrower).approve(env.mockTokenContracts[1].contract.address, pool.address, depositAmount);
-        await env.savingsAccount.connect(borrower).depositTo(depositAmount, env.mockTokenContracts[1].contract.address, env.yields.compoundYield.address, borrower.address);
+        // Approving the Savings Account for deposit of tokens
+        await env.savingsAccount.connect(borrower).approve(Collateral.address, pool.address, liquidityShares);
+        await env.savingsAccount.connect(borrower)
+            .depositTo(liquidityShares, Collateral.address, env.yields.compoundYield.address, borrower.address);
 
-        // console.log("Deposit!");
-        await expect(pool.connect(borrower).depositCollateral(depositAmount,true))
+        // Checking balance before deposit
+        let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
+
+        // Depositing Tokens
+        await expect(pool.connect(borrower).depositCollateral(AmountForDeposit,true))
             .to.emit(env.savingsAccount, 'Transfer');
+
+        // Checking balance after deposit
+        let SharesAfter = (await pool.poolVars()).baseLiquidityShares;
+
+        // Getting additional Shares
+        let SharesReceived = SharesAfter.sub(SharesBefore);
+        // console.log({SharesReceived: SharesReceived.toNumber()});
+
+        // Checking shares received and matching with the deposited amount
+        expectApproxEqual(SharesReceived, AmountForDeposit, 50);
     });
 
     it('Lender should be able to lend the borrow tokens directly to the pool', async function () {
@@ -306,18 +321,25 @@ export async function poolCollectionStage(
         );
     });
 
+    // Cancel pool and Terminate pool test cannot be tested together
+    // Both affect the shared instance of the pool created in the `Before all` block
     it('Borrower should be able to cancel the pool with penalty charges', async function () {
         let { admin, borrower, lender } = env.entities;
         let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+        let Borrow = await env.mockTokenContracts[0].contract;
 
         const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
         const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
         const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+        
 
         //Lenders lend borrow Tokens into the pool
         await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
         await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
         await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+
+        const borrowTokenBalancebefore = await Borrow.balanceOf(lender.address);
+        const borrowTokenBalancePool = await Borrow.balanceOf(pool.address);
 
         const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
         await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
@@ -325,6 +347,7 @@ export async function poolCollectionStage(
 
         const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
         const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+        // const borrowTokenBalanceAfter = await Borrow.balanceOf(lender.address);
         assert(
             poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
             `Pool tokens not minted correctly. amount: ${amount} Expected: ${poolTokenBalanceBefore.add(
@@ -338,29 +361,63 @@ export async function poolCollectionStage(
             )} Actual: ${poolTokenTotalSupplyBefore}`
         );
 
-        await poolToken.connect(lender)['burn(address,uint256)'](lender.address,amount);
-        console.log("Checkpoint 2");
-
         //borrower cancels the pool
         await pool.connect(borrower).cancelPool();
 
-        console.log("Checkpoint 1");
-
-        // lender should be able to burn tokens
-        // await poolToken.allowance(admin.address, lender.address)
-        // await poolToken.connect(lender).burnFrom(lender.address, amount);
+        // lender should be able to withdraw Liquidity
+        await pool.connect(lender).withdrawLiquidity();
         
-
+        // Checking balance after pool cancel and liquidation
         const poolTokenBalanceAfterCancel = await poolToken.balanceOf(lender.address);
         const poolTokenTotalSupplyAfterCancel = await poolToken.totalSupply();
+        const borrowTokenBalanceAfterCancel = await Borrow.balanceOf(lender.address);
 
-        console.log(poolTokenBalanceBefore.toString());
-        console.log(poolTokenBalanceAfter.toString());
-        console.log(poolTokenBalanceAfterCancel.toString());
+        assert(
+            poolTokenBalanceAfterCancel.toString() == BigNumber.from('0').toString(),
+            `Pool tokens not burnt correctly. amount: ${amount} Expected: ${BigNumber.from('0').toString()} 
+            Actual: ${poolTokenBalanceAfterCancel}`
+        );
+        assert(
+            poolTokenTotalSupplyAfterCancel.toString() == BigNumber.from('0').toString(),
+            `Pool tokens not burnt correctly. amount: ${amount} Expected: ${BigNumber.from('0').toString()} 
+            Actual: ${poolTokenTotalSupplyAfterCancel}`
+        );
+        assert(
+            borrowTokenBalanceAfterCancel.toString() == borrowTokenBalancebefore.add(borrowTokenBalancePool).toString(),
+            `Pool tokens not liquidated correctly and liquidation penalty not received. amount: ${amount} 
+            Expected: ${borrowTokenBalancebefore.add(borrowTokenBalancePool).toString()} 
+            Actual: ${borrowTokenBalanceAfterCancel}`
+        );
 
-        console.log(poolTokenTotalSupplyBefore.toString());
-        console.log(poolTokenTotalSupplyAfter.toString());
-        console.log(poolTokenTotalSupplyAfterCancel.toString());
+        // console.log(borrowTokenBalanceAfterCancel.toString());
+        // console.log(borrowTokenBalancePool.toString());
+    });
+
+    xit('Pool Factory owner should be able to terminate the pool', async function () {
+        let { admin, borrower, lender } = env.entities;
+        let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+
+        const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+
+        //Lenders can lend borrow Tokens into the pool
+        await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+        await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+        await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+
+        const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+        await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+        await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+        await expect(pool.connect(admin).terminateOpenBorrowPool()).to.emit(pool, 'OpenBorrowPoolTerminated');
+
+        // Check if loan status is set to 'TERMINATED' (5)
+        let LoanStatus = (await pool.poolVars()).loanStatus;   
+        assert(
+            LoanStatus.toString() == BigNumber.from('5').toString(),
+            `Pool not terminated correctly. Expected: ${BigNumber.from('5').toString()} 
+            Actual: ${LoanStatus}`
+        );    
+
     });
 });
 }

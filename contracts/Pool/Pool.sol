@@ -161,8 +161,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     }
 
     modifier onlyOwner {
-        console.log(msg.sender);
-        console.log(IPoolFactory(PoolFactory).owner());
         require(msg.sender == IPoolFactory(PoolFactory).owner(), '3');
         _;
     }
@@ -697,12 +695,8 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         
         _deposit(_fromSavingsAccount, false, _borrowAsset, _poolBorrowTokens, address(0), msg.sender, address(this));
         _withdraw(_toSavingsAccount, _recieveLiquidityShare, _collateralAsset, _poolSavingsStrategy, _collateralTokens);
-<<<<<<< HEAD
         delete poolVars.extraLiquidityShares;
         delete poolVars.baseLiquidityShares;
-=======
-
->>>>>>> 29fba2a18e7f3f0daaae340c9ed05deee2811842
         emit PoolLiquidated(msg.sender);
     }
 
@@ -856,11 +850,8 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         }
         lenders[_lender].interestWithdrawn = lenders[_lender].interestWithdrawn.add(_amountToWithdraw);
 
-<<<<<<< HEAD
         lenders[_lender].interestWithdrawn = lenders[_lender].interestWithdrawn.add(_amountToWithdraw);
 
-=======
->>>>>>> 29fba2a18e7f3f0daaae340c9ed05deee2811842
         SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _amountToWithdraw, address(this), _lender);
     }
 
