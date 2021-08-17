@@ -682,7 +682,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         }
         uint256 _poolBorrowTokens =
             correspondingBorrowTokens(_collateralTokens, _poolFactory, IPoolFactory(_poolFactory).liquidatorRewardFraction());
-
         delete poolVars.extraLiquidityShares;
         delete poolVars.baseLiquidityShares;
 
@@ -801,7 +800,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         IPoolFactory _PoolFactory = IPoolFactory(_poolFactory);
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(_PoolFactory.priceOracle()).getLatestPrice(poolConstants.collateralAsset, poolConstants.borrowAsset);
-        return _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)).div(10**_decimals).div(10**30);
+        return _totalCollateralTokens.mul(_ratioOfPrices).div(10**_decimals).mul(uint256(10**30).sub(_fraction)).div(10**30);
     }
 
     function interestPerSecond(uint256 _principal) public view returns (uint256) {
