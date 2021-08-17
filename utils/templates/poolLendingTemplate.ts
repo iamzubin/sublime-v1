@@ -181,16 +181,17 @@ export async function poolLendingTest(
             await env.poolLogic.connect(env.entities.borrower).depositCollateral(BigNumber.from('1'), false);
         });
         it("Test Lending", async() => {
+            let amountLent: BigNumber = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
             await env.poolLogic.connect(env.entities.borrower).depositCollateral(createPoolParams._collateralAmount, false);
             let borrowToken: ERC20 = env.mockTokenContracts[0].contract //DAI
-            await borrowToken.transfer(env.entities.lender.address, OperationalAmounts._amountLent);
-            await borrowToken.connect(env.entities.lender).approve(env.poolLogic.address, OperationalAmounts._amountLent);
+            await borrowToken.transfer(env.entities.lender.address, amountLent);
+            await borrowToken.connect(env.entities.lender).approve(env.poolLogic.address, amountLent);
 
             await expect(env.poolLogic.connect(env.entities.lender).lend(env.entities.lender.address,
-                                                                    OperationalAmounts._amountLent,
+                                                                    amountLent,
                                                                     false))
                                                                     .to.emit(env.poolLogic, 'LiquiditySupplied')
-                                                                    .withArgs(OperationalAmounts._amountLent, env.entities.lender.address);
+                                                                    .withArgs(amountLent, env.entities.lender.address);
         });
     });
 
