@@ -1,4 +1,5 @@
 import { poolCreationTest } from '../../utils/templates/poolGenerationTemplate';
+import { poolLendingTest } from '../../utils/templates/poolLendingTemplate';
 
 import {Contracts} from '../../existingContracts/compound.json'
 
@@ -18,6 +19,17 @@ describe("Testing", async () => {
         "0x95812193E603cA35b55025C242934BAd1a308305",
         ChainLinkAggregators['DAI/USD'],
         ChainLinkAggregators['LINK/USD']
-    )
+    );
+
+    await poolLendingTest(
+        DAIWhale,
+        LINKWhale,
+        Contracts.DAI,
+        Contracts.LINK,
+        Contracts.cDAI,
+        "0x95812193E603cA35b55025C242934BAd1a308305",
+        ChainLinkAggregators['DAI/USD'],
+        ChainLinkAggregators['LINK/USD']
+    );
 });
 
