@@ -1,4 +1,6 @@
-import { BigNumber } from '@ethersproject/bignumber';
+import { BigNumber } from '@ethersproject/providers/node_modules/@ethersproject/bignumber';
+import { BigNumberish } from '@ethersproject/providers/node_modules/@ethersproject/bignumber';
+import { sha256 } from '@ethersproject/sha2';
 import { Address } from 'hardhat-deploy/dist/types';
 
 export const depositValueToTest: BigNumber = BigNumber.from('1000000000000000000'); // 1 ETH (or) 10^18 Tokens

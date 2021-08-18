@@ -116,7 +116,17 @@ export async function poolCreationTest(
                 env.yields.compoundYield,
                 salt,
                 false,
-                createPoolParams
+                {
+                    _poolSize: BigNumber.from(1000).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in DAI pool;
+                    _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)), // 10 DAI;
+                    _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)),
+                    _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), //1 LINK
+                    _collateralRatio: BigNumber.from(60).mul(BigNumber.from(10).pow(28)),
+                    _collectionPeriod: BigNumber.from(5000000),
+                    _matchCollateralRatioInterval: 200,
+                    _noOfRepaymentIntervals: BigNumber.from(25),
+                    _repaymentInterval:  BigNumber.from(1000)
+                }
             );
             
             console.log("calculateNewPoolAddress() is executed successfully.")
@@ -128,15 +138,7 @@ export async function poolCreationTest(
             });
             console.log("getContractAddress() is executed successfully.")
 
-            let {
-                _poolSize,
-                _minborrowAmount,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _collateralAmount,
-            } = createPoolParams;
+            let _collateralAmount = BigNumber.from(1).mul(BigNumber.from(10).pow(18));
 
             console.log(await collateralToken.balanceOf(admin.address));
             console.log(_collateralAmount);
@@ -155,16 +157,14 @@ export async function poolCreationTest(
                         BigNumber.from(10).mul(BigNumber.from(10).pow(18)), // 10 DAI
                         env.mockTokenContracts[0].contract.address,
                         env.mockTokenContracts[1].contract.address,
-                        // Contracts.DAI,
-                        // Contracts.LINK,
                         BigNumber.from(200).mul(BigNumber.from(10).pow(28)),
                         BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,
-                        _repaymentInterval,
-                        _noOfRepaymentIntervals,
+                        BigNumber.from(1000),
+                        BigNumber.from(25),
                         env.yields.compoundYield.address,
                         BigNumber.from(1).mul(BigNumber.from(10).pow(18)), //1 LINK
                         false,
-                        sha256(Buffer.from('borrower')),
+                        sha256(Buffer.from('borrower'))
                     )
             )
             .to.emit(env.poolFactory, 'PoolCreated')

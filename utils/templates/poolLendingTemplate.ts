@@ -163,7 +163,7 @@ export async function poolLendingTest(
                         env.yields.compoundYield.address,
                         BigNumber.from(1).mul(BigNumber.from(10).pow(18)), //1 LINK
                         false,
-                        sha256(Buffer.from('borrower')),
+                        sha256(Buffer.from(`borrower-${new Date().valueOf()}`)),
                     )
             )
             .to.emit(env.poolFactory, 'PoolCreated')
