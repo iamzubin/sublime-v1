@@ -355,14 +355,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             IPriceOracle(priceOracle).doesFeedExist(_collateralTokenType, _borrowTokenType),
             "PoolFactory::createPool - Price feed doesn't support token pair"
         );
-        require(
-            IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy),
-            'PoolFactory::createPool - Invalid strategy'
-        );
-        require(
-            isWithinLimits(_poolSize, poolSizeLimit.min, poolSizeLimit.max),
-            'PoolFactory::createPool - PoolSize not within limits'
-        );
+        require(IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy), 'PoolFactory::createPool - Invalid strategy');
+        require(isWithinLimits(_poolSize, poolSizeLimit.min, poolSizeLimit.max), 'PoolFactory::createPool - PoolSize not within limits');
         require(
             isWithinLimits(_collateralRatio, collateralRatioLimit.min, collateralRatioLimit.max),
             'PoolFactory::createPool - Collateral Ratio not within limits'
@@ -674,7 +668,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit LimitsUpdated('NoOfRepaymentIntervals', _min, _max);
     }
 
-    function getProtocolFeeData() external view override returns(uint256, address) {
+    function getProtocolFeeData() external view override returns (uint256, address) {
         return (protocolFeeFraction, protocolFeeCollector);
     }
 }

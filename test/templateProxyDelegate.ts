@@ -248,19 +248,23 @@ describe('Template 2', async () => {
             await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
 
             await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.DAI, testPoolFactoryParams._collateralVolatilityThreshold);
-            await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
+            await poolFactory
+                .connect(admin)
+                .updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
         }
 
-        await poolFactory.connect(admin).setImplementations(
-            poolLogic.address, 
-            repaymentLogic.address, 
-            poolTokenLogic.address,
-            verification.address,
-            strategyRegistry.address,
-            priceOracle.address,
-            savingsAccount.address,
-            extenstion.address
-        );
+        await poolFactory
+            .connect(admin)
+            .setImplementations(
+                poolLogic.address,
+                repaymentLogic.address,
+                poolTokenLogic.address,
+                verification.address,
+                strategyRegistry.address,
+                priceOracle.address,
+                savingsAccount.address,
+                extenstion.address
+            );
 
         if (network.name === 'hardhat') {
             deployHelper = new DeployHelper(borrower);
@@ -274,7 +278,8 @@ describe('Template 2', async () => {
                 poolFactory.address,
                 sha256(Buffer.from('borrower')),
                 poolLogic.address,
-                false
+                false,
+                {}
             );
 
             const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
@@ -341,8 +346,12 @@ describe('Template 2', async () => {
             await poolFactory.connect(admin).updateSupportedBorrowTokens(testToken1.address, true); //test token 1
             await poolFactory.connect(admin).updateSupportedBorrowTokens(testToken2.address, true); // test token 2
             await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true); // for ether
-            await poolFactory.connect(admin).updateVolatilityThreshold(testToken1.address, testPoolFactoryParams._collateralVolatilityThreshold);
-            await poolFactory.connect(admin).updateVolatilityThreshold(testToken2.address, testPoolFactoryParams._collateralVolatilityThreshold);
+            await poolFactory
+                .connect(admin)
+                .updateVolatilityThreshold(testToken1.address, testPoolFactoryParams._collateralVolatilityThreshold);
+            await poolFactory
+                .connect(admin)
+                .updateVolatilityThreshold(testToken2.address, testPoolFactoryParams._collateralVolatilityThreshold);
             await poolFactory.connect(admin).updateVolatilityThreshold(zeroAddress, testPoolFactoryParams._collateralVolatilityThreshold);
 
             console.log('Pool Factory Updating Collateral Tokens');
@@ -363,7 +372,8 @@ describe('Template 2', async () => {
                 poolFactory.address,
                 salt,
                 poolLogic.address,
-                false
+                false,
+                {}
             );
 
             const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;

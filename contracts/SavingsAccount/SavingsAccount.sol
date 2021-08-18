@@ -210,7 +210,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             amount,
             'SavingsAccount::withdrawFrom allowance limit exceeding'
         );
-
         if (strategy != address(0)) {
             amount = IYield(strategy).getSharesForTokens(amount, asset);
         }
@@ -220,10 +219,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             amount,
             'SavingsAccount::withdrawFrom insufficient balance'
         );
-
         address token;
         (token, amountReceived) = _withdraw(to, amount, asset, strategy, withdrawShares);
-
         emit Withdrawn(from, msg.sender, amountReceived, token, strategy);
     }
 
