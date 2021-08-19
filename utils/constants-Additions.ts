@@ -13,10 +13,10 @@ export const aaveYieldParams = {
 
 //Yearn Protocol Addresses
 export const LINK_Yearn_Protocol_Address = '0x881b06da56bb5675c54e4ed311c21e54c5025298'; // @prateek to check if update needed in upgrade v2
-export const USDC_Yearn_Protocol_Address = '0x597aD1e0c13Bfe8025993D9e79C69E1c0233522e';
+export const USDC_Yearn_Protocol_Address = '0x5f18c75abdae578b483e5f43f12a39cf75b973a9';
 export const USDT_Yearn_Protocol_Address = '0x2f08119C6f07c006695E079AAFc638b8789FAf18';
 export const DAI_Yearn_Protocol_Address = '0xACd43E627e64355f1861cEC6d3a6688B31a6F952'; // TODO: To be upgraded to v2
-export const INCH_Yearn_Protocol_Address = '0xB8C3B7A2A618C552C23B1E4701109a9E756Bab67';
+export const INCH_Yearn_Protocol_Address = '0xB8C3B7A2A618C552C23B1E4701109a9E756Bab67'; 
 export const INCH_Token_Address = '0x111111111117dC0aa78b770fA6A738034120C302';
 export const YFI_Token_Address = '0xBA2E7Fed597fd0E3e70f5130BcDbbFE06bB94fe1';
 export const YFI_Yearn_Protocol_Address = '0xBA2E7Fed597fd0E3e70f5130BcDbbFE06bB94fe1';
@@ -27,7 +27,7 @@ export const COMP_CURVE_POOL = '0x845838DF265Dcd2c412A1Dc9e959c7d08537f8a2'; //C
 //WETH = ETH
 //WBTC = BTC
 export const WETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7'; // TODO: To be upgraded to v2
-export const WBTC_Yearn_Protocol_Address = '0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5';
+export const WBTC_Yearn_Protocol_Address = '0xcb550a6d4c8e3517a939bc79d0c7093eb7cf56b5';
 
 
 //Account Holders

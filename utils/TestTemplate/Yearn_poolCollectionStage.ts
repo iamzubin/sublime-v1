@@ -30,10 +30,9 @@ import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { PoolToken } from '@typechain/PoolToken';
-import { CompoundYield } from '@typechain/CompoundYield';
-import { expectApproxEqual } from '../../utils/helpers';
+import { expectApproxEqual } from '../helpers';
 
-export async function poolCollectionStage(
+export async function yearnPoolCollectionStage(
     WhaleAccount1: Address,
     WhaleAccount2: Address,
     BorrowToken: Address, 
@@ -53,17 +52,16 @@ export async function poolCollectionStage(
     let BorrowAsset: ERC20;
     let CollateralAsset: ERC20;
     let iyield: IYield;
-    let Compound: CompoundYield;
 
     before(async () => {
         env = await createEnvironment(
             hre,
             [WhaleAccount1, WhaleAccount2],
+            [] as CompoundPair[],
             [
                 { asset: BorrowToken, liquidityToken: liquidityBorrowToken},
                 { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
-            ] as CompoundPair[],
-            [] as YearnPair[],
+            ] as YearnPair[],
             [
                 { tokenAddress: BorrowToken, feedAggregator: chainlinkBorrow },
                 { tokenAddress: CollateralToken, feedAggregator: ChainlinkCollateral },
@@ -88,7 +86,7 @@ export async function poolCollectionStage(
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
             } as PoolFactoryInitParams,
-            CreditLineDefaultStrategy.Compound,
+            CreditLineDefaultStrategy.Yearn,
             { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
         );
 
@@ -97,7 +95,7 @@ export async function poolCollectionStage(
         deployHelper = new DeployHelper(admin);
         BorrowAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address);
         CollateralAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[1].contract.address);
-        iyield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
+        iyield = await deployHelper.mock.getYield(env.yields.yearnYield.address);
 
         let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
         let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
@@ -161,21 +159,24 @@ export async function poolCollectionStage(
 
         // Checking balance before deposit
         let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
+        // console.log({SharesBefore: SharesBefore.toNumber()});
 
         // Direct Collateral deposit 
-        await pool.connect(borrower).depositCollateral(depositAmount,false);
+        await expect(pool.connect(borrower).depositCollateral(depositAmount,false))
+            .to.emit(pool, 'CollateralAdded');
 
         // Checking balance after deposit
         let SharesAfter = (await pool.poolVars()).baseLiquidityShares;
+        // console.log({SharesAfter: SharesAfter.toNumber()});
 
         // Getting additional Shares
         let SharesReceived = SharesAfter.sub(SharesBefore);
-        // console.log({SharesReceived: SharesReceived.toNumber()});
+        console.log({SharesReceived: SharesReceived.toNumber()});
 
         // Checking shares received and matching with the deposited amount
-        let liquidityShares = await env.yields.compoundYield.callStatic.getSharesForTokens(depositAmount,Collateral);
-        // console.log({ LiquidityShares: liquidityShares.toNumber() });
-        expectApproxEqual(liquidityShares.toNumber(), SharesReceived, 50);
+        // let liquidityShares = await env.yields.yearnYield.getSharesForTokens(depositAmount,Collateral);
+        // console.log({ LiquidityShares: liquidityShares });
+        // expectApproxEqual(liquidityShares.toNumber(), SharesReceived, 50);
     });
 
     it('Borrower should be able to deposit Collateral to the pool using Savings Account', async function () {
@@ -185,19 +186,19 @@ export async function poolCollectionStage(
         let depositAmount = BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals));
         let AmountForDeposit = depositAmount.div(100);
 
-        let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(depositAmount,Collateral.address);
-        // console.log({ LiquidityShares: liquidityShares.toString() }); 
+        let liquidityShares = await env.yields.yearnYield.callStatic.getTokensForShares(depositAmount,Collateral.address);
+        console.log({ LiquidityShares: liquidityShares.toString() }); 
         // console.log({ DepositAmount: depositAmount.toString() }); 
         
         // Transfering again as the initial amount was used for initial deposit
         await Collateral.connect(env.impersonatedAccounts[0]).transfer(admin.address, depositAmount);
         await Collateral.connect(admin).transfer(borrower.address, depositAmount);
-        await Collateral.connect(borrower).approve(env.yields.compoundYield.address, liquidityShares);
+        await Collateral.connect(borrower).approve(env.yields.yearnYield.address, liquidityShares);
 
         // Approving the Savings Account for deposit of tokens
         await env.savingsAccount.connect(borrower).approve(Collateral.address, pool.address, liquidityShares);
         await env.savingsAccount.connect(borrower)
-            .depositTo(liquidityShares, Collateral.address, env.yields.compoundYield.address, borrower.address);
+            .depositTo(liquidityShares, Collateral.address, env.yields.yearnYield.address, borrower.address);
 
         // Checking balance before deposit
         let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
@@ -362,12 +363,15 @@ export async function poolCollectionStage(
         );
 
         //borrower cancels the pool
+        console.log("Cancel");
         await pool.connect(borrower).cancelPool();
 
         // lender should be able to withdraw Liquidity
+        console.log("Withdraw");
         await pool.connect(lender).withdrawLiquidity();
         
         // Checking balance after pool cancel and liquidation
+        console.log("Checks");
         const poolTokenBalanceAfterCancel = await poolToken.balanceOf(lender.address);
         const poolTokenTotalSupplyAfterCancel = await poolToken.totalSupply();
         const borrowTokenBalanceAfterCancel = await Borrow.balanceOf(lender.address);

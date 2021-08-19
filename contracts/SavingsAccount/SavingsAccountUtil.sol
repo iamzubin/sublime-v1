@@ -37,8 +37,10 @@ library SavingsAccountUtil {
         address _strategy
     ) internal returns (uint256) {
         if (_toSavingsAccount) {
+            // console.log("DD IF");
             return directSavingsAccountDeposit(_savingsAccount, _from, _to, _amount, _asset, _strategy);
         } else {
+            // console.log("DD ELSE");
             return transferTokens(_asset, _amount, _from, _to);
         }
     }
@@ -51,7 +53,9 @@ library SavingsAccountUtil {
         address _asset,
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
+        // console.log("Calling Transfer tokens");
         transferTokens(_asset, _amount, _from, address(this));
+        // console.log("Called Transfer tokens");
         uint256 _ethValue;
         if (_asset == address(0)) {
             _ethValue = _amount;
@@ -104,16 +108,21 @@ library SavingsAccountUtil {
         address _to
     ) internal returns (uint256) {
         if (_amount == 0) {
+            // console.log(_amount);
             return 0;
         }
         if (_asset == address(0)) {
+            // console.log(_asset);
+            // console.log(msg.value >= _amount);
             require(msg.value >= _amount, '');
             if (_to != address(this)) {
                 (bool success, ) = payable(_to).call{value: _amount}('');
+                console.log(success);
                 require(success, 'Transfer failed');
             }
             if (msg.value >= _amount) {
                 (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
+                // console.log("Msg.Value",success);
                 require(success, 'Transfer failed');
             } else {
                 revert('Insufficient Ether');
@@ -126,6 +135,7 @@ library SavingsAccountUtil {
             //pool
             IERC20(_asset).safeTransferFrom(_from, _to, _amount);
         }
+        // console.log("Transfer done!");
         return _amount;
     }
 }

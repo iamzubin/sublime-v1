@@ -9,6 +9,8 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 import '../interfaces/IYield.sol';
 import '../interfaces/Invest/IyVault.sol';
 
+import 'hardhat/console.sol';
+
 /**
  * @title Yield contract
  * @notice Implements the functions to lock/unlock tokens into YVault
@@ -136,11 +138,15 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      **/
     function getTokensForShares(uint256 shares, address asset) public view override returns (uint256 amount) {
         if (shares == 0) return 0;
+        console.log("Checkpoint 2");
+        console.log(liquidityToken[asset]);
         amount = IyVault(liquidityToken[asset]).getPricePerFullShare().mul(shares).div(1e18);
     }
 
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
+        console.log("Checkpoint 1");
         shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
+        console.log("Checkpoint 3");
     }
 
     function _depositETH(address vault, uint256 amount) internal returns (uint256 sharesReceived) {

@@ -241,6 +241,10 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     ) internal {
         uint256 _equivalentCollateral =
             getEquivalentTokens(poolConstants.borrowAsset, poolConstants.collateralAsset, poolConstants.borrowAmountRequested);
+
+        // console.log("Amount", _amount);
+        // console.log(poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30));
+        // console.log(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30));
         require(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30), '36');
         _depositCollateral(_borrower, _amount, _transferFromSavingsAccount);
     }
