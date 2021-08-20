@@ -192,8 +192,8 @@ export async function compoundPoolCollectionStage(
         let AmountForDeposit = BigNumber.from(100);
 
         let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(AmountForDeposit,Collateral.address);
-        // console.log({ LiquidityShares: liquidityShares.toString() }); 
-        // console.log({ DepositAmount: depositAmount.toString() }); 
+        console.log({ LiquidityShares: liquidityShares.toString() }); 
+        console.log({ DepositAmount: depositAmount.toString() }); 
         
         // Transfering again as the initial amount was used for initial deposit
         await Collateral.connect(env.impersonatedAccounts[0]).transfer(admin.address, depositAmount);
