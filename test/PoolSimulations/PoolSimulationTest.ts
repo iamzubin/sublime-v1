@@ -11,7 +11,7 @@ import {
     zeroAddress
 } from '../../utils/constants-Additions';
 
-describe('Test case: Pool using Compound strategy with Borrow Token: DAI and Collateral Token: WBTC', async function () {
+describe.only('Test case: Pool using Compound strategy with Borrow Token: DAI and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         1,
         WBTCWhale,
@@ -24,7 +24,7 @@ describe('Test case: Pool using Compound strategy with Borrow Token: DAI and Col
         ChainLinkAggregators['BTC/USD'])
 });
 
-describe('Test case: Pool using Compound strategy with Borrow Token: UNI and Collateral Token: WBTC', async function () {
+describe.only('Test case: Pool using Compound strategy with Borrow Token: UNI and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         1,
         WBTCWhale,
@@ -37,7 +37,7 @@ describe('Test case: Pool using Compound strategy with Borrow Token: UNI and Col
         ChainLinkAggregators['BTC/USD'])
 });
 
-describe('Test case: Pool using Compound strategy with Borrow Token: USDC and Collateral Token: WBTC', async function () {
+describe.only('Test case: Pool using Compound strategy with Borrow Token: USDC and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         1,
         WBTCWhale,
@@ -50,7 +50,7 @@ describe('Test case: Pool using Compound strategy with Borrow Token: USDC and Co
         ChainLinkAggregators['BTC/USD'])
 });
 
-describe('Test case: Pool using Compound strategy with Borrow Token: USDT and Collateral Token: WBTC', async function () {
+describe.only('Test case: Pool using Compound strategy with Borrow Token: USDT and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         1,
         WBTCWhale,
@@ -169,6 +169,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: UNI an
 // yearn Strategy: Fix issues with IyVault
 describe('Test case: Pool using Yearn strategy with Borrow Token: DAI and Collateral Token: WBTC', async function () {
     await yearnPoolCollectionStage(
+        10,
         WBTCWhale,
         WhaleAccount,
         Contracts.DAI, 

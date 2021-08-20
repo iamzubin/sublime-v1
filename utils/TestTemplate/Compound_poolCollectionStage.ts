@@ -193,17 +193,17 @@ export async function compoundPoolCollectionStage(
 
         let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(AmountForDeposit,Collateral.address);
         console.log({ LiquidityShares: liquidityShares.toString() }); 
-        console.log({ DepositAmount: depositAmount.toString() }); 
+        console.log({ DepositAmount: AmountForDeposit.toString() }); 
         
         // Transfering again as the initial amount was used for initial deposit
         await Collateral.connect(env.impersonatedAccounts[0]).transfer(admin.address, depositAmount);
         await Collateral.connect(admin).transfer(borrower.address, depositAmount);
-        await Collateral.connect(borrower).approve(env.yields.compoundYield.address, liquidityShares);
+        await Collateral.connect(borrower).approve(env.yields.compoundYield.address, liquidityShares.mul(100));
 
         // Approving the Savings Account for deposit of tokens
-        await env.savingsAccount.connect(borrower).approve(Collateral.address, pool.address, liquidityShares);
+        await env.savingsAccount.connect(borrower).approve(Collateral.address, pool.address, liquidityShares.mul(100));
         await env.savingsAccount.connect(borrower)
-            .depositTo(liquidityShares, Collateral.address, env.yields.compoundYield.address, borrower.address);
+            .depositTo(liquidityShares.mul(100), Collateral.address, env.yields.compoundYield.address, borrower.address);
 
         // Checking balance before deposit
         let SharesBefore = (await pool.poolVars()).baseLiquidityShares;

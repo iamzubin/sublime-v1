@@ -30,9 +30,11 @@ import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { PoolToken } from '@typechain/PoolToken';
-import { expectApproxEqual } from '../helpers';
+import { CompoundYield } from '@typechain/CompoundYield';
+import { expectApproxEqual } from '../../utils/helpers';
 
 export async function yearnPoolCollectionStage(
+    Amount: Number,
     WhaleAccount1: Address,
     WhaleAccount2: Address,
     BorrowToken: Address, 
@@ -52,6 +54,7 @@ export async function yearnPoolCollectionStage(
     let BorrowAsset: ERC20;
     let CollateralAsset: ERC20;
     let iyield: IYield;
+    let Compound: CompoundYield;
 
     before(async () => {
         env = await createEnvironment(
@@ -104,7 +107,8 @@ export async function yearnPoolCollectionStage(
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
+            _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
+            // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
             _collectionPeriod: 10000,
             _matchCollateralRatioInterval: 200,
@@ -116,16 +120,20 @@ export async function yearnPoolCollectionStage(
 
         console.log("Borrow Token: ", env.mockTokenContracts[0].name);
         console.log("Collateral Token: ", env.mockTokenContracts[1].name);
+        // console.log(await env.mockTokenContracts[0].contract.decimals());
+        // console.log(await env.mockTokenContracts[1].contract.decimals());
         
-        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)));
-        await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)));
-        await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)));
+        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
+        await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
+        await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
 
+        // console.log("Tokens present!");
         pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
             _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
+            _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
+            // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
             _collectionPeriod: 10000,
             _matchCollateralRatioInterval: 200,
@@ -159,24 +167,21 @@ export async function yearnPoolCollectionStage(
 
         // Checking balance before deposit
         let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
-        // console.log({SharesBefore: SharesBefore.toNumber()});
 
         // Direct Collateral deposit 
-        await expect(pool.connect(borrower).depositCollateral(depositAmount,false))
-            .to.emit(pool, 'CollateralAdded');
+        await pool.connect(borrower).depositCollateral(depositAmount,false);
 
         // Checking balance after deposit
         let SharesAfter = (await pool.poolVars()).baseLiquidityShares;
-        // console.log({SharesAfter: SharesAfter.toNumber()});
 
         // Getting additional Shares
         let SharesReceived = SharesAfter.sub(SharesBefore);
-        console.log({SharesReceived: SharesReceived.toNumber()});
+        // console.log({SharesReceived: SharesReceived.toNumber()});
 
         // Checking shares received and matching with the deposited amount
-        // let liquidityShares = await env.yields.yearnYield.getSharesForTokens(depositAmount,Collateral);
-        // console.log({ LiquidityShares: liquidityShares });
-        // expectApproxEqual(liquidityShares.toNumber(), SharesReceived, 50);
+        let liquidityShares = await env.yields.yearnYield.callStatic.getSharesForTokens(depositAmount,Collateral);
+        // console.log({ LiquidityShares: liquidityShares.toNumber() });
+        expectApproxEqual(liquidityShares.toNumber(), SharesReceived, 50);
     });
 
     it('Borrower should be able to deposit Collateral to the pool using Savings Account', async function () {
@@ -184,11 +189,11 @@ export async function yearnPoolCollectionStage(
         let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
         let Collateral = await env.mockTokenContracts[1].contract;
         let depositAmount = BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals));
-        let AmountForDeposit = depositAmount.div(100);
+        let AmountForDeposit = BigNumber.from(100);
 
-        let liquidityShares = await env.yields.yearnYield.callStatic.getTokensForShares(depositAmount,Collateral.address);
+        let liquidityShares = await env.yields.yearnYield.callStatic.getTokensForShares(AmountForDeposit,Collateral.address);
         console.log({ LiquidityShares: liquidityShares.toString() }); 
-        // console.log({ DepositAmount: depositAmount.toString() }); 
+        console.log({ DepositAmount: depositAmount.toString() }); 
         
         // Transfering again as the initial amount was used for initial deposit
         await Collateral.connect(env.impersonatedAccounts[0]).transfer(admin.address, depositAmount);
@@ -363,15 +368,12 @@ export async function yearnPoolCollectionStage(
         );
 
         //borrower cancels the pool
-        console.log("Cancel");
         await pool.connect(borrower).cancelPool();
 
         // lender should be able to withdraw Liquidity
-        console.log("Withdraw");
         await pool.connect(lender).withdrawLiquidity();
         
         // Checking balance after pool cancel and liquidation
-        console.log("Checks");
         const poolTokenBalanceAfterCancel = await poolToken.balanceOf(lender.address);
         const poolTokenTotalSupplyAfterCancel = await poolToken.totalSupply();
         const borrowTokenBalanceAfterCancel = await Borrow.balanceOf(lender.address);
@@ -396,32 +398,138 @@ export async function yearnPoolCollectionStage(
         // console.log(borrowTokenBalanceAfterCancel.toString());
         // console.log(borrowTokenBalancePool.toString());
     });
+});
 
-    xit('Pool Factory owner should be able to terminate the pool', async function () {
-        let { admin, borrower, lender } = env.entities;
-        let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+    describe('Pool Simulations: Termination Stage', async() => {
+        let env: Environment;
+        let pool: Pool;
+        let poolAddress: Address;
+        let poolToken: PoolToken;
 
-        const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+        let deployHelper: DeployHelper;
+        let BorrowAsset: ERC20;
+        let CollateralAsset: ERC20;
+        let iyield: IYield;
+        let Compound: CompoundYield;
 
-        //Lenders can lend borrow Tokens into the pool
-        await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
-        await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
-        await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+        before(async () => {
+            env = await createEnvironment(
+                hre,
+                [WhaleAccount1, WhaleAccount2],
+                [] as CompoundPair[],
+                [
+                    { asset: BorrowToken, liquidityToken: liquidityBorrowToken},
+                    { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
+                ] as YearnPair[],
+                [
+                    { tokenAddress: BorrowToken, feedAggregator: chainlinkBorrow },
+                    { tokenAddress: CollateralToken, feedAggregator: ChainlinkCollateral },
+                ] as PriceOracleSource[],
+                {
+                    votingPassRatio: extensionParams.votingPassRatio,
+                } as ExtensionInitParams,
+                {
+                    gracePenalityRate: repaymentParams.gracePenalityRate,
+                    gracePeriodFraction: repaymentParams.gracePeriodFraction,
+                } as RepaymentsInitParams,
+                {
+                    admin: '',
+                    _collectionPeriod: testPoolFactoryParams._collectionPeriod,
+                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _marginCallDuration: testPoolFactoryParams._marginCallDuration,
+                    _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
+                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
+                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
+                    _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
+                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    protocolFeeCollector: '',
+                } as PoolFactoryInitParams,
+                CreditLineDefaultStrategy.Yearn,
+                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+            );
 
-        const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
-        await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-        await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            let salt = sha256(Buffer.from(`borrower`+ Math.random() * 10000000));
+            let { admin, borrower, lender } = env.entities;
+            deployHelper = new DeployHelper(admin);
+            BorrowAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address);
+            CollateralAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[1].contract.address);
+            iyield = await deployHelper.mock.getYield(env.yields.yearnYield.address);
 
-        await expect(pool.connect(admin).terminateOpenBorrowPool()).to.emit(pool, 'OpenBorrowPoolTerminated');
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
 
-        // Check if loan status is set to 'TERMINATED' (5)
-        let LoanStatus = (await pool.poolVars()).loanStatus;   
-        assert(
-            LoanStatus.toString() == BigNumber.from('5').toString(),
-            `Pool not terminated correctly. Expected: ${BigNumber.from('5').toString()} 
-            Actual: ${LoanStatus}`
-        );    
+            poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
+                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
+                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
+                _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
+                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                _collectionPeriod: 10000,
+                _matchCollateralRatioInterval: 200,
+                _noOfRepaymentIntervals: 100,
+                _repaymentInterval: 1000,
+            });
 
-    });
+            // console.log({ calculatedPoolAddress: poolAddress });
+
+            console.log("Borrow Token: ", env.mockTokenContracts[0].name);
+            console.log("Collateral Token: ", env.mockTokenContracts[1].name);
+            
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
+            await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
+
+            pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
+                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
+                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
+                _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
+                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                _collectionPeriod: 10000,
+                _matchCollateralRatioInterval: 200,
+                _noOfRepaymentIntervals: 100,
+                _repaymentInterval: 1000,
+            });
+
+            // console.log({ actualPoolAddress: pool.address });
+            
+            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
+
+            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
+
+            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.symbol()).eq('OBPT');
+            expect(await poolToken.decimals()).eq(18);
+
+            assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
+        });
+
+        it('Pool Factory owner should be able to terminate the pool', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+
+            const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+
+            //Lenders can lend borrow Tokens into the pool
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            await expect(pool.connect(admin).terminateOpenBorrowPool()).to.emit(pool, 'OpenBorrowPoolTerminated');
+
+            // Check if loan status is set to 'TERMINATED' (5)
+            let LoanStatus = (await pool.poolVars()).loanStatus;   
+            assert(
+                LoanStatus.toString() == BigNumber.from('5').toString(),
+                `Pool not terminated correctly. Expected: ${BigNumber.from('5').toString()} 
+                Actual: ${LoanStatus}`
+            );    
+
+        });
 });
 }
