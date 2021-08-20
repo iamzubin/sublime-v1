@@ -24,20 +24,22 @@ import {
 } from '../constants-rahul';
 
 import hre from 'hardhat';
+const {ethers, network} = hre
 import { Contracts } from '../../existingContracts/compound.json';
-import { expect } from "chai";
+import { assert, expect } from "chai";
 
 import DeployHelper from "../deploys";
 import { ERC20 } from "@typechain/ERC20";
 import { sha256 } from '@ethersproject/sha2';
 import { PoolToken } from '../../typechain/PoolToken';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { Context } from 'mocha';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { create } from "underscore";
 import { OperationalAmounts } from "@utils/constants";
+import { getProxyAdminFactory } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 export async function poolLendingTest(
     Whale1: Address,
@@ -51,6 +53,13 @@ export async function poolLendingTest(
 ): Promise<any> {
     describe("Pool", async() => {
         let env:Environment;
+        let deployHelper: DeployHelper;
+        let borrowToken: ERC20;
+        let collateralToken: ERC20;
+        let iYield: IYield;
+        let generatedPoolAddress: Address;
+        let pool: Pool;
+        let poolToken: PoolToken;
         before(async () => {
             env = await createEnvironment(
                 hre,
@@ -87,11 +96,20 @@ export async function poolLendingTest(
                 { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
             );
             
-            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[0]).transfer(env.entities.admin.address, BigNumber.from('10').pow(23)); // 50,000 DAI  tokens    
-            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[1]).transfer(env.entities.admin.address, BigNumber.from('10').pow(23)); // 50,000 LINK tokens
+            
+            console.log("createEnvironment() executed successfully.");
 
-            console.log("createEnvironment() executed successfully.")
             let {admin, borrower, lender} = env.entities;
+            deployHelper = new DeployHelper(admin);
+            borrowToken = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address); //DAI
+            collateralToken = await deployHelper.mock.getMockERC20(env.mockTokenContracts[1].contract.address); //LINK 
+            iYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
+            
+            let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));        
+            let BorrowDecimals: BigNumberish = await env.mockTokenContracts[0].contract.decimals();
+            let CollateralDecimals:BigNumberish = await env.mockTokenContracts[1].contract.decimals();    
+
+            console.log("Params for calculateNewPoolAddress generated.")
 
             // await env.poolFactory
             //     .connect(admin)
@@ -100,98 +118,118 @@ export async function poolLendingTest(
             //     .connect(admin)
             //     .updateVolatilityThreshold(env.mockTokenContracts[1].contract.address, testPoolFactoryParams._collateralVolatilityThreshold);
             
-            console.log("Volatility Threshold updated.")
+            console.log("Volatility Threshold updated.")    
 
-            let borrowToken: ERC20 = env.mockTokenContracts[0].contract //DAI
-            let collateralToken: ERC20 = env.mockTokenContracts[1].contract; //LINK 
-            let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
-
-            console.log("Params for calculateNewPoolAddress generated.")
-
-            let generatedPoolAddress: Address = await calculateNewPoolAddress(
+            generatedPoolAddress = await calculateNewPoolAddress(
                 env,
                 borrowToken,
                 collateralToken,
-                env.yields.compoundYield,
+                iYield,
                 salt,
                 false,
-                createPoolParams
+                {
+                    _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
+                    _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
+                    _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
+                    _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CollateralDecimals)),
+                    _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                    _collectionPeriod:10000,
+                    _matchCollateralRatioInterval: 200,
+                    _noOfRepaymentIntervals: 10,
+                    _repaymentInterval: 1000,
+                }
             );
-            
+           
+            console.log("Borrow Token: ", env.mockTokenContracts[0].name);
+            console.log("Collateral Token: ", env.mockTokenContracts[1].name);
+            console.log("Generated Pool address is: ", generatedPoolAddress);
             console.log("calculateNewPoolAddress() is executed successfully.")
             
-            const nonce = (await env.poolFactory.provider.getTransactionCount(env.poolFactory.address)) + 1;
-            let newPoolToken: string = getContractAddress({
-                from: env.poolFactory.address,
-                nonce,
-            });
-            console.log("getContractAddress() is executed successfully.")
+            // const nonce = (await env.poolFactory.provider.getTransactionCount(env.poolFactory.address)) + 1;
+            // let newPoolToken: string = getContractAddress({
+            //     from: env.poolFactory.address,
+            //     nonce,
+            // });
 
-            let {
-                _poolSize,
-                _minborrowAmount,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _collateralAmount,
-            } = createPoolParams;
+            //console.log("getContractAddress() is executed successfully.")
 
+            let collateralAmount = BigNumber.from(1).mul(BigNumber.from(10).pow(CollateralDecimals));
             console.log(await collateralToken.balanceOf(admin.address));
-            console.log(_collateralAmount);
+            console.log(collateralAmount);
             console.log(await collateralToken.balanceOf(borrower.address));
-            await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2));
-            await collateralToken.approve(generatedPoolAddress, _collateralAmount.mul(2));
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmount);
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, collateralAmount);
+            await env.mockTokenContracts[1].contract.connect(borrower).approve(generatedPoolAddress, collateralAmount);
             console.log(await collateralToken.balanceOf(borrower.address));
 
             console.log("collateralToken transfers took place.");
 
-            await expect(
-                env.poolFactory
-                    .connect(borrower)
-                    .createPool(
-                        BigNumber.from(1000).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in DAI pool
-                        BigNumber.from(10).mul(BigNumber.from(10).pow(18)), // 10 DAI
-                        env.mockTokenContracts[0].contract.address,
-                        env.mockTokenContracts[1].contract.address,
-                        // Contracts.DAI,
-                        // Contracts.LINK,
-                        BigNumber.from(200).mul(BigNumber.from(10).pow(28)),
-                        BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,
-                        _repaymentInterval,
-                        _noOfRepaymentIntervals,
-                        env.yields.compoundYield.address,
-                        BigNumber.from(1).mul(BigNumber.from(10).pow(18)), //1 LINK
-                        false,
-                        sha256(Buffer.from(`borrower-${new Date().valueOf()}`)),
-                    )
-            )
-            .to.emit(env.poolFactory, 'PoolCreated')
-            .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-            console.log("Borrower pool created.")
+            console.log(BorrowDecimals, CollateralDecimals);
 
-            let deployHelper: DeployHelper = new DeployHelper(borrower);
-            let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
+            pool = await createNewPool(
+                env,
+                borrowToken,
+                collateralToken,
+                iYield,
+                salt,
+                false,
+                {
+                    _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
+                    _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
+                    _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
+                    _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CollateralDecimals)),
+                    _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                    _collectionPeriod:10000,
+                    _matchCollateralRatioInterval: 200,
+                    _noOfRepaymentIntervals: 10,
+                    _repaymentInterval: 1000,
+                }
+            );
 
-            expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
-            expect(await newlyCreatedToken.symbol()).eq('OBPT');
-            expect(await newlyCreatedToken.decimals()).eq(18);
+            // await expect(
+            //     env.poolFactory
+            //         .connect(borrower)
+            //         .createPool(
+            //             BigNumber.from(1000).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in DAI pool ~1000 DAI
+            //             BigNumber.from(10).mul(BigNumber.from(10).pow(18)), //10 DAI,
+            //             borrowToken.address,
+            //             collateralToken.address,
+            //             BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+            //             BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
+            //             BigNumber.from(1000),
+            //             BigNumber.from(10),
+            //             env.yields.compoundYield.address,
+            //             BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
+            //             false,  
+            //             salt
+            //         )
+            // )
+            // .to.emit(env.poolFactory, 'PoolCreated')
+            // .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
+            // console.log("Borrower pool created.")
+
+            // let deployHelper: DeployHelper = new DeployHelper(borrower);
+            let poolTokenAddress = await pool.poolToken();
+            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
+
+            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.symbol()).eq('OBPT');
+            expect(await poolToken.decimals()).eq(18);
+
+            assert.equal(generatedPoolAddress, pool.address, "Generated and Actual pool address are the same");
         });    
-        it('Deposit collateral (not from savings account)', async() => {
-            await env.poolLogic.connect(env.entities.borrower).depositCollateral(BigNumber.from('1'), false);
-        });
         it("Test Lending", async() => {
-            let amountLent: BigNumber = BigNumber.from(10).mul(BigNumber.from(10).pow(18));
-            await env.poolLogic.connect(env.entities.borrower).depositCollateral(createPoolParams._collateralAmount, false);
-            let borrowToken: ERC20 = env.mockTokenContracts[0].contract //DAI
-            await borrowToken.transfer(env.entities.lender.address, amountLent);
-            await borrowToken.connect(env.entities.lender).approve(env.poolLogic.address, amountLent);
+            const {admin, lender, borrower} = env.entities;
+            const BorrowDecimals = env.mockTokenContracts[0].contract.decimals();
+            const CollateralDecimals = env.mockTokenContracts[1].contract.decimals();
+            const amountLent = BigNumber.from('1').mul(BigNumber.from('10').pow(BorrowDecimals));
+           
+            await borrowToken.transfer(lender.address, amountLent);
+            await borrowToken.connect(lender).approve(pool.address, amountLent);
 
-            await expect(env.poolLogic.connect(env.entities.lender).lend(env.entities.lender.address,
-                                                                    amountLent,
-                                                                    false))
-                                                                    .to.emit(env.poolLogic, 'LiquiditySupplied')
-                                                                    .withArgs(amountLent, env.entities.lender.address);
+            await expect(pool.connect(lender).lend(lender.address, amountLent, false))
+                .to.emit(pool, 'LiquiditySupplied')
+                .withArgs(amountLent, lender.address);
         });
     });
 

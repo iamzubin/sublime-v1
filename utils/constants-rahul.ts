@@ -30,10 +30,16 @@ export const WBTC_Yearn_Protocol_Address = '0xcB550A6D4C8e3517A939BC79d0c7093eb7
 
 //Account Holders
 export const Binance7 = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8'; // has LINK
-export const WhaleAccount = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503'; //has USDC, USDT, DAI
-export const WBTCWhale = '0x28C6c06298d514Db089934071355E5743bf21d60'; // Binance 14
-export const DAIWhale = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503' // DAI
 export const LINKWhale = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8';
+
+export const WhaleAccount = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503'; //has USDC, USDT, DAI
+export const DAIWhale = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503' // DAI
+export const USDTWhale = "0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503"
+
+export const WBTCWhale = '0x28C6c06298d514Db089934071355E5743bf21d60'; // Binance 14
+
+
+
 
 export const aLink = '0xa06bC25B5805d5F8d82847D191Cb4Af5A3e873E0';
 
@@ -59,6 +65,25 @@ export const createPoolParams = {
     _collectionPeriod: BigNumber.from(5000000),
     _matchCollateralRatioInterval: 200
 };
+
+export const createPoolParamsExpt = {
+    _poolSize: BigNumber.from(1000).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in DAI pool ~1000 DAI
+    _borrowAmountRequested: BigNumber.from(10).mul(BigNumber.from(10).pow(18)), //10 DAI for 1 LINK (that's what the borrower is asking for)
+    _minborrowAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), //1 DAI,
+    _collateralRatio: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+    _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
+    _repaymentInterval: BigNumber.from(1000),
+    _noOfRepaymentIntervals: BigNumber.from(25),
+    _collateralAmount: BigNumber.from('3000000000000000000000'), // 3000e18
+    _collateralAmountForETH: BigNumber.from('10000000000000000000'), // 10 ETH
+    _collateralAmountForUNI: BigNumber.from('10000000000000000000'), // 1 UNI
+    _collateralAmountForUSDC: BigNumber.from('1000000000000000000'), // 1 USDC
+    _collateralAmountForWBTC: BigNumber.from('100000000'), // 1 BTC
+    _collateralAmountForLINK: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
+    _loanWithdrawalDuration: BigNumber.from(15000000),
+    _collectionPeriod: BigNumber.from(10000),
+    _matchCollateralRatioInterval: BigNumber.from(200)
+}
 
 // address _borrowTokenType,
 // address _collateralTokenType,
