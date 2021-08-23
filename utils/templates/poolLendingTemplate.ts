@@ -20,7 +20,8 @@ import {
     repaymentParams,
     testPoolFactoryParams,
     aaveYieldParams,
-    createPoolParams
+    createPoolParams,
+    zeroAddress
 } from '../constants-rahul';
 
 import hre from 'hardhat';
@@ -42,6 +43,7 @@ import { OperationalAmounts } from "@utils/constants";
 import { getProxyAdminFactory } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
 export async function poolLendingTest(
+    amount: Number,
     Whale1: Address,
     Whale2: Address,
     BorrowTokenParam: Address,
@@ -106,8 +108,8 @@ export async function poolLendingTest(
             iYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
             
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));        
-            let BorrowDecimals: BigNumberish = await env.mockTokenContracts[0].contract.decimals();
-            let CollateralDecimals:BigNumberish = await env.mockTokenContracts[1].contract.decimals();    
+            let BorrowDecimals: BigNumber = await env.mockTokenContracts[0].contract.decimals();
+            let CollateralDecimals:BigNumber = await env.mockTokenContracts[1].contract.decimals();    
 
             console.log("Params for calculateNewPoolAddress generated.")
 
@@ -131,11 +133,11 @@ export async function poolLendingTest(
                     _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
                     _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
                     _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
-                    _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CollateralDecimals)),
+                    _collateralAmount: BigNumber.from(amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                     _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                     _collectionPeriod:10000,
                     _matchCollateralRatioInterval: 200,
-                    _noOfRepaymentIntervals: 10,
+                    _noOfRepaymentIntervals: 100,
                     _repaymentInterval: 1000,
                 }
             );
@@ -153,11 +155,11 @@ export async function poolLendingTest(
 
             //console.log("getContractAddress() is executed successfully.")
 
-            let collateralAmount = BigNumber.from(1).mul(BigNumber.from(10).pow(CollateralDecimals));
+            let collateralAmount = BigNumber.from(amount).mul(BigNumber.from(10).pow(CollateralDecimals));
             console.log(await collateralToken.balanceOf(admin.address));
             console.log(collateralAmount);
             console.log(await collateralToken.balanceOf(borrower.address));
-            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmount);
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmount.mul(2));
             await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, collateralAmount);
             await env.mockTokenContracts[1].contract.connect(borrower).approve(generatedPoolAddress, collateralAmount);
             console.log(await collateralToken.balanceOf(borrower.address));
@@ -177,11 +179,11 @@ export async function poolLendingTest(
                     _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
                     _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
                     _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
-                    _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CollateralDecimals)),
+                    _collateralAmount: BigNumber.from(amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                     _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                     _collectionPeriod:10000,
                     _matchCollateralRatioInterval: 200,
-                    _noOfRepaymentIntervals: 10,
+                    _noOfRepaymentIntervals: 100,
                     _repaymentInterval: 1000,
                 }
             );
@@ -218,19 +220,43 @@ export async function poolLendingTest(
 
             assert.equal(generatedPoolAddress, pool.address, "Generated and Actual pool address are the same");
         });    
-        it("Test Lending", async() => {
-            const {admin, lender, borrower} = env.entities;
-            const BorrowDecimals = env.mockTokenContracts[0].contract.decimals();
-            const CollateralDecimals = env.mockTokenContracts[1].contract.decimals();
-            const amountLent = BigNumber.from('1').mul(BigNumber.from('10').pow(BorrowDecimals));
-           
-            await borrowToken.transfer(lender.address, amountLent);
-            await borrowToken.connect(lender).approve(pool.address, amountLent);
 
-            await expect(pool.connect(lender).lend(lender.address, amountLent, false))
-                .to.emit(pool, 'LiquiditySupplied')
-                .withArgs(amountLent, lender.address);
+        it('Lender should be able to lend the borrow tokens different account in savingsAccount to the pool', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let lender1 = env.entities.extraLenders[10];
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+    
+            const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+            const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
+            const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+    
+            //Lenders can lend borrow Tokens into the pool
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender1.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender1).approve(env.savingsAccount.address, amount);
+            await env.savingsAccount.connect(lender1).depositTo(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender1.address);
+            await env.savingsAccount.connect(lender1).approve(env.mockTokenContracts[0].contract.address, pool.address, amount);
+    
+            const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+    
+            const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+            assert(
+                poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
+                `Pool tokens not minted correctly. amount: ${amount} Expected: ${poolTokenBalanceBefore.add(
+                    amount
+                )} Actual: ${poolTokenBalanceAfter}`
+            );
+            assert(
+                poolTokenTotalSupplyAfter.toString() == poolTokenTotalSupplyBefore.add(amount).toString(),
+                `Pool token supply not correct. amount: ${amount} Expected: ${poolTokenTotalSupplyBefore.add(
+                    amount
+                )} Actual: ${poolTokenTotalSupplyBefore}`
+            );
         });
+    
     });
 
 }

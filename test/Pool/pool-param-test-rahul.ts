@@ -9,7 +9,8 @@ import {
     LINKWhale,
     ChainLinkAggregators,
     WBTCWhale, 
-    WhaleAccount
+    WhaleAccount,
+    UNIWhale
 } from '../../utils/constants-rahul';
 
 describe("Testing", async () => {
@@ -36,17 +37,19 @@ describe("Testing", async () => {
     // );
 
     await poolLendingTest(
-        DAIWhale,
-        LINKWhale,
-        Contracts.DAI,
-        Contracts.LINK,
-        Contracts.cDAI,
-        "0x95812193E603cA35b55025C242934BAd1a308305",
-        ChainLinkAggregators['DAI/USD'],
-        ChainLinkAggregators['LINK/USD']
+        100,
+        UNIWhale,
+        WhaleAccount,
+        Contracts.USDC,
+        Contracts.UNI,
+        Contracts.cUSDC,
+        Contracts.cUNI,
+        ChainLinkAggregators['USDC/USD'],
+        ChainLinkAggregators['UNI/USD']
     );
 
     await poolLendingTest(
+        1,
         WBTCWhale,
         WhaleAccount,
         Contracts.DAI,
