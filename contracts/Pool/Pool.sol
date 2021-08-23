@@ -392,6 +392,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _collateralShares = poolVars.baseLiquidityShares.add(poolVars.extraLiquidityShares).sub(_penality);
         uint256 _collateralTokens = _collateralShares;
         if (_poolSavingsStrategy != address(0)) {
+            console.log("Cancel Pool Fails here!");
             _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralShares, _collateralAsset);
         }
         poolVars.baseLiquidityShares = _penality;
@@ -488,6 +489,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     function _cancelPool(uint256 _penality) internal {
         poolVars.loanStatus = LoanStatus.CANCELLED;
         IExtension(IPoolFactory(PoolFactory).extension()).closePoolExtension();
+        console.log("Cancel pool to Withdraw Collateral");
         _withdrawAllCollateral(poolConstants.borrower, _penality);
         poolToken.pause();
         emit OpenBorrowPoolCancelled();

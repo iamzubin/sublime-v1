@@ -29,12 +29,12 @@ export const COMP_CURVE_POOL = '0x845838DF265Dcd2c412A1Dc9e959c7d08537f8a2'; //C
 export const WETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7'; // TODO: To be upgraded to v2
 export const WBTC_Yearn_Protocol_Address = '0xcb550a6d4c8e3517a939bc79d0c7093eb7cf56b5';
 
-
 //Account Holders
 export const Binance7 = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8';
 export const WhaleAccount = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503';
 export const WBTCWhale = '0x28C6c06298d514Db089934071355E5743bf21d60'; // Binance 14
 export const UNIWhale = '0x72A53cDBBcc1b9efa39c834A540550e23463AAcB';
+export const INCHWhale = '0x72A53cDBBcc1b9efa39c834A540550e23463AAcB';
 
 export const aLink = '0xa06bC25B5805d5F8d82847D191Cb4Af5A3e873E0';
 

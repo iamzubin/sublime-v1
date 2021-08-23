@@ -139,8 +139,10 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     function getTokensForShares(uint256 shares, address asset) public view override returns (uint256 amount) {
         if (shares == 0) return 0;
         console.log("Checkpoint 2");
-        console.log(liquidityToken[asset]);
+        // console.log(liquidityToken[asset]);
+        // console.log(address(IyVault(liquidityToken[asset])));
         amount = IyVault(liquidityToken[asset]).getPricePerFullShare().mul(shares).div(1e18);
+        console.log(amount);
     }
 
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
