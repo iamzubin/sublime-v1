@@ -27,7 +27,8 @@ export const COMP_CURVE_POOL = '0x845838DF265Dcd2c412A1Dc9e959c7d08537f8a2'; //C
 //WETH = ETH
 //WBTC = BTC
 export const WETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7'; // TODO: To be upgraded to v2
-export const WBTC_Yearn_Protocol_Address = '0xcb550a6d4c8e3517a939bc79d0c7093eb7cf56b5';
+export const WBTC_Yearn_Protocol_Address = '0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E';
+// '0xcb550a6d4c8e3517a939bc79d0c7093eb7cf56b5';
 
 //Account Holders
 export const Binance7 = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8';
