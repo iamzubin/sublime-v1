@@ -231,8 +231,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /*
      * @notice functions affected by this modifier can only be invoked by the borrow of the Pool
      */
-    modifier onlyBorrower() {
-        require(IVerification(userRegistry).isUser(msg.sender), 'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool');
+    modifier onlyBorrower(address _verifier) {
+        require(IVerification(userRegistry).isUser(msg.sender, _verifier), 'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool');
         _;
     }
 
@@ -345,8 +345,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
-        bytes32 _salt
-    ) external payable onlyBorrower {
+        bytes32 _salt,
+        address _verifier
+    ) external payable onlyBorrower(_verifier) {
         require(_minBorrowAmount <= _poolSize, 'PoolFactory::createPool - invalid min borrow amount');
         require(volatilityThreshold[_collateralTokenType] <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
         require(isBorrowToken[_borrowTokenType], 'PoolFactory::createPool - Invalid borrow token type');
