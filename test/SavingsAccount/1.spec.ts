@@ -242,7 +242,7 @@ describe('Test Savings Account (with ETH)', async () => {
         });
     });
 
-    describe.only('#When YearnYield is the strategy', async () => {
+    describe('#When YearnYield is the strategy', async () => {
         let randomAccount: SignerWithAddress;
         let userAccount: SignerWithAddress;
         let withdrawAccount: SignerWithAddress;
