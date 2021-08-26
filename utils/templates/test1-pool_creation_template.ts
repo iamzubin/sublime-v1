@@ -41,8 +41,8 @@ import { create } from "underscore";
 import { OperationalAmounts } from "@utils/constants";
 import { getProxyAdminFactory } from "@openzeppelin/hardhat-upgrades/dist/utils";
 
-export async function poolLendingTest(
-    amount: Number,
+export async function poolCreationTest(
+    Amount: Number,
     Whale1: Address,
     Whale2: Address,
     BorrowTokenParam: Address,
@@ -124,7 +124,7 @@ export async function poolLendingTest(
                     _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
                     _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
                     _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
-                    _collateralAmount: BigNumber.from(amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
+                    _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                     _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                     _collectionPeriod:10000,
                     _matchCollateralRatioInterval: 200,
@@ -138,7 +138,7 @@ export async function poolLendingTest(
             console.log("Generated Pool address is: ", generatedPoolAddress);
             console.log("calculateNewPoolAddress() is executed successfully.")
             
-            let collateralAmount = BigNumber.from(amount).mul(BigNumber.from(10).pow(CollateralDecimals));
+            let collateralAmount = BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals));
             console.log(await collateralToken.balanceOf(admin.address));
             console.log(collateralAmount);
             console.log(await collateralToken.balanceOf(borrower.address));
@@ -162,7 +162,7 @@ export async function poolLendingTest(
                     _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
                     _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
                     _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
-                    _collateralAmount: BigNumber.from(amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
+                    _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                     _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                     _collectionPeriod:10000,
                     _matchCollateralRatioInterval: 200,
