@@ -20,7 +20,7 @@ import {
     zeroAddress
 } from '../../utils/constants-Additions';
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: DAI and Collateral Token: WBTC', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: DAI and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         1,
         WBTCWhale,
@@ -33,7 +33,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: DAI an
         ChainLinkAggregators['BTC/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: UNI and Collateral Token: WBTC', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: UNI and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         1,
         WBTCWhale,
@@ -46,7 +46,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: UNI an
         ChainLinkAggregators['BTC/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: USDC and Collateral Token: WBTC', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: USDC and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         1,
         WBTCWhale,
@@ -59,7 +59,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: USDC a
         ChainLinkAggregators['BTC/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: USDT and Collateral Token: WBTC', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: USDT and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         1,
         WBTCWhale,
@@ -72,7 +72,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: USDT a
         ChainLinkAggregators['BTC/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: COMP and Collateral Token: WBTC', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: COMP and Collateral Token: WBTC', async function () {
     await compoundPoolCollectionStage(
         10,
         WBTCWhale,
@@ -85,7 +85,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: COMP a
         ChainLinkAggregators['BTC/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: USDC and Collateral Token: UNI', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: USDC and Collateral Token: UNI', async function () {
     await compoundPoolCollectionStage(
         100,
         UNIWhale,
@@ -98,7 +98,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: USDC a
         ChainLinkAggregators['UNI/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: USDT and Collateral Token: UNI', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: USDT and Collateral Token: UNI', async function () {
     await compoundPoolCollectionStage(
         100,
         UNIWhale,
@@ -111,7 +111,8 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: USDT a
         ChainLinkAggregators['UNI/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: DAI and Collateral Token: UNI', async function () {
+// Special case
+describe('Test case: Pool using Compound strategy with Borrow Token: DAI and Collateral Token: UNI', async function () {
     await compoundPoolCollectionStage(
         100,
         UNIWhale,
@@ -124,7 +125,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: DAI an
         ChainLinkAggregators['UNI/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: DAI and Collateral Token: COMP', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: DAI and Collateral Token: COMP', async function () {
     await compoundPoolCollectionStage(
         100,
         UNIWhale,
@@ -137,7 +138,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: DAI an
         ChainLinkAggregators['COMP/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: USDC and Collateral Token: COMP', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: USDC and Collateral Token: COMP', async function () {
     await compoundPoolCollectionStage(
         100,
         UNIWhale,
@@ -150,7 +151,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: USDC a
         ChainLinkAggregators['COMP/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: USDT and Collateral Token: COMP', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: USDT and Collateral Token: COMP', async function () {
     await compoundPoolCollectionStage(
         100,
         UNIWhale,
@@ -163,7 +164,7 @@ describe.only('Test case: Pool using Compound strategy with Borrow Token: USDT a
         ChainLinkAggregators['COMP/USD'])
 });
 
-describe.only('Test case: Pool using Compound strategy with Borrow Token: UNI and Collateral Token: COMP', async function () {
+describe('Test case: Pool using Compound strategy with Borrow Token: UNI and Collateral Token: COMP', async function () {
     await compoundPoolCollectionStage(
         100,
         UNIWhale,

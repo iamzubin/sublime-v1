@@ -10,6 +10,8 @@ import '../interfaces/IPool.sol';
 import '../interfaces/IRepayment.sol';
 import '../interfaces/ISavingsAccount.sol';
 
+import 'hardhat/console.sol';
+
 contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -258,12 +260,15 @@ contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGu
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
 
+        console.log("RepayAmount");
+        console.log(_amount);
         uint256 _loanStatus = _pool.getLoanStatus();
         require(_loanStatus == 1, 'Repayments:repayInterest Pool should be active.');
 
         uint256 _amountRequired = 0;
         uint256 _interestPerSecond = getInterestPerSecond(_poolID);
         // First pay off the overdue
+        console.log("Repay Overdue");
         if (repaymentVars[_poolID].isLoanExtensionActive == true) {
             uint256 _interestOverdue = getInterestOverdue(_poolID);
 
@@ -283,6 +288,7 @@ contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGu
             }
         }
 
+        console.log("Repay Second interest");
         // Second pay off the interest
         if (_amount != 0) {
             uint256 _interestLeft = getInterestLeft(_poolID);

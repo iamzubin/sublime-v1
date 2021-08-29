@@ -693,12 +693,14 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         if (_poolSavingsStrategy != address(0)) {
             _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralLiquidityShare, _collateralAsset);
         }
+        console.log("Checkpoint1");
         uint256 _poolBorrowTokens =
             correspondingBorrowTokens(_collateralTokens, _poolFactory, IPoolFactory(_poolFactory).liquidatorRewardFraction());
+        console.log("Checkpoint2");
 
         delete poolVars.extraLiquidityShares;
         delete poolVars.baseLiquidityShares;
-        
+
         _deposit(_fromSavingsAccount, false, _borrowAsset, _poolBorrowTokens, address(0), msg.sender, address(this));
         _withdraw(_toSavingsAccount, _recieveLiquidityShare, _collateralAsset, _poolSavingsStrategy, _collateralTokens);
         delete poolVars.extraLiquidityShares;
@@ -816,6 +818,14 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         IPoolFactory _PoolFactory = IPoolFactory(_poolFactory);
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(_PoolFactory.priceOracle()).getLatestPrice(poolConstants.collateralAsset, poolConstants.borrowAsset);
+        console.log("Checkpoint CBT");
+        // console.log("collateral Tokens", _totalCollateralTokens);
+        // console.log("Ratio", _ratioOfPrices);
+        // console.log("first multiply", _totalCollateralTokens.mul(_ratioOfPrices));
+        // console.log("Other operator",uint256(10**30).sub(_fraction));
+        // console.log("Second Multiply", _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)));
+        // console.log("First divide", _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)).div(10**_decimals));
+        // console.log("Second divide", _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)).div(10**_decimals).div(10**30));
         return _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)).div(10**_decimals).div(10**30);
     }
 
