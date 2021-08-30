@@ -4,6 +4,7 @@ pragma solidity 0.7.0;
 import '../interfaces/ISavingsAccount.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import 'hardhat/console.sol';
 
 import 'hardhat/console.sol';
 
@@ -36,6 +37,7 @@ library SavingsAccountUtil {
         bool _toSavingsAccount,
         address _strategy
     ) internal returns (uint256) {
+        console.log('SavingsAccountUtil: directDeposit _toSavingsAccount', _toSavingsAccount);
         if (_toSavingsAccount) {
             // console.log("DD IF");
             return directSavingsAccountDeposit(_savingsAccount, _from, _to, _amount, _asset, _strategy);
@@ -66,6 +68,7 @@ library SavingsAccountUtil {
             }
             IERC20(_asset).safeApprove(_approveTo, _amount);
         }
+        console.log('Pool.directSavingsAccountDeposit trying to call deposit To');
         _sharesReceived = _savingsAccount.depositTo{value: _ethValue}(_amount, _asset, _strategy, _to);
     }
 
@@ -107,23 +110,31 @@ library SavingsAccountUtil {
         address _from,
         address _to
     ) internal returns (uint256) {
+        console.log('Savings Account Util transferTokens: _amount', _amount);
         if (_amount == 0) {
             // console.log(_amount);
             return 0;
         }
         if (_asset == address(0)) {
-            // console.log(_asset);
-            // console.log(msg.value >= _amount);
-            require(msg.value >= _amount, '');
+            require(msg.value >= _amount, 'ethers provided should be greater than _amount');
+            console.log('Pool: transfer token CP1 _to', _to);
+            console.log('Pool: transfer token CP1 address(this)', address(this));
+
             if (_to != address(this)) {
                 (bool success, ) = payable(_to).call{value: _amount}('');
                 console.log(success);
                 require(success, 'Transfer failed');
             }
             if (msg.value >= _amount) {
-                (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
-                // console.log("Msg.Value",success);
-                require(success, 'Transfer failed');
+                console.log('Pool: transfer tokens _amount', _amount);
+                console.log('Pool: transfer ethers using msg.value to _to where msg.value=', msg.value);
+                if (msg.value - _amount != 0) {
+                    (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
+                    // payable(address(msg.sender)).transfer(msg.value - _amount);
+                    console.log('Successful transfer');
+                    // console.log("Pool: transfer ethers using msg.value to ?success", success);
+                    require(success, 'Transfer failed');
+                }
             } else {
                 revert('Insufficient Ether');
             }

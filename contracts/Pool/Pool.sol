@@ -15,6 +15,7 @@ import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IExtension.sol';
 import '../interfaces/IPoolToken.sol';
+import 'hardhat/console.sol';
 
 import 'hardhat/console.sol';
 
@@ -241,10 +242,16 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     ) internal {
         uint256 _equivalentCollateral =
             getEquivalentTokens(poolConstants.borrowAsset, poolConstants.collateralAsset, poolConstants.borrowAmountRequested);
-
-        // console.log("Amount", _amount);
-        // console.log(poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30));
-        // console.log(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30));
+        console.log('Pool _initial deposit eq collateral', _equivalentCollateral);
+        console.log('Pool _initial deposit eq _amount', _amount);
+        console.log(
+            'Pool _initial deposit eq poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30)',
+            poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30)
+        );
+        console.log(
+            'Pool _initial deposit eq _amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30)',
+            _amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30)
+        );
         require(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30), '36');
         _depositCollateral(_borrower, _amount, _transferFromSavingsAccount);
     }
@@ -285,6 +292,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         address _depositFrom,
         address _depositTo
     ) internal returns (uint256 _sharesReceived) {
+        console.log('Pool: _deposit', _fromSavingsAccount);
         if (_fromSavingsAccount) {
             // console.log("Checkpoint2_if");
             _sharesReceived = SavingsAccountUtil.depositFromSavingsAccount(
@@ -298,7 +306,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
                 _toSavingsAccount
             );
         } else {
-            // console.log("Checkpoint2_else");
+            console.log('Pool: _deposit: _asset', _asset);
             _sharesReceived = SavingsAccountUtil.directDeposit(
                 ISavingsAccount(IPoolFactory(PoolFactory).savingsAccount()),
                 _depositFrom,

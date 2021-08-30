@@ -82,7 +82,7 @@ export async function createEnvironment(
             let name = await contract.symbol();
             env.mockTokenContracts.push({ name, contract });
         } catch (e) {
-            console.log(e);
+            // console.log(e);
             env.mockTokenContracts.push({ name: 'name not found', contract });
         }
     }
@@ -282,7 +282,8 @@ export async function createNewPool(
             strategy.address,
             poolCreateParams._collateralAmount,
             _transferFromSavingsAccount,
-            salt
+            salt,
+            { value: collateralToken.address === zeroAddress ? poolCreateParams._collateralAmount : 0 }
         );
 
     return deployHelper.pool.getPool(generatedPoolAddress);
