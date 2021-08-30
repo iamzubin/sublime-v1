@@ -582,7 +582,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 repayAmount,
         bytes32 creditLineHash,
         bool _transferFromSavingAccount
-    ) external nonReentrant payable {
+    ) external payable nonReentrant {
         require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(creditLineHash);
@@ -670,7 +670,11 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         }
     }
 
-    function withdrawCollateralFromCreditLine(bytes32 creditLineHash, uint256 amount) external nonReentrant onlyCreditLineBorrower(creditLineHash) {
+    function withdrawCollateralFromCreditLine(bytes32 creditLineHash, uint256 amount)
+        external
+        nonReentrant
+        onlyCreditLineBorrower(creditLineHash)
+    {
         //check for ideal ratio
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(priceOracle).getLatestPrice(

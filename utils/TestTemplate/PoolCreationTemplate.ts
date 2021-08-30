@@ -1,4 +1,4 @@
-import { createEnvironment, calculateNewPoolAddress, createNewPool } from "../createEnv";
+import { createEnvironment, calculateNewPoolAddress, createNewPool } from '../createEnv';
 
 import {
     CompoundPair,
@@ -20,26 +20,26 @@ import {
     testPoolFactoryParams,
     aaveYieldParams,
     createPoolParams,
-    zeroAddress
+    zeroAddress,
 } from '../constants-rahul';
 
 import hre from 'hardhat';
-const {ethers, network} = hre
+const { ethers, network } = hre;
 import { Contracts } from '../../existingContracts/compound.json';
-import { assert, expect } from "chai";
+import { assert, expect } from 'chai';
 
-import DeployHelper from "../deploys";
-import {ERC20} from "../../typechain/ERC20";
+import DeployHelper from '../deploys';
+import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { PoolToken } from '../../typechain/PoolToken';
 import { BigNumber, BigNumberish } from 'ethers';
-import { IYield } from "../../typechain/IYield";
+import { IYield } from '../../typechain/IYield';
 import { Context } from 'mocha';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '../../typechain/Pool';
-import { create } from "underscore";
-import { OperationalAmounts } from "@utils/constants";
-import { getProxyAdminFactory } from "@openzeppelin/hardhat-upgrades/dist/utils";
+import { create } from 'underscore';
+import { OperationalAmounts } from '@utils/constants';
+import { getProxyAdminFactory } from '@openzeppelin/hardhat-upgrades/dist/utils';
 
 export async function poolCreationTest(
     Amount: Number,
@@ -52,8 +52,8 @@ export async function poolCreationTest(
     chainlinkBorrowParam: Address,
     chainlinkCollateralParam: Address
 ): Promise<any> {
-    describe("Pool", async() => {
-        let env:Environment;
+    describe('Pool', async () => {
+        let env: Environment;
         let deployHelper: DeployHelper;
         let borrowToken: ERC20;
         let collateralToken: ERC20;
@@ -66,14 +66,15 @@ export async function poolCreationTest(
                 hre,
                 [Whale1, Whale2],
                 [
-                    { asset: BorrowTokenParam, liquidityToken: liquidityBorrowTokenParam},
+                    { asset: BorrowTokenParam, liquidityToken: liquidityBorrowTokenParam },
                     { asset: CollateralTokenParam, liquidityToken: liquidityCollateralTokenParam },
                 ] as CompoundPair[],
                 [] as YearnPair[],
                 [
                     { tokenAddress: BorrowTokenParam, feedAggregator: chainlinkBorrowParam },
                     { tokenAddress: CollateralTokenParam, feedAggregator: chainlinkCollateralParam },
-                ] as PriceOracleSource[],                {
+                ] as PriceOracleSource[],
+                {
                     votingPassRatio: extensionParams.votingPassRatio,
                 } as ExtensionInitParams,
                 {
@@ -96,48 +97,39 @@ export async function poolCreationTest(
                 CreditLineDefaultStrategy.Compound,
                 { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
             );
-            
-            
-            console.log("createEnvironment() executed successfully.");
 
-            let {admin, borrower, lender} = env.entities;
+            console.log('createEnvironment() executed successfully.');
+
+            let { admin, borrower, lender } = env.entities;
             deployHelper = new DeployHelper(admin);
             borrowToken = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address); //DAI
-            collateralToken = await deployHelper.mock.getMockERC20(env.mockTokenContracts[1].contract.address); //LINK 
+            collateralToken = await deployHelper.mock.getMockERC20(env.mockTokenContracts[1].contract.address); //LINK
             iYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
-            
-            let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));        
+
+            let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
             let BorrowDecimals: BigNumber = await env.mockTokenContracts[0].contract.decimals();
-            let CollateralDecimals:BigNumber = await env.mockTokenContracts[1].contract.decimals();    
+            let CollateralDecimals: BigNumber = await env.mockTokenContracts[1].contract.decimals();
 
-            console.log("Params for calculateNewPoolAddress generated.");            
-            console.log("Volatility Threshold updated.")    
+            console.log('Params for calculateNewPoolAddress generated.');
+            console.log('Volatility Threshold updated.');
 
-            generatedPoolAddress = await calculateNewPoolAddress(
-                env,
-                borrowToken,
-                collateralToken,
-                iYield,
-                salt,
-                false,
-                {
-                    _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
-                    _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
-                    _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
-                    _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
-                    _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
-                    _collectionPeriod:10000,
-                    _matchCollateralRatioInterval: 200,
-                    _noOfRepaymentIntervals: 100,
-                    _repaymentInterval: 1000,
-                }
-            );
-           
-            console.log("Borrow Token: ", env.mockTokenContracts[0].name);
-            console.log("Collateral Token: ", env.mockTokenContracts[1].name);
-            console.log("Generated Pool address is: ", generatedPoolAddress);
-            console.log("calculateNewPoolAddress() is executed successfully.")
-            
+            generatedPoolAddress = await calculateNewPoolAddress(env, borrowToken, collateralToken, iYield, salt, false, {
+                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
+                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
+                _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
+                _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
+                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                _collectionPeriod: 10000,
+                _matchCollateralRatioInterval: 200,
+                _noOfRepaymentIntervals: 100,
+                _repaymentInterval: 1000,
+            });
+
+            console.log('Borrow Token: ', env.mockTokenContracts[0].name);
+            console.log('Collateral Token: ', env.mockTokenContracts[1].name);
+            console.log('Generated Pool address is: ', generatedPoolAddress);
+            console.log('calculateNewPoolAddress() is executed successfully.');
+
             let collateralAmount = BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals));
             console.log(await collateralToken.balanceOf(admin.address));
             console.log(collateralAmount);
@@ -147,29 +139,21 @@ export async function poolCreationTest(
             await env.mockTokenContracts[1].contract.connect(borrower).approve(generatedPoolAddress, collateralAmount);
             console.log(await collateralToken.balanceOf(borrower.address));
 
-            console.log("collateralToken transfers took place.");
+            console.log('collateralToken transfers took place.');
 
             console.log(BorrowDecimals, CollateralDecimals);
 
-            pool = await createNewPool(
-                env,
-                borrowToken,
-                collateralToken,
-                iYield,
-                salt,
-                false,
-                {
-                    _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
-                    _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
-                    _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
-                    _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
-                    _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
-                    _collectionPeriod:10000,
-                    _matchCollateralRatioInterval: 200,
-                    _noOfRepaymentIntervals: 100,
-                    _repaymentInterval: 1000,
-                }
-            );
+            pool = await createNewPool(env, borrowToken, collateralToken, iYield, salt, false, {
+                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
+                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
+                _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
+                _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
+                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                _collectionPeriod: 10000,
+                _matchCollateralRatioInterval: 200,
+                _noOfRepaymentIntervals: 100,
+                _repaymentInterval: 1000,
+            });
 
             let poolTokenAddress = await pool.poolToken();
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
@@ -177,11 +161,10 @@ export async function poolCreationTest(
             expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
-        });    
-
-        it("Pool created successfully for this pair", async function() {
-            assert.equal(generatedPoolAddress, pool.address, "Generated and Actual pool address are the same");
         });
 
+        it('Pool created successfully for this pair', async function () {
+            assert.equal(generatedPoolAddress, pool.address, 'Generated and Actual pool address are the same');
+        });
     });
 }

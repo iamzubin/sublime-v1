@@ -15,9 +15,6 @@ import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IExtension.sol';
 import '../interfaces/IPoolToken.sol';
-import 'hardhat/console.sol';
-
-import 'hardhat/console.sol';
 
 contract Pool is Initializable, IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -225,7 +222,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      */
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) public payable override {
         require(_amount != 0, '7');
-        // console.log("Checkpoint1");
         _depositCollateral(msg.sender, _amount, _transferFromSavingsAccount);
     }
 
@@ -242,16 +238,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     ) internal {
         uint256 _equivalentCollateral =
             getEquivalentTokens(poolConstants.borrowAsset, poolConstants.collateralAsset, poolConstants.borrowAmountRequested);
-        console.log('Pool _initial deposit eq collateral', _equivalentCollateral);
-        console.log('Pool _initial deposit eq _amount', _amount);
-        console.log(
-            'Pool _initial deposit eq poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30)',
-            poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30)
-        );
-        console.log(
-            'Pool _initial deposit eq _amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30)',
-            _amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30)
-        );
         require(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30), '36');
         _depositCollateral(_borrower, _amount, _transferFromSavingsAccount);
     }
@@ -267,7 +253,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _amount,
         bool _transferFromSavingsAccount
     ) internal nonReentrant {
-        // console.log("Checkpoint2");
         uint256 _sharesReceived =
             _deposit(
                 _transferFromSavingsAccount,
@@ -279,7 +264,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
                 address(this)
             );
         poolVars.baseLiquidityShares = poolVars.baseLiquidityShares.add(_sharesReceived);
-        // console.log(_sharesReceived);
         emit CollateralAdded(_depositor, _amount, _sharesReceived);
     }
 
@@ -292,9 +276,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         address _depositFrom,
         address _depositTo
     ) internal returns (uint256 _sharesReceived) {
-        console.log('Pool: _deposit', _fromSavingsAccount);
         if (_fromSavingsAccount) {
-            // console.log("Checkpoint2_if");
             _sharesReceived = SavingsAccountUtil.depositFromSavingsAccount(
                 ISavingsAccount(IPoolFactory(PoolFactory).savingsAccount()),
                 _depositFrom,
@@ -306,7 +288,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
                 _toSavingsAccount
             );
         } else {
-            console.log('Pool: _deposit: _asset', _asset);
             _sharesReceived = SavingsAccountUtil.directDeposit(
                 ISavingsAccount(IPoolFactory(PoolFactory).savingsAccount()),
                 _depositFrom,
@@ -400,7 +381,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _collateralShares = poolVars.baseLiquidityShares.add(poolVars.extraLiquidityShares).sub(_penality);
         uint256 _collateralTokens = _collateralShares;
         if (_poolSavingsStrategy != address(0)) {
-            // console.log("Cancel Pool Fails here!");
             _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralShares, _collateralAsset);
         }
         poolVars.baseLiquidityShares = _penality;
@@ -497,7 +477,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     function _cancelPool(uint256 _penality) internal {
         poolVars.loanStatus = LoanStatus.CANCELLED;
         IExtension(IPoolFactory(PoolFactory).extension()).closePoolExtension();
-        // console.log("Cancel pool to Withdraw Collateral");
         _withdrawAllCollateral(poolConstants.borrower, _penality);
         poolToken.pause();
         emit OpenBorrowPoolCancelled();
@@ -701,10 +680,8 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         if (_poolSavingsStrategy != address(0)) {
             _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralLiquidityShare, _collateralAsset);
         }
-        console.log("Checkpoint1");
         uint256 _poolBorrowTokens =
             correspondingBorrowTokens(_collateralTokens, _poolFactory, IPoolFactory(_poolFactory).liquidatorRewardFraction());
-        console.log("Checkpoint2");
 
         delete poolVars.extraLiquidityShares;
         delete poolVars.baseLiquidityShares;
@@ -826,14 +803,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         IPoolFactory _PoolFactory = IPoolFactory(_poolFactory);
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(_PoolFactory.priceOracle()).getLatestPrice(poolConstants.collateralAsset, poolConstants.borrowAsset);
-        console.log("Checkpoint CBT");
-        // console.log("collateral Tokens", _totalCollateralTokens);
-        // console.log("Ratio", _ratioOfPrices);
-        // console.log("first multiply", _totalCollateralTokens.mul(_ratioOfPrices));
-        // console.log("Other operator",uint256(10**30).sub(_fraction));
-        // console.log("Second Multiply", _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)));
-        // console.log("First divide", _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)).div(10**_decimals));
-        // console.log("Second divide", _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)).div(10**_decimals).div(10**30));
         return _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)).div(10**_decimals).div(10**30);
     }
 
