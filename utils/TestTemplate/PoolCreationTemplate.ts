@@ -29,14 +29,14 @@ import { Contracts } from '../../existingContracts/compound.json';
 import { assert, expect } from "chai";
 
 import DeployHelper from "../deploys";
-import { ERC20 } from "@typechain/ERC20";
+import {ERC20} from "../../typechain/ERC20";
 import { sha256 } from '@ethersproject/sha2';
 import { PoolToken } from '../../typechain/PoolToken';
 import { BigNumber, BigNumberish } from 'ethers';
-import { IYield } from '@typechain/IYield';
+import { IYield } from "../../typechain/IYield";
 import { Context } from 'mocha';
 import { Address } from 'hardhat-deploy/dist/types';
-import { Pool } from '@typechain/Pool';
+import { Pool } from '../../typechain/Pool';
 import { create } from "underscore";
 import { OperationalAmounts } from "@utils/constants";
 import { getProxyAdminFactory } from "@openzeppelin/hardhat-upgrades/dist/utils";
