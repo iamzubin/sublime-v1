@@ -227,8 +227,7 @@ export async function compoundPoolCollectionStage(
 
         // Getting additional Shares
         let SharesReceived = SharesAfter.sub(SharesBefore);
-        // console.log({SharesReceived: SharesReceived.toNumber()});
-
+         
         // Checking shares received and matching with the deposited amount
         expectApproxEqual(SharesReceived, AmountForDeposit, 50);
     });
@@ -410,11 +409,6 @@ describe('Pool Simulations: Active Stage', async() => {
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
-
-        // console.log({ calculatedPoolAddress: poolAddress });
-
-        // console.log("Borrow Token: ", env.mockTokenContracts[0].name);
-        // console.log("Collateral Token: ", env.mockTokenContracts[1].name);
         
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
@@ -431,8 +425,6 @@ describe('Pool Simulations: Active Stage', async() => {
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
-
-        // console.log({ actualPoolAddress: pool.address });
         
         let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
 
@@ -494,23 +486,11 @@ describe('Pool Simulations: Active Stage', async() => {
         const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
         const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
 
-        // When using Savings Account
-        // const borrowAssetBalancePoolSavings = await env.savingsAccount.userLockedBalance(
-        //     pool.address,
-        //     borrowToken.address,
-        //     zeroAddress
-        // );
         const tokensLent = await poolToken.totalSupply();
         await pool.connect(borrower).withdrawBorrowedAmount();
         const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
         const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
 
-        // When using Savings Account
-        // const borrowAssetBalancePoolSavingsAfter = await env.savingsAccount.userLockedBalance(
-        //     pool.address,
-        //     borrowToken.address,
-        //     zeroAddress
-        // );
         const tokensLentAfter = await poolToken.totalSupply();
         const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
@@ -527,11 +507,6 @@ describe('Pool Simulations: Active Stage', async() => {
                 .sub(tokensLentAfter)
                 .toString()}`
         );
-        // When using Savings Account
-        // assert(
-        //     borrowAssetBalancePoolSavings.toString() == borrowAssetBalancePoolSavingsAfter.toString(),
-        //     `Savings account changing instead of token balance`
-        // );
 
         let LoanStatus = (await pool.poolVars()).loanStatus;   
         assert(
@@ -542,375 +517,6 @@ describe('Pool Simulations: Active Stage', async() => {
 
     });
 });
-
-
-describe('Pool Simulations: Defaulted Stage', async() => {
-    let env: Environment;
-    let pool: Pool;
-    let poolAddress: Address;
-    let poolToken: PoolToken;
-
-    let deployHelper: DeployHelper;
-    let BorrowAsset: ERC20;
-    let CollateralAsset: ERC20;
-    let iyield: IYield;
-    let Compound: CompoundYield;
-
-    const scaler = BigNumber.from('10').pow(30);
-
-    before(async () => {
-        env = await createEnvironment(
-            hre,
-            [WhaleAccount1, WhaleAccount2],
-            [
-                { asset: BorrowToken, liquidityToken: liquidityBorrowToken},
-                { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
-            ] as CompoundPair[],
-            [] as YearnPair[],
-            [
-                { tokenAddress: BorrowToken, feedAggregator: chainlinkBorrow },
-                { tokenAddress: CollateralToken, feedAggregator: ChainlinkCollateral },
-            ] as PriceOracleSource[],
-            {
-                votingPassRatio: extensionParams.votingPassRatio,
-            } as ExtensionInitParams,
-            {
-                gracePenalityRate: repaymentParams.gracePenalityRate,
-                gracePeriodFraction: repaymentParams.gracePeriodFraction,
-            } as RepaymentsInitParams,
-            {
-                admin: '',
-                _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
-                _marginCallDuration: testPoolFactoryParams._marginCallDuration,
-                _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
-                _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
-                _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
-                _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
-                protocolFeeCollector: '',
-            } as PoolFactoryInitParams,
-            CreditLineDefaultStrategy.Compound,
-            { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
-        );
-
-        let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
-        let { admin, borrower, lender } = env.entities;
-        deployHelper = new DeployHelper(admin);
-        BorrowAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address);
-        CollateralAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[1].contract.address);
-        iyield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
-
-        let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
-        let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
-
-        poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
-            _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-            _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
-            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
-            _collectionPeriod: 10000,
-            _matchCollateralRatioInterval: 200,
-            _noOfRepaymentIntervals: 100,
-            _repaymentInterval: 1000,
-        });
-
-        // console.log({ calculatedPoolAddress: poolAddress });
-
-        // console.log("Borrow Token: ", env.mockTokenContracts[0].name);
-        // console.log("Collateral Token: ", env.mockTokenContracts[1].name);
-        
-        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
-        await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
-        await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
-
-        pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
-            _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-            _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
-            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
-            _collectionPeriod: 10000,
-            _matchCollateralRatioInterval: 200,
-            _noOfRepaymentIntervals: 100,
-            _repaymentInterval: 1000,
-        });
-
-        // console.log({ actualPoolAddress: pool.address });
-        
-        let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-        poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-        expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
-        expect(await poolToken.symbol()).eq('OBPT');
-        expect(await poolToken.decimals()).eq(18);
-
-        assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
-    });
-
-    it('Anyone should be able to Liquidate the loan', async function () {
-        let { admin, borrower, lender } = env.entities;
-        let random = env.entities.extraLenders[10];
-        let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
-        let collateralToken = await env.mockTokenContracts[1].contract;
-        let borrowToken =await env.mockTokenContracts[0].contract;
-        let poolStrategy = await env.yields.compoundYield;
-        let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Token
-
-        // Approving Borrow tokens to the lender
-        await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
-        await borrowToken.connect(admin).transfer(lender.address, amount);
-        await borrowToken.connect(lender).approve(poolAddress, amount);        
-
-        // Lender lends into the pool
-        const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
-        await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-        await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
-
-        //block travel to escape withdraw interval
-        const { loanStartTime } = await pool.poolConstants();
-        await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
-
-        // Borrower withdraws borrow tokens
-        await pool.connect(borrower).withdrawBorrowedAmount();
-
-        // Request extension
-        await env.extenstion.connect(borrower).requestExtension(pool.address);
-        await env.extenstion.connect(lender).voteOnExtension(pool.address);
-
-        const interestForCurrentPeriod = (await env.repayments.connect(random).getInterestDueTillInstalmentDeadline(pool.address)).div(
-            scaler
-        );
-        await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestForCurrentPeriod);
-        await borrowToken.connect(admin).transfer(random.address, interestForCurrentPeriod);
-        await borrowToken.connect(random).approve(env.repayments.address, interestForCurrentPeriod);
-        console.log("Repay Amount!");
-        let balance = await borrowToken.balanceOf(random.address);
-        console.log("Random balance:", balance.toString());
-        await env.repayments.connect(random).repayAmount(pool.address, interestForCurrentPeriod);
-        console.log("Amount Repaid!");
-
-        const endOfExtension: BigNumber = (await env.repayments.connect(random).getNextInstalmentDeadline(pool.address)).div(scaler);
-        const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction
-            .mul(createPoolParams._repaymentInterval)
-            .div(scaler);
-        await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
-
-        const collateralShares = await env.savingsAccount.connect(random).userLockedBalance(
-            pool.address,
-            collateralToken.address,
-            poolStrategy.address
-        );
-
-        let collateralTokens = await poolStrategy.callStatic.getTokensForShares(
-            collateralShares.sub(2),
-            collateralToken.address
-        );
-        let borrowTokensForCollateral = await pool.getEquivalentTokens(
-            collateralToken.address,
-            borrowToken.address,
-            collateralTokens
-        );
-        await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
-        await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
-        await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
-        console.log("Reached Here");
-        await pool.connect(random).liquidatePool(false, false, false);
-        
-        // Borrower misses a repayment
-        // const repayAmount = createPoolParams._borrowRate
-        //                 .mul(amount)
-        //                 .mul(createPoolParams._repaymentInterval)
-        //                 .div(60 * 60 * 24 * 365)
-        //                 .div(scaler);
-
-        // await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, repayAmount);
-        // await borrowToken.connect(admin).transfer(random.address, repayAmount);
-        // await borrowToken.connect(random).approve(env.repayments.address, repayAmount);
-
-        // Do not repay
-        // await env.repayments.connect(random).repayAmount(pool.address, repayAmount);
-
-        // let deadline = await env.repayments.connect(borrower).getCurrentInstalmentInterval(poolAddress);
-        // const endOfPeriod: BigNumber = (await env.repayments.connect(borrower).getNextInstalmentDeadline(pool.address)).div(scaler);
-        // const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
-
-        // await blockTravel(network, parseInt(endOfPeriod.add(gracePeriod).add(1).toString()));
-
-        // const collateralShares = await env.savingsAccount.connect(borrower).userLockedBalance(
-        //     pool.address,
-        //     collateralToken.address,
-        //     poolStrategy.address
-        // );
-        // let collateralTokens = await poolStrategy.callStatic.getTokensForShares(
-        //     collateralShares.sub(2),
-        //     collateralToken.address
-        // );
-        // let borrowTokensForCollateral = await pool.getEquivalentTokens(
-        //     collateralToken.address,
-        //     borrowToken.address,
-        //     collateralTokens
-        // );
-        
-
-        // Calling liquidate pool
-        // await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
-        // await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
-        // await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
-        // console.log("Liquidating pool");
-        // await pool.connect(random).liquidatePool(false, false, false);
-        // console.log("Liquidated pool");
-
-
-        // Loan status should be 4
-        let LoanStatus = (await pool.poolVars()).loanStatus; 
-        console.log("Loan Status",LoanStatus);  
-        // assert(
-        //     LoanStatus.toString() == BigNumber.from('2').toString(),
-        //     `Pool should be in Collection Stage. Expected: ${BigNumber.from('2').toString()} 
-        //     Actual: ${LoanStatus}`
-        // ); 
-    });
-});
-
-xdescribe('Pool Simulations: Closed Stage', async() => {
-    let env: Environment;
-    let pool: Pool;
-    let poolAddress: Address;
-    let poolToken: PoolToken;
-
-    let deployHelper: DeployHelper;
-    let BorrowAsset: ERC20;
-    let CollateralAsset: ERC20;
-    let iyield: IYield;
-    let Compound: CompoundYield;
-
-    before(async () => {
-        env = await createEnvironment(
-            hre,
-            [WhaleAccount1, WhaleAccount2],
-            [
-                { asset: BorrowToken, liquidityToken: liquidityBorrowToken},
-                { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
-            ] as CompoundPair[],
-            [] as YearnPair[],
-            [
-                { tokenAddress: BorrowToken, feedAggregator: chainlinkBorrow },
-                { tokenAddress: CollateralToken, feedAggregator: ChainlinkCollateral },
-            ] as PriceOracleSource[],
-            {
-                votingPassRatio: extensionParams.votingPassRatio,
-            } as ExtensionInitParams,
-            {
-                gracePenalityRate: repaymentParams.gracePenalityRate,
-                gracePeriodFraction: repaymentParams.gracePeriodFraction,
-            } as RepaymentsInitParams,
-            {
-                admin: '',
-                _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
-                _marginCallDuration: testPoolFactoryParams._marginCallDuration,
-                _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
-                _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
-                _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
-                _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
-                protocolFeeCollector: '',
-            } as PoolFactoryInitParams,
-            CreditLineDefaultStrategy.Compound,
-            { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
-        );
-
-        let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
-        let { admin, borrower, lender } = env.entities;
-        deployHelper = new DeployHelper(admin);
-        BorrowAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address);
-        CollateralAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[1].contract.address);
-        iyield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
-
-        let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
-        let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
-
-        poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
-            _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-            _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
-            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
-            _collectionPeriod: 10000,
-            _matchCollateralRatioInterval: 200,
-            _noOfRepaymentIntervals: 100,
-            _repaymentInterval: 1000,
-        });
-
-        // console.log({ calculatedPoolAddress: poolAddress });
-
-        // console.log("Borrow Token: ", env.mockTokenContracts[0].name);
-        // console.log("Collateral Token: ", env.mockTokenContracts[1].name);
-        
-        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
-        await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
-        await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
-
-        pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
-            _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-            _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
-            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
-            _collectionPeriod: 10000,
-            _matchCollateralRatioInterval: 200,
-            _noOfRepaymentIntervals: 100,
-            _repaymentInterval: 1000,
-        });
-
-        // console.log({ actualPoolAddress: pool.address });
-        
-        let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-        poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-        expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
-        expect(await poolToken.symbol()).eq('OBPT');
-        expect(await poolToken.decimals()).eq(18);
-
-        assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
-    });
-
-    it('Borrower should be able to close the pool, once repayment is done', async function () {
-        let { admin, borrower, lender } = env.entities;
-        let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
-        let Borrow = await env.mockTokenContracts[0].contract;
-
-        const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));        
-
-        //Lenders lend borrow Tokens into the pool
-        await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
-        await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
-        await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
-
-        const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
-        await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-        await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
-
-        // After the withdraw period ends
-        // Borrower should withdraw the borrow amount
-        // Borrower should repay the repayments
-        // Borrower should repay the principal => this closes the loan
-
-        let LoanStatus = (await pool.poolVars()).loanStatus;   
-        assert(
-            LoanStatus.toString() == BigNumber.from('3').toString(),
-            `Pool not terminated correctly. Expected: ${BigNumber.from('3').toString()} 
-            Actual: ${LoanStatus}`
-        );
-    });
-});
-
 
 describe('Pool Simulations: Cancellation Stage', async() => {
     let env: Environment;
@@ -982,11 +588,6 @@ describe('Pool Simulations: Cancellation Stage', async() => {
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
-
-        // console.log({ calculatedPoolAddress: poolAddress });
-
-        // console.log("Borrow Token: ", env.mockTokenContracts[0].name);
-        // console.log("Collateral Token: ", env.mockTokenContracts[1].name);
         
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
@@ -1003,8 +604,6 @@ describe('Pool Simulations: Cancellation Stage', async() => {
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
-
-        // console.log({ actualPoolAddress: pool.address });
         
         let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
 
@@ -1161,11 +760,6 @@ describe('Pool Simulations: Termination Stage', async() => {
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
-
-        // console.log({ calculatedPoolAddress: poolAddress });
-
-        // console.log("Borrow Token: ", env.mockTokenContracts[0].name);
-        // console.log("Collateral Token: ", env.mockTokenContracts[1].name);
         
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
@@ -1182,8 +776,6 @@ describe('Pool Simulations: Termination Stage', async() => {
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
-
-        // console.log({ actualPoolAddress: pool.address });
         
         let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
 
