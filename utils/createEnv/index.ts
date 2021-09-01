@@ -87,7 +87,7 @@ export async function createEnvironment(
         }
     }
 
-    entities.admin = proxyAdmin;
+    entities.admin = admin;
     entities.borrower = borrower;
     entities.lender = lender;
     entities.protocolFeeCollector = protocolFeeCollector;
