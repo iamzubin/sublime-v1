@@ -40,7 +40,7 @@ export async function compoundPoolCollectionStage(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
-    xdescribe('Pool Simulation: Collection Stage', async () => {
+    describe('Pool Simulation: Collection Stage', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -340,7 +340,7 @@ export async function compoundPoolCollectionStage(
         });
     });
 
-    xdescribe('Pool Simulations: Active Stage', async () => {
+    describe('Pool Simulations: Active Stage', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -749,7 +749,7 @@ export async function compoundPoolCollectionStage(
         });
     });
 
-    describe('Pool Simulations: Closed Stage', async () => {
+    xdescribe('Pool Simulations: Closed Stage', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -970,7 +970,7 @@ export async function compoundPoolCollectionStage(
         });
     });
 
-    xdescribe('Pool Simulations: Cancellation Stage', async () => {
+    describe('Pool Simulations: Cancellation Stage', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -1154,7 +1154,7 @@ export async function compoundPoolCollectionStage(
         });
     });
 
-    xdescribe('Pool Simulations: Termination Stage', async () => {
+    describe('Pool Simulations: Termination Stage', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;

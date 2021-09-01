@@ -105,14 +105,18 @@ library SavingsAccountUtil {
             return 0;
         }
         if (_asset == address(0)) {
-            require(msg.value >= _amount, '');
+            require(msg.value >= _amount, 'ethers provided should be greater than _amount');
+
             if (_to != address(this)) {
                 (bool success, ) = payable(_to).call{value: _amount}('');
                 require(success, 'Transfer failed');
             }
             if (msg.value >= _amount) {
-                (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
-                require(success, 'Transfer failed');
+                if (msg.value - _amount != 0) {
+                    (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
+                    // payable(address(msg.sender)).transfer(msg.value - _amount);
+                    require(success, 'Transfer failed');
+                }
             } else {
                 revert('Insufficient Ether');
             }

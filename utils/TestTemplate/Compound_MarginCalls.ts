@@ -194,7 +194,7 @@ export async function compound_MarginCalls(
             await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('26');
         });
 
-        it('Lender should be able to request margin call only if the price goes down', async function () {
+        xit('Lender should be able to request margin call only if the price goes down', async function () {
             let { admin, borrower, lender } = env.entities;
             let lender1 = await env.entities.extraLenders[3];
             await pool.connect(lender).requestMarginCall();

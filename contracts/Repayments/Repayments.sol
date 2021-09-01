@@ -257,7 +257,6 @@ contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGu
     function repayAmount(address _poolID, uint256 _amount) public payable nonReentrant isPoolInitialized(_poolID) {
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
-
         uint256 _loanStatus = _pool.getLoanStatus();
         require(_loanStatus == 1, 'Repayments:repayInterest Pool should be active.');
 
@@ -282,7 +281,6 @@ contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGu
                 _amount = 0;
             }
         }
-
         // Second pay off the interest
         if (_amount != 0) {
             uint256 _interestLeft = getInterestLeft(_poolID);
