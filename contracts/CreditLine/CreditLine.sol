@@ -412,7 +412,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _collateralAmount,
         bytes32 _creditLineHash,
         bool _fromSavingAccount
-    ) public payable ifCreditLineExists(_creditLineHash) {
+    ) external payable nonReentrant ifCreditLineExists(_creditLineHash) {
         require(creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine not active');
         _depositCollateral(_collateralAsset, _collateralAmount, _creditLineHash, _fromSavingAccount);
     }
@@ -422,7 +422,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _collateralAmount,
         bytes32 _creditLineHash,
         bool _fromSavingAccount
-    ) internal nonReentrant {
+    ) internal {
         if (_fromSavingAccount) {
             transferFromSavingAccount(_collateralAsset, _collateralAmount, msg.sender, address(this));
         } else {
@@ -582,7 +582,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 repayAmount,
         bytes32 creditLineHash,
         bool _transferFromSavingAccount
-    ) external payable {
+    ) external payable nonReentrant {
         require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(creditLineHash);
@@ -670,7 +670,11 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         }
     }
 
-    function withdrawCollateralFromCreditLine(bytes32 creditLineHash, uint256 amount) public onlyCreditLineBorrower(creditLineHash) {
+    function withdrawCollateralFromCreditLine(bytes32 creditLineHash, uint256 amount)
+        external
+        nonReentrant
+        onlyCreditLineBorrower(creditLineHash)
+    {
         //check for ideal ratio
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(priceOracle).getLatestPrice(
@@ -741,6 +745,8 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(creditLineHash);
         address _borrowAsset = creditLineInfo[creditLineHash].borrowAsset;
 
+        creditLineInfo[creditLineHash].currentStatus = creditLineStatus.LIQUIDATED;
+
         if (creditLineInfo[creditLineHash].autoLiquidation) {
             if (_lender == msg.sender) {
                 transferFromSavingAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
@@ -755,7 +761,6 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             require(msg.sender == _lender, 'CreditLine: Liquidation can only be performed by lender.');
             transferFromSavingAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
         }
-        creditLineInfo[creditLineHash].currentStatus = creditLineStatus.LIQUIDATED;
 
         emit CreditLineLiquidated(creditLineHash, msg.sender);
     }
