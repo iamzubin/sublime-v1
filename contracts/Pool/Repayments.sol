@@ -72,27 +72,26 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     event InterestRepaid(address poolID, uint256 repayAmount); // Made during current period interest repayment
 
     /// @notice Event emitted when previous period's interest is repaid fully
-    /// @param poolID The address of the pool to which repayment was made 
-    event MissedRepaymentRepaid(address poolID); 
+    /// @param poolID The address of the pool to which repayment was made
+    event MissedRepaymentRepaid(address poolID);
 
     /// @notice Event emitted when previous period's interest is repaid partially
     /// @param poolID The address of the pool to which the partial repayment was made
-    event PartialExtensionRepaymentMade(address poolID); 
+    event PartialExtensionRepaymentMade(address poolID);
 
     /// @notice Event to denote changes in the configurations of the pool factory
     event PoolFactoryUpdated(address poolFactory);
-    
+
     /// @notice Event to denote changes in the configurations of the savings account
     event SavingsAccountUpdated(address savingsAccount);
-    
+
     /// @notice Event to denote changes in the configurations of the Grace Penalty Rate
     event GracePenalityRateUpdated(uint256 gracePenaltyRate);
-    
+
     /// @notice Event to denote changes in the configurations of the Grace Period Fraction
     event GracePeriodFractionUpdated(uint256 gracePeriodFraction);
 
-  
-    /// @notice determines if the pool is active or not based on whether repayments have been started by the 
+    /// @notice determines if the pool is active or not based on whether repayments have been started by the
     ///borrower for this particular pool or not
     /// @dev mapping(address => RepaymentConstants) public repaymentConstants is imported from RepaymentStorage.sol
     /// @param _poolID address of the pool for which we want to test statu
@@ -114,7 +113,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     }
 
     /// @notice Initializes the contract (similar to a constructor)
-    /// @dev Since we cannot use constructors when using OpenZeppelin Upgrades, we use the initialize function 
+    /// @dev Since we cannot use constructors when using OpenZeppelin Upgrades, we use the initialize function
     ///and the initializer modifier makes sure that this function is called only once
     /// @param _poolFactory The address of the pool factory
     /// @param _gracePenaltyRate The penalty rate levied in the grace period
@@ -234,7 +233,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         return _interestDueTillInstalmentDeadline;
     }
 
-
     /// @notice This function determines the timestamp of the next instalment deadline
     /// @param _poolID The address of the pool for which we want the next instalment deadline
     /// @return timestamp before which next instalment ends
@@ -274,7 +272,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _loanStartTime = repaymentConstants[_poolID].loanStartTime;
         uint256 _currentTime = block.timestamp.mul(10**30);
         uint256 _repaymentInterval = repaymentConstants[_poolID].repaymentInterval;
-        uint256 _currentInterval = ((_currentTime.sub(_loanStartTime)).mul(10**30).div(_repaymentInterval)).add(10**30); 
+        uint256 _currentInterval = ((_currentTime.sub(_loanStartTime)).mul(10**30).div(_repaymentInterval)).add(10**30);
 
         return _currentInterval;
     }
@@ -349,6 +347,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
         return _interestLeft;
     }
+
     /// @notice Given there is no loan extension, find the overdue interest after missing the repayment deadline
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
@@ -369,7 +368,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
                 .div(10**30);
         return _interestOverdue;
     }
-    
+
     /// @notice Used to for your overdues, grace penalty and interest
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
@@ -447,7 +446,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    /// @notice Used to pay off the principal of the loan, once the overdues and interests are repaid 
+    /// @notice Used to pay off the principal of the loan, once the overdues and interests are repaid
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
     /// @param _amount amount required to pay off the principal

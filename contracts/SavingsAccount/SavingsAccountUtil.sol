@@ -114,7 +114,7 @@ library SavingsAccountUtil {
             if (msg.value > _amount) {
                 (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
                 require(success, 'Transfer failed');
-            } else if(msg.value != _amount) {
+            } else if (msg.value != _amount) {
                 revert('Insufficient Ether');
             }
             return _amount;

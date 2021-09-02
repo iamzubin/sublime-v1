@@ -16,15 +16,14 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
  * @author Sublime
  */
 contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
-    
     /**
-    * @notice assigning hash of "MINTER_ROLE" as a constant
-    */
+     * @notice assigning hash of "MINTER_ROLE" as a constant
+     */
     bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
 
     /**
-    * @notice assigning hash of "PAUSER_ROLE" as a constant
-    */
+     * @notice assigning hash of "PAUSER_ROLE" as a constant
+     */
     bytes32 public constant PAUSER_ROLE = keccak256('PAUSER_ROLE');
 
     /*
@@ -89,7 +88,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      */
     address public override savingsAccount;
 
-
     /**
      * @notice the time interval for the lenders to make contributions to pool
      */
@@ -99,7 +97,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @notice the time interval for the borrower to withdraw the loan from pool
      */
     uint256 public override matchCollateralRatioInterval;
-    
 
     /**
      * @notice the time interval for the active stage of the margin call
@@ -405,7 +402,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _poolSavingsStrategy savings strategy selected for the pool collateral
      * @param _collateralAmount collateral amount deposited
      * @param _transferFromSavingsAccount if true, initial collateral is transferred from borrower's savings account, if false, borrower transfers initial collateral deposit from wallet
-     * @param _salt random and unique initial seed 
+     * @param _salt random and unique initial seed
      */
     function createPool(
         uint256 _poolSize,
@@ -421,8 +418,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bool _transferFromSavingsAccount,
         bytes32 _salt
     ) external payable onlyBorrower {
-        if(_collateralTokenType == address(0)) {
-            require(msg.value == _collateralAmount, "PoolFactory::createPool - Ether send is different from collateral amount specified");
+        if (_collateralTokenType == address(0)) {
+            require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
         require(_minBorrowAmount <= _poolSize, 'PoolFactory::createPool - invalid min borrow amount');
         require(volatilityThreshold[_collateralTokenType] <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
