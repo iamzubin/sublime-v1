@@ -61,6 +61,7 @@ const config: HardhatUserConfig = {
             saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,
             loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
             tags: ['hardhat'],
+            initialBaseFeePerGas: 1
         },
         localhost: {
             url: 'http://127.0.0.1:8545',

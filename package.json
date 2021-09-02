@@ -9,7 +9,7 @@
     "test": "npx hardhat test --network hardhat",
     "test:withEvents": "npx hardhat test --network hardhat --logs",
     "typechain": "npx hardhat typechain",
-    "coverage": "npm run build && npx hardhat coverage --temp artifacts",
+    "coverage": "yarn build && npx hardhat coverage --network hardhat",
     "prettier": "prettier --write '{test,utils,scripts,types}/**/*.{ts,js,json}' && prettier --write '*.{ts,js}'",
     "flatten": "npx waffle flatten",
     "lint-sol": "npx prettier --write 'contracts/**/*.sol'",
@@ -75,7 +75,8 @@
     "typedoc": "0.20.28",
     "typedoc-plugin-markdown": "3.6.0",
     "typescript": "3.9.9",
-    "web3": "^1.3.5"
+    "web3": "^1.3.5",
+    "yarn": "^1.22.11"
   },
   "dependencies": {
     "@nomiclabs/hardhat-etherscan": "^2.1.3",
