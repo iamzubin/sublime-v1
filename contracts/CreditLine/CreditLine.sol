@@ -517,8 +517,10 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         } else {
+            uint256 _balanceBefore = address(this).balance;
             _withdrawBorrowAmount(_borrowAsset, borrowAmount, _lender);
-            _tokenDiffBalance = borrowAmount;
+            uint256 _balanceAfter = address(this).balance;
+            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         }
 
         uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
@@ -529,12 +531,11 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             require(feeSuccess, 'Transfer fail');
             (bool success, ) = msg.sender.call{value: _tokenDiffBalance}('');
             require(success, 'Transfer fail');
-            emit BorrowedFromCreditLine(_tokenDiffBalance, creditLineHash);
         } else {
             IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);
             IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
-            emit BorrowedFromCreditLine(_tokenDiffBalance, creditLineHash);
         }
+        emit BorrowedFromCreditLine(_tokenDiffBalance, creditLineHash);
     }
 
     //TODO:- Make the function to accept ether as well
@@ -567,8 +568,10 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         address _defaultStrategy = defaultStrategy;
         if (!_transferFromSavingAccount) {
             if (_borrowAsset == address(0)) {
-                require(msg.value == _repayAmount, "creditLine::repay - value to transfer doesn't match argument");
-                _savingsAccount.depositTo{value: msg.value}(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
+                require(msg.value >= _repayAmount, 'creditLine::repay - value should be eq or more than repay amount');
+                (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_repayAmount)}(''); // transfer the remaining amount
+                require(success, 'creditLine::repay - remainig value transfered successfully');
+                _savingsAccount.depositTo{value: _repayAmount}(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             } else {
                 _savingsAccount.depositTo(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             }
@@ -589,7 +592,6 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _totalInterestAccrued =
             (creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate).add(_interestSincePrincipalUpdate);
         uint256 _totalDebt = _totalInterestAccrued.add(creditLineUsage[creditLineHash].principal);
-        uint256 _totalRepaidNow = creditLineUsage[creditLineHash].totalInterestRepaid.add(repayAmount);
 
         bool _totalRemainingIsRepaid = false;
 
@@ -597,6 +599,8 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             _totalRemainingIsRepaid = true;
             repayAmount = _totalDebt;
         }
+
+        uint256 _totalRepaidNow = creditLineUsage[creditLineHash].totalInterestRepaid.add(repayAmount);
 
         if (_totalRepaidNow > _totalInterestAccrued) {
             creditLineUsage[creditLineHash].principal = (creditLineUsage[creditLineHash].principal).add(_totalInterestAccrued).sub(

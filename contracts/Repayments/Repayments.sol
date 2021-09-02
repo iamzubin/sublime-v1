@@ -310,12 +310,20 @@ contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGu
         require(_amountRequired != 0, 'Repayments::repayAmount not necessary');
         _amountRequired = _amountRequired.div(10**30);
         repaymentVars[_poolID].repaidAmount = repaymentVars[_poolID].repaidAmount.add(_amountRequired);
+
         if (_asset == address(0)) {
             require(_amountRequired <= msg.value, 'Repayments::repayAmount amount does not match message value.');
             (bool success, ) = payable(address(_poolID)).call{value: _amountRequired}('');
             require(success, 'Transfer failed');
         } else {
             IERC20(_asset).safeTransferFrom(msg.sender, _poolID, _amountRequired);
+        }
+
+        if (_asset == address(0)) {
+            if (msg.value > _amountRequired) {
+                (bool success, ) = payable(address(msg.sender)).call{value: msg.value.sub(_amountRequired)}('');
+                require(success, 'Transfer failed');
+            }
         }
     }
 
