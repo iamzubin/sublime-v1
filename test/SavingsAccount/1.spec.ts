@@ -8,7 +8,7 @@ import { aaveYieldParams, depositValueToTest, ETH_Yearn_Protocol_Address, zeroAd
 import DeployHelper from '../../utils/deploys';
 import { SavingsAccount } from '../../typechain/SavingsAccount';
 import { StrategyRegistry } from '../../typechain/StrategyRegistry';
-import { getRandomFromArray, incrementChain } from '../../utils/helpers';
+import { expectApproxEqual, getRandomFromArray, incrementChain } from '../../utils/helpers';
 import { Address } from 'hardhat-deploy/dist/types';
 
 import { AaveYield } from '../../typechain/AaveYield';
@@ -191,9 +191,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address, false, {
-                            gasPrice: 0,
-                        })
+                        .withdraw(withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address, false, {})
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
                     .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address);
@@ -210,7 +208,11 @@ describe('Test Savings Account (with ETH)', async () => {
                     aaveYield.address
                 );
 
-                expect(balanceLockedAfterTransaction).eq(BigNumber.from(sharesReceivedWithAave).sub(sharesToWithdraw));
+                expectApproxEqual(
+                    balanceLockedAfterTransaction,
+                    BigNumber.from(sharesReceivedWithAave).sub(sharesToWithdraw),
+                    BigNumber.from(10).pow(16)
+                );
             });
 
             it('Withdraw half of shares received to account (withdrawShares = true)', async () => {
@@ -229,15 +231,14 @@ describe('Test Savings Account (with ETH)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address, true, {
-                            gasPrice: 0,
-                        })
+                        .withdraw(withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address, true, {})
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
                     .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, aaveEthLiquidityToken, aaveYield.address);
 
                 let sharesAfter = await liquidityToken.balanceOf(withdrawAccount.address);
-                expect(sharesAfter.sub(sharesBefore)).eq(sharesToWithdraw);
+
+                expectApproxEqual(sharesAfter.sub(sharesBefore), sharesToWithdraw, BigNumber.from(10).pow(16));
             });
         });
     });
@@ -282,7 +283,6 @@ describe('Test Savings Account (with ETH)', async () => {
             await expect(
                 savingsAccount.connect(userAccount).depositTo(depositValueToTest, zeroAddress, yearnYield.address, randomAccount.address, {
                     value: depositValueToTest,
-                    gasPrice: 0,
                 })
             )
                 .to.emit(savingsAccount, 'Deposited')

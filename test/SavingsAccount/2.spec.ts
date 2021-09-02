@@ -167,9 +167,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress, false, {
-                        gasPrice: 0,
-                    })
+                    .withdraw(randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress, false, {})
             ).to.emit(savingsAccount, 'Withdrawn');
             //     .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress);
 
@@ -342,9 +340,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, balanceToWithdraw, Contracts.LINK, aaveYield.address, true, {
-                        gasPrice: 0,
-                    })
+                    .withdraw(randomAccount.address, balanceToWithdraw, Contracts.LINK, aaveYield.address, true, {})
             )
                 .to.emit(savingsAccount, 'Withdrawn')
                 .withArgs(
