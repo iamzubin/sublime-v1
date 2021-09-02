@@ -183,10 +183,7 @@ describe('Test Savings Account (with ETH)', async () => {
 
         context('Withdraw ETH', async () => {
             it('Withdraw half of shares received to account (withdrawShares = false)', async () => {
-                const balanceBeforeWithdraw = await network.provider.request({
-                    method: 'eth_getBalance',
-                    params: [withdrawAccount.address],
-                });
+                const balanceBeforeWithdraw = await withdrawAccount.getBalance();
 
                 await incrementChain(network, 12000);
                 const sharesToWithdraw = BigNumber.from(sharesReceivedWithAave).div(2);
@@ -201,10 +198,7 @@ describe('Test Savings Account (with ETH)', async () => {
                     .to.emit(savingsAccount, 'Withdrawn')
                     .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address);
 
-                const balanceAfterWithdraw = await network.provider.request({
-                    method: 'eth_getBalance',
-                    params: [withdrawAccount.address],
-                });
+                const balanceAfterWithdraw = await withdrawAccount.getBalance();
 
                 const amountReceived: BigNumberish = BigNumber.from(balanceAfterWithdraw).sub(BigNumber.from(balanceBeforeWithdraw));
 
@@ -248,7 +242,7 @@ describe('Test Savings Account (with ETH)', async () => {
         });
     });
 
-    describe('#When YearnYield is the strategy', async () => {
+    describe.only('#When YearnYield is the strategy', async () => {
         let randomAccount: SignerWithAddress;
         let userAccount: SignerWithAddress;
         let withdrawAccount: SignerWithAddress;
@@ -306,10 +300,7 @@ describe('Test Savings Account (with ETH)', async () => {
 
         context('Withdraw ETH', async () => {
             it('Withdraw half of shares received to account (withdrawShares = false)', async () => {
-                const balanceBeforeWithdraw = await network.provider.request({
-                    method: 'eth_getBalance',
-                    params: [withdrawAccount.address],
-                });
+                const balanceBeforeWithdraw = await withdrawAccount.getBalance();
 
                 await incrementChain(network, 12000);
                 const sharesToWithdraw = BigNumber.from(sharesReceivedWithYearn).div(2);
@@ -331,10 +322,7 @@ describe('Test Savings Account (with ETH)', async () => {
                     .to.emit(savingsAccount, 'Withdrawn')
                     .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, yearnYield.address);
 
-                const balanceAfterWithdraw = await network.provider.request({
-                    method: 'eth_getBalance',
-                    params: [withdrawAccount.address],
-                });
+                const balanceAfterWithdraw = await withdrawAccount.getBalance();
 
                 const amountReceived: BigNumberish = BigNumber.from(balanceAfterWithdraw).sub(BigNumber.from(balanceBeforeWithdraw));
                 expect(sharesToWithdraw).eq(amountReceived);
@@ -429,10 +417,7 @@ describe('Test Savings Account (with ETH)', async () => {
 
         context('Withdraw ETH', async () => {
             it('Withdraw half of shares received to account (withdrawShares = false)', async () => {
-                const balanceBeforeWithdraw = await network.provider.request({
-                    method: 'eth_getBalance',
-                    params: [withdrawAccount.address],
-                });
+                const balanceBeforeWithdraw = await withdrawAccount.getBalance();
 
                 await incrementChain(network, 12000);
                 const sharesToWithdraw = BigNumber.from(sharesReceivedWithCompound).div(2);
@@ -444,10 +429,7 @@ describe('Test Savings Account (with ETH)', async () => {
                         .withdraw(withdrawAccount.address, sharesToWithdraw, zeroAddress, compoundYield.address, false)
                 ).to.emit(savingsAccount, 'Withdrawn');
 
-                // const balanceAfterWithdraw = await network.provider.request({
-                //     method: 'eth_getBalance',
-                //     params: [withdrawAccount.address],
-                // });
+                // const balanceAfterWithdraw = await withdrawAccount.getBalance();
 
                 // const amountReceived: BigNumberish = BigNumber.from(balanceAfterWithdraw).sub(
                 //     BigNumber.from(balanceBeforeWithdraw)

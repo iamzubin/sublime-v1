@@ -5,8 +5,8 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-import './RepaymentStorage.sol';
 import '../interfaces/IPool.sol';
+import '../interfaces/IPoolFactory.sol';
 import '../interfaces/IRepayment.sol';
 import '../interfaces/ISavingsAccount.sol';
 
@@ -17,14 +17,59 @@ import '../interfaces/ISavingsAccount.sol';
  * have to made by the borrower back to the pool)
  * @author Sublime
  */
-contract Repayments is Initializable, RepaymentStorage, IRepayment, ReentrancyGuard {
+contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
+
+    address internal _owner;
+    IPoolFactory poolFactory;
+    address savingsAccount;
+
+    enum LoanStatus {
+        COLLECTION, //denotes collection period
+        ACTIVE, // denotes the active loan
+        CLOSED, // Loan is repaid and closed
+        CANCELLED, // Cancelled by borrower
+        DEFAULTED, // Repaymennt defaulted by  borrower
+        TERMINATED // Pool terminated by admin
+    }
+
+    uint256 votingPassRatio;
+    uint256 gracePenaltyRate;
+    uint256 gracePeriodFraction; // fraction of the repayment interval
+    uint256 constant yearInSeconds = 365 days;
+
+    struct RepaymentVars {
+        uint256 totalRepaidAmount;
+        uint256 repaymentPeriodCovered;
+        uint256 repaidAmount;
+        bool isLoanExtensionActive;
+        uint256 loanDurationCovered;
+        uint256 nextDuePeriod;
+        uint256 nInstalmentsFullyPaid;
+        uint256 loanExtensionPeriod; // period for which the extension was granted, ie, if loanExtensionPeriod is 7 * 10**30, 7th instalment can be repaid by 8th instalment deadline
+    }
+
+    struct RepaymentConstants {
+        uint256 numberOfTotalRepayments; // using it to check if RepaymentDetails Exists as repayment Interval!=0 in any case
+        uint256 gracePenaltyRate;
+        uint256 gracePeriodFraction;
+        uint256 loanDuration;
+        uint256 repaymentInterval;
+        uint256 borrowRate;
+        //uint256 repaymentDetails;
+        uint256 loanStartTime;
+        address repayAsset;
+        address savingsAccount;
+    }
+
+    mapping(address => RepaymentVars) public repaymentVars;
+    mapping(address => RepaymentConstants) public repaymentConstants;
 
     /// @notice Event emitted during current period interest repayment
     /// @param poolID The address of the pool to which interest was paid
     /// @param repayAmount Amount being re-payed by the borrower
-    event InterestRepaid(address poolID, uint256 repayAmount);
+    event InterestRepaid(address poolID, uint256 repayAmount); // Made during current period interest repayment
 
     /// @notice Event emitted when previous period's interest is repaid fully
     /// @param poolID The address of the pool to which repayment was made 

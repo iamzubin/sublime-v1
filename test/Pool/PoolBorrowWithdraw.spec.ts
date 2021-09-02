@@ -1410,11 +1410,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     zeroAddress
                 );
                 const tokensLentAfter = await poolToken.totalSupply();
-                const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
+                const protocolFee = createPoolParams._poolSize.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
                 assert(
-                    borrowAssetBalanceBorrower.add(tokensLent).sub(protocolFee).toString() == borrowAssetBalanceBorrowerAfter.toString(),
-                    'Borrower not receiving correct lent amount'
+                     createPoolParams._poolSize.sub(protocolFee).toString() == borrowAssetBalanceBorrowerAfter.sub(borrowAssetBalanceBorrower).toString(),
+                    `Borrower not receiving correct lent amount Actual: ${borrowAssetBalanceBorrowerAfter.sub(borrowAssetBalanceBorrower).toString()} Expected: ${createPoolParams._poolSize.sub(protocolFee).toString()}`
                 );
 
                 assert(
