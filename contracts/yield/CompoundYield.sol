@@ -83,7 +83,6 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         uint256 amount
     ) public payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
-
         address investedTo = liquidityToken[asset];
         if (asset == address(0)) {
             require(msg.value == amount, 'Invest: ETH amount');
@@ -181,7 +180,6 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         uint256 amount
     ) internal returns (uint256 tokensReceived) {
         uint256 initialAssetBalance = IERC20(asset).balanceOf(address(this));
-
         require(ICToken(cToken).redeem(amount) == 0, 'Error in unwrapping');
 
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);

@@ -181,12 +181,10 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     ) internal returns (uint256 tokensReceived) {
         uint256 initialAssetBalance = IERC20(asset).balanceOf(address(this));
 
-        //withdraw collateral from vault
         IyVault(vault).withdraw(amount);
 
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
     }
 
-    //to apply check
     receive() external payable {}
 }

@@ -1,6 +1,8 @@
 import { Network } from 'hardhat/types';
-import { BytesLike, ethers } from 'ethers';
+import { BigNumber, BytesLike, ethers } from 'ethers';
 import { Address } from 'hardhat-deploy/dist/types';
+import { BigNumberish } from '@ethersproject/bignumber';
+import { expect } from 'chai';
 
 export function getRandomFromArray<T>(items: T[]): T {
     return items[Math.floor(Math.random() * items.length)];
@@ -31,29 +33,40 @@ const initializeFragement = _interface.getFunction('initialize');
 
 export async function getPoolAddress(
     borrower: Address,
-    token1: Address,
-    token2: Address,
+    borrowToken: Address,
+    collateralToken: Address,
     strategy: Address,
     poolFactory: Address,
     salt: BytesLike,
     poolLogic: Address,
-    transferFromSavingsAccount: Boolean
+    transferFromSavingsAccount: Boolean,
+    {
+        _poolSize = createPoolParams._poolSize,
+        _minborrowAmount = createPoolParams._minborrowAmount,
+        _collateralRatio = createPoolParams._collateralRatio,
+        _borrowRate = createPoolParams._borrowRate,
+        _repaymentInterval = createPoolParams._repaymentInterval,
+        _noOfRepaymentIntervals = createPoolParams._noOfRepaymentIntervals,
+        _collateralAmount = createPoolParams._collateralAmount,
+        _matchCollateralRatioInterval = testPoolFactoryParams._matchCollateralRatioInterval,
+        _collectionPeriod = testPoolFactoryParams._collectionPeriod,
+    }
 ) {
     const poolData = _interface.encodeFunctionData(initializeFragement, [
-        createPoolParams._poolSize,
-        createPoolParams._minborrowAmount,
+        _poolSize,
+        _minborrowAmount,
         borrower,
-        token1,
-        token2,
-        createPoolParams._collateralRatio,
-        createPoolParams._borrowRate,
-        createPoolParams._repaymentInterval,
-        createPoolParams._noOfRepaymentIntervals,
+        borrowToken,
+        collateralToken,
+        _collateralRatio,
+        _borrowRate,
+        _repaymentInterval,
+        _noOfRepaymentIntervals,
         strategy,
-        createPoolParams._collateralAmount,
+        _collateralAmount,
         transferFromSavingsAccount,
-        testPoolFactoryParams._matchCollateralRatioInterval,
-        testPoolFactoryParams._collectionPeriod,
+        _matchCollateralRatioInterval,
+        _collectionPeriod,
     ]);
 
     const poolAddress = ethers.utils.getCreate2Address(
@@ -76,4 +89,19 @@ function getInitCodehash(proxyBytecode: BytesLike, poolImplAddr: Address, poolDa
 
 function print(data: any) {
     console.log(JSON.stringify(data, null, 4));
+}
+
+export function expectApproxEqual(a: BigNumberish, b: BigNumberish, delta: BigNumberish = BigNumber.from(1000)) {
+    let _a: BigNumber = BigNumber.from(a);
+    let _b: BigNumber = BigNumber.from(b);
+    let aGreaterThanB = _a.gte(_b);
+    if (aGreaterThanB) {
+        _a = BigNumber.from(a);
+        _b = BigNumber.from(b);
+    } else {
+        _a = BigNumber.from(b);
+        _b = BigNumber.from(a);
+    }
+    let _delta = _a.sub(_b);
+    expect(_delta).lte(delta);
 }

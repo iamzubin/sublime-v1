@@ -14,13 +14,13 @@ contract PoolToken is Initializable, ERC20PresetMinterPauserUpgradeable {
     using SafeMath for uint256;
 
     /**
-    * @notice assigning hash of "BURNER_ROLE" as a constant
-    */
+     * @notice assigning hash of "BURNER_ROLE" as a constant
+     */
     bytes32 public constant BURNER_ROLE = keccak256('BURNER_ROLE');
 
     /**
-    * @notice address of the open borrow pool
-    */
+     * @notice address of the open borrow pool
+     */
     address public pool;
 
     /**
@@ -61,7 +61,7 @@ contract PoolToken is Initializable, ERC20PresetMinterPauserUpgradeable {
         address from,
         address to,
         uint256 amount
-    ) internal virtual override{
+    ) internal virtual override {
         if (to != address(0)) {
             // super._beforeTokenTransfer(from, to, amount);  //To silence the warnings
             require(!paused(), 'ERC20Pausable: token transfer while paused');

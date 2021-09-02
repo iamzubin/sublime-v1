@@ -101,19 +101,20 @@ library SavingsAccountUtil {
         address _from,
         address _to
     ) internal returns (uint256) {
-        if(_amount == 0) {
+        if (_amount == 0) {
             return 0;
         }
         if (_asset == address(0)) {
-            require(msg.value >= _amount, '');
+            require(msg.value >= _amount, 'ethers provided should be greater than _amount');
+
             if (_to != address(this)) {
                 (bool success, ) = payable(_to).call{value: _amount}('');
                 require(success, 'Transfer failed');
             }
-            if (msg.value >= _amount) {
+            if (msg.value > _amount) {
                 (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
                 require(success, 'Transfer failed');
-            } else {
+            } else if (msg.value != _amount) {
                 revert('Insufficient Ether');
             }
             return _amount;
@@ -121,6 +122,7 @@ library SavingsAccountUtil {
         if (_from == address(this)) {
             IERC20(_asset).safeTransfer(_to, _amount);
         } else {
+            //pool
             IERC20(_asset).safeTransferFrom(_from, _to, _amount);
         }
         return _amount;

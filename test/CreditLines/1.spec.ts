@@ -189,30 +189,34 @@ describe('Credit Lines', async () => {
                     _protocolFeeFraction,
                     protocolFeeCollector.address
                 );
-                
+
             const poolImpl = await deployHelper.pool.deployPool();
             const poolTokenImpl = await deployHelper.pool.deployPoolToken();
             const repaymentImpl = await deployHelper.pool.deployRepayments();
-            await poolFactory.connect(admin).setImplementations(
-                poolImpl.address, 
-                repaymentImpl.address, 
-                poolTokenImpl.address,
-                verification.address,
-                strategyRegistry.address,
-                priceOracle.address,
-                savingsAccount.address,
-                extenstion.address
-            );
+            await poolFactory
+                .connect(admin)
+                .setImplementations(
+                    poolImpl.address,
+                    repaymentImpl.address,
+                    poolTokenImpl.address,
+                    verification.address,
+                    strategyRegistry.address,
+                    priceOracle.address,
+                    savingsAccount.address,
+                    extenstion.address
+                );
 
-            await creditLine.connect(admin).initialize(
-                yearnYield.address, 
-                priceOracle.address, 
-                savingsAccount.address,
-                strategyRegistry.address,
-                admin.address,
-                _protocolFeeFraction,
-                protocolFeeCollector.address
-            );
+            await creditLine
+                .connect(admin)
+                .initialize(
+                    yearnYield.address,
+                    priceOracle.address,
+                    savingsAccount.address,
+                    strategyRegistry.address,
+                    admin.address,
+                    _protocolFeeFraction,
+                    protocolFeeCollector.address
+                );
         });
 
         it('Check global variables', async () => {
@@ -401,30 +405,34 @@ describe('Credit Lines', async () => {
                         _protocolFeeFraction,
                         protocolFeeCollector.address
                     );
-                
+
                 const poolImpl = await deployHelper.pool.deployPool();
                 const poolTokenImpl = await deployHelper.pool.deployPoolToken();
                 const repaymentImpl = await deployHelper.pool.deployRepayments();
-                await poolFactory.connect(admin).setImplementations(
-                    poolImpl.address, 
-                    repaymentImpl.address, 
-                    poolTokenImpl.address,
-                    verification.address,
-                    strategyRegistry.address,
-                    priceOracle.address,
-                    savingsAccount.address,
-                    extenstion.address
-                );
-                    
-                await creditLine.connect(admin).initialize(
-                    yearnYield.address, 
-                    priceOracle.address, 
-                    savingsAccount.address,
-                    strategyRegistry.address,
-                    admin.address,
-                    _protocolFeeFraction,
-                    protocolFeeCollector.address
-                );
+                await poolFactory
+                    .connect(admin)
+                    .setImplementations(
+                        poolImpl.address,
+                        repaymentImpl.address,
+                        poolTokenImpl.address,
+                        verification.address,
+                        strategyRegistry.address,
+                        priceOracle.address,
+                        savingsAccount.address,
+                        extenstion.address
+                    );
+
+                await creditLine
+                    .connect(admin)
+                    .initialize(
+                        yearnYield.address,
+                        priceOracle.address,
+                        savingsAccount.address,
+                        strategyRegistry.address,
+                        admin.address,
+                        _protocolFeeFraction,
+                        protocolFeeCollector.address
+                    );
             });
 
             it('Check global variables', async () => {

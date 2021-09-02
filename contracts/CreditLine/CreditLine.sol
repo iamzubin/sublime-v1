@@ -63,6 +63,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     event CreditLineAccepted(bytes32 creditLineHash);
     event CreditLineReset(bytes32 creditLineHash);
     event PartialCreditLineRepaid(bytes32 creditLineHash, uint256 repayAmount);
+    event CompleteCreditLineRepaid(bytes32 creditLineHash, uint256 repayAmount);
     event CreditLineClosed(bytes32 creditLineHash);
 
     event DefaultStrategyUpdated(address defaultStrategy);
@@ -206,6 +207,11 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     }
 
     function calculateBorrowableAmount(bytes32 _creditLineHash) public returns (uint256) {
+        require(
+            creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.ACTIVE ||
+                creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.REQUESTED,
+            'CreditLine: Cannot only if credit line ACTIVE or REQUESTED'
+        );
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(priceOracle).getLatestPrice(
                 creditLineInfo[_creditLineHash].collateralAsset,
@@ -219,6 +225,9 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 maxPossible =
             _totalCollateralToken.mul(_ratioOfPrices).div(creditLineInfo[_creditLineHash].idealCollateralRatio).div(10**_decimals);
 
+        if (maxPossible > creditLineInfo[_creditLineHash].borrowLimit) {
+            maxPossible = creditLineInfo[_creditLineHash].borrowLimit;
+        }
         if (maxPossible > _currentDebt) {
             return maxPossible.sub(_currentDebt);
         }
@@ -286,10 +295,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     ) public returns (bytes32) {
         //require(userData[lender].blockCreditLineRequests == true,
         //        "CreditLine: External requests blocked");
-        require(
-            IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset),
-            "CL: No price feed"
-        );
+        require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
         bytes32 _creditLineHash =
             _createCreditLineRequest(
                 _lender,
@@ -320,10 +326,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     ) public returns (bytes32) {
         //require(userData[borrower].blockCreditLineRequests == true,
         //        "CreditLine: External requests blocked");
-        require(
-            IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset),
-            "CL: No price feed"
-        );
+        require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
         bytes32 _creditLineHash =
             _createCreditLineRequest(
                 msg.sender,
@@ -338,11 +341,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
                 true
             );
         // setRepayments(creditLineHash);
-        ISavingsAccount(savingsAccount).approveFromToCreditLine(
-            _borrowAsset,
-            msg.sender,
-            _borrowLimit
-        );
+        ISavingsAccount(savingsAccount).approveFromToCreditLine(_borrowAsset, msg.sender, _borrowLimit);
 
         emit CreditLineRequestedToBorrower(_creditLineHash, msg.sender, _borrower);
         return _creditLineHash;
@@ -497,7 +496,6 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
 
         uint256 collateralRatioIfAmountIsWithdrawn =
             _ratioOfPrices.mul(_totalCollateralToken).div((_currentDebt.add(borrowAmount)).mul(10**_decimals));
-
         require(
             collateralRatioIfAmountIsWithdrawn > creditLineInfo[creditLineHash].idealCollateralRatio,
             "CreditLine::borrowFromCreditLine - The current collateral ratio doesn't allow to withdraw the amount"
@@ -509,19 +507,35 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         creditLineUsage[creditLineHash].principal = creditLineUsage[creditLineHash].principal.add(borrowAmount);
         creditLineUsage[creditLineHash].lastPrincipalUpdateTime = block.timestamp;
 
-        uint256 _protocolFee = borrowAmount.mul(protocolFeeFraction).div(10**30);
-        _withdrawBorrowAmount(_borrowAsset, borrowAmount, _lender);
-        borrowAmount = borrowAmount.sub(_protocolFee);
+        //transferFromSavingAccount(_borrowAsset,borrowAmount,_lender,address(this)); // 10000000000000000000
+
+        // @ TO-DO
+        uint256 _tokenDiffBalance;
+        if (_borrowAsset != address(0)) {
+            uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
+            _withdrawBorrowAmount(_borrowAsset, borrowAmount, _lender);
+            uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
+            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
+        } else {
+            uint256 _balanceBefore = address(this).balance;
+            _withdrawBorrowAmount(_borrowAsset, borrowAmount, _lender);
+            uint256 _balanceAfter = address(this).balance;
+            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
+        }
+
+        uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
+        _tokenDiffBalance = _tokenDiffBalance.sub(_protocolFee);
+
         if (_borrowAsset == address(0)) {
             (bool feeSuccess, ) = protocolFeeCollector.call{value: _protocolFee}('');
             require(feeSuccess, 'Transfer fail');
-            (bool success, ) = msg.sender.call{value: borrowAmount}('');
+            (bool success, ) = msg.sender.call{value: _tokenDiffBalance}('');
             require(success, 'Transfer fail');
         } else {
             IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);
-            IERC20(_borrowAsset).safeTransfer(msg.sender, borrowAmount);
+            IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
         }
-        emit BorrowedFromCreditLine(borrowAmount, creditLineHash);
+        emit BorrowedFromCreditLine(_tokenDiffBalance, creditLineHash);
     }
 
     //TODO:- Make the function to accept ether as well
@@ -554,8 +568,10 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         address _defaultStrategy = defaultStrategy;
         if (!_transferFromSavingAccount) {
             if (_borrowAsset == address(0)) {
-                require(msg.value == _repayAmount, "creditLine::repay - value to transfer doesn't match argument");
-                _savingsAccount.depositTo{value: msg.value}(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
+                require(msg.value >= _repayAmount, 'creditLine::repay - value should be eq or more than repay amount');
+                (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_repayAmount)}(''); // transfer the remaining amount
+                require(success, 'creditLine::repay - remainig value transfered successfully');
+                _savingsAccount.depositTo{value: _repayAmount}(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             } else {
                 _savingsAccount.depositTo(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             }
@@ -569,15 +585,22 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 repayAmount,
         bytes32 creditLineHash,
         bool _transferFromSavingAccount
-    ) external nonReentrant payable {
+    ) external payable nonReentrant {
         require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(creditLineHash);
         uint256 _totalInterestAccrued =
             (creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate).add(_interestSincePrincipalUpdate);
         uint256 _totalDebt = _totalInterestAccrued.add(creditLineUsage[creditLineHash].principal);
+
+        bool _totalRemainingIsRepaid = false;
+
+        if (repayAmount > _totalDebt) {
+            _totalRemainingIsRepaid = true;
+            repayAmount = _totalDebt;
+        }
+
         uint256 _totalRepaidNow = creditLineUsage[creditLineHash].totalInterestRepaid.add(repayAmount);
-        require(_totalDebt >= repayAmount, 'CreditLine: Repay amount is greater than debt.');
 
         if (_totalRepaidNow > _totalInterestAccrued) {
             creditLineUsage[creditLineHash].principal = (creditLineUsage[creditLineHash].principal).add(_totalInterestAccrued).sub(
@@ -592,7 +615,12 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         if (creditLineUsage[creditLineHash].principal == 0) {
             _resetCreditLine(creditLineHash);
         }
-        emit PartialCreditLineRepaid(creditLineHash, repayAmount);
+
+        if (_totalRemainingIsRepaid) {
+            emit CompleteCreditLineRepaid(creditLineHash, repayAmount);
+        } else {
+            emit PartialCreditLineRepaid(creditLineHash, repayAmount);
+        }
     }
 
     function _resetCreditLine(bytes32 creditLineHash) internal {
@@ -646,7 +674,11 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         }
     }
 
-    function withdrawCollateralFromCreditLine(bytes32 creditLineHash, uint256 amount) external nonReentrant onlyCreditLineBorrower(creditLineHash) {
+    function withdrawCollateralFromCreditLine(bytes32 creditLineHash, uint256 amount)
+        external
+        nonReentrant
+        onlyCreditLineBorrower(creditLineHash)
+    {
         //check for ideal ratio
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(priceOracle).getLatestPrice(
@@ -687,7 +719,6 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) > _amountInTokens) {
                 _tokensToTransfer = _amountInTokens.sub(_activeAmount);
-
                 liquidityShares = liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy);
             }
             _activeAmount = _activeAmount.add(_tokensToTransfer);
@@ -695,13 +726,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
                 _strategyList[index]
             ]
                 .sub(liquidityShares);
-            ISavingsAccount(savingsAccount).withdraw(
-                msg.sender,
-                _tokensToTransfer,
-                _asset,
-                _strategyList[index],
-                false
-            );
+            ISavingsAccount(savingsAccount).withdraw(msg.sender, _tokensToTransfer, _asset, _strategyList[index], false);
 
             if (_activeAmount == _amountInTokens) {
                 return;
@@ -730,11 +755,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             if (_lender == msg.sender) {
                 transferFromSavingAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
             } else {
-                (uint256 _ratioOfPrices, uint256 _decimals) =
-                    IPriceOracle(priceOracle).getLatestPrice(
-                        _borrowAsset,
-                        _collateralAsset
-                    );
+                (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
 
                 uint256 _borrowToken = (_totalCollateralToken.mul(_ratioOfPrices).div(10**_decimals));
                 IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowToken);
