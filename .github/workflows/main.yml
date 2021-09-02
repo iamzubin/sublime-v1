@@ -13,12 +13,7 @@ jobs:
         run: npm install --include-dev --save-exact
       - name: Build the contracts
         run: npm run build
-      - name: Run tests
-        run: npm run test
-        env:
-          DEFAULT_BRANCH: main
-          GITHUB_TOKENN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run coverage
+      - name: Run tests annd get coverage
         run: npm run coverage
       - name: Upload reports to Codecov
         run: |
