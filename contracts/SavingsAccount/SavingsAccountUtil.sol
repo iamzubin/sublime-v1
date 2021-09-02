@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.7.0;
 
 import '../interfaces/ISavingsAccount.sol';
@@ -110,13 +111,10 @@ library SavingsAccountUtil {
                 (bool success, ) = payable(_to).call{value: _amount}('');
                 require(success, 'Transfer failed');
             }
-            if (msg.value >= _amount) {
-                if (msg.value - _amount != 0) {
-                    (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
-                    // payable(address(msg.sender)).transfer(msg.value - _amount);
-                    require(success, 'Transfer failed');
-                }
-            } else {
+            if (msg.value > _amount) {
+                (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
+                require(success, 'Transfer failed');
+            } else if(msg.value != _amount) {
                 revert('Insufficient Ether');
             }
             return _amount;

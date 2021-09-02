@@ -22,7 +22,7 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
-} from '../../utils/constants-rahul';
+} from '../../utils/constants';
 
 import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
