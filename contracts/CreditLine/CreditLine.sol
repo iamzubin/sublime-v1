@@ -206,7 +206,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         return _currentDebt;
     }
 
-    function calculateBorrowableAmount(bytes32 _creditLineHash) public returns (uint256) {
+    function calculateBorrowableAmount(bytes32 _creditLineHash) public view returns (uint256) {
         require(
             creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.ACTIVE ||
                 creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.REQUESTED,
@@ -655,7 +655,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         return currentCollateralRatio;
     }
 
-    function calculateTotalCollateralTokens(bytes32 creditLineHash) public returns (uint256 amount) {
+    function calculateTotalCollateralTokens(bytes32 creditLineHash) public view returns (uint256 amount) {
         address _collateralAsset = creditLineInfo[creditLineHash].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 liquidityShares;
