@@ -23,5 +23,5 @@ jobs:
       - name: Upload reports to Codecov
         run: |
           curl -Os https://uploader.codecov.io/latest/linux/codecov
-          chmod +x codecov
+          chmod +x ./codecov
           ./codecov -f coverage/coverage-final.json -Z
