@@ -70,8 +70,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param poolID The address of the pool to which interest was paid
     /// @param repayAmount Amount being re-payed by the borrower
     event InterestRepaid(address poolID, uint256 repayAmount); // Made during current period interest repayment
-    event MissedRepaymentRepaid(address poolID); // Previous period's interest is repaid fully
-    event PartialExtensionRepaymentMade(address poolID); // Previous period's interest is repaid partially
 
     /// @notice Event emitted when previous period's interest is repaid fully
     /// @param poolID The address of the pool to which repayment was made 
