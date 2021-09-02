@@ -1,6 +1,6 @@
 import { Contracts } from '../../existingContracts/compound.json';
 
-import { USDTWhale, USDCWhale, DAIWhale, LINKWhale, ChainLinkAggregators, WBTCWhale, WhaleAccount, UNIWhale } from '../constants-rahul';
+import { USDTWhale, USDCWhale, DAIWhale, LINKWhale, ChainLinkAggregators, WBTCWhale, WhaleAccount, UNIWhale } from '../constants';
 
 export const poolCreationTestCases = [
     {

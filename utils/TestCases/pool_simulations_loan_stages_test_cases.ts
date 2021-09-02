@@ -1,6 +1,6 @@
 import { Contracts } from '../../existingContracts/compound.json';
 
-import { ChainLinkAggregators, WBTCWhale, WhaleAccount, UNIWhale } from '../../utils/constants-Additions';
+import { ChainLinkAggregators, WBTCWhale, WhaleAccount, UNIWhale } from '../../utils/constants';
 
 export const psLoanStagesTestCases = [
     {
