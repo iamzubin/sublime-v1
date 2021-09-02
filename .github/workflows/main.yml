@@ -9,9 +9,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: docker://node:12.14.1
-      - run: npm install --include-dev --save-exact
-      - run: npm run build
-      - run: npm run test
+      - name: Install dependencies
+        run: npm install --include-dev --save-exact
+      - name: Build the contracts
+        run: npm run build
+      - name: Run tests
+        run: npm run test
         env:
           DEFAULT_BRANCH: main
           GITHUB_TOKENN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run coverage
+        run: npm run coverage
+      - name: Upload reports to Codecov
+        run: |
+          curl -Os https://uploader.codecov.io/latest/linux/codecov
+          chmod +x codecov
+          ./codecov -f coverage/coverage-final.json -Z
