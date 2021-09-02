@@ -468,9 +468,13 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         }
         uint256 _cancelPenalityMultiple = IPoolFactory(PoolFactory).poolCancelPenalityFraction();
         uint256 penality =
-            _cancelPenalityMultiple.mul(poolConstants.borrowRate).mul(_collateralLiquidityShare).mul(_penalityTime).div(365 days).div(
-                10**60
-            );
+            _cancelPenalityMultiple
+                .mul(poolConstants.borrowRate)
+                .mul(_collateralLiquidityShare)
+                .div(10**30)
+                .mul(_penalityTime)
+                .div(365 days)
+                .div(10**30);
         _cancelPool(penality);
     }
 
@@ -682,14 +686,11 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         }
         uint256 _poolBorrowTokens =
             correspondingBorrowTokens(_collateralTokens, _poolFactory, IPoolFactory(_poolFactory).liquidatorRewardFraction());
-
         delete poolVars.extraLiquidityShares;
         delete poolVars.baseLiquidityShares;
 
         _deposit(_fromSavingsAccount, false, _borrowAsset, _poolBorrowTokens, address(0), msg.sender, address(this));
         _withdraw(_toSavingsAccount, _recieveLiquidityShare, _collateralAsset, _poolSavingsStrategy, _collateralTokens);
-        delete poolVars.extraLiquidityShares;
-        delete poolVars.baseLiquidityShares;
         emit PoolLiquidated(msg.sender);
     }
 
@@ -803,7 +804,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         IPoolFactory _PoolFactory = IPoolFactory(_poolFactory);
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(_PoolFactory.priceOracle()).getLatestPrice(poolConstants.collateralAsset, poolConstants.borrowAsset);
-        return _totalCollateralTokens.mul(_ratioOfPrices).mul(uint256(10**30).sub(_fraction)).div(10**_decimals).div(10**30);
+        return _totalCollateralTokens.mul(_ratioOfPrices).div(10**_decimals).mul(uint256(10**30).sub(_fraction)).div(10**30);
     }
 
     function interestPerSecond(uint256 _principal) public view returns (uint256) {
@@ -841,8 +842,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         if (_amountToWithdraw == 0) {
             return;
         }
-        lenders[_lender].interestWithdrawn = lenders[_lender].interestWithdrawn.add(_amountToWithdraw);
-
         lenders[_lender].interestWithdrawn = lenders[_lender].interestWithdrawn.add(_amountToWithdraw);
 
         SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _amountToWithdraw, address(this), _lender);

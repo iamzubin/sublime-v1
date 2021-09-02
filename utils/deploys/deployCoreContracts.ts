@@ -16,6 +16,9 @@ import { YearnYield__factory } from '../../typechain/factories/YearnYield__facto
 import { PoolToken__factory } from '../../typechain/factories/PoolToken__factory';
 import { CreditLine__factory } from '../../typechain/factories/CreditLine__factory';
 
+import { TokenLogic__factory } from '../../typechain/factories/TokenLogic__factory';
+import { TokenLogic } from '../../typechain/TokenLogic';
+
 import { Address } from 'hardhat-deploy/dist/types';
 
 export default class DeployCoreContracts {
@@ -79,5 +82,13 @@ export default class DeployCoreContracts {
 
     public async getCreditLines(creditLinesAddress: Address): Promise<CreditLine> {
         return await new CreditLine__factory(this._deployerSigner).attach(creditLinesAddress);
+    }
+
+    public async deployGovTokenLogic(): Promise<TokenLogic> {
+        return await new TokenLogic__factory(this._deployerSigner).deploy();
+    }
+
+    public async getGovToken(contractAddress: Address): Promise<TokenLogic> {
+        return await new TokenLogic__factory(this._deployerSigner).attach(contractAddress);
     }
 }

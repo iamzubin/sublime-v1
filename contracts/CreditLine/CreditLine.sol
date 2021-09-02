@@ -716,8 +716,8 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             if (_activeAmount.add(_tokenInStrategy) > _amountInTokens) {
                 _tokensToTransfer = _amountInTokens.sub(_activeAmount);
                 liquidityShares = liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy);
-            } // 0
-            _activeAmount = _activeAmount.add(_tokensToTransfer); //64753966145743327485
+            }
+            _activeAmount = _activeAmount.add(_tokensToTransfer);
             collateralShareInStrategy[creditLineHash][_strategyList[index]] = collateralShareInStrategy[creditLineHash][
                 _strategyList[index]
             ]
