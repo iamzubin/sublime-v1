@@ -1,5 +1,6 @@
 # Sublime-protocol
 
+[![codecov](https://codecov.io/gh/sublime-finance/sublime-v1/branch/master/graph/badge.svg?token=30JPP4ZVOY)](https://codecov.io/gh/sublime-finance/sublime-v1)
 
 Smart contracts for Sublime Protocol.
 
