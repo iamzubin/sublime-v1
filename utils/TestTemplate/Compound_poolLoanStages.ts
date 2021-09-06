@@ -550,7 +550,7 @@ export async function compoundPoolCollectionStage(
         });
     });
 
-    xdescribe('Pool Simulations: Defaulted Stage', async () => {
+    describe('Pool Simulations: Defaulted Stage', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -658,14 +658,14 @@ export async function compoundPoolCollectionStage(
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
 
-        it('Anyone should be able to Liquidate the loan, after the borrower deafults', async function () {
+        it('Anyone should be able to Liquidate the loan, if borrower misses repayment', async function () {
             let { admin, borrower, lender } = env.entities;
-            let random = env.entities.extraLenders[10];
+            let random = env.entities.extraLenders[10]; // Random address
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
-            let collateralToken = await env.mockTokenContracts[1].contract;
-            let borrowToken = await env.mockTokenContracts[0].contract;
-            let poolStrategy = await env.yields.compoundYield;
-            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Token
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let poolStrategy = env.yields.compoundYield;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
 
             // Approving Borrow tokens to the lender
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
@@ -695,6 +695,7 @@ export async function compoundPoolCollectionStage(
                 .div(60 * 60 * 24 * 365)
                 .div(scaler);
 
+            // Checking calculated and received interest to be paid
             assert(
                 interestForCurrentPeriod.toString() == repayAmount.toString(),
                 `Incorrect interest for period. Actual: ${interestForCurrentPeriod.toString()} Expected: ${repayAmount.toString()}`
@@ -707,45 +708,30 @@ export async function compoundPoolCollectionStage(
             // Repayment done for period 1
             await env.repayments.connect(random).repayAmount(pool.address, repayAmount);
 
-            // let deadline = await env.repayments.connect(borrower).getCurrentInstalmentInterval(poolAddress);
             const endOfPeriod: BigNumber = (await env.repayments.connect(borrower).getNextInstalmentDeadline(pool.address)).div(scaler);
-            // const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
 
-            // Have to request for an extension and then try to liquidate pool
-            console.log('Blocktravel');
-            await blockTravel(network, parseInt(endOfPeriod.add(1000).toString()));
+            // Travel beyond the current repayment period, borrower misses next repayment
+            await blockTravel(network, parseInt(endOfPeriod.add(1001).toString()));
 
             const collateralShares = await env.savingsAccount
                 .connect(borrower)
                 .userLockedBalance(pool.address, collateralToken.address, poolStrategy.address);
-            // console.log('Collateral Shares', collateralShares.toString());
-
             let collateralTokens = await poolStrategy.callStatic.getTokensForShares(collateralShares.sub(2), collateralToken.address);
-            // console.log('Collateral Tokens', collateralTokens.toString());
-
             let borrowTokensForCollateral = await pool.getEquivalentTokens(collateralToken.address, borrowToken.address, collateralTokens);
-            // console.log('Borrow Tokens For Collateral', borrowTokensForCollateral.toString());
 
             // Calling liquidate pool
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
             await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
             await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
-            let LoanStatus = (await pool.poolVars()).loanStatus;
-            console.log('Loan Status', LoanStatus);
-            console.log(await admin.address);
-            await pool.liquidatePool(false, false, false);
-            // console.log("Liquidating pool");
-            // await pool.connect(random).liquidatePool(false, false, false);
-            // console.log("Liquidated pool");
+            await pool.connect(random).liquidatePool(false, false, false);
 
             // Loan status should be 4
-            LoanStatus = (await pool.poolVars()).loanStatus;
-            console.log('Loan Status', LoanStatus);
-            // assert(
-            //     LoanStatus.toString() == BigNumber.from('2').toString(),
-            //     `Pool should be in Collection Stage. Expected: ${BigNumber.from('2').toString()}
-            //     Actual: ${LoanStatus}`
-            // );
+            let LoanStatus = (await pool.poolVars()).loanStatus;
+            assert(
+                LoanStatus.toString() == BigNumber.from('4').toString(),
+                `Pool should be in Collection Stage. Expected: ${BigNumber.from('4').toString()}
+                Actual: ${LoanStatus}`
+            );
         });
     });
 
@@ -866,9 +852,9 @@ export async function compoundPoolCollectionStage(
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
-            let collateralToken = await env.mockTokenContracts[1].contract;
-            let borrowToken = await env.mockTokenContracts[0].contract;
-            let poolStrategy = await env.yields.compoundYield;
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let poolStrategy = env.yields.compoundYield;
             let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Token
 
             // Approving Borrow tokens to the lender
@@ -890,7 +876,7 @@ export async function compoundPoolCollectionStage(
 
             // Calculate repayment amount for period 1
             const interestForCurrentPeriod = (
-                await env.repayments.connect(borrower).getInterestDueTillInstalmentDeadline(pool.address)
+                await env.repayments.connect(random).getInterestDueTillInstalmentDeadline(pool.address)
             ).div(scaler);
 
             const repayAmount = createPoolParams._borrowRate
@@ -926,7 +912,17 @@ export async function compoundPoolCollectionStage(
             const endOfPeriod: BigNumber = (await env.repayments.connect(borrower).getNextInstalmentDeadline(pool.address)).div(scaler);
             await blockTravel(network, parseInt(endOfPeriod.add(10).toString()));
 
+            let loanduration = (await env.repayments.connect(random).repaymentConstants(pool.address)).loanDuration;
+            let loandurationDone = (await env.repayments.connect(random).repaymentVars(pool.address)).loanDurationCovered;
+
+            console.log('loan duration',loanduration.toString());
+            console.log('Loan duration done', loandurationDone.toString());
+
             // Calculate repayment amount for period 2
+            const interestForCurrentPeriod1 = (
+                await env.repayments.connect(random).getInterestDueTillInstalmentDeadline(pool.address)
+            ).div(scaler);
+            console.log('Interest for second period observed', interestForCurrentPeriod1.toString());
             const repayAmount2 = createPoolParams._borrowRate
                 .mul(amount)
                 .mul(createPoolParams._repaymentInterval)
@@ -944,19 +940,22 @@ export async function compoundPoolCollectionStage(
             // Block travel to beyond repayment period 2
             console.log('Timetravel to beyond period 2');
             const endOfPeriod1: BigNumber = (await env.repayments.connect(borrower).getNextInstalmentDeadline(pool.address)).div(scaler);
-            const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
-            await blockTravel(network, parseInt(endOfPeriod1.add(gracePeriod).add(10).toString()));
+            console.log('EndOfPeriod2', endOfPeriod1.toString());
+            // const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
+            // await blockTravel(network, parseInt(endOfPeriod1.add(gracePeriod).add(10).toString()));
+            await blockTravel(network, parseInt(endOfPeriod1.mul(2).toString()));
 
-            let loanduration = (await env.repayments.connect(random).repaymentConstants(pool.address)).loanDuration;
-            let loandurationDone = (await env.repayments.connect(random).repaymentVars(pool.address)).loanDurationCovered;
+            loanduration = (await env.repayments.connect(random).repaymentConstants(pool.address)).loanDuration;
+            loandurationDone = (await env.repayments.connect(random).repaymentVars(pool.address)).loanDurationCovered;
 
-            console.log(loanduration.toString());
-            console.log(loandurationDone.toString());
+            console.log('Loan duration', loanduration.toString());
+            console.log('Loan duration done', loandurationDone.toString());
             // Repayment of principal at the end of the loan
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await borrowToken.connect(admin).transfer(random.address, amount);
             await borrowToken.connect(random).approve(env.repayments.address, amount);
 
+            // Should it be random or borrower?
             await env.repayments.connect(random).repayPrincipal(pool.address, amount, { value: amount });
 
             // Loan status should be 2

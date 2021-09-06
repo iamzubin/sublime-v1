@@ -15,7 +15,7 @@ import hre from 'hardhat';
 const { ethers, network } = hre;
 import { expect, assert } from 'chai';
 
-import { extensionParams, repaymentParams, testPoolFactoryParams, createPoolParams, zeroAddress } from '../constants-Additions';
+import { extensionParams, repaymentParams, testPoolFactoryParams, createPoolParams, zeroAddress, ChainLinkAggregators } from '../constants-Additions';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -197,7 +197,12 @@ export async function compound_MarginCalls(
         xit('Lender should be able to request margin call only if the price goes down', async function () {
             let { admin, borrower, lender } = env.entities;
             let lender1 = await env.entities.extraLenders[3];
+            await env.priceOracle.connect(admin).setChainlinkFeedAddress(CollateralToken, ChainLinkAggregators['ETH/USD']);
             await pool.connect(lender).requestMarginCall();
+        });
+
+        context('Any user should be able to liquidate margin call if call is not answered in time', async () => {
+
         });
     });
 }
