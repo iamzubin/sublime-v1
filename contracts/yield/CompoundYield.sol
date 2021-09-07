@@ -134,27 +134,23 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @dev Used to get amount of underlying tokens for given number of shares
      * @param shares the amount of shares
      * @param asset the address of token locked
-     * @return amountview amount of underlying tokens
+     * @return amount amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) public view override returns (uint256 amountview) {
+    function getTokensForShares(uint256 shares, address asset) public override returns (uint256 amount) {
         //balanceOfUnderlying returns underlying balance for total shares
         if (shares == 0) return 0;
         address cToken = liquidityToken[asset];
-        ////////////////////////////////////////////////
-        // console.log('BalanceOfUnderlying', ICToken(cToken).balanceOfUnderlying(address(this)));
-        uint exchangeRate = ICToken(cToken).exchangeRateStored();
-        uint product = exchangeRate.mul(IERC20(cToken).balanceOf(address(this)));
-        uint truncated = product/1e18;
-        // console.log('BalanceOfUnderlying view', truncated);
-        ////////////////////////////////////////////////
-        // uint256 amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
-        amountview = truncated.mul(shares).div(IERC20(cToken).balanceOf(address(this)));
-        // console.log('Amount', amount);
-        // console.log('Amount view', amountview);
+        // View functionality
+        // uint exchangeRate = ICToken(cToken).exchangeRateStored();
+        // uint product = exchangeRate.mul(IERC20(cToken).balanceOf(address(this)));
+        // uint truncated = product/1e18;
+        // uint256 amountview = truncated.mul(shares).div(IERC20(cToken).balanceOf(address(this)));
+        amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
+        
 
     }
 
-    function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
+    function getSharesForTokens(uint256 amount, address asset) external override returns (uint256 shares) {
         shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
     }
 
