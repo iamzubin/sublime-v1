@@ -15,8 +15,6 @@ import '../interfaces/IPool.sol';
 import '../interfaces/IExtension.sol';
 import '../interfaces/IPoolToken.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * @title Pool contract with Methods related to Pool
  * @notice Implements the functions related to Pool
@@ -713,12 +711,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
         require(getMarginCallEndTime(msg.sender) == 0, 'RMC1');
         uint256 _idealCollateralRatio = poolConstants.idealCollateralRatio;
-        console.log('Pool: Ideal Collateral Ratio', _idealCollateralRatio);
-        console.log('Pool: Observed Collateral Ratio', getCurrentCollateralRatio(msg.sender));
-        console.log('Pool: Observed Volatility Threshold', _poolFactory.volatilityThreshold(poolConstants.collateralAsset));
-        console.log('Pool: Collateral Asset', poolConstants.collateralAsset);
-        console.log('Pool: Observed Collateral Ratio + VT', getCurrentCollateralRatio(msg.sender).add(_poolFactory.volatilityThreshold(poolConstants.collateralAsset)));
-        console.log('Pool: Condition', _idealCollateralRatio > getCurrentCollateralRatio(msg.sender).add(_poolFactory.volatilityThreshold(poolConstants.collateralAsset)));
         require(
             _idealCollateralRatio >
                 getCurrentCollateralRatio(msg.sender).add(_poolFactory.volatilityThreshold(poolConstants.collateralAsset)),
@@ -769,7 +761,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      */
     function calculateCollateralRatio(uint256 _balance, uint256 _liquidityShares) public returns (uint256 _ratio) {
         uint256 _interest = interestTillNow();
-        console.log('Interest till now', _interest);
         address _collateralAsset = poolConstants.collateralAsset;
         address _strategy = poolConstants.poolSavingsStrategy;
         uint256 _currentCollateralTokens =
@@ -794,7 +785,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      */
     function getCurrentCollateralRatio(address _lender) public returns (uint256 _ratio) {
         uint256 _balanceOfLender = poolToken.balanceOf(_lender);
-        console.log('Balance Of Lender', _balanceOfLender);
         uint256 _liquidityShares =
             (poolVars.baseLiquidityShares.mul(_balanceOfLender).div(poolToken.totalSupply())).add(lenders[_lender].extraLiquidityShares);
 

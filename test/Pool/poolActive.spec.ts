@@ -793,7 +793,6 @@ describe('Pool Active stage', async () => {
                 it("If collateral ratio below ideal after margin call time, Anyone can liquidate lender's part of collateral", async () => {
                     await pool.connect(lender).requestMarginCall();
                     const price = await priceOracle.getLatestPrice(Contracts.LINK, Contracts.DAI);
-                    // console.log(price.toString());
                     const totalDeficit: BigNumber = createPoolParams._minborrowAmount
                         .mul(price[0])
                         .mul(createPoolParams._collateralRatio.sub(testPoolFactoryParams._collateralVolatilityThreshold))
