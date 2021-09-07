@@ -1,6 +1,4 @@
-import { BigNumber } from '@ethersproject/providers/node_modules/@ethersproject/bignumber';
-import { BigNumberish } from '@ethersproject/providers/node_modules/@ethersproject/bignumber';
-import { sha256 } from '@ethersproject/sha2';
+import { BigNumber } from '@ethersproject/bignumber';
 import { Address } from 'hardhat-deploy/dist/types';
 
 export const depositValueToTest: BigNumber = BigNumber.from('1000000000000000000'); // 1 ETH (or) 10^18 Tokens
@@ -15,30 +13,29 @@ export const aaveYieldParams = {
 
 //Yearn Protocol Addresses
 export const LINK_Yearn_Protocol_Address = '0x881b06da56bb5675c54e4ed311c21e54c5025298'; // @prateek to check if update needed in upgrade v2
-export const USDC_Yearn_Protocol_Address = '0x597aD1e0c13Bfe8025993D9e79C69E1c0233522e';
+export const USDC_Yearn_Protocol_Address = '0x5f18c75abdae578b483e5f43f12a39cf75b973a9';
 export const USDT_Yearn_Protocol_Address = '0x2f08119C6f07c006695E079AAFc638b8789FAf18';
 export const DAI_Yearn_Protocol_Address = '0xACd43E627e64355f1861cEC6d3a6688B31a6F952'; // TODO: To be upgraded to v2
 export const INCH_Yearn_Protocol_Address = '0xB8C3B7A2A618C552C23B1E4701109a9E756Bab67';
-export const WETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7';
+export const INCH_Token_Address = '0x111111111117dC0aa78b770fA6A738034120C302';
+export const YFI_Token_Address = '0xBA2E7Fed597fd0E3e70f5130BcDbbFE06bB94fe1';
 export const YFI_Yearn_Protocol_Address = '0xBA2E7Fed597fd0E3e70f5130BcDbbFE06bB94fe1';
+export const HEGIC_Token_Address = '0x584bC13c7D411c00c01A62e8019472dE68768430';
 export const HEGIC_Yearn_Protocol_Address = '0xe11ba472F74869176652C35D30dB89854b5ae84D';
 export const COMP_Yearn_Protocol_Address = '0x629c759D1E83eFbF63d84eb3868B564d9521C129'; //yvCurve-Compound
+export const COMP_CURVE_POOL = '0x845838DF265Dcd2c412A1Dc9e959c7d08537f8a2'; //Curve-Compound
 //WETH = ETH
 //WBTC = BTC
-export const ETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7'; // TODO: To be upgraded to v2
-export const WBTC_Yearn_Protocol_Address = '0xcB550A6D4C8e3517A939BC79d0c7093eb7cF56B5';
+export const WETH_Yearn_Protocol_Address = '0xe1237aA7f535b0CC33Fd973D66cBf830354D16c7'; // TODO: To be upgraded to v2
+export const WBTC_Yearn_Protocol_Address = '0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E';
+// '0xcb550a6d4c8e3517a939bc79d0c7093eb7cf56b5';
 
 //Account Holders
-export const Binance7 = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8'; // has LINK
-export const LINKWhale = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8';
-
-export const WhaleAccount = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503'; //has USDC, USDT, DAI
-export const DAIWhale = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503'; // DAI
-export const USDTWhale = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503';
-export const UNIWhale = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503';
-export const USDCWhale = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503';
-
+export const Binance7 = '0xbe0eb53f46cd790cd13851d5eff43d12404d33e8';
+export const WhaleAccount = '0x47ac0Fb4F2D84898e4D9E7b4DaB3C24507a6D503';
 export const WBTCWhale = '0x28C6c06298d514Db089934071355E5743bf21d60'; // Binance 14
+export const UNIWhale = '0x72A53cDBBcc1b9efa39c834A540550e23463AAcB';
+export const INCHWhale = '0x72A53cDBBcc1b9efa39c834A540550e23463AAcB';
 
 export const aLink = '0xa06bC25B5805d5F8d82847D191Cb4Af5A3e873E0';
 
@@ -49,7 +46,7 @@ const poolSize = BigNumber.from('100000000000000000000'); // 100e18 dai
 export const createPoolParams = {
     _poolSize: poolSize,
     _borrowAmountRequested: depositValueToTest,
-    _minborrowAmount: BigNumber.from('10').pow(18), // 10e18
+    _minborrowAmount: BigNumber.from('10000000000000000000'), // 10e18
     _idealCollateralRatio: collateralRatio,
     _collateralRatio: collateralRatio,
     _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
@@ -58,30 +55,9 @@ export const createPoolParams = {
     _collateralAmount: BigNumber.from('3000000000000000000000'), // 3000e18
     _collateralAmountForETH: BigNumber.from('10000000000000000000'), // 10 ETH
     _collateralAmountForUNI: BigNumber.from('10000000000000000000'), // 1 UNI
-    _collateralAmountForUSDC: BigNumber.from('1000000000000000000'), // 1 USDC
     _collateralAmountForWBTC: BigNumber.from('100000000'), // 1 BTC
     _loanWithdrawalDuration: BigNumber.from(15000000),
     _collectionPeriod: BigNumber.from(5000000),
-    _matchCollateralRatioInterval: 200,
-};
-
-export const createPoolParamsExpt = {
-    _poolSize: BigNumber.from(1000).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in DAI pool ~1000 DAI
-    _borrowAmountRequested: BigNumber.from(10).mul(BigNumber.from(10).pow(18)), //10 DAI for 1 LINK (that's what the borrower is asking for)
-    _minborrowAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), //1 DAI,
-    _collateralRatio: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
-    _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
-    _repaymentInterval: BigNumber.from(1000),
-    _noOfRepaymentIntervals: BigNumber.from(25),
-    _collateralAmount: BigNumber.from('3000000000000000000000'), // 3000e18
-    _collateralAmountForETH: BigNumber.from('10000000000000000000'), // 10 ETH
-    _collateralAmountForUNI: BigNumber.from('10000000000000000000'), // 1 UNI
-    _collateralAmountForUSDC: BigNumber.from('1000000000000000000'), // 1 USDC
-    _collateralAmountForWBTC: BigNumber.from('100000000'), // 1 BTC
-    _collateralAmountForLINK: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
-    _loanWithdrawalDuration: BigNumber.from(15000000),
-    _collectionPeriod: BigNumber.from(10000),
-    _matchCollateralRatioInterval: BigNumber.from(200),
 };
 
 // address _borrowTokenType,
@@ -94,12 +70,12 @@ export const testPoolFactoryParams = {
     _collectionPeriod: BigNumber.from(10000),
     _matchCollateralRatioInterval: BigNumber.from(200),
     _marginCallDuration: BigNumber.from(300),
-    _collateralVolatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)), // 10%
-    _gracePeriodPenaltyFraction: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), //10%
-    _liquidatorRewardFraction: BigNumber.from(15).mul(BigNumber.from(10).pow(28)), // 10%
+    _collateralVolatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+    _gracePeriodPenaltyFraction: BigNumber.from(5).mul(BigNumber.from(10).pow(28)),
+    _liquidatorRewardFraction: BigNumber.from(15).mul(BigNumber.from(10).pow(28)),
     _poolInitFuncSelector: '0x272edaf2',
     _poolTokenInitFuncSelector: '0x077f224a',
-    _poolCancelPenalityFraction: BigNumber.from(10).mul(BigNumber.from(10).pow(28)), // 10%
+    _poolCancelPenalityFraction: BigNumber.from(10).mul(BigNumber.from(10).pow(28)),
     _protocolFeeFraction: BigNumber.from(1).mul(BigNumber.from(10).pow(26)),
 };
 

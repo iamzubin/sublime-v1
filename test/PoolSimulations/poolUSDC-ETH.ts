@@ -22,28 +22,29 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
-} from '../../utils/constants';
+} from '../../utils/constants-rahul';
 
 import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
-import { IYield } from '@typechain/IYield';
+import { IYield } from '../../typechain/IYield';
+import { zeroAddress } from '../../utils/constants';
 
-describe('Pool With Compound Strategy 2', async () => {
+describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
     before(async () => {
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
             [
-                { asset: Contracts.DAI, liquidityToken: Contracts.cDAI },
-                { asset: Contracts.WBTC, liquidityToken: Contracts.cWBTC2 },
+                { asset: Contracts.USDT, liquidityToken: Contracts.cUSDT },
+                { asset: zeroAddress, liquidityToken: Contracts.cETH },
             ] as CompoundPair[],
             [] as YearnPair[],
             [
-                { tokenAddress: Contracts.DAI, feedAggregator: ChainLinkAggregators['DAI/USD'] },
-                { tokenAddress: Contracts.WBTC, feedAggregator: ChainLinkAggregators['BTC/USD'] },
+                { tokenAddress: zeroAddress, feedAggregator: ChainLinkAggregators['ETH/USD'] },
+                { tokenAddress: Contracts.USDT, feedAggregator: ChainLinkAggregators['USDT/USD'] },
             ] as PriceOracleSource[],
             {
                 votingPassRatio: extensionParams.votingPassRatio,
@@ -71,19 +72,19 @@ describe('Pool With Compound Strategy 2', async () => {
     });
 
     it('Sample', async function () {
-        let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
+        let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`)); // one pool factory - one salt => 1 unique pool
         let { admin, borrower, lender } = env.entities;
         let deployHelper: DeployHelper = new DeployHelper(admin);
-        let DAI: ERC20 = await deployHelper.mock.getMockERC20(Contracts.DAI);
-        let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
+        let USDT: ERC20 = await deployHelper.mock.getMockERC20(Contracts.USDT);
+        let ETH: ERC20 = await deployHelper.mock.getMockERC20(zeroAddress); // this is made into type only for matching the signature
         let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
-        let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
-            _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
-            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+        let poolAddress = await calculateNewPoolAddress(env, USDT, ETH, iyield, salt, false, {
+            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
+            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)), // 10 usdt
+            _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
+            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
+            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
             _collectionPeriod: 10000,
             _matchCollateralRatioInterval: 200,
             _noOfRepaymentIntervals: 100,
@@ -92,21 +93,17 @@ describe('Pool With Compound Strategy 2', async () => {
 
         console.log({ calculatedPoolAddress: poolAddress });
 
-        console.log(env.mockTokenContracts[0]);
         console.log(env.mockTokenContracts[1].name);
-        // console.log(env.mockTokenContracts[2]); -> UNDEFINED
-        // console.log(env.mockTokenContracts[3].name); -> UNDEFINED
-
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, '100000000');
         await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, '100000000');
 
-        let pool = await createNewPool(env, DAI, WBTC, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
-            _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
-            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+        let pool = await createNewPool(env, USDT, ETH, iyield, salt, false, {
+            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
+            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)), // 10 usdt
+            _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
+            _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
+            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
             _collectionPeriod: 10000,
             _matchCollateralRatioInterval: 200,
             _noOfRepaymentIntervals: 100,

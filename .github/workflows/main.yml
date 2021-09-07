@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: docker://node:12.14.1
-      - run: npm install --save-dev
+      - run: npm install --include-dev --save-exact
       - run: npm run build
       - run: npm run test
         env:

@@ -53,6 +53,10 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
     }
 
     function getDecimals(address _token) internal view returns (uint8) {
+        if (_token == address(0)) {
+            return 18;
+        }
+
         try ERC20(_token).decimals() returns (uint8 v) {
             return v;
         } catch Error(string memory) {
@@ -88,12 +92,10 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         if (_decimals != 0) {
             return (_price, _decimals);
         }
-
         (_price, _decimals) = getUniswapLatestPrice(num, den);
         if (_decimals != 0) {
             return (_price, _decimals);
         }
-
         revert("PriceOracle::getLatestPrice - Price Feed doesn't exist");
     }
 

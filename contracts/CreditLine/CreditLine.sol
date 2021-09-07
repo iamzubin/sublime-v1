@@ -412,7 +412,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _collateralAmount,
         bytes32 _creditLineHash,
         bool _fromSavingAccount
-    ) public payable ifCreditLineExists(_creditLineHash) {
+    ) external payable nonReentrant ifCreditLineExists(_creditLineHash) {
         require(creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine not active');
         _depositCollateral(_collateralAsset, _collateralAmount, _creditLineHash, _fromSavingAccount);
     }
@@ -422,7 +422,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _collateralAmount,
         bytes32 _creditLineHash,
         bool _fromSavingAccount
-    ) internal nonReentrant {
+    ) internal {
         if (_fromSavingAccount) {
             transferFromSavingAccount(_collateralAsset, _collateralAmount, msg.sender, address(this));
         } else {
@@ -517,8 +517,10 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         } else {
+            uint256 _balanceBefore = address(this).balance;
             _withdrawBorrowAmount(_borrowAsset, borrowAmount, _lender);
-            _tokenDiffBalance = borrowAmount;
+            uint256 _balanceAfter = address(this).balance;
+            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         }
 
         uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
@@ -529,12 +531,11 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             require(feeSuccess, 'Transfer fail');
             (bool success, ) = msg.sender.call{value: _tokenDiffBalance}('');
             require(success, 'Transfer fail');
-            emit BorrowedFromCreditLine(_tokenDiffBalance, creditLineHash);
         } else {
             IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);
             IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
-            emit BorrowedFromCreditLine(_tokenDiffBalance, creditLineHash);
         }
+        emit BorrowedFromCreditLine(_tokenDiffBalance, creditLineHash);
     }
 
     //TODO:- Make the function to accept ether as well
@@ -567,8 +568,10 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         address _defaultStrategy = defaultStrategy;
         if (!_transferFromSavingAccount) {
             if (_borrowAsset == address(0)) {
-                require(msg.value == _repayAmount, "creditLine::repay - value to transfer doesn't match argument");
-                _savingsAccount.depositTo{value: msg.value}(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
+                require(msg.value >= _repayAmount, 'creditLine::repay - value should be eq or more than repay amount');
+                (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_repayAmount)}(''); // transfer the remaining amount
+                require(success, 'creditLine::repay - remainig value transfered successfully');
+                _savingsAccount.depositTo{value: _repayAmount}(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             } else {
                 _savingsAccount.depositTo(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             }
@@ -582,14 +585,13 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 repayAmount,
         bytes32 creditLineHash,
         bool _transferFromSavingAccount
-    ) external payable {
+    ) external payable nonReentrant {
         require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(creditLineHash);
         uint256 _totalInterestAccrued =
             (creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate).add(_interestSincePrincipalUpdate);
         uint256 _totalDebt = _totalInterestAccrued.add(creditLineUsage[creditLineHash].principal);
-        uint256 _totalRepaidNow = creditLineUsage[creditLineHash].totalInterestRepaid.add(repayAmount);
 
         bool _totalRemainingIsRepaid = false;
 
@@ -597,6 +599,8 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             _totalRemainingIsRepaid = true;
             repayAmount = _totalDebt;
         }
+
+        uint256 _totalRepaidNow = creditLineUsage[creditLineHash].totalInterestRepaid.add(repayAmount);
 
         if (_totalRepaidNow > _totalInterestAccrued) {
             creditLineUsage[creditLineHash].principal = (creditLineUsage[creditLineHash].principal).add(_totalInterestAccrued).sub(
@@ -670,7 +674,11 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         }
     }
 
-    function withdrawCollateralFromCreditLine(bytes32 creditLineHash, uint256 amount) public onlyCreditLineBorrower(creditLineHash) {
+    function withdrawCollateralFromCreditLine(bytes32 creditLineHash, uint256 amount)
+        external
+        nonReentrant
+        onlyCreditLineBorrower(creditLineHash)
+    {
         //check for ideal ratio
         (uint256 _ratioOfPrices, uint256 _decimals) =
             IPriceOracle(priceOracle).getLatestPrice(
@@ -712,8 +720,8 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             if (_activeAmount.add(_tokenInStrategy) > _amountInTokens) {
                 _tokensToTransfer = _amountInTokens.sub(_activeAmount);
                 liquidityShares = liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy);
-            } // 0
-            _activeAmount = _activeAmount.add(_tokensToTransfer); //64753966145743327485
+            }
+            _activeAmount = _activeAmount.add(_tokensToTransfer);
             collateralShareInStrategy[creditLineHash][_strategyList[index]] = collateralShareInStrategy[creditLineHash][
                 _strategyList[index]
             ]
@@ -741,6 +749,8 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(creditLineHash);
         address _borrowAsset = creditLineInfo[creditLineHash].borrowAsset;
 
+        creditLineInfo[creditLineHash].currentStatus = creditLineStatus.LIQUIDATED;
+
         if (creditLineInfo[creditLineHash].autoLiquidation) {
             if (_lender == msg.sender) {
                 transferFromSavingAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
@@ -755,7 +765,6 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             require(msg.sender == _lender, 'CreditLine: Liquidation can only be performed by lender.');
             transferFromSavingAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
         }
-        creditLineInfo[creditLineHash].currentStatus = creditLineStatus.LIQUIDATED;
 
         emit CreditLineLiquidated(creditLineHash, msg.sender);
     }

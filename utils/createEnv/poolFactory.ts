@@ -14,6 +14,7 @@ import { PriceOracle } from '@typechain/PriceOracle';
 import { SavingsAccount } from '@typechain/SavingsAccount';
 import { Extension } from '@typechain/Extension';
 import { PoolFactoryInitParams } from '@utils/types';
+import { zeroAddress } from '../../utils/constants';
 
 export async function createPoolFactory(proxyAdmin: SignerWithAddress): Promise<PoolFactory> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -68,6 +69,8 @@ export async function addSupportedTokens(
         const bor = borrowTokens[index];
         await poolFactory.connect(admin).updateSupportedBorrowTokens(bor, true);
     }
+    await poolFactory.connect(admin).updateSupportedCollateralTokens(zeroAddress, true);
+    await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true);
 }
 
 export async function setImplementations(
