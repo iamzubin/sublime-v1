@@ -129,14 +129,15 @@ contract TokenLogic is Initializable {
 
     function increaseAllowance(address spender, uint256 addedAmount) external returns (bool) {
         uint96 amount;
+        uint96 currentAllowance = allowances[msg.sender][spender];
         if (addedAmount == uint256(-1)) {
-            amount = uint96(-1);
+            amount = sub96(uint96(-1), currentAllowance, 'Token::approve: currentAllowance exceeds 96 bits');
         } else {
             amount = safe96(addedAmount, 'Token::approve: addedAmount exceeds 96 bits');
         }
 
         allowances[msg.sender][spender] = add96(
-            allowances[msg.sender][spender],
+            currentAllowance,
             amount,
             'Token: increaseAllowance allowance value overflows'
         );
@@ -146,14 +147,15 @@ contract TokenLogic is Initializable {
 
     function decreaseAllowance(address spender, uint256 removedAmount) external returns (bool) {
         uint96 amount;
+        uint96 currentAllowance = allowances[msg.sender][spender];
         if (removedAmount == uint256(-1)) {
-            amount = uint96(-1);
+            amount = currentAllowance;
         } else {
             amount = safe96(removedAmount, 'Token::approve: removedAmount exceeds 96 bits');
         }
 
         allowances[msg.sender][spender] = sub96(
-            allowances[msg.sender][spender],
+            currentAllowance,
             amount,
             'Token: decreaseAllowance allowance value underflows'
         );
