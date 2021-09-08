@@ -875,9 +875,9 @@ export async function compoundPoolCollectionStage(
             await pool.connect(borrower).withdrawBorrowedAmount();
 
             // Calculate repayment amount for period 1
-            const interestForCurrentPeriod = (
-                await env.repayments.connect(random).getInterestDueTillInstalmentDeadline(pool.address)
-            ).div(scaler);
+            const interestForCurrentPeriod = (await env.repayments.connect(random).getInterestDueTillInstalmentDeadline(pool.address)).div(
+                scaler
+            );
 
             const repayAmount = createPoolParams._borrowRate
                 .mul(amount)
@@ -915,13 +915,13 @@ export async function compoundPoolCollectionStage(
             let loanduration = (await env.repayments.connect(random).repaymentConstants(pool.address)).loanDuration;
             let loandurationDone = (await env.repayments.connect(random).repaymentVars(pool.address)).loanDurationCovered;
 
-            console.log('loan duration',loanduration.toString());
+            console.log('loan duration', loanduration.toString());
             console.log('Loan duration done', loandurationDone.toString());
 
             // Calculate repayment amount for period 2
-            const interestForCurrentPeriod1 = (
-                await env.repayments.connect(random).getInterestDueTillInstalmentDeadline(pool.address)
-            ).div(scaler);
+            const interestForCurrentPeriod1 = (await env.repayments.connect(random).getInterestDueTillInstalmentDeadline(pool.address)).div(
+                scaler
+            );
             console.log('Interest for second period observed', interestForCurrentPeriod1.toString());
             const repayAmount2 = createPoolParams._borrowRate
                 .mul(amount)

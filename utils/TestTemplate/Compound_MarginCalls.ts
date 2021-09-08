@@ -15,12 +15,19 @@ import hre from 'hardhat';
 const { ethers, network } = hre;
 import { expect, assert } from 'chai';
 
-import { extensionParams, repaymentParams, testPoolFactoryParams, createPoolParams, zeroAddress, ChainLinkAggregators } from '../constants-Additions';
+import {
+    extensionParams,
+    repaymentParams,
+    testPoolFactoryParams,
+    createPoolParams,
+    zeroAddress,
+    ChainLinkAggregators,
+} from '../constants-Additions';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
-import { BigNumber } from 'ethers';
+import { BigNumber, BigNumberish } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
@@ -155,15 +162,19 @@ export async function compound_MarginCalls(
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
 
-            let borrowToken = await env.mockTokenContracts[0].contract;
-            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Token
-            let amount1 = BigNumber.from(5).mul(BigNumber.from(10).pow(BTDecimals)); // 5 Borrow Token
-            let lender1 = await env.entities.extraLenders[3];
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let minBorrowAmount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+            let amount = minBorrowAmount.add(10).mul(2).div(3);
+            let amount1 = minBorrowAmount.div(3);
+            // console.log(amount.toString());
+            // console.log(amount1.toString());
+            let lender1 = env.entities.extraLenders[3];
 
             // Approving Borrow tokens to the lender
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await borrowToken.connect(admin).transfer(lender.address, amount);
             await borrowToken.connect(lender).approve(poolAddress, amount);
+            // console.log('1st Lender approved!');
 
             // Lender lends into the pool
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
@@ -174,6 +185,7 @@ export async function compound_MarginCalls(
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount1);
             await borrowToken.connect(admin).transfer(lender1.address, amount1);
             await borrowToken.connect(lender1).approve(poolAddress, amount1);
+            // console.log('2nd Lender approved!');
 
             // Lender1 lends into the pool
             const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, false));
@@ -190,19 +202,71 @@ export async function compound_MarginCalls(
 
         it('Lender should not be able to request margin call if price has not reached threshold', async function () {
             let { admin, borrower, lender } = env.entities;
-            let lender1 = await env.entities.extraLenders[3];
+            // Requesting margin call
             await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('26');
         });
 
-        xit('Lender should be able to request margin call only if the price goes down', async function () {
+        it('Lender should be able to request margin call only if the price goes down', async function () {
             let { admin, borrower, lender } = env.entities;
-            let lender1 = await env.entities.extraLenders[3];
-            await env.priceOracle.connect(admin).setChainlinkFeedAddress(CollateralToken, ChainLinkAggregators['ETH/USD']);
-            await pool.connect(lender).requestMarginCall();
+            let lender1 = env.entities.extraLenders[3];
+            let collateralToken = env.mockTokenContracts[1].contract;
+
+            // Reducing the collateral ratio
+            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['ETH/USD']);
+
+            // Requesting margin call
+            await pool.connect(lender1).requestMarginCall();
+
+            // Setting the collateral ratio to correct value
+            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, chainlinkBorrow);
         });
 
-        context('Any user should be able to liquidate margin call if call is not answered in time', async () => {
+        it('Any user should be able to liquidate margin call if call is not answered in time', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10];
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let collateralToken = env.mockTokenContracts[1].contract;
 
+            // Setting a lower collateral ratio and requesting for margin call
+            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['ETH/USD']);
+            await pool.connect(lender).requestMarginCall();
+
+            await timeTravel(network, parseInt(testPoolFactoryParams._marginCallDuration.toString()));
+
+            const liquidationTokens = await poolToken.balanceOf(lender.address);
+            let borrowTokenBefore = await borrowToken.balanceOf(lender.address);
+
+            let randomCollateralBefore = await collateralToken.balanceOf(random.address);
+            // console.log(liquidationTokens.toString());
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, liquidationTokens.mul(2));
+            await borrowToken.connect(admin).transfer(random.address, liquidationTokens.mul(2));
+            await borrowToken.connect(random).approve(pool.address, liquidationTokens.mul(2));
+
+            // Liquidate lender after margin call duration is over
+            let liquidateExpect = expect(pool.connect(random).liquidateLender(lender.address, false, false, false));
+            await liquidateExpect.to.emit(pool, 'LenderLiquidated');
+
+            let lenderPoolTokenAfter = await poolToken.balanceOf(lender.address);
+            let collateralTokenAfter = await collateralToken.balanceOf(lender.address);
+            let randomCollateral = await collateralToken.balanceOf(random.address);
+
+            assert(
+                lenderPoolTokenAfter.toString() == BigNumber.from('0').toString(),
+                `Lender not liquidated Properly. Actual ${lenderPoolTokenAfter.toString()} Expected ${BigNumber.from('0').toString()}`
+            );
+
+            // Before Liquidation
+            console.log('BorrowToken Before', borrowTokenBefore.toString());
+
+            // After Liquidation
+            console.log('PoolToken After', lenderPoolTokenAfter.toString()); // Should be 0
+            console.log('CollateralToken After', collateralTokenAfter.toString());
+
+            // Random
+            console.log('CollateralToken Random Before', randomCollateralBefore.toString());
+            console.log('CollateralToken Random', randomCollateral.toString());
+
+            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, chainlinkBorrow);
         });
     });
 }

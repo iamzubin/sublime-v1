@@ -10,8 +10,6 @@ import '../interfaces/IYield.sol';
 import '../interfaces/Invest/ICEther.sol';
 import '../interfaces/Invest/ICToken.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * @title Yield contract
  * @notice Implements the functions to lock/unlock tokens into available exchanges
@@ -140,18 +138,12 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         //balanceOfUnderlying returns underlying balance for total shares
         if (shares == 0) return 0;
         address cToken = liquidityToken[asset];
-        ////////////////////////////////////////////////
-        // console.log('BalanceOfUnderlying', ICToken(cToken).balanceOfUnderlying(address(this)));
-        uint exchangeRate = ICToken(cToken).exchangeRateStored();
-        uint product = exchangeRate.mul(IERC20(cToken).balanceOf(address(this)));
-        uint truncated = product/1e18;
-        // console.log('BalanceOfUnderlying view', truncated);
+        uint256 exchangeRate = ICToken(cToken).exchangeRateStored();
+        uint256 product = exchangeRate.mul(IERC20(cToken).balanceOf(address(this)));
+        uint256 truncated = product / 1e18;
         ////////////////////////////////////////////////
         // uint256 amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
         amountview = truncated.mul(shares).div(IERC20(cToken).balanceOf(address(this)));
-        // console.log('Amount', amount);
-        // console.log('Amount view', amountview);
-
     }
 
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {

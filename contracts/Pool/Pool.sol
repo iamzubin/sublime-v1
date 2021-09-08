@@ -919,7 +919,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
 
         address _borrowAsset = poolConstants.borrowAsset;
         _deposit(_fromSavingsAccount, false, _borrowAsset, _lenderLiquidationTokens, _poolSavingsStrategy, msg.sender, _lender);
-
         _withdrawRepayment(_lender);
     }
 
