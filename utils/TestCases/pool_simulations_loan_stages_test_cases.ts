@@ -146,5 +146,5 @@ export const psLoanStagesTestCases = [
     //     liquidityCollateralTokenParam: '0x80a2ae356fc9ef4305676f7a3e2ed04e12c33946', //cyfi
     //     chainlinkBorrowParam: '0xCc70F09A6CC17553b2E31954cD36E4A2d89501f7',
     //     chainlinkCollateralParam: '0xA027702dbb89fbd58938e4324ac03B58d812b0E1',
-    // },
+    // }
 ];
