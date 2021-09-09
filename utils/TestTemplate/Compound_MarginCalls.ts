@@ -212,7 +212,7 @@ export async function compound_MarginCalls(
             let collateralToken = env.mockTokenContracts[1].contract;
 
             // Reducing the collateral ratio
-            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['ETH/USD']);
+            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['BTC/USD']);
 
             // Requesting margin call
             await pool.connect(lender1).requestMarginCall();
@@ -228,7 +228,7 @@ export async function compound_MarginCalls(
             let collateralToken = env.mockTokenContracts[1].contract;
 
             // Setting a lower collateral ratio and requesting for margin call
-            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['ETH/USD']);
+            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['BTC/USD']);
             await pool.connect(lender).requestMarginCall();
 
             await timeTravel(network, parseInt(testPoolFactoryParams._marginCallDuration.toString()));
