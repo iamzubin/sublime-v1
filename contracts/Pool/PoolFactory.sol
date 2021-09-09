@@ -447,29 +447,27 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             isWithinLimits(_repaymentInterval, repaymentIntervalLimit.min, repaymentIntervalLimit.max),
             'PoolFactory::createPool - Repayment interval not within limits'
         );
-        bytes memory data =
-            abi.encodeWithSelector(
-                poolInitFuncSelector,
-                _poolSize,
-                _minBorrowAmount,
-                msg.sender,
-                _borrowTokenType,
-                _collateralTokenType,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _poolSavingsStrategy,
-                _collateralAmount,
-                _transferFromSavingsAccount,
-                matchCollateralRatioInterval,
-                collectionPeriod
-            );
+        bytes memory data = abi.encodeWithSelector(
+            poolInitFuncSelector,
+            _poolSize,
+            _minBorrowAmount,
+            msg.sender,
+            _borrowTokenType,
+            _collateralTokenType,
+            _collateralRatio,
+            _borrowRate,
+            _repaymentInterval,
+            _noOfRepaymentIntervals,
+            _poolSavingsStrategy,
+            _collateralAmount,
+            _transferFromSavingsAccount,
+            matchCollateralRatioInterval,
+            collectionPeriod
+        );
 
         bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
         bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
         uint256 amount = _collateralTokenType == address(0) ? _collateralAmount : 0;
-
         address pool = _deploy(amount, salt, bytecode);
 
         bytes memory tokenData = abi.encodeWithSelector(poolTokenInitFuncSelector, 'Open Borrow Pool Tokens', 'OBPT', pool);

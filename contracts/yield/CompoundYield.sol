@@ -28,7 +28,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
 
     event ProtocolAddressesUpdated(address asset, address protocolToken);
 
-    modifier onlySavingsAccount {
+    modifier onlySavingsAccount() {
         require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
@@ -162,7 +162,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         uint256 initialCTokenBalance = IERC20(cToken).balanceOf(address(this));
         //mint cToken
         IERC20(asset).approve(cToken, amount);
-        require(ICToken(cToken).mint(amount) == 0, 'Error in minting tokens');
+        // require(ICToken(cToken).mint(amount) == 0, 'Error in minting tokens');
         sharesReceived = IERC20(cToken).balanceOf(address(this)).sub(initialCTokenBalance);
     }
 

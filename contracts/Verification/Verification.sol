@@ -10,11 +10,6 @@ contract Verification is Initializable, OwnableUpgradeable {
     event UserDetailsUpdated(address user, bytes32 offChainDetails);
     event UserUnregistered(address user);
 
-    event CollateralAdded(bytes32 poolHash, uint256 amount);
-    event AmountBorrowed(bytes32 poolHash, address user, uint256 amount, uint256 time);
-
-    event CollateralWithdrawn(bytes32 poolHash, address user, uint256 amount);
-
     modifier ifUserRegistered(address _user) {
         require(registeredUsers[_user] != bytes32(0), 'Verification: User must be registered');
         _;

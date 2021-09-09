@@ -135,4 +135,16 @@ export const psLoanStagesTestCases = [
         chainlinkBorrowParam: ChainLinkAggregators['UNI/USD'],
         chainlinkCollateralParam: ChainLinkAggregators['COMP/USD'],
     },
+    // investigate why the below thing is failing
+    // {
+    //     Amount: 1,
+    //     Whale1: '0xE93381fB4c4F14bDa253907b18faD305D799241a', //houbi 10
+    //     Whale2: '0xE93381fB4c4F14bDa253907b18faD305D799241a', // houbi 10
+    //     BorrowTokenParam: '0x6b3595068778dd592e39a122f4f5a5cf09c90fe2', // sushi
+    //     CollateralTokenParam: '0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e', //yfi
+    //     liquidityBorrowTokenParam: '0x4b0181102a0112a2ef11abee5563bb4a3176c9d7', //csushi
+    //     liquidityCollateralTokenParam: '0x80a2ae356fc9ef4305676f7a3e2ed04e12c33946', //cyfi
+    //     chainlinkBorrowParam: '0xCc70F09A6CC17553b2E31954cD36E4A2d89501f7',
+    //     chainlinkCollateralParam: '0xA027702dbb89fbd58938e4324ac03B58d812b0E1',
+    // },
 ];
