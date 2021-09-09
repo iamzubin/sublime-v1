@@ -500,7 +500,6 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
             (_currentDebt.add(borrowAmount)).mul(10**_decimals)
         );
-        
         require(
             collateralRatioIfAmountIsWithdrawn > creditLineInfo[creditLineHash].idealCollateralRatio,
             "CreditLine::borrowFromCreditLine - The current collateral ratio doesn't allow to withdraw the amount"
