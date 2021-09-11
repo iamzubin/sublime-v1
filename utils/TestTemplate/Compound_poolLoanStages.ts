@@ -502,23 +502,21 @@ export async function compoundPoolCollectionStage(
             const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
             const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
 
-            // When using Savings Account
-            // const borrowAssetBalancePoolSavings = await env.savingsAccount.userLockedBalance(
-            //     pool.address,
-            //     borrowToken.address,
-            //     zeroAddress
-            // );
+            const borrowAssetBalancePoolSavings = await env.savingsAccount.connect(admin).userLockedBalance(
+                pool.address,
+                borrowToken.address,
+                zeroAddress
+            );
             const tokensLent = await poolToken.totalSupply();
             await pool.connect(borrower).withdrawBorrowedAmount();
             const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
             const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
 
-            // When using Savings Account
-            // const borrowAssetBalancePoolSavingsAfter = await env.savingsAccount.userLockedBalance(
-            //     pool.address,
-            //     borrowToken.address,
-            //     zeroAddress
-            // );
+            const borrowAssetBalancePoolSavingsAfter = await env.savingsAccount.connect(admin).userLockedBalance(
+                pool.address,
+                borrowToken.address,
+                zeroAddress
+            );
             const tokensLentAfter = await poolToken.totalSupply();
             const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
@@ -535,11 +533,10 @@ export async function compoundPoolCollectionStage(
                     .sub(tokensLentAfter)
                     .toString()}`
             );
-            // When using Savings Account
-            // assert(
-            //     borrowAssetBalancePoolSavings.toString() == borrowAssetBalancePoolSavingsAfter.toString(),
-            //     `Savings account changing instead of token balance`
-            // );
+            assert(
+                borrowAssetBalancePoolSavings.toString() == borrowAssetBalancePoolSavingsAfter.toString(),
+                `Savings account changing instead of token balance`
+            );
 
             let LoanStatus = (await pool.poolVars()).loanStatus;
             assert(
