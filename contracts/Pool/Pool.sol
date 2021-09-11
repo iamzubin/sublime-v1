@@ -891,7 +891,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     {
         uint256 _poolBaseLPShares = poolVars.baseLiquidityShares;
         _lenderBalance = poolToken.balanceOf(_lender);
-
         uint256 _lenderBaseLPShares = (_poolBaseLPShares.mul(_lenderBalance)).div(poolToken.totalSupply());
         uint256 _lenderExtraLPShares = lenders[_lender].extraLiquidityShares;
         poolVars.baseLiquidityShares = _poolBaseLPShares.sub(_lenderBaseLPShares);

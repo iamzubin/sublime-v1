@@ -132,21 +132,16 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @dev Used to get amount of underlying tokens for given number of shares
      * @param shares the amount of shares
      * @param asset the address of token locked
-     * @return amountview amount of underlying tokens
+     * @return amount amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) public view override returns (uint256 amountview) {
+    function getTokensForShares(uint256 shares, address asset) public override returns (uint256 amount) {
         //balanceOfUnderlying returns underlying balance for total shares
         if (shares == 0) return 0;
         address cToken = liquidityToken[asset];
-        uint256 exchangeRate = ICToken(cToken).exchangeRateStored();
-        uint256 product = exchangeRate.mul(IERC20(cToken).balanceOf(address(this)));
-        uint256 truncated = product / 1e18;
-        ////////////////////////////////////////////////
-        // uint256 amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
-        amountview = truncated.mul(shares).div(IERC20(cToken).balanceOf(address(this)));
+        amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
     }
 
-    function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
+    function getSharesForTokens(uint256 amount, address asset) external override returns (uint256 shares) {
         shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
     }
 
@@ -186,7 +181,6 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     ) internal returns (uint256 tokensReceived) {
         uint256 initialAssetBalance = IERC20(asset).balanceOf(address(this));
         require(ICToken(cToken).redeem(amount) == 0, 'Error in unwrapping');
-
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
     }
 
