@@ -22,14 +22,14 @@ contract adminVerifier is Initializable, OwnableUpgradeable {
         verification = IVerification(_verification);
     }
 
-    function registerUser(address _user, string _metadata, bool _isMasterLinked) external onlyOwner {
-        string memory _empty;
-        require(userData[_user] == _empty; "User already exists");
+    function registerUser(address _user, string memory _metadata, bool _isMasterLinked) external onlyOwner {
+        require(bytes(userData[_user]).length == 0, "User already exists");
         verification.registerMasterAddress(_user, _isMasterLinked);
         emit UserRegistered(_user, _isMasterLinked, _metadata);
     }
 
     function unregisterUser(address _user) external onlyOwner {
+        require(bytes(userData[_user]).length != 0, "User doesnt exists");
         delete userData[_user];
         verification.unregisterMasterAddress(_user, address(this));
         emit UserUnregistered(_user);
