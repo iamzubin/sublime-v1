@@ -61,7 +61,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice address of the contract storing the user registry
      */
-    address public userRegistry;
+    address public override userRegistry;
 
     /**
      * @notice address of the contract storing the strategy registry
@@ -326,8 +326,11 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice functions affected by this modifier can only be invoked by the borrow of the Pool
      */
-    modifier onlyBorrower() {
-        require(IVerification(userRegistry).isUser(msg.sender), 'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool');
+    modifier onlyBorrower(address _verifier) {
+        require(
+            IVerification(userRegistry).isUser(msg.sender, _verifier),
+            'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool'
+        );
         _;
     }
 
@@ -416,8 +419,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
-        bytes32 _salt
-    ) external payable onlyBorrower {
+        bytes32 _salt,
+        address _verifier,
+        address _lenderVerifier
+    ) external payable onlyBorrower(_verifier) {
         if (_collateralTokenType == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
@@ -447,7 +452,80 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             isWithinLimits(_repaymentInterval, repaymentIntervalLimit.min, repaymentIntervalLimit.max),
             'PoolFactory::createPool - Repayment interval not within limits'
         );
-        bytes memory data = abi.encodeWithSelector(
+        _createPool(
+            _poolSize,
+            _minBorrowAmount,
+            _borrowTokenType,
+            _collateralTokenType,
+            _collateralRatio,
+            _borrowRate,
+            _repaymentInterval,
+            _noOfRepaymentIntervals,
+            _poolSavingsStrategy,
+            _collateralAmount,
+            _transferFromSavingsAccount,
+            _salt,
+            _lenderVerifier
+        );
+    }
+
+    // @dev These functions are used to avoid stack too deep
+    function _createPool(
+        uint256 _poolSize,
+        uint256 _minBorrowAmount,
+        address _borrowTokenType,
+        address _collateralTokenType,
+        uint256 _collateralRatio,
+        uint256 _borrowRate,
+        uint256 _repaymentInterval,
+        uint256 _noOfRepaymentIntervals,
+        address _poolSavingsStrategy,
+        uint256 _collateralAmount,
+        bool _transferFromSavingsAccount,
+        bytes32 _salt,
+        address _lenderVerifier
+    ) internal {
+        bytes memory data = _encodePoolInitCall(
+            _poolSize,
+            _minBorrowAmount,
+            _borrowTokenType,
+            _collateralTokenType,
+            _collateralRatio,
+            _borrowRate,
+            _repaymentInterval,
+            _noOfRepaymentIntervals,
+            _poolSavingsStrategy,
+            _collateralAmount,
+            _transferFromSavingsAccount
+        );
+        bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
+        bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
+        uint256 amount = _collateralTokenType == address(0) ? _collateralAmount : 0;
+
+        address pool = _deploy(amount, salt, bytecode);
+
+        bytes memory tokenData = abi.encodeWithSelector(poolTokenInitFuncSelector, 'Open Borrow Pool Tokens', 'OBPT', pool);
+        address poolToken = address(new SublimeProxy(poolTokenImpl, address(0), tokenData));
+        IPool(pool).setConstants(poolToken, _lenderVerifier);
+        openBorrowPoolRegistry[pool] = true;
+        emit PoolCreated(pool, msg.sender, poolToken);
+    }
+
+    // @dev These functions are used to avoid stack too deep
+    function _encodePoolInitCall(
+        uint256 _poolSize,
+        uint256 _minBorrowAmount,
+        address _borrowTokenType,
+        address _collateralTokenType,
+        uint256 _collateralRatio,
+        uint256 _borrowRate,
+        uint256 _repaymentInterval,
+        uint256 _noOfRepaymentIntervals,
+        address _poolSavingsStrategy,
+        uint256 _collateralAmount,
+        bool _transferFromSavingsAccount
+    ) internal view returns (bytes memory data) {
+        data = abi.encodeWithSelector(
             poolInitFuncSelector,
             _poolSize,
             _minBorrowAmount,
@@ -464,18 +542,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             matchCollateralRatioInterval,
             collectionPeriod
         );
-
-        bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
-        bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
-        uint256 amount = _collateralTokenType == address(0) ? _collateralAmount : 0;
-
-        address pool = _deploy(amount, salt, bytecode);
-
-        bytes memory tokenData = abi.encodeWithSelector(poolTokenInitFuncSelector, 'Open Borrow Pool Tokens', 'OBPT', pool);
-        address poolToken = address(new SublimeProxy(poolTokenImpl, address(0), tokenData));
-        IPool(pool).setPoolToken(poolToken);
-        openBorrowPoolRegistry[pool] = true;
-        emit PoolCreated(pool, msg.sender, poolToken);
     }
 
     /**
