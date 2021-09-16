@@ -61,7 +61,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice address of the contract storing the user registry
      */
-    address public userRegistry;
+    address public override userRegistry;
 
     /**
      * @notice address of the contract storing the strategy registry
@@ -419,8 +419,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
-        bytes32 _salt
-    ) external payable onlyBorrower {
+        bytes32 _salt,
+        address _verifier,
+        address _lenderVerifier
+    ) external payable onlyBorrower(_verifier) {
         if (_collateralTokenType == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
