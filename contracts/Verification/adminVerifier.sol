@@ -5,7 +5,6 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '../interfaces/IVerification.sol';
 
 contract adminVerifier is Initializable, OwnableUpgradeable {
-
     IVerification public verification;
 
     mapping(address => string) userData;
@@ -22,14 +21,18 @@ contract adminVerifier is Initializable, OwnableUpgradeable {
         verification = IVerification(_verification);
     }
 
-    function registerUser(address _user, string memory _metadata, bool _isMasterLinked) external onlyOwner {
-        require(bytes(userData[_user]).length == 0, "User already exists");
+    function registerUser(
+        address _user,
+        string memory _metadata,
+        bool _isMasterLinked
+    ) external onlyOwner {
+        require(bytes(userData[_user]).length == 0, 'User already exists');
         verification.registerMasterAddress(_user, _isMasterLinked);
         emit UserRegistered(_user, _isMasterLinked, _metadata);
     }
 
     function unregisterUser(address _user) external onlyOwner {
-        require(bytes(userData[_user]).length != 0, "User doesnt exists");
+        require(bytes(userData[_user]).length != 0, 'User doesnt exists');
         delete userData[_user];
         verification.unregisterMasterAddress(_user, address(this));
         emit UserUnregistered(_user);

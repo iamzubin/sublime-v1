@@ -184,8 +184,11 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _lastPrincipleUpdateTime = creditLineUsage[creditLineHash].lastPrincipalUpdateTime;
         if (_lastPrincipleUpdateTime == 0) return 0;
         uint256 _timeElapsed = (block.timestamp).sub(_lastPrincipleUpdateTime);
-        uint256 _interestAccrued =
-            calculateInterest(creditLineUsage[creditLineHash].principal, creditLineInfo[creditLineHash].borrowRate, _timeElapsed);
+        uint256 _interestAccrued = calculateInterest(
+            creditLineUsage[creditLineHash].principal,
+            creditLineInfo[creditLineHash].borrowRate,
+            _timeElapsed
+        );
         return _interestAccrued;
     }
 
@@ -198,11 +201,10 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     // maybe change interestAccruedTillPrincipalUpdate to interestAccruedTillLastPrincipalUpdate
     function calculateCurrentDebt(bytes32 _creditLineHash) public view returns (uint256) {
         uint256 _interestAccrued = calculateInterestAccrued(_creditLineHash);
-        uint256 _currentDebt =
-            (creditLineUsage[_creditLineHash].principal)
-                .add(creditLineUsage[_creditLineHash].interestAccruedTillPrincipalUpdate)
-                .add(_interestAccrued)
-                .sub(creditLineUsage[_creditLineHash].totalInterestRepaid);
+        uint256 _currentDebt = (creditLineUsage[_creditLineHash].principal)
+            .add(creditLineUsage[_creditLineHash].interestAccruedTillPrincipalUpdate)
+            .add(_interestAccrued)
+            .sub(creditLineUsage[_creditLineHash].totalInterestRepaid);
         return _currentDebt;
     }
 
@@ -212,18 +214,18 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
                 creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.REQUESTED,
             'CreditLine: Cannot only if credit line ACTIVE or REQUESTED'
         );
-        (uint256 _ratioOfPrices, uint256 _decimals) =
-            IPriceOracle(priceOracle).getLatestPrice(
-                creditLineInfo[_creditLineHash].collateralAsset,
-                creditLineInfo[_creditLineHash].borrowAsset
-            );
+        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
+            creditLineInfo[_creditLineHash].collateralAsset,
+            creditLineInfo[_creditLineHash].borrowAsset
+        );
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_creditLineHash);
 
         uint256 _currentDebt = calculateCurrentDebt(_creditLineHash);
 
-        uint256 maxPossible =
-            _totalCollateralToken.mul(_ratioOfPrices).div(creditLineInfo[_creditLineHash].idealCollateralRatio).div(10**_decimals);
+        uint256 maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineInfo[_creditLineHash].idealCollateralRatio).div(
+            10**_decimals
+        );
 
         if (maxPossible > creditLineInfo[_creditLineHash].borrowLimit) {
             maxPossible = creditLineInfo[_creditLineHash].borrowLimit;
@@ -296,19 +298,18 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         //require(userData[lender].blockCreditLineRequests == true,
         //        "CreditLine: External requests blocked");
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
-        bytes32 _creditLineHash =
-            _createCreditLineRequest(
-                _lender,
-                msg.sender,
-                _borrowLimit,
-                _liquidationThreshold,
-                _borrowRate,
-                _autoLiquidation,
-                _collateralRatio,
-                _borrowAsset,
-                _collateralAsset,
-                false
-            );
+        bytes32 _creditLineHash = _createCreditLineRequest(
+            _lender,
+            msg.sender,
+            _borrowLimit,
+            _liquidationThreshold,
+            _borrowRate,
+            _autoLiquidation,
+            _collateralRatio,
+            _borrowAsset,
+            _collateralAsset,
+            false
+        );
         // setRepayments(creditLineHash);
         emit CreditLineRequestedToLender(_creditLineHash, _lender, msg.sender);
         return _creditLineHash;
@@ -327,19 +328,18 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         //require(userData[borrower].blockCreditLineRequests == true,
         //        "CreditLine: External requests blocked");
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
-        bytes32 _creditLineHash =
-            _createCreditLineRequest(
-                msg.sender,
-                _borrower,
-                _borrowLimit,
-                _liquidationThreshold,
-                _borrowRate,
-                _autoLiquidation,
-                _collateralRatio,
-                _borrowAsset,
-                _collateralAsset,
-                true
-            );
+        bytes32 _creditLineHash = _createCreditLineRequest(
+            msg.sender,
+            _borrower,
+            _borrowLimit,
+            _liquidationThreshold,
+            _borrowRate,
+            _autoLiquidation,
+            _collateralRatio,
+            _borrowAsset,
+            _collateralAsset,
+            true
+        );
         // setRepayments(creditLineHash);
         ISavingsAccount(savingsAccount).approveFromToCreditLine(_borrowAsset, msg.sender, _borrowLimit);
 
@@ -438,8 +438,12 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
                     IERC20(_collateralAsset).approve(_strategy, _collateralAmount);
                 }
             }
-            uint256 _sharesReceived =
-                _savingsAccount.depositTo{value: msg.value}(_collateralAmount, _collateralAsset, _strategy, address(this));
+            uint256 _sharesReceived = _savingsAccount.depositTo{value: msg.value}(
+                _collateralAmount,
+                _collateralAsset,
+                _strategy,
+                address(this)
+            );
             collateralShareInStrategy[_creditLineHash][_strategy] = collateralShareInStrategy[_creditLineHash][_strategy].add(
                 _sharesReceived
             );
@@ -486,16 +490,16 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _currentDebt = calculateCurrentDebt(creditLineHash);
         require(_currentDebt.add(borrowAmount) <= creditLineInfo[creditLineHash].borrowLimit, 'CreditLine: Amount exceeds borrow limit.');
 
-        (uint256 _ratioOfPrices, uint256 _decimals) =
-            IPriceOracle(priceOracle).getLatestPrice(
-                creditLineInfo[creditLineHash].collateralAsset,
-                creditLineInfo[creditLineHash].borrowAsset
-            );
+        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
+            creditLineInfo[creditLineHash].collateralAsset,
+            creditLineInfo[creditLineHash].borrowAsset
+        );
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(creditLineHash);
 
-        uint256 collateralRatioIfAmountIsWithdrawn =
-            _ratioOfPrices.mul(_totalCollateralToken).div((_currentDebt.add(borrowAmount)).mul(10**_decimals));
+        uint256 collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
+            (_currentDebt.add(borrowAmount)).mul(10**_decimals)
+        );
         require(
             collateralRatioIfAmountIsWithdrawn > creditLineInfo[creditLineHash].idealCollateralRatio,
             "CreditLine::borrowFromCreditLine - The current collateral ratio doesn't allow to withdraw the amount"
@@ -586,8 +590,9 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(creditLineHash);
-        uint256 _totalInterestAccrued =
-            (creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate).add(_interestSincePrincipalUpdate);
+        uint256 _totalInterestAccrued = (creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate).add(
+            _interestSincePrincipalUpdate
+        );
         uint256 _totalDebt = _totalInterestAccrued.add(creditLineUsage[creditLineHash].principal);
         uint256 _totalRepaidNow = creditLineUsage[creditLineHash].totalInterestRepaid.add(repayAmount);
 
@@ -643,15 +648,15 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     }
 
     function calculateCurrentCollateralRatio(bytes32 creditLineHash) public ifCreditLineExists(creditLineHash) returns (uint256) {
-        (uint256 _ratioOfPrices, uint256 _decimals) =
-            IPriceOracle(priceOracle).getLatestPrice(
-                creditLineInfo[creditLineHash].collateralAsset,
-                creditLineInfo[creditLineHash].borrowAsset
-            );
+        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
+            creditLineInfo[creditLineHash].collateralAsset,
+            creditLineInfo[creditLineHash].borrowAsset
+        );
 
         uint256 currentDebt = calculateCurrentDebt(creditLineHash);
-        uint256 currentCollateralRatio =
-            calculateTotalCollateralTokens(creditLineHash).mul(_ratioOfPrices).div(currentDebt).div(10**_decimals);
+        uint256 currentCollateralRatio = calculateTotalCollateralTokens(creditLineHash).mul(_ratioOfPrices).div(currentDebt).div(
+            10**_decimals
+        );
         return currentCollateralRatio;
     }
 
@@ -676,17 +681,17 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         onlyCreditLineBorrower(creditLineHash)
     {
         //check for ideal ratio
-        (uint256 _ratioOfPrices, uint256 _decimals) =
-            IPriceOracle(priceOracle).getLatestPrice(
-                creditLineInfo[creditLineHash].collateralAsset,
-                creditLineInfo[creditLineHash].borrowAsset
-            );
+        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
+            creditLineInfo[creditLineHash].collateralAsset,
+            creditLineInfo[creditLineHash].borrowAsset
+        );
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(creditLineHash);
         uint256 currentDebt = calculateCurrentDebt(creditLineHash);
         if (currentDebt != 0) {
-            uint256 collateralRatioIfAmountIsWithdrawn =
-                ((_totalCollateralToken.sub(amount)).mul(_ratioOfPrices).div(currentDebt)).div(10**_decimals);
+            uint256 collateralRatioIfAmountIsWithdrawn = ((_totalCollateralToken.sub(amount)).mul(_ratioOfPrices).div(currentDebt)).div(
+                10**_decimals
+            );
             require(
                 collateralRatioIfAmountIsWithdrawn >= creditLineInfo[creditLineHash].idealCollateralRatio,
                 "CreditLine::withdrawCollateralFromCreditLine - The current collateral ration doesn't allow to withdraw"
@@ -720,8 +725,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             _activeAmount = _activeAmount.add(_tokensToTransfer); //64753966145743327485
             collateralShareInStrategy[creditLineHash][_strategyList[index]] = collateralShareInStrategy[creditLineHash][
                 _strategyList[index]
-            ]
-                .sub(liquidityShares);
+            ].sub(liquidityShares);
             ISavingsAccount(savingsAccount).withdraw(msg.sender, _tokensToTransfer, _asset, _strategyList[index], false);
 
             if (_activeAmount == _amountInTokens) {

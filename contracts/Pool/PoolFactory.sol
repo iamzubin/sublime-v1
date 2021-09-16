@@ -232,7 +232,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @notice functions affected by this modifier can only be invoked by the borrow of the Pool
      */
     modifier onlyBorrower(address _verifier) {
-        require(IVerification(userRegistry).isUser(msg.sender, _verifier), 'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool');
+        require(
+            IVerification(userRegistry).isUser(msg.sender, _verifier),
+            'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool'
+        );
         _;
     }
 
@@ -408,20 +411,19 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt,
         address _lenderVerifier
     ) internal {
-        bytes memory data =
-            _encodePoolInitCall(
-                _poolSize,
-                _minBorrowAmount,
-                _borrowTokenType,
-                _collateralTokenType,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _poolSavingsStrategy,
-                _collateralAmount,
-                _transferFromSavingsAccount
-            );
+        bytes memory data = _encodePoolInitCall(
+            _poolSize,
+            _minBorrowAmount,
+            _borrowTokenType,
+            _collateralTokenType,
+            _collateralRatio,
+            _borrowRate,
+            _repaymentInterval,
+            _noOfRepaymentIntervals,
+            _poolSavingsStrategy,
+            _collateralAmount,
+            _transferFromSavingsAccount
+        );
         bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
         bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
         uint256 amount = _collateralTokenType == address(0) ? _collateralAmount : 0;
@@ -448,25 +450,24 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount
-    ) internal view returns(bytes memory data) {
-        data =
-            abi.encodeWithSelector(
-                poolInitFuncSelector,
-                _poolSize,
-                _minBorrowAmount,
-                msg.sender,
-                _borrowTokenType,
-                _collateralTokenType,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _poolSavingsStrategy,
-                _collateralAmount,
-                _transferFromSavingsAccount,
-                matchCollateralRatioInterval,
-                collectionPeriod
-            );
+    ) internal view returns (bytes memory data) {
+        data = abi.encodeWithSelector(
+            poolInitFuncSelector,
+            _poolSize,
+            _minBorrowAmount,
+            msg.sender,
+            _borrowTokenType,
+            _collateralTokenType,
+            _collateralRatio,
+            _borrowRate,
+            _repaymentInterval,
+            _noOfRepaymentIntervals,
+            _poolSavingsStrategy,
+            _collateralAmount,
+            _transferFromSavingsAccount,
+            matchCollateralRatioInterval,
+            collectionPeriod
+        );
     }
 
     /**

@@ -15,7 +15,14 @@ contract CreditLineStorage is OwnableUpgradeable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    enum creditLineStatus {NOT_CREATED, REQUESTED, ACTIVE, CLOSED, CANCELLED, LIQUIDATED}
+    enum creditLineStatus {
+        NOT_CREATED,
+        REQUESTED,
+        ACTIVE,
+        CLOSED,
+        CANCELLED,
+        LIQUIDATED
+    }
 
     uint256 public CreditLineCounter;
 
