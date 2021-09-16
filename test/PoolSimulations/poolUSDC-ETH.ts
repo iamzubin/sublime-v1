@@ -28,7 +28,7 @@ import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
-import { IYield } from '@typechain/IYield';
+import { IYield } from '../../typechain/IYield';
 import { zeroAddress } from '../../utils/constants';
 
 describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {

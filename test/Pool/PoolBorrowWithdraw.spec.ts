@@ -1426,8 +1426,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const protocolFee = createPoolParams._poolSize.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
                 assert(
-                     createPoolParams._poolSize.sub(protocolFee).toString() == borrowAssetBalanceBorrowerAfter.sub(borrowAssetBalanceBorrower).toString(),
-                    `Borrower not receiving correct lent amount Actual: ${borrowAssetBalanceBorrowerAfter.sub(borrowAssetBalanceBorrower).toString()} Expected: ${createPoolParams._poolSize.sub(protocolFee).toString()}`
+                    createPoolParams._poolSize.sub(protocolFee).toString() ==
+                        borrowAssetBalanceBorrowerAfter.sub(borrowAssetBalanceBorrower).toString(),
+                    `Borrower not receiving correct lent amount Actual: ${borrowAssetBalanceBorrowerAfter
+                        .sub(borrowAssetBalanceBorrower)
+                        .toString()} Expected: ${createPoolParams._poolSize.sub(protocolFee).toString()}`
                 );
 
                 assert(
