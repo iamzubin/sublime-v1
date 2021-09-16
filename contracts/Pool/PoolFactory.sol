@@ -30,7 +30,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     bytes4 public poolTokenInitFuncSelector;
     address public poolImpl;
     address public poolTokenImpl;
-    address public userRegistry;
+    address public override userRegistry;
     address public strategyRegistry;
     address public override extension;
     address public override repaymentImpl;
@@ -346,7 +346,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
         bytes32 _salt,
-        address _verifier
+        address _verifier,
+        address _lenderVerifier
     ) external payable onlyBorrower(_verifier) {
         require(_minBorrowAmount <= _poolSize, 'PoolFactory::createPool - invalid min borrow amount');
         require(volatilityThreshold[_collateralTokenType] <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
@@ -374,7 +375,79 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             isWithinLimits(_repaymentInterval, repaymentIntervalLimit.min, repaymentIntervalLimit.max),
             'PoolFactory::createPool - Repayment interval not within limits'
         );
+        _createPool(
+            _poolSize,
+            _minBorrowAmount,
+            _borrowTokenType,
+            _collateralTokenType,
+            _collateralRatio,
+            _borrowRate,
+            _repaymentInterval,
+            _noOfRepaymentIntervals,
+            _poolSavingsStrategy,
+            _collateralAmount,
+            _transferFromSavingsAccount,
+            _salt,
+            _lenderVerifier
+        );
+    }
+
+    function _createPool(
+        uint256 _poolSize,
+        uint256 _minBorrowAmount,
+        address _borrowTokenType,
+        address _collateralTokenType,
+        uint256 _collateralRatio,
+        uint256 _borrowRate,
+        uint256 _repaymentInterval,
+        uint256 _noOfRepaymentIntervals,
+        address _poolSavingsStrategy,
+        uint256 _collateralAmount,
+        bool _transferFromSavingsAccount,
+        bytes32 _salt,
+        address _lenderVerifier
+    ) internal {
         bytes memory data =
+            _encodePoolInitCall(
+                _poolSize,
+                _minBorrowAmount,
+                _borrowTokenType,
+                _collateralTokenType,
+                _collateralRatio,
+                _borrowRate,
+                _repaymentInterval,
+                _noOfRepaymentIntervals,
+                _poolSavingsStrategy,
+                _collateralAmount,
+                _transferFromSavingsAccount
+            );
+        bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
+        bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
+        uint256 amount = _collateralTokenType == address(0) ? _collateralAmount : 0;
+
+        address pool = _deploy(amount, salt, bytecode);
+
+        bytes memory tokenData = abi.encodeWithSelector(poolTokenInitFuncSelector, 'Open Borrow Pool Tokens', 'OBPT', pool);
+        address poolToken = address(new SublimeProxy(poolTokenImpl, address(0), tokenData));
+        IPool(pool).setConstants(poolToken, _lenderVerifier);
+        openBorrowPoolRegistry[pool] = true;
+        emit PoolCreated(pool, msg.sender, poolToken);
+    }
+
+    function _encodePoolInitCall(
+        uint256 _poolSize,
+        uint256 _minBorrowAmount,
+        address _borrowTokenType,
+        address _collateralTokenType,
+        uint256 _collateralRatio,
+        uint256 _borrowRate,
+        uint256 _repaymentInterval,
+        uint256 _noOfRepaymentIntervals,
+        address _poolSavingsStrategy,
+        uint256 _collateralAmount,
+        bool _transferFromSavingsAccount
+    ) internal view returns(bytes memory data) {
+        data =
             abi.encodeWithSelector(
                 poolInitFuncSelector,
                 _poolSize,
@@ -392,18 +465,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
                 matchCollateralRatioInterval,
                 collectionPeriod
             );
-
-        bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
-        bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
-        uint256 amount = _collateralTokenType == address(0) ? _collateralAmount : 0;
-
-        address pool = _deploy(amount, salt, bytecode);
-
-        bytes memory tokenData = abi.encodeWithSelector(poolTokenInitFuncSelector, 'Open Borrow Pool Tokens', 'OBPT', pool);
-        address poolToken = address(new SublimeProxy(poolTokenImpl, address(0), tokenData));
-        IPool(pool).setPoolToken(poolToken);
-        openBorrowPoolRegistry[pool] = true;
-        emit PoolCreated(pool, msg.sender, poolToken);
     }
 
     /**

@@ -15,6 +15,7 @@ import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IExtension.sol';
 import '../interfaces/IPoolToken.sol';
+import '../interfaces/IVerification.sol';
 
 contract Pool is Initializable, IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
@@ -54,6 +55,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 repaymentInterval;
         address collateralAsset;
         address poolSavingsStrategy; // invest contract
+        address lenderVerifier;
     }
 
     struct PoolVars {
@@ -207,11 +209,12 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     }
 
     /*
-     * @notice Each pool has a unique pool token deployed by PoolFactory
+     * @notice Each pool has a unique pool token deployed by PoolFactory, lender verifier to filter lender is also set by PoolFactory
      * @param _poolToken address of the PoolToken contract deployed for a loan request
      */
-    function setPoolToken(address _poolToken) external override {
+    function setConstants(address _poolToken, address _lenderVerifier) external override {
         require(msg.sender == PoolFactory, '6');
+        poolConstants.lenderVerifier = _lenderVerifier;
         poolToken = IPoolToken(_poolToken);
     }
 
@@ -406,6 +409,10 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _amountLent,
         bool _fromSavingsAccount
     ) external payable nonReentrant {
+        address _lenderVerifier = poolConstants.lenderVerifier;
+        if(_lenderVerifier != address(0)) {
+            require(IVerification(IPoolFactory(PoolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'invalid lender');
+        }
         require(poolVars.loanStatus == LoanStatus.COLLECTION, '15');
         require(block.timestamp < poolConstants.loanStartTime, '16');
         uint256 _amount = _amountLent;
