@@ -392,6 +392,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         );
     }
 
+    // @dev These functions are used to avoid stack too deep
     function _createPool(
         uint256 _poolSize,
         uint256 _minBorrowAmount,
@@ -434,6 +435,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit PoolCreated(pool, msg.sender, poolToken);
     }
 
+    // @dev These functions are used to avoid stack too deep
     function _encodePoolInitCall(
         uint256 _poolSize,
         uint256 _minBorrowAmount,
