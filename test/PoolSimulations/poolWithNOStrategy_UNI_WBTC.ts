@@ -48,6 +48,7 @@ import { getContractAddress } from '@ethersproject/address';
 
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
+import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
@@ -81,6 +82,8 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
 
     let verificationLogic: Verification;
     let verification: Verification;
+    let adminVerifierLogic: AdminVerifier;
+    let adminVerifier: AdminVerifier;
 
     let priceOracleLogic: PriceOracle;
     let priceOracle: PriceOracle;
@@ -212,8 +215,13 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         verificationLogic = await deployHelper.helper.deployVerification();
         let verificationProxy = await deployHelper.helper.deploySublimeProxy(verificationLogic.address, proxyAdmin.address);
         verification = await deployHelper.helper.getVerification(verificationProxy.address);
+        adminVerifierLogic = await deployHelper.helper.deployAdminVerifier();
+        let adminVerificationProxy = await deployHelper.helper.deploySublimeProxy(adminVerifierLogic.address, proxyAdmin.address);
+        adminVerifier = await deployHelper.helper.getAdminVerifier(adminVerificationProxy.address);
         await verification.connect(admin).initialize(admin.address);
-        await verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
+        await adminVerifier.connect(admin).initialize(admin.address, verification.address);
+        await verification.connect(admin).addVerifier(adminVerifier.address);
+        await adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
 
         priceOracleLogic = await deployHelper.helper.deployPriceOracle();
         let priceOracleProxy = await deployHelper.helper.deploySublimeProxy(priceOracleLogic.address, proxyAdmin.address);
@@ -361,7 +369,9 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                     iyield.address,
                     _collateralAmount,
                     false,
-                    salt
+                    salt,
+                    adminVerifier.address,
+                    zeroAddress
                 )
         )
             .to.emit(poolFactory, 'PoolCreated')
