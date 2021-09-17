@@ -283,7 +283,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate = _newInterestAccrued;
     }
 
-    function transferFromSavingAccount(
+    function transferFromSavingsAccount(
         address _asset,
         uint256 _amount,
         address _sender,
@@ -314,7 +314,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 return;
             }
         }
-        revert('CreditLine::transferFromSavingAccount - Insufficient balance');
+        revert('CreditLine::transferFromSavingsAccount - Insufficient balance');
     }
 
     /**
@@ -451,20 +451,20 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function depositCollateral(
         uint256 _amount,
         bytes32 _creditLineHash,
-        bool _fromSavingAccount
+        bool _fromSavingsAccount
     ) external payable nonReentrant ifCreditLineExists(_creditLineHash) {
         require(creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine not active');
-        _depositCollateral(_amount, _creditLineHash, _fromSavingAccount);
+        _depositCollateral(_amount, _creditLineHash, _fromSavingsAccount);
     }
 
     function _depositCollateral(
         uint256 _amount,
         bytes32 _creditLineHash,
-        bool _fromSavingAccount
+        bool _fromSavingsAccount
     ) internal {
         address _collateralAsset = creditLineInfo[_creditLineHash].collateralAsset;
-        if (_fromSavingAccount) {
-            transferFromSavingAccount(_collateralAsset, _amount, msg.sender, address(this));
+        if (_fromSavingsAccount) {
+            transferFromSavingsAccount(_collateralAsset, _amount, msg.sender, address(this));
         } else {
             address _strategy = defaultStrategy;
             ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
@@ -551,7 +551,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineUsage[creditLineHash].principal = creditLineUsage[creditLineHash].principal.add(borrowAmount);
         creditLineUsage[creditLineHash].lastPrincipalUpdateTime = block.timestamp;
 
-        //transferFromSavingAccount(_borrowAsset,borrowAmount,_lender,address(this)); // 10000000000000000000
+        //transferFromSavingsAccount(_borrowAsset,borrowAmount,_lender,address(this)); // 10000000000000000000
 
         // @ TO-DO
         uint256 _tokenDiffBalance;
@@ -603,14 +603,14 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     */
     function repay(
         bytes32 _creditLineHash,
-        bool _transferFromSavingAccount,
+        bool _transferFromSavingsAccount,
         uint256 _repayAmount
     ) internal {
         address _borrowAsset = creditLineInfo[_creditLineHash].borrowAsset;
         address _lender = creditLineInfo[_creditLineHash].lender;
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         address _defaultStrategy = defaultStrategy;
-        if (!_transferFromSavingAccount) {
+        if (!_transferFromSavingsAccount) {
             if (_borrowAsset == address(0)) {
                 require(msg.value >= _repayAmount, 'creditLine::repay - value should be eq or more than repay amount');
                 (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_repayAmount)}(''); // transfer the remaining amount
@@ -620,7 +620,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 _savingsAccount.depositTo(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             }
         } else {
-            transferFromSavingAccount(_borrowAsset, _repayAmount, msg.sender, creditLineInfo[_creditLineHash].lender);
+            transferFromSavingsAccount(_borrowAsset, _repayAmount, msg.sender, creditLineInfo[_creditLineHash].lender);
         }
         _savingsAccount.approveFromToCreditLine(_borrowAsset, _lender, _repayAmount);
     }
@@ -628,7 +628,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function repayCreditLine(
         uint256 repayAmount,
         bytes32 creditLineHash,
-        bool _transferFromSavingAccount
+        bool _transferFromSavingsAccount
     ) external payable nonReentrant {
         require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
@@ -655,7 +655,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineUsage[creditLineHash].lastPrincipalUpdateTime = block.timestamp;
         }
         creditLineUsage[creditLineHash].totalInterestRepaid = _totalRepaidNow;
-        repay(creditLineHash, _transferFromSavingAccount, repayAmount);
+        repay(creditLineHash, _transferFromSavingsAccount, repayAmount);
 
         if (creditLineUsage[creditLineHash].principal == 0) {
             _resetCreditLine(creditLineHash);
@@ -797,7 +797,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         if (creditLineInfo[creditLineHash].autoLiquidation) {
             if (_lender == msg.sender) {
-                transferFromSavingAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
+                transferFromSavingsAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
             } else {
                 (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
 
@@ -807,7 +807,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             }
         } else {
             require(msg.sender == _lender, 'CreditLine: Liquidation can only be performed by lender.');
-            transferFromSavingAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
+            transferFromSavingsAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
         }
 
         emit CreditLineLiquidated(creditLineHash, msg.sender);
