@@ -449,38 +449,37 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function depositCollateral(
-        address _collateralAsset,
-        uint256 _collateralAmount,
+        uint256 _amount,
         bytes32 _creditLineHash,
         bool _fromSavingAccount
     ) external payable nonReentrant ifCreditLineExists(_creditLineHash) {
         require(creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine not active');
-        _depositCollateral(_collateralAsset, _collateralAmount, _creditLineHash, _fromSavingAccount);
+        _depositCollateral(_amount, _creditLineHash, _fromSavingAccount);
     }
 
     function _depositCollateral(
-        address _collateralAsset,
-        uint256 _collateralAmount,
+        uint256 _amount,
         bytes32 _creditLineHash,
         bool _fromSavingAccount
     ) internal {
+        address _collateralAsset = creditLineInfo[_creditLineHash].collateralAsset;
         if (_fromSavingAccount) {
-            transferFromSavingAccount(_collateralAsset, _collateralAmount, msg.sender, address(this));
+            transferFromSavingAccount(_collateralAsset, _amount, msg.sender, address(this));
         } else {
             address _strategy = defaultStrategy;
             ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
             if (_collateralAsset == address(0)) {
-                require(msg.value == _collateralAmount, "CreditLine ::borrowFromCreditLine - value to transfer doesn't match argument");
+                require(msg.value == _amount, "CreditLine ::borrowFromCreditLine - value to transfer doesn't match argument");
             } else {
-                IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _collateralAmount);
+                IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _amount);
                 if (_strategy == address(0)) {
-                    IERC20(_collateralAsset).approve(address(_savingsAccount), _collateralAmount);
+                    IERC20(_collateralAsset).approve(address(_savingsAccount), _amount);
                 } else {
-                    IERC20(_collateralAsset).approve(_strategy, _collateralAmount);
+                    IERC20(_collateralAsset).approve(_strategy, _amount);
                 }
             }
             uint256 _sharesReceived = _savingsAccount.depositTo{value: msg.value}(
-                _collateralAmount,
+                _amount,
                 _collateralAsset,
                 _strategy,
                 address(this)
