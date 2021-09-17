@@ -242,7 +242,7 @@ describe('Credit Lines', async () => {
 
             let values = await creditLine
                 .connect(borrower)
-                .callStatic.requestCreditLineToLender(
+                .callStatic.request(
                     _lender,
                     _borrowLimit,
                     _liquidationThreshold,
@@ -250,13 +250,14 @@ describe('Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    false
                 );
 
             await expect(
                 creditLine
                     .connect(borrower)
-                    .requestCreditLineToLender(
+                    .request(
                         _lender,
                         _borrowLimit,
                         _liquidationThreshold,
@@ -264,10 +265,11 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        false
                     )
             )
-                .to.emit(creditLine, 'CreditLineRequestedToLender')
+                .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
 
             lenderCreditLine = values;
@@ -285,9 +287,11 @@ describe('Credit Lines', async () => {
             let _borrowAsset: string = Contracts.DAI;
             let _collateralAsset: string = Contracts.LINK;
 
+            await DaiTokenContract.increaseAllowance(creditLine.address, _borrowLimit);
+
             let values = await creditLine
                 .connect(lender)
-                .callStatic.requestCreditLineToBorrower(
+                .callStatic.request(
                     _borrower,
                     _borrowLimit,
                     _liquidationThreshold,
@@ -295,13 +299,14 @@ describe('Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    true
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .requestCreditLineToBorrower(
+                    .request(
                         _borrower,
                         _borrowLimit,
                         _liquidationThreshold,
@@ -309,10 +314,11 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        true
                     )
             )
-                .to.emit(creditLine, 'CreditLineRequestedToBorrower')
+                .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
 
             borrowerCreditLine = values;
@@ -321,7 +327,7 @@ describe('Credit Lines', async () => {
         });
 
         it('Accept Credit Line (Borrower)', async () => {
-            await expect(creditLine.connect(borrower).acceptCreditLineBorrower(borrowerCreditLine))
+            await expect(creditLine.connect(borrower).accept(borrowerCreditLine))
                 .to.emit(creditLine, 'CreditLineAccepted')
                 .withArgs(borrowerCreditLine);
         });
@@ -357,7 +363,7 @@ describe('Credit Lines', async () => {
         });
 
         it('Close Credit Line', async () => {
-            await expect(creditLine.connect(borrower).closeCreditLine(borrowerCreditLine))
+            await expect(creditLine.connect(borrower).close(borrowerCreditLine))
                 .to.emit(creditLine, 'CreditLineClosed')
                 .withArgs(borrowerCreditLine);
         });
@@ -459,7 +465,7 @@ describe('Credit Lines', async () => {
 
                 let values = await creditLine
                     .connect(borrower)
-                    .callStatic.requestCreditLineToLender(
+                    .callStatic.request(
                         _lender,
                         _borrowLimit,
                         _liquidationThreshold,
@@ -467,13 +473,14 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        false
                     );
 
                 await expect(
                     creditLine
                         .connect(borrower)
-                        .requestCreditLineToLender(
+                        .request(
                             _lender,
                             _borrowLimit,
                             _liquidationThreshold,
@@ -481,10 +488,11 @@ describe('Credit Lines', async () => {
                             _autoLiquidation,
                             _collateralRatio,
                             _borrowAsset,
-                            _collateralAsset
+                            _collateralAsset,
+                            false
                         )
                 )
-                    .to.emit(creditLine, 'CreditLineRequestedToLender')
+                    .to.emit(creditLine, 'CreditLineRequested')
                     .withArgs(values, lender.address, borrower.address);
 
                 lenderCreditLine = values;
@@ -502,9 +510,11 @@ describe('Credit Lines', async () => {
                 let _borrowAsset: string = Contracts.DAI;
                 let _collateralAsset: string = Contracts.LINK;
 
+                await DaiTokenContract.increaseAllowance(creditLine.address, _borrowLimit);
+
                 let values = await creditLine
                     .connect(lender)
-                    .callStatic.requestCreditLineToBorrower(
+                    .callStatic.request(
                         _borrower,
                         _borrowLimit,
                         _liquidationThreshold,
@@ -512,13 +522,14 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        true
                     );
 
                 await expect(
                     creditLine
                         .connect(lender)
-                        .requestCreditLineToBorrower(
+                        .request(
                             _borrower,
                             _borrowLimit,
                             _liquidationThreshold,
@@ -526,10 +537,11 @@ describe('Credit Lines', async () => {
                             _autoLiquidation,
                             _collateralRatio,
                             _borrowAsset,
-                            _collateralAsset
+                            _collateralAsset,
+                            true
                         )
                 )
-                    .to.emit(creditLine, 'CreditLineRequestedToBorrower')
+                    .to.emit(creditLine, 'CreditLineRequested')
                     .withArgs(values, lender.address, borrower.address);
 
                 borrowerCreditLine = values;
@@ -538,7 +550,7 @@ describe('Credit Lines', async () => {
             });
 
             it('Accept Credit Line (Borrower)', async () => {
-                await expect(creditLine.connect(borrower).acceptCreditLineBorrower(borrowerCreditLine))
+                await expect(creditLine.connect(borrower).accept(borrowerCreditLine))
                     .to.emit(creditLine, 'CreditLineAccepted')
                     .withArgs(borrowerCreditLine);
             });
@@ -574,7 +586,7 @@ describe('Credit Lines', async () => {
             });
 
             it('Close Credit Line', async () => {
-                await expect(creditLine.connect(borrower).closeCreditLine(borrowerCreditLine))
+                await expect(creditLine.connect(borrower).close(borrowerCreditLine))
                     .to.emit(creditLine, 'CreditLineClosed')
                     .withArgs(borrowerCreditLine);
             });
@@ -594,7 +606,7 @@ describe('Credit Lines', async () => {
                 });
 
                 it('should fail if any other user/address is trying to accept the credit line', async () => {
-                    await expect(creditLine.connect(lender).acceptCreditLineBorrower(borrowerCreditLine)).to.be.revertedWith(
+                    await expect(creditLine.connect(lender).accept(borrowerCreditLine)).to.be.revertedWith(
                         'Only credit line Borrower can access'
                     );
                 });

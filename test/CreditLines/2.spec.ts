@@ -240,7 +240,7 @@ describe('Credit Lines', async () => {
 
             let values = await creditLine
                 .connect(lender)
-                .callStatic.requestCreditLineToBorrower(
+                .callStatic.request(
                     _borrower,
                     borrowLimit,
                     _liquidationThreshold,
@@ -248,13 +248,14 @@ describe('Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    true
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .requestCreditLineToBorrower(
+                    .request(
                         _borrower,
                         borrowLimit,
                         _liquidationThreshold,
@@ -262,10 +263,11 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        true
                     )
             )
-                .to.emit(creditLine, 'CreditLineRequestedToBorrower')
+                .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
 
             borrowerCreditLine = values;
@@ -274,7 +276,7 @@ describe('Credit Lines', async () => {
         });
 
         it('Accept Credit Line (Borrower)', async () => {
-            await expect(creditLine.connect(borrower).acceptCreditLineBorrower(borrowerCreditLine))
+            await expect(creditLine.connect(borrower).accept(borrowerCreditLine))
                 .to.emit(creditLine, 'CreditLineAccepted')
                 .withArgs(borrowerCreditLine);
         });
@@ -309,7 +311,7 @@ describe('Credit Lines', async () => {
 
             await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
 
-            await creditLine.connect(borrower).borrowFromCreditLine(amountToBorrow, borrowerCreditLine);
+            await creditLine.connect(borrower).borrow(amountToBorrow, borrowerCreditLine);
         });
 
         it('Check Collateralization Ratio', async () => {
@@ -325,14 +327,14 @@ describe('Credit Lines', async () => {
                 await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
 
                 await expect(
-                    creditLine.connect(borrower).borrowFromCreditLine(amountToBorrow.mul(100), borrowerCreditLine)
+                    creditLine.connect(borrower).borrow(amountToBorrow.mul(100), borrowerCreditLine)
                 ).to.be.revertedWith('CreditLine: Amount exceeds borrow limit.');
             });
         });
 
         it('Cannot liquidate if overcollateralized', async () => {
             await DaiTokenContract.connect(admin).approve(creditLine.address, largeAmount.mul(100));
-            await expect(creditLine.connect(admin).liquidation(borrowerCreditLine)).to.be.revertedWith(
+            await expect(creditLine.connect(admin).liquidate(borrowerCreditLine)).to.be.revertedWith(
                 'CreditLine: Collateral ratio is higher than liquidation threshold'
             );
         });
@@ -347,7 +349,7 @@ describe('Credit Lines', async () => {
 
                 await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, _borrowableAmount.mul(5).div(4));
 
-                await creditLine.connect(borrower).borrowFromCreditLine(_borrowableAmount.mul(9).div(10), borrowerCreditLine); // 90% of borrowable amount
+                await creditLine.connect(borrower).borrow(_borrowableAmount.mul(9).div(10), borrowerCreditLine); // 90% of borrowable amount
 
                 // increase blocks/time
             });
@@ -376,7 +378,7 @@ describe('Credit Lines', async () => {
                 //     _borrowableAmount: _borrowableAmount.toString(),
                 // });
 
-                await expect(creditLine.connect(admin).liquidation(borrowerCreditLine)).to.emit(creditLine, 'CreditLineLiquidated');
+                await expect(creditLine.connect(admin).liquidate(borrowerCreditLine)).to.emit(creditLine, 'CreditLineLiquidated');
             });
         });
     });

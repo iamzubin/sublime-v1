@@ -320,7 +320,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit Approved(token, msg.sender, to, _updatedAllowance);
     }
 
-    function approveFromToCreditLine(
+    function increaseAllowanceToCreditLine(
         address token,
         address from,
         uint256 amount

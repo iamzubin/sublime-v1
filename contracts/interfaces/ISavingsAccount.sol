@@ -92,7 +92,7 @@ interface ISavingsAccount {
         address strategy
     ) external view returns (uint256);
 
-    function approveFromToCreditLine(
+    function increaseAllowanceToCreditLine(
         address token,
         address from,
         uint256 amount
