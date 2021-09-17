@@ -1,4 +1,4 @@
-import { BytesLike, Signer } from 'ethers';
+import { Signer } from 'ethers';
 
 import { Verification } from '../../typechain/Verification';
 import { AdminVerifier } from '../../typechain/AdminVerifier';

@@ -43,7 +43,6 @@ import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
-import { BytesLike } from '@ethersproject/bytes';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('WBTC-DAI Credit Lines', async () => {
@@ -80,8 +79,8 @@ describe('WBTC-DAI Credit Lines', async () => {
     let WBTCTokenContract: ERC20;
     let WBTCWhale: any;
 
-    let borrowerCreditLine: BytesLike;
-    let lenderCreditLine: BytesLike;
+    let borrowerCreditLine: BigNumber;
+    let lenderCreditLine: BigNumber;
 
     let extraAccounts: SignerWithAddress[];
 

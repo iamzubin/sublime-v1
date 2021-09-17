@@ -42,7 +42,6 @@ import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
-import { BytesLike } from '@ethersproject/bytes';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('Credit Lines', async () => {
@@ -154,8 +153,8 @@ describe('Credit Lines', async () => {
         let poolFactory: PoolFactory;
         let extenstion: Extension;
 
-        let borrowerCreditLine: BytesLike;
-        let lenderCreditLine: BytesLike;
+        let borrowerCreditLine: BigNumber;
+        let lenderCreditLine: BigNumber;
 
         let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
 
