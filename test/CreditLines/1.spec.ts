@@ -286,7 +286,7 @@ describe('Credit Lines', async () => {
             let _borrowAsset: string = Contracts.DAI;
             let _collateralAsset: string = Contracts.LINK;
 
-            await DaiTokenContract.increaseAllowance(creditLine.address, _borrowLimit);
+            await DaiTokenContract.connect(lender).increaseAllowance(creditLine.address, _borrowLimit);
 
             let values = await creditLine
                 .connect(lender)
@@ -509,7 +509,7 @@ describe('Credit Lines', async () => {
                 let _borrowAsset: string = Contracts.DAI;
                 let _collateralAsset: string = Contracts.LINK;
 
-                await DaiTokenContract.increaseAllowance(creditLine.address, _borrowLimit);
+                await DaiTokenContract.connect(lender).increaseAllowance(creditLine.address, _borrowLimit);
 
                 let values = await creditLine
                     .connect(lender)

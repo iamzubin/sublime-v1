@@ -261,15 +261,17 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _currentDebt = calculateCurrentDebt(_id);
 
-        uint256 maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineInfo[_id].idealCollateralRatio).div(
+        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineInfo[_id].idealCollateralRatio).div(
             10**_decimals
         );
 
-        if (maxPossible > creditLineInfo[_id].borrowLimit) {
-            maxPossible = creditLineInfo[_id].borrowLimit;
+        uint256 _borrowLimit = creditLineInfo[_id].borrowLimit;
+
+        if (_maxPossible > _borrowLimit) {
+            _maxPossible = _borrowLimit;
         }
-        if (maxPossible > _currentDebt) {
-            return maxPossible.sub(_currentDebt);
+        if (_maxPossible > _currentDebt) {
+            return _maxPossible.sub(_currentDebt);
         }
         return 0;
     }
@@ -282,7 +284,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineUsage[_id].interestAccruedTillPrincipalUpdate = _newInterestAccrued;
     }
 
-    function transferFromSavingsAccount(
+    function _transferFromSavingsAccount(
         address _asset,
         uint256 _amount,
         address _sender,
@@ -313,7 +315,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 return;
             }
         }
-        revert('CreditLine::transferFromSavingsAccount - Insufficient balance');
+        revert('CreditLine::_transferFromSavingsAccount - Insufficient balance');
     }
 
     /**
@@ -428,7 +430,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal {
         address _collateralAsset = creditLineInfo[_id].collateralAsset;
         if (_fromSavingsAccount) {
-            transferFromSavingsAccount(_collateralAsset, _amount, msg.sender, address(this));
+            _transferFromSavingsAccount(_collateralAsset, _amount, msg.sender, address(this));
         } else {
             address _strategy = defaultStrategy;
             ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
@@ -501,11 +503,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
 
-        uint256 collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
+        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
             (_currentDebt.add(amount)).mul(10**_decimals)
         );
         require(
-            collateralRatioIfAmountIsWithdrawn > creditLineInfo[_id].idealCollateralRatio,
+            _collateralRatioIfAmountIsWithdrawn > creditLineInfo[_id].idealCollateralRatio,
             "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
         );
         address _borrowAsset = creditLineInfo[_id].borrowAsset;
@@ -515,7 +517,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineUsage[_id].principal = creditLineUsage[_id].principal.add(amount);
         creditLineUsage[_id].lastPrincipalUpdateTime = block.timestamp;
 
-        //transferFromSavingsAccount(_borrowAsset,amount,_lender,address(this)); // 10000000000000000000
+        //_transferFromSavingsAccount(_borrowAsset,amount,_lender,address(this)); // 10000000000000000000
 
         // @ TO-DO
         uint256 _tokenDiffBalance;
@@ -565,16 +567,16 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
 
     */
-    function repay(
+    function _repay(
         uint256 _id,
-        bool _transferFromSavingsAccount,
+        bool _fromSavingsAccount,
         uint256 _repayAmount
     ) internal {
         address _borrowAsset = creditLineInfo[_id].borrowAsset;
         address _lender = creditLineInfo[_id].lender;
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         address _defaultStrategy = defaultStrategy;
-        if (!_transferFromSavingsAccount) {
+        if (!_fromSavingsAccount) {
             if (_borrowAsset == address(0)) {
                 require(msg.value >= _repayAmount, 'creditLine::repay - value should be eq or more than repay amount');
                 (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_repayAmount)}(''); // transfer the remaining amount
@@ -584,7 +586,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 _savingsAccount.depositTo(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             }
         } else {
-            transferFromSavingsAccount(_borrowAsset, _repayAmount, msg.sender, creditLineInfo[_id].lender);
+            _transferFromSavingsAccount(_borrowAsset, _repayAmount, msg.sender, creditLineInfo[_id].lender);
         }
         _savingsAccount.increaseAllowanceToCreditLine(_borrowAsset, _lender, _repayAmount);
     }
@@ -592,7 +594,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function repay(
         uint256 _amount,
         uint256 _id,
-        bool _transferFromSavingsAccount
+        bool _fromSavingsAccount
     ) external payable nonReentrant {
         require(creditLineInfo[_id].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
@@ -619,7 +621,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineUsage[_id].lastPrincipalUpdateTime = block.timestamp;
         }
         creditLineUsage[_id].totalInterestRepaid = _totalRepaidNow;
-        repay(_id, _transferFromSavingsAccount, _amount);
+        _repay(_id, _fromSavingsAccount, _amount);
 
         if (creditLineUsage[_id].principal == 0) {
             _resetCreditLine(_id);
@@ -671,12 +673,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function calculateTotalCollateralTokens(uint256 _id) public returns (uint256 amount) {
         address _collateralAsset = creditLineInfo[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
-        uint256 liquidityShares;
+        uint256 _liquidityShares;
         for (uint256 index = 0; index < _strategyList.length; index++) {
-            liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            uint256 tokenInStrategy = liquidityShares;
+            _liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
+            uint256 tokenInStrategy = _liquidityShares;
             if (_strategyList[index] != address(0)) {
-                tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(liquidityShares, _collateralAsset);
+                tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
             }
 
             amount = amount.add(tokenInStrategy);
@@ -695,9 +697,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
-        uint256 currentDebt = calculateCurrentDebt(_id);
-        if (currentDebt != 0) {
-            uint256 collateralRatioIfAmountIsWithdrawn = ((_totalCollateralToken.sub(amount)).mul(_ratioOfPrices).div(currentDebt)).div(
+        uint256 _currentDebt = calculateCurrentDebt(_id);
+        if (_currentDebt != 0) {
+            uint256 collateralRatioIfAmountIsWithdrawn = ((_totalCollateralToken.sub(amount)).mul(_ratioOfPrices).div(_currentDebt)).div(
                 10**_decimals
             );
             require(
@@ -761,7 +763,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         if (creditLineInfo[_id].autoLiquidation) {
             if (_lender == msg.sender) {
-                transferFromSavingsAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
+                _transferFromSavingsAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
             } else {
                 (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
 
@@ -771,7 +773,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             }
         } else {
             require(msg.sender == _lender, 'CreditLine: Liquidation can only be performed by lender.');
-            transferFromSavingsAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
+            _transferFromSavingsAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
         }
 
         emit CreditLineLiquidated(_id, msg.sender);
