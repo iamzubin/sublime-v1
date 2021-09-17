@@ -21,6 +21,45 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    enum creditLineStatus {
+        NOT_CREATED,
+        REQUESTED,
+        ACTIVE,
+        CLOSED,
+        CANCELLED,
+        LIQUIDATED
+    }
+
+    uint256 public CreditLineCounter;
+
+    uint256 public constant yearInSeconds = 365 days;
+
+    struct CreditLineUsageVars {
+        uint256 principal;
+        uint256 totalInterestRepaid;
+        uint256 lastPrincipalUpdateTime;
+        uint256 interestAccruedTillPrincipalUpdate;
+        uint256 collateralAmount;
+    }
+
+    struct CreditLineVars {
+        bool exists;
+        address lender;
+        address borrower;
+        uint256 borrowLimit;
+        uint256 idealCollateralRatio;
+        uint256 liquidationThreshold;
+        uint256 borrowRate;
+        address borrowAsset;
+        address collateralAsset;
+        creditLineStatus currentStatus;
+        bool autoLiquidation;
+        bool requestByLender;
+    }
+    mapping(bytes32 => mapping(address => uint256)) collateralShareInStrategy;
+    mapping(bytes32 => CreditLineUsageVars) public creditLineUsage;
+    mapping(bytes32 => CreditLineVars) public creditLineInfo;
+
     address public savingsAccount;
     address public priceOracle;
     address public strategyRegistry;
@@ -298,6 +337,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         //require(userData[lender].blockCreditLineRequests == true,
         //        "CreditLine: External requests blocked");
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
+        require(_liquidationThreshold < _collateralRatio, 'CL: collateral ratio should be higher');
         bytes32 _creditLineHash = _createCreditLineRequest(
             _lender,
             msg.sender,
@@ -328,6 +368,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         //require(userData[borrower].blockCreditLineRequests == true,
         //        "CreditLine: External requests blocked");
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
+        require(_liquidationThreshold < _collateralRatio, 'CL: collateral ratio should be higher');
         bytes32 _creditLineHash = _createCreditLineRequest(
             msg.sender,
             _borrower,
