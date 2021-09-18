@@ -35,7 +35,7 @@ describe('Pool simulation using Compound strategy', function () {
     });
 });
 
-describe.only('Pool simulation using Yearn strategy', function () {
+xdescribe('Pool simulation using Yearn strategy', function () {
     YearnTestcases.forEach((testCase) => {
         yearnPoolCollectionStage(
             testCase.Amount,
@@ -50,17 +50,17 @@ describe.only('Pool simulation using Yearn strategy', function () {
         );
     });
 
-    // YearnTestcases.forEach((testCase) => {
-    //     yearn_MarginCalls(
-    //         testCase.Amount,
-    //         testCase.Whale1,
-    //         testCase.Whale2,
-    //         testCase.BorrowTokenParam,
-    //         testCase.CollateralTokenParam,
-    //         testCase.liquidityBorrowTokenParam,
-    //         testCase.liquidityCollateralTokenParam,
-    //         testCase.chainlinkBorrowParam,
-    //         testCase.chainlinkCollateralParam
-    //     );
-    // });
+    YearnTestcases.forEach((testCase) => {
+        yearn_MarginCalls(
+            testCase.Amount,
+            testCase.Whale1,
+            testCase.Whale2,
+            testCase.BorrowTokenParam,
+            testCase.CollateralTokenParam,
+            testCase.liquidityBorrowTokenParam,
+            testCase.liquidityCollateralTokenParam,
+            testCase.chainlinkBorrowParam,
+            testCase.chainlinkCollateralParam
+        );
+    });
 });
