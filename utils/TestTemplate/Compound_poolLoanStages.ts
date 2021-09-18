@@ -502,21 +502,17 @@ export async function compoundPoolCollectionStage(
             const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
             const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
 
-            const borrowAssetBalancePoolSavings = await env.savingsAccount.connect(admin).userLockedBalance(
-                pool.address,
-                borrowToken.address,
-                zeroAddress
-            );
+            const borrowAssetBalancePoolSavings = await env.savingsAccount
+                .connect(admin)
+                .userLockedBalance(pool.address, borrowToken.address, zeroAddress);
             const tokensLent = await poolToken.totalSupply();
             await pool.connect(borrower).withdrawBorrowedAmount();
             const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
             const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
 
-            const borrowAssetBalancePoolSavingsAfter = await env.savingsAccount.connect(admin).userLockedBalance(
-                pool.address,
-                borrowToken.address,
-                zeroAddress
-            );
+            const borrowAssetBalancePoolSavingsAfter = await env.savingsAccount
+                .connect(admin)
+                .userLockedBalance(pool.address, borrowToken.address, zeroAddress);
             const tokensLentAfter = await poolToken.totalSupply();
             const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
