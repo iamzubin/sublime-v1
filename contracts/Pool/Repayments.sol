@@ -102,7 +102,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     /// @notice modifier used to determine whether the current pool is valid or not
     /// @dev openBorrowPoolRegistry from IPoolFactory interface returns a bool
-    modifier onlyValidPool {
+    modifier onlyValidPool() {
         require(poolFactory.openBorrowPoolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
         _;
     }
@@ -226,10 +226,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _interestPerSecond = getInterestPerSecond(_poolID);
         uint256 _nextInstalmentDeadline = getNextInstalmentDeadline(_poolID);
         uint256 _loanDurationCovered = repaymentVars[_poolID].loanDurationCovered;
-        uint256 _interestDueTillInstalmentDeadline =
-            (_nextInstalmentDeadline.sub(repaymentConstants[_poolID].loanStartTime).sub(_loanDurationCovered)).mul(_interestPerSecond).div(
-                10**30
-            );
+        uint256 _interestDueTillInstalmentDeadline = (
+            _nextInstalmentDeadline.sub(repaymentConstants[_poolID].loanStartTime).sub(_loanDurationCovered)
+        ).mul(_interestPerSecond).div(10**30);
         return _interestDueTillInstalmentDeadline;
     }
 
@@ -356,16 +355,13 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         require(repaymentVars[_poolID].isLoanExtensionActive == true, 'No overdue');
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         uint256 _interestPerSecond = getInterestPerSecond(_poolID);
-        uint256 _interestOverdue =
+        uint256 _interestOverdue = (
             (
-                (
-                    (_instalmentsCompleted.add(10**30)).mul(repaymentConstants[_poolID].repaymentInterval).div(10**30).sub(
-                        repaymentVars[_poolID].loanDurationCovered
-                    )
+                (_instalmentsCompleted.add(10**30)).mul(repaymentConstants[_poolID].repaymentInterval).div(10**30).sub(
+                    repaymentVars[_poolID].loanDurationCovered
                 )
             )
-                .mul(_interestPerSecond)
-                .div(10**30);
+        ).mul(_interestPerSecond).div(10**30);
         return _interestOverdue;
     }
 
@@ -408,8 +404,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
             // adding grace penalty if applicable
             if (_isBorrowerLate) {
-                uint256 _penalty =
-                    repaymentConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
+                uint256 _penalty = repaymentConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(
+                    10**30
+                );
                 _amount = _amount.sub(_penalty);
                 _amountRequired = _amountRequired.add(_penalty);
             }

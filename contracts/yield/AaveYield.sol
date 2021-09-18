@@ -36,7 +36,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     );
     event ReferralCodeUpdated(uint16 referralCode);
 
-    modifier onlySavingsAccount {
+    modifier onlySavingsAccount() {
         require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }

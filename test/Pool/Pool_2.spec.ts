@@ -27,6 +27,7 @@ import { YearnYield } from '../../typechain/YearnYield';
 import { CompoundYield } from '../../typechain/CompoundYield';
 import { Pool } from '../../typechain/Pool';
 import { Verification } from '../../typechain/Verification';
+import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { PoolFactory } from '../../typechain/PoolFactory';
 import { ERC20 } from '../../typechain/ERC20';
 import { PriceOracle } from '../../typechain/PriceOracle';
@@ -58,6 +59,7 @@ describe('Pool', async () => {
     let DaiTokenContract: ERC20;
 
     let verification: Verification;
+    let adminVerifier: AdminVerifier;
     let priceOracle: PriceOracle;
 
     let Binance7: any;
@@ -126,7 +128,10 @@ describe('Pool', async () => {
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
-        await verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
+        adminVerifier = await deployHelper.helper.deployAdminVerifier();
+        await verification.connect(admin).addVerifier(adminVerifier.address);
+        await adminVerifier.connect(admin).initialize(admin.address, verification.address);
+        await adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
 
         priceOracle = await deployHelper.helper.deployPriceOracle();
         await priceOracle.connect(admin).initialize(admin.address);
@@ -263,7 +268,9 @@ describe('Pool', async () => {
                             aaveYield.address,
                             _collateralAmount,
                             false,
-                            sha256(Buffer.from('borrower'))
+                            sha256(Buffer.from('borrower')),
+                            adminVerifier.address,
+                            zeroAddress
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')

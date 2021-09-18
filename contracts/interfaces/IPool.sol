@@ -20,7 +20,7 @@ interface IPool {
         uint256 _amount
     ) external;
 
-    function setPoolToken(address _poolToken) external;
+    function setConstants(address _poolToken, address _lenderVerifier) external;
 
     function borrower() external returns (address);
 

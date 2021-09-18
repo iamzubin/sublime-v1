@@ -25,7 +25,7 @@ import { createStrategyRegistry, initStrategyRegistry } from './strategyRegistry
 import { impersonateAccount, getImpersonatedAccounts } from './impersonationsAndTransfers';
 import { randomAddress, zeroAddress } from '../../utils/constants';
 import { createAaveYieldWithInit, createCompoundYieldWithInit, createYearnYieldWithInit } from './yields';
-import { createVerificationWithInit } from './verification';
+import { createAdminVerifierWithInit, createVerificationWithInit } from './verification';
 import { createPriceOracle, setPriceOracleFeeds } from './priceOracle';
 import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from './poolFactory';
 import { createExtenstionWithInit } from './extension';
@@ -113,8 +113,10 @@ export async function createEnvironment(
     await env.strategyRegistry.connect(admin).addStrategy(yields.noStrategy);
 
     env.verification = await createVerificationWithInit(proxyAdmin, admin);
+    env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification)
 
-    await env.verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
+    await env.verification.connect(admin).addVerifier(env.adminVerifier.address);
+    await env.adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
     env.priceOracle = await createPriceOracle(proxyAdmin, admin);
     await setPriceOracleFeeds(env.priceOracle, admin, priceFeeds);
 
@@ -282,6 +284,8 @@ export async function createNewPool(
             poolCreateParams._collateralAmount,
             _transferFromSavingsAccount,
             salt,
+            env.adminVerifier.address,
+            zeroAddress,
             { value: collateralToken.address === zeroAddress ? poolCreateParams._collateralAmount : 0 }
         );
 

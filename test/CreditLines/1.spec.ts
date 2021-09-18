@@ -43,6 +43,7 @@ import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { BytesLike } from '@ethersproject/bytes';
+import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -63,6 +64,7 @@ describe('Credit Lines', async () => {
     let DaiTokenContract: ERC20;
 
     let verification: Verification;
+    let adminVerifier: AdminVerifier;
     let priceOracle: PriceOracle;
 
     let Binance7: any;
@@ -133,7 +135,10 @@ describe('Credit Lines', async () => {
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
-        await verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
+        adminVerifier = await deployHelper.helper.deployAdminVerifier();
+        await verification.connect(admin).addVerifier(adminVerifier.address);
+        await adminVerifier.connect(admin).initialize(admin.address, verification.address);
+        await adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
 
         priceOracle = await deployHelper.helper.deployPriceOracle();
         await priceOracle.connect(admin).initialize(admin.address);

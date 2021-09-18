@@ -43,6 +43,7 @@ import { getContractAddress } from '@ethersproject/address';
 
 import { SublimeProxy } from '../typechain/SublimeProxy';
 import { Token } from '../typechain/Token';
+import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('Template 2', async () => {
     let savingsAccount: SavingsAccount;
@@ -72,6 +73,8 @@ describe('Template 2', async () => {
 
     let verificationLogic: Verification;
     let verification: Verification;
+    let adminVerifierLogic: AdminVerifier;
+    let adminVerifier: AdminVerifier;
 
     let priceOracleLogic: PriceOracle;
     let priceOracle: PriceOracle;
@@ -184,8 +187,13 @@ describe('Template 2', async () => {
         verificationLogic = await deployHelper.helper.deployVerification();
         let verificationProxy = await deployHelper.helper.deploySublimeProxy(verificationLogic.address, proxyAdmin.address);
         verification = await deployHelper.helper.getVerification(verificationProxy.address);
+        adminVerifierLogic = await deployHelper.helper.deployAdminVerifier();
+        let adminVerificationProxy = await deployHelper.helper.deploySublimeProxy(adminVerifierLogic.address, proxyAdmin.address);
+        adminVerifier = await deployHelper.helper.getAdminVerifier(adminVerificationProxy.address);
         await verification.connect(admin).initialize(admin.address);
-        await verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
+        await adminVerifier.connect(admin).initialize(admin.address, verification.address);
+        await verification.connect(admin).addVerifier(adminVerifier.address);
+        await adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
 
         console.log('Deploying price oracle');
         priceOracleLogic = await deployHelper.helper.deployPriceOracle();
@@ -317,7 +325,9 @@ describe('Template 2', async () => {
                         zeroAddress,
                         _collateralAmount,
                         false,
-                        sha256(Buffer.from('borrower'))
+                        sha256(Buffer.from('borrower')),
+                        adminVerifier.address,
+                        zeroAddress
                     )
             )
                 .to.emit(poolFactory, 'PoolCreated')
