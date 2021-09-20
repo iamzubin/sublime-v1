@@ -294,7 +294,7 @@ describe('Credit Lines', async () => {
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
             await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-            await creditLine.connect(borrower).depositCollateral(valueToTest, borrowerCreditLine, false);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
         });
 
         it('Calculate Interest', async () => {
@@ -316,7 +316,7 @@ describe('Credit Lines', async () => {
 
             await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
 
-            await creditLine.connect(borrower).borrow(amountToBorrow, borrowerCreditLine);
+            await creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow);
         });
 
         it('Check Collateralization Ratio', async () => {
@@ -332,7 +332,7 @@ describe('Credit Lines', async () => {
                 await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
 
                 await expect(
-                    creditLine.connect(borrower).borrow(amountToBorrow.mul(100), borrowerCreditLine)
+                    creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow.mul(100))
                 ).to.be.revertedWith('CreditLine: Amount exceeds borrow limit.');
             });
         });
@@ -354,7 +354,7 @@ describe('Credit Lines', async () => {
 
                 await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, _borrowableAmount.mul(5).div(4));
 
-                await creditLine.connect(borrower).borrow(_borrowableAmount.mul(9).div(10), borrowerCreditLine); // 90% of borrowable amount
+                await creditLine.connect(borrower).borrow(borrowerCreditLine, _borrowableAmount.mul(9).div(10)); // 90% of borrowable amount
 
                 // increase blocks/time
             });

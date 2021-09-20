@@ -309,12 +309,12 @@ describe('WBTC-DAI Credit Lines', async () => {
             await WBTCTokenContract.connect(admin).transfer(borrower.address, borrowerCollateral);
             await WBTCTokenContract.connect(borrower).approve(creditLine.address, borrowerCollateral);
 
-            await creditLine.connect(borrower).depositCollateral(borrowerCollateral, lenderCreditLine, false);
+            await creditLine.connect(borrower).depositCollateral(lenderCreditLine, borrowerCollateral, false);
 
             await savingsAccount.connect(lender).depositTo(lenderAmount, DaiTokenContract.address, compoundYield.address, lender.address);
             await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, unlimited);
 
-            await creditLine.connect(borrower).borrow(borrowAmount, lenderCreditLine);
+            await creditLine.connect(borrower).borrow(borrowerCreditLine, borrowAmount);
         });
     });
 });
