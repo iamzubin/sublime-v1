@@ -311,7 +311,7 @@ describe('WBTC-DAI Credit Lines', async () => {
 
             await creditLine.connect(borrower).depositCollateral(lenderCreditLine, borrowerCollateral, false);
 
-            await savingsAccount.connect(lender).depositTo(lenderAmount, DaiTokenContract.address, compoundYield.address, lender.address);
+            await savingsAccount.connect(lender).deposit(lenderAmount, DaiTokenContract.address, compoundYield.address, lender.address);
             await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, unlimited);
 
             await creditLine.connect(borrower).borrow(borrowerCreditLine, borrowAmount);

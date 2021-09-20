@@ -457,7 +457,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                     IERC20(_collateralAsset).approve(_strategy, _amount);
                 }
             }
-            uint256 _sharesReceived = _savingsAccount.depositTo{value: msg.value}(
+            uint256 _sharesReceived = _savingsAccount.deposit{value: msg.value}(
                 _amount,
                 _collateralAsset,
                 _strategy,
@@ -576,9 +576,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 require(msg.value >= _amount, 'creditLine::repay - value should be eq or more than repay amount');
                 (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_amount)}(''); // transfer the remaining amount
                 require(success, 'creditLine::repay - remainig value transfered successfully');
-                _savingsAccount.depositTo{value: _amount}(_amount, _borrowAsset, _defaultStrategy, _lender);
+                _savingsAccount.deposit{value: _amount}(_amount, _borrowAsset, _defaultStrategy, _lender);
             } else {
-                _savingsAccount.depositTo(_amount, _borrowAsset, _defaultStrategy, _lender);
+                _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
             }
         } else {
             _transferFromSavingsAccount(_borrowAsset, _amount, msg.sender, creditLineConstants[_id].lender);

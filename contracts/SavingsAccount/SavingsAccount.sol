@@ -72,13 +72,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit StrategyRegistryUpdated(_strategyRegistry);
     }
 
-    function depositTo(
+    function deposit(
         uint256 amount,
         address asset,
         address strategy,
         address to
     ) external payable override nonReentrant returns (uint256 sharesReceived) {
-        require(to != address(0), 'SavingsAccount::depositTo receiver address should not be zero address');
+        require(to != address(0), 'SavingsAccount::deposit receiver address should not be zero address');
 
         sharesReceived = _deposit(amount, asset, strategy);
 

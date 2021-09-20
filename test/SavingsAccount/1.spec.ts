@@ -57,7 +57,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 zeroAddress,
                 zeroAddress
             );
-            await savingsAccount.connect(userAccount).depositTo(depositValueToTest, zeroAddress, zeroAddress, randomAccount.address, {
+            await savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, zeroAddress, randomAccount.address, {
                 value: depositValueToTest,
             });
 
@@ -77,7 +77,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 zeroAddress
             );
             await expect(
-                savingsAccount.connect(userAccount).depositTo(depositValueToTest, zeroAddress, zeroAddress, userAccount.address, {
+                savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, zeroAddress, userAccount.address, {
                     value: depositValueToTest,
                 })
             )
@@ -94,7 +94,7 @@ describe('Test Savings Account (with ETH)', async () => {
         });
 
         async function subject(to: Address, depositValue: BigNumberish, ethValue?: BigNumberish): Promise<any> {
-            return savingsAccount.connect(userAccount).depositTo(depositValue, zeroAddress, zeroAddress, to, {
+            return savingsAccount.connect(userAccount).deposit(depositValue, zeroAddress, zeroAddress, to, {
                 value: ethValue,
             });
         }
@@ -102,7 +102,7 @@ describe('Test Savings Account (with ETH)', async () => {
         describe('Failed cases', async () => {
             it('Should throw error or revert if receiver address is zero_address', async () => {
                 await expect(subject(zeroAddress, depositValueToTest)).to.be.revertedWith(
-                    'SavingsAccount::depositTo receiver address should not be zero address'
+                    'SavingsAccount::deposit receiver address should not be zero address'
                 );
             });
 
@@ -164,7 +164,7 @@ describe('Test Savings Account (with ETH)', async () => {
             );
 
             await expect(
-                savingsAccount.connect(userAccount).depositTo(depositValueToTest, zeroAddress, aaveYield.address, randomAccount.address, {
+                savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, aaveYield.address, randomAccount.address, {
                     value: depositValueToTest,
                 })
             )
@@ -281,7 +281,7 @@ describe('Test Savings Account (with ETH)', async () => {
             );
             // gas price put to test
             await expect(
-                savingsAccount.connect(userAccount).depositTo(depositValueToTest, zeroAddress, yearnYield.address, randomAccount.address, {
+                savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, yearnYield.address, randomAccount.address, {
                     value: depositValueToTest,
                 })
             )
@@ -399,7 +399,7 @@ describe('Test Savings Account (with ETH)', async () => {
             await expect(
                 savingsAccount
                     .connect(userAccount)
-                    .depositTo(depositValueToTest, zeroAddress, compoundYield.address, randomAccount.address, {
+                    .deposit(depositValueToTest, zeroAddress, compoundYield.address, randomAccount.address, {
                         value: depositValueToTest,
                     })
             )

@@ -14,7 +14,7 @@ interface ISavingsAccount {
 
     event CreditLineAllowanceRefreshed(address token, address from, uint256 amount);
 
-    function depositTo(
+    function deposit(
         uint256 amount,
         address asset,
         address strategy,

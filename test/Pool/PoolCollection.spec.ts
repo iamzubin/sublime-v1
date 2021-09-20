@@ -316,7 +316,7 @@ describe('Pool Collection stage', async () => {
             const amount = createPoolParams._poolSize.div(10);
             await borrowToken.connect(admin).transfer(lender.address, amount);
             await borrowToken.connect(lender).approve(savingsAccount.address, amount);
-            await savingsAccount.connect(lender).depositTo(amount, borrowToken.address, zeroAddress, lender.address);
+            await savingsAccount.connect(lender).deposit(amount, borrowToken.address, zeroAddress, lender.address);
 
             const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
             const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
@@ -348,7 +348,7 @@ describe('Pool Collection stage', async () => {
             const amount = createPoolParams._poolSize.div(10);
             await borrowToken.connect(admin).transfer(lender1.address, amount);
             await borrowToken.connect(lender1).approve(savingsAccount.address, amount);
-            await savingsAccount.connect(lender1).depositTo(amount, borrowToken.address, zeroAddress, lender1.address);
+            await savingsAccount.connect(lender1).deposit(amount, borrowToken.address, zeroAddress, lender1.address);
 
             const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
             const poolTokenTotalSupplyBefore = await poolToken.totalSupply();

@@ -60,7 +60,7 @@ library SavingsAccountUtil {
             }
             IERC20(_asset).safeApprove(_approveTo, _amount);
         }
-        _sharesReceived = _savingsAccount.depositTo{value: _ethValue}(_amount, _asset, _strategy, _to);
+        _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_amount, _asset, _strategy, _to);
     }
 
     function savingsAccountTransfer(

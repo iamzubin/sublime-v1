@@ -511,7 +511,7 @@ describe('Pool', async () => {
 
                 await savingsAccount
                     .connect(borrower)
-                    .depositTo(amountUsedForDeposit.mul(10), Contracts.LINK, aaveYield.address, borrower.address);
+                    .deposit(amountUsedForDeposit.mul(10), Contracts.LINK, aaveYield.address, borrower.address);
                 // console.log({aaveYield: aaveYield.address, yearnYield: yearnYield.address, compoundYield: compoundYield.address});
                 // console.log({poolConstants: await pool.poolConstants()})
                 // console.log({allowance1: await savingsAccount.allowance(borrower.address, Contracts.LINK, pool.address)})

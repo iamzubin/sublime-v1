@@ -312,7 +312,7 @@ describe('Credit Lines', async () => {
 
             await DaiTokenContract.connect(lender).approve(savingsAccount.address, largeAmount.mul(100));
 
-            await savingsAccount.connect(lender).depositTo(largeAmount.mul(100), DaiTokenContract.address, zeroAddress, lender.address);
+            await savingsAccount.connect(lender).deposit(largeAmount.mul(100), DaiTokenContract.address, zeroAddress, lender.address);
 
             await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
 

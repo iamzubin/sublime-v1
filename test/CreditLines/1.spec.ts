@@ -360,10 +360,10 @@ describe('Credit Lines', async () => {
 
             await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-            await savingsAccount.connect(borrower).depositTo(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+            await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
             await savingsAccount
                 .connect(borrower)
-                .depositTo(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
+                .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
             await savingsAccount.connect(borrower).approve(Contracts.LINK, creditLine.address, valueToTest.mul(2));
 
             await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
@@ -590,10 +590,10 @@ describe('Credit Lines', async () => {
 
                 await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-                await savingsAccount.connect(borrower).depositTo(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+                await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
                 await savingsAccount
                     .connect(borrower)
-                    .depositTo(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
+                    .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
                 await savingsAccount.connect(borrower).approve(Contracts.LINK, creditLine.address, valueToTest.mul(2));
 
                 await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
