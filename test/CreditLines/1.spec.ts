@@ -279,8 +279,8 @@ describe('Credit Lines', async () => {
                 .withArgs(values, lender.address, borrower.address);
 
             lenderCreditLine = values;
-            let creditLineInfo = await creditLine.creditLineInfo(values);
-            //   console.log({ creditLineInfo });
+            let creditLineConstants = await creditLine.creditLineConstants(values);
+            //   console.log({ creditLineConstants });
         });
 
         it('Request Credit Line to borrower', async () => {
@@ -329,8 +329,8 @@ describe('Credit Lines', async () => {
                 .withArgs(values, lender.address, borrower.address);
             console.log("credit lines created")
             borrowerCreditLine = values;
-            let creditLineInfo = await creditLine.creditLineInfo(values);
-            // console.log({ creditLineInfo });
+            let creditLineConstants = await creditLine.creditLineConstants(values);
+            // console.log({ creditLineConstants });
         });
 
         it('Accept Credit Line (Borrower)', async () => {
@@ -341,7 +341,7 @@ describe('Credit Lines', async () => {
 
         it('Deposit Collateral into existing credit line (not from savings account)', async () => {
             // console.log({ borrowerCreditLine, lenderCreditLine });
-            // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+            // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
             let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
@@ -352,7 +352,7 @@ describe('Credit Lines', async () => {
 
         it('Deposit Collateral into existing credit line (from savings account)', async () => {
             // console.log({ borrowerCreditLine, lenderCreditLine });
-            // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+            // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
             let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
@@ -509,8 +509,8 @@ describe('Credit Lines', async () => {
                     .withArgs(values, lender.address, borrower.address);
 
                 lenderCreditLine = values;
-                let creditLineInfo = await creditLine.creditLineInfo(values);
-                //   console.log({ creditLineInfo });
+                let creditLineConstants = await creditLine.creditLineConstants(values);
+                //   console.log({ creditLineConstants });
             });
 
             it('Request Credit Line to borrower', async () => {
@@ -559,8 +559,8 @@ describe('Credit Lines', async () => {
                     .withArgs(values, lender.address, borrower.address);
 
                 borrowerCreditLine = values;
-                let creditLineInfo = await creditLine.creditLineInfo(values);
-                // console.log({ creditLineInfo });
+                let creditLineConstants = await creditLine.creditLineConstants(values);
+                // console.log({ creditLineConstants });
             });
 
             it('Accept Credit Line (Borrower)', async () => {
@@ -571,7 +571,7 @@ describe('Credit Lines', async () => {
 
             it('Deposit Collateral into existing credit line (not from savings account)', async () => {
                 // console.log({ borrowerCreditLine, lenderCreditLine });
-                // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+                // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
                 let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
@@ -582,7 +582,7 @@ describe('Credit Lines', async () => {
 
             it('Deposit Collateral into existing credit line (from savings account)', async () => {
                 // console.log({ borrowerCreditLine, lenderCreditLine });
-                // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+                // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
                 let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));

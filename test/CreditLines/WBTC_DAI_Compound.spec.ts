@@ -290,8 +290,8 @@ describe('WBTC-DAI Credit Lines', async () => {
         });
 
         it('Check Credit Line Info', async () => {
-            let creditLineInfo = await creditLine.creditLineInfo(lenderCreditLine);
-            print(creditLineInfo);
+            let creditLineConstants = await creditLine.creditLineConstants(lenderCreditLine);
+            print(creditLineConstants);
         });
 
         it('Borrow From Credit Line only borrower', async () => {

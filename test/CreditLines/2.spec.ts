@@ -276,8 +276,8 @@ describe('Credit Lines', async () => {
                 .withArgs(values, lender.address, borrower.address);
 
             borrowerCreditLine = values;
-            let creditLineInfo = await creditLine.creditLineInfo(values);
-            // console.log({ creditLineInfo });
+            let creditLineConstants = await creditLine.creditLineConstants(values);
+            // console.log({ creditLineConstants });
         });
 
         it('Accept Credit Line (Borrower)', async () => {
@@ -288,7 +288,7 @@ describe('Credit Lines', async () => {
 
         it('Deposit Collateral into existing credit line (not from savings account)', async () => {
             // console.log({ borrowerCreditLine, lenderCreditLine });
-            // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+            // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
             let valueToTest: BigNumberish = collateralAmountToUse;
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
