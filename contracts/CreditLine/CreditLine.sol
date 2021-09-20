@@ -38,7 +38,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 principal;
         uint256 totalInterestRepaid;
         uint256 lastPrincipalUpdateTime;
-        uint256 interestAccruedTillPrincipalUpdate;
+        uint256 interestAccruedTillLastPrincipalUpdate;
         uint256 collateralAmount;
     }
 
@@ -235,12 +235,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id Hash of the credit line for which current debt has to be calculated
      * @return uint256 current debt of borrower
      */
-
-    // maybe change interestAccruedTillPrincipalUpdate to interestAccruedTillLastPrincipalUpdate
     function calculateCurrentDebt(uint256 _id) public view returns (uint256) {
         uint256 _interestAccrued = calculateInterestAccrued(_id);
         uint256 _currentDebt = (creditLineUsage[_id].principal)
-            .add(creditLineUsage[_id].interestAccruedTillPrincipalUpdate)
+            .add(creditLineUsage[_id].interestAccruedTillLastPrincipalUpdate)
             .add(_interestAccrued)
             .sub(creditLineUsage[_id].totalInterestRepaid);
         return _currentDebt;
@@ -276,12 +274,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         return 0;
     }
 
-    function updateinterestAccruedTillPrincipalUpdate(uint256 _id) internal {
+    function updateinterestAccruedTillLastPrincipalUpdate(uint256 _id) internal {
         require(creditLineInfo[_id].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestAccrued = calculateInterestAccrued(_id);
-        uint256 _newInterestAccrued = (creditLineUsage[_id].interestAccruedTillPrincipalUpdate).add(_interestAccrued);
-        creditLineUsage[_id].interestAccruedTillPrincipalUpdate = _newInterestAccrued;
+        uint256 _newInterestAccrued = (creditLineUsage[_id].interestAccruedTillLastPrincipalUpdate).add(_interestAccrued);
+        creditLineUsage[_id].interestAccruedTillLastPrincipalUpdate = _newInterestAccrued;
     }
 
     function _transferFromSavingsAccount(
@@ -461,7 +459,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _amountInTokens,
         address _lender
     ) internal {
-        //address _lender = creditLineInfo[id].lender;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
@@ -513,13 +510,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _borrowAsset = creditLineInfo[_id].borrowAsset;
         address _lender = creditLineInfo[_id].lender;
 
-        updateinterestAccruedTillPrincipalUpdate(_id);
+        updateinterestAccruedTillLastPrincipalUpdate(_id);
         creditLineUsage[_id].principal = creditLineUsage[_id].principal.add(amount);
         creditLineUsage[_id].lastPrincipalUpdateTime = block.timestamp;
 
-        //_transferFromSavingsAccount(_borrowAsset,amount,_lender,address(this)); // 10000000000000000000
-
-        // @ TO-DO
         uint256 _tokenDiffBalance;
         if (_borrowAsset != address(0)) {
             uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
@@ -548,25 +542,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit BorrowedFromCreditLine(_tokenDiffBalance, _id);
     }
 
-    //TODO:- Make the function to accept ether as well
     /**
      * @dev used to repay assest to credit line
      * @param _repayAmount amount which borrower wants to repay to credit line
      * @param _id Credit line hash which represents the credit Line Unique Hash
      */
-
-    /*
-        Parameters used:
-        - currentStatus
-        - borrowAsset
-        - interestAccruedTillPrincipalUpdate
-        - principal
-        - totalInterestRepaid
-        - lastPrincipalUpdateTime
-
-
-
-    */
     function _repay(
         uint256 _id,
         bool _fromSavingsAccount,
@@ -599,7 +579,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineInfo[_id].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(_id);
-        uint256 _totalInterestAccrued = (creditLineUsage[_id].interestAccruedTillPrincipalUpdate).add(
+        uint256 _totalInterestAccrued = (creditLineUsage[_id].interestAccruedTillLastPrincipalUpdate).add(
             _interestSincePrincipalUpdate
         );
         uint256 _totalDebt = _totalInterestAccrued.add(creditLineUsage[_id].principal);
@@ -617,7 +597,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineUsage[_id].principal = (creditLineUsage[_id].principal).add(_totalInterestAccrued).sub(
                 _totalRepaidNow
             );
-            creditLineUsage[_id].interestAccruedTillPrincipalUpdate = _totalInterestAccrued;
+            creditLineUsage[_id].interestAccruedTillLastPrincipalUpdate = _totalInterestAccrued;
             creditLineUsage[_id].lastPrincipalUpdateTime = block.timestamp;
         }
         creditLineUsage[_id].totalInterestRepaid = _totalRepaidNow;
@@ -635,9 +615,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _resetCreditLine(uint256 id) internal {
-        creditLineUsage[id].lastPrincipalUpdateTime = 0; // check if can assign 0 or not
+        creditLineUsage[id].lastPrincipalUpdateTime = 0;
         creditLineUsage[id].totalInterestRepaid = 0;
-        creditLineUsage[id].interestAccruedTillPrincipalUpdate = 0;
+        creditLineUsage[id].interestAccruedTillLastPrincipalUpdate = 0;
         emit CreditLineReset(id);
     }
 
@@ -652,7 +632,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         require(creditLineInfo[_id].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineUsage[_id].principal == 0, 'CreditLine: Cannot be closed since not repaid.');
-        require(creditLineUsage[_id].interestAccruedTillPrincipalUpdate == 0, 'CreditLine: Cannot be closed since not repaid.');
+        require(creditLineUsage[_id].interestAccruedTillLastPrincipalUpdate == 0, 'CreditLine: Cannot be closed since not repaid.');
         creditLineInfo[_id].currentStatus = creditLineStatus.CLOSED;
         emit CreditLineClosed(_id);
     }
@@ -690,7 +670,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         nonReentrant
         onlyCreditLineBorrower(_id)
     {
-        //check for ideal ratio
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineInfo[_id].collateralAsset,
             creditLineInfo[_id].borrowAsset
@@ -782,9 +761,4 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     receive() external payable {
         require(msg.sender == savingsAccount, 'CreditLine::receive invalid transaction');
     }
-
-    // Think about threshHold liquidation
-    // only one type of token is accepted check for that
-    // collateral ratio has to calculated initially
-    // current debt is more than borrow amount
 }
