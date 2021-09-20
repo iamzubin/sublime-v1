@@ -395,9 +395,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice invoked when a new borrow pool is created. deploys a new pool for every borrow request
      * @param _poolSize loan amount requested
-     * @param _minBorrowAmount minimum borrow amount for the loan to become active - expressed as a fraction of _poolSize
-     * @param _borrowTokenType borrow asset requested
-     * @param _collateralTokenType collateral asset requested
+     * @param _minBorrowAmount minimum borrow amount for the loan to become active
+     * @param _borrowToken borrow asset requested
+     * @param _collateralToken collateral asset requested
      * @param _collateralRatio ideal pool collateral ratio set by the borrower
      * @param _borrowRate interest rate provided by the borrower
      * @param _repaymentInterval interval between the last dates of two repayment cycles
@@ -410,8 +410,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function createPool(
         uint256 _poolSize,
         uint256 _minBorrowAmount,
-        address _borrowTokenType,
-        address _collateralTokenType,
+        address _borrowToken,
+        address _collateralToken,
         uint256 _collateralRatio,
         uint256 _borrowRate,
         uint256 _repaymentInterval,
@@ -423,15 +423,15 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _verifier,
         address _lenderVerifier
     ) external payable onlyBorrower(_verifier) {
-        if (_collateralTokenType == address(0)) {
+        if (_collateralToken == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
         require(_minBorrowAmount <= _poolSize, 'PoolFactory::createPool - invalid min borrow amount');
-        require(volatilityThreshold[_collateralTokenType] <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
-        require(isBorrowToken[_borrowTokenType], 'PoolFactory::createPool - Invalid borrow token type');
-        require(isCollateralToken[_collateralTokenType], 'PoolFactory::createPool - Invalid collateral token type');
+        require(volatilityThreshold[_collateralToken] <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
+        require(isBorrowToken[_borrowToken], 'PoolFactory::createPool - Invalid borrow token type');
+        require(isCollateralToken[_collateralToken], 'PoolFactory::createPool - Invalid collateral token type');
         require(
-            IPriceOracle(priceOracle).doesFeedExist(_collateralTokenType, _borrowTokenType),
+            IPriceOracle(priceOracle).doesFeedExist(_collateralToken, _borrowToken),
             "PoolFactory::createPool - Price feed doesn't support token pair"
         );
         require(IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy), 'PoolFactory::createPool - Invalid strategy');
@@ -455,8 +455,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _createPool(
             _poolSize,
             _minBorrowAmount,
-            _borrowTokenType,
-            _collateralTokenType,
+            _borrowToken,
+            _collateralToken,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
@@ -473,8 +473,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function _createPool(
         uint256 _poolSize,
         uint256 _minBorrowAmount,
-        address _borrowTokenType,
-        address _collateralTokenType,
+        address _borrowToken,
+        address _collateralToken,
         uint256 _collateralRatio,
         uint256 _borrowRate,
         uint256 _repaymentInterval,
@@ -488,8 +488,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes memory data = _encodePoolInitCall(
             _poolSize,
             _minBorrowAmount,
-            _borrowTokenType,
-            _collateralTokenType,
+            _borrowToken,
+            _collateralToken,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
@@ -500,7 +500,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         );
         bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
         bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
-        uint256 amount = _collateralTokenType == address(0) ? _collateralAmount : 0;
+        uint256 amount = _collateralToken == address(0) ? _collateralAmount : 0;
 
         address pool = _deploy(amount, salt, bytecode);
 
@@ -515,8 +515,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function _encodePoolInitCall(
         uint256 _poolSize,
         uint256 _minBorrowAmount,
-        address _borrowTokenType,
-        address _collateralTokenType,
+        address _borrowToken,
+        address _collateralToken,
         uint256 _collateralRatio,
         uint256 _borrowRate,
         uint256 _repaymentInterval,
@@ -530,8 +530,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _poolSize,
             _minBorrowAmount,
             msg.sender,
-            _borrowTokenType,
-            _collateralTokenType,
+            _borrowToken,
+            _collateralToken,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
