@@ -184,6 +184,11 @@ describe('Credit Lines', async () => {
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
 
+            let {
+                _protocolFeeFraction: clProtocolFeeFraction,
+                _liquidatorRewardFraction: clLiquidatorRewardFraction
+            } = testPoolFactoryParams;
+
             await poolFactory
                 .connect(admin)
                 .initialize(
@@ -223,8 +228,9 @@ describe('Credit Lines', async () => {
                     savingsAccount.address,
                     strategyRegistry.address,
                     admin.address,
-                    _protocolFeeFraction,
-                    protocolFeeCollector.address
+                    clProtocolFeeFraction,
+                    protocolFeeCollector.address,
+                    clLiquidatorRewardFraction
                 );
         });
 

@@ -66,6 +66,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     address public defaultStrategy;
     uint256 public protocolFeeFraction;
     address public protocolFeeCollector;
+    uint256 public liquidatorRewardFraction;
     /**
      * @dev checks if Credit Line exists
      * @param _id credit hash
@@ -121,6 +122,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     event ProtocolFeeCollectorUpdated(address updatedProtocolFeeCollector);
 
+    event LiquidationRewardFractionUpdated(uint256 liquidatorRewardFraction);
+
     function initialize(
         address _defaultStrategy,
         address _priceOracle,
@@ -128,7 +131,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _strategyRegistry,
         address _owner,
         uint256 _protocolFeeFraction,
-        address _protocolFeeCollector
+        address _protocolFeeCollector,
+        uint256 _liquidatorRewardFraction
     ) public initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_owner);
@@ -139,6 +143,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         _updateStrategyRegistry(_strategyRegistry);
         _updateProtocolFeeFraction(_protocolFeeFraction);
         _updateProtocolFeeCollector(_protocolFeeCollector);
+        _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
     }
 
     function updateDefaultStrategy(address _defaultStrategy) external onlyOwner {
@@ -194,6 +199,16 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(_strategyRegistry != address(0), 'CL::I zero address');
         strategyRegistry = _strategyRegistry;
         emit StrategyRegistryUpdated(_strategyRegistry);
+    }
+
+    function updateLiquidatorRewardFraction(uint256 _rewardFraction) public onlyOwner {
+        _updateLiquidatorRewardFraction(_rewardFraction);
+    }
+
+    function _updateLiquidatorRewardFraction(uint256 _rewardFraction) internal {
+        require(_rewardFraction <= 10**30, "Fraction has to be less than 1");
+        liquidatorRewardFraction = _rewardFraction;
+        emit LiquidationRewardFractionUpdated(_rewardFraction);
     }
 
     /**
@@ -761,7 +776,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     function _borrowTokensToLiquidate(address _borrowAsset, address _collateralAsset, uint256 _totalCollateralTokens) internal view returns(uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
-        uint256 _borrowTokens = (_totalCollateralTokens.mul(_ratioOfPrices).div(10**_decimals));
+        uint256 _borrowTokens = (_totalCollateralTokens.mul(uint256(10**30).sub(liquidatorRewardFraction)).div(10**30).mul(_ratioOfPrices).div(10**_decimals));
 
         return _borrowTokens;
     }
