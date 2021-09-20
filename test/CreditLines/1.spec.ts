@@ -286,8 +286,9 @@ describe('Credit Lines', async () => {
             let _borrowAsset: string = Contracts.DAI;
             let _collateralAsset: string = Contracts.LINK;
 
-            await DaiTokenContract.connect(lender).increaseAllowance(creditLine.address, _borrowLimit);
-
+            const allowance = await DaiTokenContract.allowance(lender.address, creditLine.address);
+            await DaiTokenContract.connect(lender).approve(creditLine.address, allowance.add(_borrowLimit));
+            console.log("allowance done")
             let values = await creditLine
                 .connect(lender)
                 .callStatic.request(
@@ -301,7 +302,7 @@ describe('Credit Lines', async () => {
                     _collateralAsset,
                     true
                 );
-
+            console.log("credit line id is", values)
             await expect(
                 creditLine
                     .connect(lender)
@@ -319,7 +320,7 @@ describe('Credit Lines', async () => {
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
-
+            console.log("credit lines created")
             borrowerCreditLine = values;
             let creditLineInfo = await creditLine.creditLineInfo(values);
             // console.log({ creditLineInfo });
@@ -509,7 +510,8 @@ describe('Credit Lines', async () => {
                 let _borrowAsset: string = Contracts.DAI;
                 let _collateralAsset: string = Contracts.LINK;
 
-                await DaiTokenContract.connect(lender).increaseAllowance(creditLine.address, _borrowLimit);
+                const allowance = await DaiTokenContract.allowance(lender.address, creditLine.address);
+                await DaiTokenContract.connect(lender).approve(creditLine.address, allowance.add(_borrowLimit));
 
                 let values = await creditLine
                     .connect(lender)
@@ -606,7 +608,7 @@ describe('Credit Lines', async () => {
 
                 it('should fail if any other user/address is trying to accept the credit line', async () => {
                     await expect(creditLine.connect(lender).accept(borrowerCreditLine)).to.be.revertedWith(
-                        'Only credit line Borrower can access'
+                        'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
                     );
                 });
             });
