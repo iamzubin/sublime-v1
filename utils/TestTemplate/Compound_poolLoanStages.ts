@@ -87,7 +87,7 @@ export async function compoundPoolCollectionStage(
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
-                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
                 } as CreditLineInitParams
             );
@@ -393,7 +393,7 @@ export async function compoundPoolCollectionStage(
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
-                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
                 } as CreditLineInitParams
             );
@@ -580,7 +580,7 @@ export async function compoundPoolCollectionStage(
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
-                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
                 } as CreditLineInitParams
             );
@@ -760,7 +760,7 @@ export async function compoundPoolCollectionStage(
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
-                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
                 } as CreditLineInitParams
             );

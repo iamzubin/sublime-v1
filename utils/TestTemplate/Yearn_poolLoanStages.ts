@@ -15,7 +15,7 @@ import hre from 'hardhat';
 const { ethers, network } = hre;
 import { expect, assert } from 'chai';
 
-import { extensionParams, repaymentParams, testPoolFactoryParams, zeroAddress } from '../constants-Additions';
+import { extensionParams, repaymentParams, testPoolFactoryParams, zeroAddress, creditLineFactoryParams } from '../constants-Additions';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -86,7 +86,10 @@ export async function yearnPoolCollectionStage(
                     protocolFeeCollector: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -450,7 +453,10 @@ export async function yearnPoolCollectionStage(
                     protocolFeeCollector: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));

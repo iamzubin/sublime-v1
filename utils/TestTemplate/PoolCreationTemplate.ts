@@ -21,6 +21,7 @@ import {
     aaveYieldParams,
     createPoolParams,
     zeroAddress,
+    creditLineFactoryParams
 } from '../constants-rahul';
 
 import hre from 'hardhat';
@@ -95,7 +96,10 @@ export async function poolCreationTest(
                     protocolFeeCollector: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                } as CreditLineInitParams
             );
 
             console.log('createEnvironment() executed successfully.');
