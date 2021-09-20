@@ -685,24 +685,29 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         nonReentrant
         onlyCreditLineBorrower(_id)
     {
+        uint256 _withdrawableCollateral = withdrawableCollateral(_id);
+        require(amount <= _withdrawableCollateral, "Collateral ratio cant go below ideal");
+        address _collateralAsset = creditLineInfo[_id].collateralAsset;
+        _withdrawCollateral(_collateralAsset, amount, _id);
+    }
+
+    function withdrawableCollateral(
+        uint256 _id
+    ) public returns(uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineInfo[_id].collateralAsset,
             creditLineInfo[_id].borrowAsset
         );
 
-        uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
+        uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
         uint256 _currentDebt = calculateCurrentDebt(_id);
-        if (_currentDebt != 0) {
-            uint256 collateralRatioIfAmountIsWithdrawn = ((_totalCollateralToken.sub(amount)).mul(_ratioOfPrices).div(_currentDebt)).div(
-                10**_decimals
-            );
-            require(
-                collateralRatioIfAmountIsWithdrawn >= creditLineInfo[_id].idealCollateralRatio,
-                "CreditLine::withdrawCollateralFromCreditLine - The current collateral ration doesn't allow to withdraw"
-            );
+
+        uint256 _collateralNeeded = _currentDebt.mul(creditLineInfo[_id].idealCollateralRatio).div(_ratioOfPrices).mul(10**_decimals).div(10**30);
+
+        if(_collateralNeeded >= _totalCollateralTokens) {
+            return 0;
         }
-        address _collateralAsset = creditLineInfo[_id].collateralAsset;
-        _withdrawCollateral(_collateralAsset, amount, _id);
+        return _totalCollateralTokens.sub(_collateralNeeded);
     }
 
     function _withdrawCollateral(
