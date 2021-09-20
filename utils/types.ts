@@ -77,6 +77,7 @@ export interface ExtensionInitParams {
 
 export interface CreditLineInitParams {
     _protocolFeeFraction: BigNumberish;
+    _liquidatorRewardFraction: BigNumberish;
 }
 
 export interface PoolFactoryInitParams {
