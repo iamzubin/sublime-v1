@@ -498,7 +498,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(_activeAmount == _amountInTokens, 'insufficient balance');
     }
 
-    function borrow(uint256 _id, uint256 amount)
+    function borrow(uint256 _id, uint256 _amount)
         external
         payable
         nonReentrant
@@ -506,7 +506,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     {
         require(state[_id].status == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         uint256 _currentDebt = calculateCurrentDebt(_id);
-        require(_currentDebt.add(amount) <= creditLineConstants[_id].borrowLimit, 'CreditLine: Amount exceeds borrow limit.');
+        require(_currentDebt.add(_amount) <= creditLineConstants[_id].borrowLimit, 'CreditLine: Amount exceeds borrow limit.');
 
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
@@ -516,7 +516,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
 
         uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
-            (_currentDebt.add(amount)).mul(10**_decimals)
+            (_currentDebt.add(_amount)).mul(10**_decimals)
         );
         require(
             _collateralRatioIfAmountIsWithdrawn > creditLineConstants[_id].idealCollateralRatio,
@@ -526,18 +526,18 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _lender = creditLineConstants[_id].lender;
 
         updateinterestAccruedTillLastPrincipalUpdate(_id);
-        state[_id].principal = state[_id].principal.add(amount);
+        state[_id].principal = state[_id].principal.add(_amount);
         state[_id].lastPrincipalUpdateTime = block.timestamp;
 
         uint256 _tokenDiffBalance;
         if (_borrowAsset != address(0)) {
             uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
-            _withdrawBorrowAmount(_borrowAsset, amount, _lender);
+            _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
             uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         } else {
             uint256 _balanceBefore = address(this).balance;
-            _withdrawBorrowAmount(_borrowAsset, amount, _lender);
+            _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
             uint256 _balanceAfter = address(this).balance;
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         }
