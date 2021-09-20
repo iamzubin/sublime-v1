@@ -656,12 +656,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _liquidityShares;
         for (uint256 index = 0; index < _strategyList.length; index++) {
             _liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            uint256 tokenInStrategy = _liquidityShares;
+            uint256 _tokenInStrategy = _liquidityShares;
             if (_strategyList[index] != address(0)) {
-                tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
+                _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
             }
 
-            amount = amount.add(tokenInStrategy);
+            amount = amount.add(_tokenInStrategy);
         }
     }
 
@@ -735,27 +735,35 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         address _collateralAsset = creditLineInfo[_id].collateralAsset;
         address _lender = creditLineInfo[_id].lender;
-        uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
+        uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
         address _borrowAsset = creditLineInfo[_id].borrowAsset;
 
         creditLineInfo[_id].currentStatus = creditLineStatus.LIQUIDATED;
 
-        if (creditLineInfo[_id].autoLiquidation) {
-            if (_lender == msg.sender) {
-                _transferFromSavingsAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
-            } else {
-                (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
-
-                uint256 _borrowToken = (_totalCollateralToken.mul(_ratioOfPrices).div(10**_decimals));
-                IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowToken);
-                _withdrawCollateral(_collateralAsset, _totalCollateralToken, _id);
-            }
+        if(creditLineInfo[_id].autoLiquidation && _lender != msg.sender) {
+            uint256 _borrowToken = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
+            IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowToken);
+            _withdrawCollateral(_collateralAsset, _totalCollateralTokens, _id);
         } else {
-            require(msg.sender == _lender, 'CreditLine: Liquidation can only be performed by lender.');
-            _transferFromSavingsAccount(_collateralAsset, _totalCollateralToken, address(this), msg.sender);
+            _transferFromSavingsAccount(_collateralAsset, _totalCollateralTokens, address(this), msg.sender);
         }
 
         emit CreditLineLiquidated(_id, msg.sender);
+    }
+
+    function borrowTokensToLiquidate(uint256 _id) public returns (uint256) {
+        address _collateralAsset = creditLineInfo[_id].collateralAsset;
+        uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
+        address _borrowAsset = creditLineInfo[_id].borrowAsset;
+
+        return _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
+    }
+
+    function _borrowTokensToLiquidate(address _borrowAsset, address _collateralAsset, uint256 _totalCollateralTokens) internal view returns(uint256) {
+        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
+        uint256 _borrowTokens = (_totalCollateralTokens.mul(_ratioOfPrices).div(10**_decimals));
+
+        return _borrowTokens;
     }
 
     receive() external payable {
