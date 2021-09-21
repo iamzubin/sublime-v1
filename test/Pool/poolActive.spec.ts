@@ -558,7 +558,7 @@ describe('Pool Active stage', async () => {
                         await extenstion.connect(borrower).requestExtension(pool.address);
                         await extenstion.connect(lender1).voteOnExtension(pool.address);
 
-                        const { extensionVoteEndTime } = await extenstion.poolInfo(pool.address);
+                        const { extensionVoteEndTime } = await extenstion.extensions(pool.address);
 
                         let interestForCurrentPeriod = (await repaymentImpl.getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
                         await borrowToken.connect(random).approve(repaymentImpl.address, interestForCurrentPeriod.add(1));

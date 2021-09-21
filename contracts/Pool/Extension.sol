@@ -16,7 +16,7 @@ import '../interfaces/IRepayment.sol';
 contract Extension is Initializable, IExtension {
     using SafeMath for uint256;
 
-    struct PoolInfo {
+    struct ExtensionState {
         uint256 periodWhenExtensionIsPassed;
         uint256 totalExtensionSupport;
         uint256 extensionVoteEndTime;
@@ -27,7 +27,7 @@ contract Extension is Initializable, IExtension {
     /**
      * @notice used to keep track of Open Borrow Pool details
      */
-    mapping(address => PoolInfo) public poolInfo;
+    mapping(address => ExtensionState) public extensions;
     IPoolFactory poolFactory;
     uint256 votingPassRatio;
 
@@ -91,9 +91,9 @@ contract Extension is Initializable, IExtension {
      */
     function initializePoolExtension(uint256 _repaymentInterval) external override {
         IPoolFactory _poolFactory = poolFactory;
-        require(poolInfo[msg.sender].repaymentInterval == 0, 'Extension::initializePoolExtension - _repaymentInterval cannot be 0');
+        require(extensions[msg.sender].repaymentInterval == 0, 'Extension::initializePoolExtension - _repaymentInterval cannot be 0');
         require(_poolFactory.openBorrowPoolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
-        poolInfo[msg.sender].repaymentInterval = _repaymentInterval;
+        extensions[msg.sender].repaymentInterval = _repaymentInterval;
     }
 
     /**
@@ -101,19 +101,19 @@ contract Extension is Initializable, IExtension {
      * @param _pool address of the Open Borrow Pool
      */
     function requestExtension(address _pool) external onlyBorrower(_pool) {
-        uint256 _repaymentInterval = poolInfo[_pool].repaymentInterval;
+        uint256 _repaymentInterval = extensions[_pool].repaymentInterval;
         require(_repaymentInterval != 0);
-        uint256 _extensionVoteEndTime = poolInfo[_pool].extensionVoteEndTime;
+        uint256 _extensionVoteEndTime = extensions[_pool].extensionVoteEndTime;
         require(block.timestamp > _extensionVoteEndTime, 'Extension::requestExtension - Extension requested already'); // _extensionVoteEndTime is 0 when no extension is active
 
         // This check is required so that borrower doesn't ask for more extension if previously an extension is already granted
-        require(poolInfo[_pool].periodWhenExtensionIsPassed == 0, 'Extension::requestExtension: Extension already availed');
+        require(extensions[_pool].periodWhenExtensionIsPassed == 0, 'Extension::requestExtension: Extension already availed');
 
-        poolInfo[_pool].totalExtensionSupport = 0; // As we can multiple voting every time new voting start we have to make previous votes 0
+        extensions[_pool].totalExtensionSupport = 0; // As we can multiple voting every time new voting start we have to make previous votes 0
         IRepayment _repayment = IRepayment(poolFactory.repaymentImpl());
         uint256 _nextDueTime = _repayment.getNextInstalmentDeadline(_pool);
         _extensionVoteEndTime = (_nextDueTime).div(10**30);
-        poolInfo[_pool].extensionVoteEndTime = _extensionVoteEndTime; // this makes extension request single use
+        extensions[_pool].extensionVoteEndTime = _extensionVoteEndTime; // this makes extension request single use
         emit ExtensionRequested(_extensionVoteEndTime);
     }
 
@@ -122,7 +122,7 @@ contract Extension is Initializable, IExtension {
      * @param _pool address of the Open Borrow Pool
      */
     function voteOnExtension(address _pool) external {
-        uint256 _extensionVoteEndTime = poolInfo[_pool].extensionVoteEndTime;
+        uint256 _extensionVoteEndTime = extensions[_pool].extensionVoteEndTime;
         require(block.timestamp < _extensionVoteEndTime, 'Pool::voteOnExtension - Voting is over');
 
         (uint256 _balance, uint256 _totalSupply) = IPool(_pool).getBalanceDetails(msg.sender);
@@ -130,17 +130,17 @@ contract Extension is Initializable, IExtension {
 
         uint256 _votingPassRatio = votingPassRatio;
 
-        uint256 _lastVoteTime = poolInfo[_pool].lastVoteTime[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
-        uint256 _repaymentInterval = poolInfo[_pool].repaymentInterval;
+        uint256 _lastVoteTime = extensions[_pool].lastVoteTime[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
+        uint256 _repaymentInterval = extensions[_pool].repaymentInterval;
         require(_lastVoteTime < _extensionVoteEndTime.sub(_repaymentInterval), 'Pool::voteOnExtension - you have already voted');
 
-        uint256 _extensionSupport = poolInfo[_pool].totalExtensionSupport;
+        uint256 _extensionSupport = extensions[_pool].totalExtensionSupport;
         _lastVoteTime = block.timestamp;
         _extensionSupport = _extensionSupport.add(_balance);
 
-        poolInfo[_pool].lastVoteTime[msg.sender] = _lastVoteTime;
+        extensions[_pool].lastVoteTime[msg.sender] = _lastVoteTime;
         emit LenderVoted(msg.sender, _extensionSupport, _lastVoteTime);
-        poolInfo[_pool].totalExtensionSupport = _extensionSupport;
+        extensions[_pool].totalExtensionSupport = _extensionSupport;
 
         if (((_extensionSupport)) >= (_totalSupply.mul(_votingPassRatio)).div(10**30)) {
             grantExtension(_pool);
@@ -156,8 +156,8 @@ contract Extension is Initializable, IExtension {
         IRepayment _repayment = IRepayment(_poolFactory.repaymentImpl());
 
         uint256 _currentLoanInterval = _repayment.getCurrentLoanInterval(_pool);
-        poolInfo[_pool].periodWhenExtensionIsPassed = _currentLoanInterval;
-        poolInfo[_pool].extensionVoteEndTime = block.timestamp; // voting is over
+        extensions[_pool].periodWhenExtensionIsPassed = _currentLoanInterval;
+        extensions[_pool].extensionVoteEndTime = block.timestamp; // voting is over
 
         _repayment.instalmentDeadlineExtended(_pool, _currentLoanInterval);
 
@@ -168,7 +168,7 @@ contract Extension is Initializable, IExtension {
      * @notice used for closing the pool extension
      */
     function closePoolExtension() external override {
-        delete poolInfo[msg.sender];
+        delete extensions[msg.sender];
     }
 
     /**
