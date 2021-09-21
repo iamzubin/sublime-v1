@@ -52,7 +52,7 @@ describe('Test Savings Account (with ETH)', async () => {
         });
 
         it('Should successfully deposit into account another account', async () => {
-            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 zeroAddress
@@ -61,7 +61,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 value: depositValueToTest,
             });
 
-            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 zeroAddress
@@ -71,7 +71,7 @@ describe('Test Savings Account (with ETH)', async () => {
         });
 
         it('Should successfully deposit into its own accounts', async () => {
-            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 userAccount.address,
                 zeroAddress,
                 zeroAddress
@@ -84,7 +84,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 .to.emit(savingsAccount, 'Deposited')
                 .withArgs(userAccount.address, depositValueToTest, zeroAddress, zeroAddress);
 
-            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 userAccount.address,
                 zeroAddress,
                 zeroAddress
@@ -157,7 +157,7 @@ describe('Test Savings Account (with ETH)', async () => {
         });
 
         it('Should deposit into another account', async () => {
-            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 aaveYield.address
@@ -171,7 +171,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 .to.emit(savingsAccount, 'Deposited')
                 .withArgs(randomAccount.address, depositValueToTest, zeroAddress, aaveYield.address);
 
-            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 aaveYield.address
@@ -202,7 +202,7 @@ describe('Test Savings Account (with ETH)', async () => {
 
                 expect(sharesToWithdraw).eq(amountReceived);
 
-                const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
+                const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                     randomAccount.address,
                     zeroAddress,
                     aaveYield.address
@@ -274,7 +274,7 @@ describe('Test Savings Account (with ETH)', async () => {
         });
 
         it('Should deposit into another account', async () => {
-            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 yearnYield.address
@@ -288,7 +288,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 .to.emit(savingsAccount, 'Deposited')
                 .withArgs(randomAccount.address, depositValueToTest, zeroAddress, yearnYield.address);
 
-            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 yearnYield.address
@@ -391,7 +391,7 @@ describe('Test Savings Account (with ETH)', async () => {
         });
 
         it('Should deposit into another account', async () => {
-            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 compoundYield.address
@@ -406,7 +406,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 .to.emit(savingsAccount, 'Deposited')
                 .withArgs(randomAccount.address, depositValueToTest, zeroAddress, compoundYield.address);
 
-            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
+            const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 compoundYield.address

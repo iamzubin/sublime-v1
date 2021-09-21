@@ -489,7 +489,7 @@ describe('Pool Active stage', async () => {
                             .div(scaler);
                         await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
 
-                        const collateralShares = await savingsAccount.userLockedBalance(
+                        const collateralShares = await savingsAccount.balanceInShares(
                             pool.address,
                             collateralToken.address,
                             poolStrategy.address
@@ -586,7 +586,7 @@ describe('Pool Active stage', async () => {
                             .div(scaler);
                         await blockTravel(network, parseInt(endOfPeriod.add(gracePeriod).add(1).toString()));
 
-                        const collateralShares = await savingsAccount.userLockedBalance(
+                        const collateralShares = await savingsAccount.balanceInShares(
                             pool.address,
                             collateralToken.address,
                             poolStrategy.address
@@ -652,7 +652,7 @@ describe('Pool Active stage', async () => {
                     const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
                     await blockTravel(network, parseInt(endOfPeriod.add(gracePeriod).add(1).toString()));
 
-                    const collateralShares = await savingsAccount.userLockedBalance(
+                    const collateralShares = await savingsAccount.balanceInShares(
                         pool.address,
                         collateralToken.address,
                         poolStrategy.address
@@ -676,7 +676,7 @@ describe('Pool Active stage', async () => {
                     const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
                     await blockTravel(network, parseInt(endOfPeriod.add(gracePeriod).add(1).toString()));
 
-                    const collateralShares = await savingsAccount.userLockedBalance(
+                    const collateralShares = await savingsAccount.balanceInShares(
                         pool.address,
                         collateralToken.address,
                         poolStrategy.address
@@ -702,7 +702,7 @@ describe('Pool Active stage', async () => {
                     const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
                     await blockTravel(network, parseInt(endOfPeriod.add(gracePeriod).add(1).toString()));
 
-                    const collateralShares = await savingsAccount.userLockedBalance(
+                    const collateralShares = await savingsAccount.balanceInShares(
                         pool.address,
                         collateralToken.address,
                         poolStrategy.address

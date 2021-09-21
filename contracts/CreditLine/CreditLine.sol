@@ -308,7 +308,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _activeAmount;
 
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {
-            uint256 _liquidityShares = _savingsAccount.userLockedBalance(_sender, _asset, _strategyList[_index]);
+            uint256 _liquidityShares = _savingsAccount.balanceInShares(_sender, _asset, _strategyList[_index]);
             if (_liquidityShares == 0) {
                 continue;
             }
@@ -478,7 +478,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {
-            uint256 _liquidityShares = _savingsAccount.userLockedBalance(_lender, _asset, _strategyList[_index]);
+            uint256 _liquidityShares = _savingsAccount.balanceInShares(_lender, _asset, _strategyList[_index]);
             if (_liquidityShares != 0) {
                 uint256 tokenInStrategy = _liquidityShares;
                 if (_strategyList[_index] != address(0)) {

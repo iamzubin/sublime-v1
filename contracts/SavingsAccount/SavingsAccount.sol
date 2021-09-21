@@ -23,7 +23,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     address public creditLine;
 
     //user -> token -> strategy (underlying address) -> amount (shares)
-    mapping(address => mapping(address => mapping(address => uint256))) public override userLockedBalance;
+    mapping(address => mapping(address => mapping(address => uint256))) public override balanceInShares;
 
     //user => token => to => amount
     mapping(address => mapping(address => mapping(address => uint256))) public allowance;
@@ -82,7 +82,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
         uint256 _sharesReceived = _deposit(_amount, _token, _strategy);
 
-        userLockedBalance[_to][_token][_strategy] = userLockedBalance[_to][_token][_strategy].add(_sharesReceived);
+        balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_sharesReceived);
 
         emit Deposited(_to, _amount, _token, _strategy);
 
@@ -143,7 +143,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _amount = IYield(_currentStrategy).getSharesForTokens(_amount, _token);
         }
 
-        userLockedBalance[msg.sender][_token][_currentStrategy] = userLockedBalance[msg.sender][_token][_currentStrategy].sub(
+        balanceInShares[msg.sender][_token][_currentStrategy] = balanceInShares[msg.sender][_token][_currentStrategy].sub(
             _amount,
             'SavingsAccount::switchStrategy Insufficient balance'
         );
@@ -162,7 +162,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _sharesReceived = _depositToYield(_tokensReceived, _token, _newStrategy);
         }
 
-        userLockedBalance[msg.sender][_token][_newStrategy] = userLockedBalance[msg.sender][_token][_newStrategy].add(_sharesReceived);
+        balanceInShares[msg.sender][_token][_newStrategy] = balanceInShares[msg.sender][_token][_newStrategy].add(_sharesReceived);
 
         emit StrategySwitched(msg.sender, _token, _currentStrategy, _newStrategy);
     }
@@ -188,7 +188,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
         }
 
-        userLockedBalance[msg.sender][_token][_strategy] = userLockedBalance[msg.sender][_token][_strategy].sub(
+        balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
             _amount,
             'SavingsAccount::withdraw Insufficient amount'
         );
@@ -217,7 +217,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
         }
 
-        userLockedBalance[_from][_token][_strategy] = userLockedBalance[_from][_token][_strategy].sub(
+        balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
             _amount,
             'SavingsAccount::withdrawFrom insufficient balance'
         );
@@ -266,16 +266,16 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
         for (uint256 i = 0; i < _strategyList.length; i++) {
-            if (userLockedBalance[msg.sender][_token][_strategyList[i]] != 0) {
-                uint256 _amount = userLockedBalance[msg.sender][_token][_strategyList[i]];
+            if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0) {
+                uint256 _amount = balanceInShares[msg.sender][_token][_strategyList[i]];
                 if (_strategyList[i] != address(0)) {
                     _amount = IYield(_strategyList[i]).unlockTokens(
                         _token,
-                        userLockedBalance[msg.sender][_token][_strategyList[i]]
+                        balanceInShares[msg.sender][_token][_strategyList[i]]
                     );
                 }
                 _tokenReceived = _tokenReceived.add(_amount);
-                delete userLockedBalance[msg.sender][_token][_strategyList[i]];
+                delete balanceInShares[msg.sender][_token][_strategyList[i]];
             }
         }
 
@@ -340,13 +340,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
         }
 
-        userLockedBalance[msg.sender][_token][_strategy] = userLockedBalance[msg.sender][_token][_strategy].sub(
+        balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
             _amount,
             'SavingsAccount::transfer insufficient funds'
         );
 
         //update receiver's balance
-        userLockedBalance[_to][_token][_strategy] = userLockedBalance[_to][_token][_strategy].add(_amount);
+        balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_amount);
 
         emit Transfer(_token, _strategy, msg.sender, _to, _amount);
 
@@ -372,13 +372,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         }
 
         //reduce sender's balance
-        userLockedBalance[_from][_token][_strategy] = userLockedBalance[_from][_token][_strategy].sub(
+        balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
             _amount,
             'SavingsAccount::transferFrom insufficient allowance'
         );
 
         //update receiver's balance
-        userLockedBalance[_to][_token][_strategy] = (userLockedBalance[_to][_token][_strategy]).add(_amount);
+        balanceInShares[_to][_token][_strategy] = (balanceInShares[_to][_token][_strategy]).add(_amount);
 
         emit Transfer(_token, _strategy, _from, _to, _amount);
 
@@ -389,7 +389,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
         for (uint256 i = 0; i < _strategyList.length; i++) {
-            uint256 _liquidityShares = userLockedBalance[_user][_token][_strategyList[i]];
+            uint256 _liquidityShares = balanceInShares[_user][_token][_strategyList[i]];
 
             if (_liquidityShares != 0) {
                 uint256 _tokenInStrategy = _liquidityShares;

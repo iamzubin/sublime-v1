@@ -316,24 +316,24 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Borrower can cancel pool without penality', async () => {
-                const collateralBalanceBorrowerSavings = await savingsAccount.userLockedBalance(
+                const collateralBalanceBorrowerSavings = await savingsAccount.balanceInShares(
                     borrower.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralBalancePoolSavings = await savingsAccount.userLockedBalance(
+                const collateralBalancePoolSavings = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
                 const { baseLiquidityShares } = await pool.poolVars();
                 await pool.connect(borrower).cancelPool();
-                const collateralBalanceBorrowerSavingsAfter = await savingsAccount.userLockedBalance(
+                const collateralBalanceBorrowerSavingsAfter = await savingsAccount.balanceInShares(
                     borrower.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralBalancePoolSavingsAfter = await savingsAccount.userLockedBalance(
+                const collateralBalancePoolSavingsAfter = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -453,7 +453,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             it('Borrower can withdraw', async () => {
                 const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
-                const borrowAssetBalancePoolSavings = await savingsAccount.userLockedBalance(
+                const borrowAssetBalancePoolSavings = await savingsAccount.balanceInShares(
                     pool.address,
                     borrowToken.address,
                     zeroAddress
@@ -462,7 +462,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await pool.connect(borrower).withdrawBorrowedAmount();
                 const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
-                const borrowAssetBalancePoolSavingsAfter = await savingsAccount.userLockedBalance(
+                const borrowAssetBalancePoolSavingsAfter = await savingsAccount.balanceInShares(
                     pool.address,
                     borrowToken.address,
                     zeroAddress
@@ -490,12 +490,12 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Borrower can cancel pool with penality before withdrawing', async () => {
-                const collateralBalanceBorrowerSavings = await savingsAccount.userLockedBalance(
+                const collateralBalanceBorrowerSavings = await savingsAccount.balanceInShares(
                     borrower.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralBalancePoolSavings = await savingsAccount.userLockedBalance(
+                const collateralBalancePoolSavings = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -521,12 +521,12 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     .div(365 * 24 * 60 * 60)
                     .div(BigNumber.from(10).pow(60));
 
-                const collateralBalanceBorrowerSavingsAfter = await savingsAccount.userLockedBalance(
+                const collateralBalanceBorrowerSavingsAfter = await savingsAccount.balanceInShares(
                     borrower.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralBalancePoolSavingsAfter = await savingsAccount.userLockedBalance(
+                const collateralBalancePoolSavingsAfter = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -564,7 +564,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             it('Once pool is cancelled anyone can liquidate penality, direct penality withdrawal', async () => {
                 await pool.connect(borrower).cancelPool();
                 const collateralTokensRandom = await collateralToken.balanceOf(random.address);
-                const collateralSharesPool = await savingsAccount.userLockedBalance(
+                const collateralSharesPool = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -594,7 +594,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 );
 
                 const collateralTokensRandomAfter = await collateralToken.balanceOf(random.address);
-                const collateralSharesPoolAfter = await await savingsAccount.userLockedBalance(
+                const collateralSharesPoolAfter = await await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -641,7 +641,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 let deployHelper: DeployHelper = new DeployHelper(borrower);
                 const yToken: ERC20 = await deployHelper.mock.getMockERC20(await poolStrategy.liquidityToken(collateralToken.address));
                 const collateralSharesRandom = await yToken.balanceOf(random.address);
-                const collateralSharesPool = await savingsAccount.userLockedBalance(
+                const collateralSharesPool = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -660,7 +660,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await pool.connect(random).liquidateCancelPenality(false, true);
 
                 const collateralSharesRandomAfter = await yToken.balanceOf(random.address);
-                const collateralSharesPoolAfter = await savingsAccount.userLockedBalance(
+                const collateralSharesPoolAfter = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -703,12 +703,12 @@ describe('Pool Borrow Withdrawal stage', async () => {
             // Note: _receiveLiquidityShares doesn't matter when sending to savings account
             it('Once pool is cancelled anyone can liquidate penality, penality to savings', async () => {
                 await pool.connect(borrower).cancelPool();
-                const collateralSavingsRandom = await savingsAccount.userLockedBalance(
+                const collateralSavingsRandom = await savingsAccount.balanceInShares(
                     random.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralSharesPool = await savingsAccount.userLockedBalance(
+                const collateralSharesPool = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -725,12 +725,12 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
                 await pool.connect(random).liquidateCancelPenality(true, true);
 
-                const collateralSavingsRandomAfter = await savingsAccount.userLockedBalance(
+                const collateralSavingsRandomAfter = await savingsAccount.balanceInShares(
                     random.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralSharesPoolAfter = await savingsAccount.userLockedBalance(
+                const collateralSharesPoolAfter = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -774,7 +774,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
             it('Pool cancellation once liquidated cannot be liquidated again', async () => {
                 await pool.connect(borrower).cancelPool();
-                const collateralSharesPool = await savingsAccount.userLockedBalance(
+                const collateralSharesPool = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -835,7 +835,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
             it('Lender who withdraws lent amount after pool cancel penality gets share of cancel penality', async () => {
                 await pool.connect(borrower).cancelPool();
-                const collateralSharesPool = await savingsAccount.userLockedBalance(
+                const collateralSharesPool = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -899,18 +899,18 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 assert(loanWithdrawalDeadline.toString() != '0', `Loan withdrawal deadline not set`);
                 await blockTravel(network, parseInt(loanWithdrawalDeadline.add(1).toString()));
 
-                const collateralBalanceRandomSavings = await savingsAccount.userLockedBalance(
+                const collateralBalanceRandomSavings = await savingsAccount.balanceInShares(
                     random.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
                 const collateralBalanceRandom = await collateralToken.balanceOf(random.address);
-                const collateralBalanceBorrowerSavings = await savingsAccount.userLockedBalance(
+                const collateralBalanceBorrowerSavings = await savingsAccount.balanceInShares(
                     borrower.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralBalancePoolSavings = await savingsAccount.userLockedBalance(
+                const collateralBalancePoolSavings = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -934,17 +934,17 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     .mul(createPoolParams._repaymentInterval.add(extraPenalityTime))
                     .div(365 * 24 * 60 * 60)
                     .div(BigNumber.from(10).pow(60));
-                const collateralBalanceBorrowerSavingsAfter = await savingsAccount.userLockedBalance(
+                const collateralBalanceBorrowerSavingsAfter = await savingsAccount.balanceInShares(
                     borrower.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralBalancePoolSavingsAfter = await savingsAccount.userLockedBalance(
+                const collateralBalancePoolSavingsAfter = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const collateralBalanceRandomSavingsAfter = await savingsAccount.userLockedBalance(
+                const collateralBalanceRandomSavingsAfter = await savingsAccount.balanceInShares(
                     random.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -982,7 +982,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 await pool.connect(random).cancelPool();
                 const collateralTokensRandom = await collateralToken.balanceOf(random.address);
-                const collateralSharesPool = await savingsAccount.userLockedBalance(
+                const collateralSharesPool = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -1012,7 +1012,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 );
 
                 const collateralTokensRandomAfter = await collateralToken.balanceOf(random.address);
-                const collateralSharesPoolAfter = await await savingsAccount.userLockedBalance(
+                const collateralSharesPoolAfter = await await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -1104,7 +1104,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 await pool.connect(random).cancelPool();
 
-                const collateralSharesPool = await savingsAccount.userLockedBalance(
+                const collateralSharesPool = await savingsAccount.balanceInShares(
                     pool.address,
                     collateralToken.address,
                     poolStrategy.address
@@ -1263,7 +1263,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             it('Borrower can withdraw', async () => {
                 const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
-                const borrowAssetBalancePoolSavings = await savingsAccount.userLockedBalance(
+                const borrowAssetBalancePoolSavings = await savingsAccount.balanceInShares(
                     pool.address,
                     borrowToken.address,
                     zeroAddress
@@ -1272,7 +1272,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await pool.connect(borrower).withdrawBorrowedAmount();
                 const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
-                const borrowAssetBalancePoolSavingsAfter = await savingsAccount.userLockedBalance(
+                const borrowAssetBalancePoolSavingsAfter = await savingsAccount.balanceInShares(
                     pool.address,
                     borrowToken.address,
                     zeroAddress
@@ -1401,7 +1401,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             it('Borrower can withdraw', async () => {
                 const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
-                const borrowAssetBalancePoolSavings = await savingsAccount.userLockedBalance(
+                const borrowAssetBalancePoolSavings = await savingsAccount.balanceInShares(
                     pool.address,
                     borrowToken.address,
                     zeroAddress
@@ -1417,7 +1417,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await pool.connect(borrower).withdrawBorrowedAmount();
                 const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
-                const borrowAssetBalancePoolSavingsAfter = await savingsAccount.userLockedBalance(
+                const borrowAssetBalancePoolSavingsAfter = await savingsAccount.balanceInShares(
                     pool.address,
                     borrowToken.address,
                     zeroAddress

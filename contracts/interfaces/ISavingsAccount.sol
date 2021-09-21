@@ -86,7 +86,7 @@ interface ISavingsAccount {
         address to
     ) external returns (uint256);
 
-    function userLockedBalance(
+    function balanceInShares(
         address user,
         address token,
         address strategy
