@@ -13,15 +13,15 @@ library SavingsAccountUtil {
         address _from,
         address _to,
         uint256 _amount,
-        address _asset,
+        address _token,
         address _strategy,
         bool _withdrawShares,
         bool _toSavingsAccount
     ) internal returns (uint256) {
         if (_toSavingsAccount) {
-            return savingsAccountTransfer(_savingsAccount, _from, _to, _amount, _asset, _strategy);
+            return savingsAccountTransfer(_savingsAccount, _from, _to, _amount, _token, _strategy);
         } else {
-            return withdrawFromSavingsAccount(_savingsAccount, _from, _to, _amount, _asset, _strategy, _withdrawShares);
+            return withdrawFromSavingsAccount(_savingsAccount, _from, _to, _amount, _token, _strategy, _withdrawShares);
         }
     }
 
@@ -30,14 +30,14 @@ library SavingsAccountUtil {
         address _from,
         address _to,
         uint256 _amount,
-        address _asset,
+        address _token,
         bool _toSavingsAccount,
         address _strategy
     ) internal returns (uint256) {
         if (_toSavingsAccount) {
-            return directSavingsAccountDeposit(_savingsAccount, _from, _to, _amount, _asset, _strategy);
+            return directSavingsAccountDeposit(_savingsAccount, _from, _to, _amount, _token, _strategy);
         } else {
-            return transferTokens(_asset, _amount, _from, _to);
+            return transferTokens(_token, _amount, _from, _to);
         }
     }
 
@@ -46,21 +46,21 @@ library SavingsAccountUtil {
         address _from,
         address _to,
         uint256 _amount,
-        address _asset,
+        address _token,
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
-        transferTokens(_asset, _amount, _from, address(this));
+        transferTokens(_token, _amount, _from, address(this));
         uint256 _ethValue;
-        if (_asset == address(0)) {
+        if (_token == address(0)) {
             _ethValue = _amount;
         } else {
             address _approveTo = _strategy;
             if (_strategy == address(0)) {
                 _approveTo = address(_savingsAccount);
             }
-            IERC20(_asset).safeApprove(_approveTo, _amount);
+            IERC20(_token).safeApprove(_approveTo, _amount);
         }
-        _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_amount, _asset, _strategy, _to);
+        _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_amount, _token, _strategy, _to);
     }
 
     function savingsAccountTransfer(
@@ -68,13 +68,13 @@ library SavingsAccountUtil {
         address _from,
         address _to,
         uint256 _amount,
-        address _asset,
+        address _token,
         address _strategy
     ) internal returns (uint256) {
         if (_from == address(this)) {
-            _savingsAccount.transfer(_asset, _to, _strategy, _amount);
+            _savingsAccount.transfer(_amount, _token , _strategy, _to);
         } else {
-            _savingsAccount.transferFrom(_asset, _from, _to, _strategy, _amount);
+            _savingsAccount.transferFrom(_amount, _token, _strategy, _from, _to);
         }
         return _amount;
     }
@@ -84,19 +84,19 @@ library SavingsAccountUtil {
         address _from,
         address _to,
         uint256 _amount,
-        address _asset,
+        address _token,
         address _strategy,
         bool _withdrawShares
     ) internal returns (uint256 _amountReceived) {
         if (_from == address(this)) {
-            _amountReceived = _savingsAccount.withdraw(payable(_to), _amount, _asset, _strategy, _withdrawShares);
+            _amountReceived = _savingsAccount.withdraw(_amount, _token, _strategy, payable(_to), _withdrawShares);
         } else {
-            _amountReceived = _savingsAccount.withdrawFrom(_from, payable(_to), _amount, _asset, _strategy, _withdrawShares);
+            _amountReceived = _savingsAccount.withdrawFrom(_amount, _token, _strategy, _from, payable(_to), _withdrawShares);
         }
     }
 
     function transferTokens(
-        address _asset,
+        address _token,
         uint256 _amount,
         address _from,
         address _to
@@ -104,7 +104,7 @@ library SavingsAccountUtil {
         if (_amount == 0) {
             return 0;
         }
-        if (_asset == address(0)) {
+        if (_token == address(0)) {
             require(msg.value >= _amount, 'ethers provided should be greater than _amount');
 
             if (_to != address(this)) {
@@ -120,10 +120,10 @@ library SavingsAccountUtil {
             return _amount;
         }
         if (_from == address(this)) {
-            IERC20(_asset).safeTransfer(_to, _amount);
+            IERC20(_token).safeTransfer(_to, _amount);
         } else {
             //pool
-            IERC20(_asset).safeTransferFrom(_from, _to, _amount);
+            IERC20(_token).safeTransferFrom(_from, _to, _amount);
         }
         return _amount;
     }

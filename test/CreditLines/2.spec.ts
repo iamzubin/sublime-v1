@@ -314,7 +314,7 @@ describe('Credit Lines', async () => {
 
             await savingsAccount.connect(lender).deposit(largeAmount.mul(100), DaiTokenContract.address, zeroAddress, lender.address);
 
-            await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
+            await savingsAccount.connect(lender).approve(amountToBorrow, DaiTokenContract.address, creditLine.address);
 
             await creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow);
         });
@@ -329,7 +329,7 @@ describe('Credit Lines', async () => {
 
         describe('Failed Cases', async () => {
             it('Cannot borrow more if amount more than borrow limit', async () => {
-                await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
+                await savingsAccount.connect(lender).approve(amountToBorrow, DaiTokenContract.address, creditLine.address);
 
                 await expect(
                     creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow.mul(100))
@@ -352,7 +352,7 @@ describe('Credit Lines', async () => {
                 //     _borrowableAmountInBefore: _borrowableAmount.toString(),
                 // });
 
-                await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, _borrowableAmount.mul(5).div(4));
+                await savingsAccount.connect(lender).approve(_borrowableAmount.mul(5).div(4), DaiTokenContract.address, creditLine.address);
 
                 await creditLine.connect(borrower).borrow(borrowerCreditLine, _borrowableAmount.mul(9).div(10)); // 90% of borrowable amount
 

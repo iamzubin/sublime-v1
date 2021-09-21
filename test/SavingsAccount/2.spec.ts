@@ -154,7 +154,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress, true)
+                        .withdraw(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address, true)
                 ).to.be.revertedWith('Cannot withdraw shared when No strategy is used');
             });
         });
@@ -167,7 +167,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress, false, {})
+                    .withdraw(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address, false, {})
             ).to.emit(savingsAccount, 'Withdrawn');
             //     .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress);
 
@@ -275,7 +275,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(randomAccount.address, balanceToWithdraw.mul(2), Contracts.LINK, aaveYield.address, false)
+                        .withdraw(balanceToWithdraw.mul(2), Contracts.LINK, aaveYield.address, randomAccount.address, false)
                 ).to.be.revertedWith('SavingsAccount::withdraw Insufficient amount');
             });
             it('should fail/revert Withdraw Token (withdrawShares = true) if more than withdrawable balance is tried to pull', async () => {
@@ -288,7 +288,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(randomAccount.address, balanceToWithdraw.mul(2), Contracts.LINK, aaveYield.address, true)
+                        .withdraw(balanceToWithdraw.mul(2), Contracts.LINK, aaveYield.address, randomAccount.address, true)
                 ).to.be.revertedWith('SavingsAccount::withdraw Insufficient amount');
             });
         });
@@ -307,7 +307,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, balanceToWithdraw, Contracts.LINK, aaveYield.address, false)
+                    .withdraw(balanceToWithdraw, Contracts.LINK, aaveYield.address, randomAccount.address, false)
             )
                 .to.emit(savingsAccount, 'Withdrawn')
                 .withArgs(
@@ -340,7 +340,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, balanceToWithdraw, Contracts.LINK, aaveYield.address, true, {})
+                    .withdraw(balanceToWithdraw, Contracts.LINK, aaveYield.address, randomAccount.address, true, {})
             )
                 .to.emit(savingsAccount, 'Withdrawn')
                 .withArgs(
@@ -455,7 +455,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(randomAccount.address, balanceToWithdraw.mul(2), Contracts.DAI, yearnYield.address, false)
+                        .withdraw(balanceToWithdraw.mul(2), Contracts.DAI, yearnYield.address, randomAccount.address, false)
                 ).to.be.revertedWith('SavingsAccount::withdraw Insufficient amount');
             });
             it('should fail/revert Withdraw Token (withdrawShares = true) if more than withdrawable balance is tried to pull', async () => {
@@ -468,7 +468,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(randomAccount.address, balanceToWithdraw.mul(2), Contracts.DAI, yearnYield.address, true)
+                        .withdraw(balanceToWithdraw.mul(2), Contracts.DAI, yearnYield.address, randomAccount.address, true)
                 ).to.be.revertedWith('SavingsAccount::withdraw Insufficient amount');
             });
         });
@@ -489,7 +489,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, balanceToWithdraw, Contracts.DAI, yearnYield.address, false)
+                    .withdraw(balanceToWithdraw, Contracts.DAI, yearnYield.address, randomAccount.address, false)
             ).to.emit(savingsAccount, 'Withdrawn');
             //     .withArgs(
             //         randomAccount.address,
@@ -521,7 +521,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, balanceToWithdraw, Contracts.DAI, yearnYield.address, true)
+                    .withdraw(balanceToWithdraw, Contracts.DAI, yearnYield.address, randomAccount.address, true)
             ).to.emit(savingsAccount, 'Withdrawn');
             //     .withArgs(
             //         randomAccount.address,
@@ -638,10 +638,10 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
 
                 await expect(
                     savingsAccount.connect(randomAccount).withdraw(
-                        randomAccount.address,
                         balanceToWithdraw.mul(BigNumber.from(10).pow('18')), //large number
                         Contracts.DAI,
                         compoundYield.address,
+                        randomAccount.address,
                         false
                     )
                 ).to.be.revertedWith('SavingsAccount::withdraw Insufficient amount');
@@ -659,10 +659,10 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
 
                 await expect(
                     savingsAccount.connect(randomAccount).withdraw(
-                        randomAccount.address,
                         balanceToWithdraw.mul(BigNumber.from(10).pow('18')), //large number
                         Contracts.DAI,
                         compoundYield.address,
+                        randomAccount.address,
                         true
                     )
                 ).to.be.revertedWith('SavingsAccount::withdraw Insufficient amount');
@@ -684,7 +684,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, sharesToWithdraw, Contracts.DAI, compoundYield.address, false)
+                    .withdraw(sharesToWithdraw, Contracts.DAI, compoundYield.address, randomAccount.address, false)
             ).to.emit(savingsAccount, 'Withdrawn');
 
             // const balanceLockedAfterTransaction: BigNumber = await DaiTokenContract.balanceOf(randomAccount.address);
@@ -713,7 +713,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, balanceToWithdraw, Contracts.DAI, compoundYield.address, true)
+                    .withdraw(balanceToWithdraw, Contracts.DAI, compoundYield.address, randomAccount.address, true)
             ).to.emit(savingsAccount, 'Withdrawn');
             //     .withArgs(
             //         randomAccount.address,

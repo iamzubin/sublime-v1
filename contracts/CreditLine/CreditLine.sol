@@ -322,7 +322,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 _tokensToTransfer = (_amount.sub(_activeAmount));
             }
             _activeAmount = _activeAmount.add(_tokensToTransfer);
-            _savingsAccount.transferFrom(_asset, _sender, _recipient, _strategyList[_index], _tokensToTransfer);
+            _savingsAccount.transferFrom(_tokensToTransfer, _asset, _strategyList[_index], _sender, _recipient);
 
             if (_amount == _activeAmount) {
                 return;
@@ -489,7 +489,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                     _tokensToTransfer = (_amountInTokens.sub(_activeAmount));
                 }
                 _activeAmount = _activeAmount.add(_tokensToTransfer);
-                _savingsAccount.withdrawFrom(_lender, address(this), _tokensToTransfer, _asset, _strategyList[_index], false);
+                _savingsAccount.withdrawFrom(_tokensToTransfer, _asset, _strategyList[_index], _lender, address(this), false);
                 if (_activeAmount == _amountInTokens) {
                     return;
                 }
@@ -583,7 +583,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         } else {
             _transferFromSavingsAccount(_borrowAsset, _amount, msg.sender, creditLineConstants[_id].lender);
         }
-        _savingsAccount.increaseAllowanceToCreditLine(_borrowAsset, _lender, _amount);
+        _savingsAccount.increaseAllowanceToCreditLine(_amount, _borrowAsset, _lender);
     }
 
     function repay(
@@ -735,7 +735,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][
                 _strategyList[index]
             ].sub(liquidityShares);
-            ISavingsAccount(savingsAccount).withdraw(msg.sender, _tokensToTransfer, _asset, _strategyList[index], false);
+            ISavingsAccount(savingsAccount).withdraw(_tokensToTransfer, _asset, _strategyList[index], msg.sender, false);
 
             if (_activeAmount == _amountInTokens) {
                 return;

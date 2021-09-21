@@ -320,7 +320,7 @@ describe('Pool Collection stage', async () => {
 
             const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
             const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
-            await savingsAccount.connect(lender).approve(borrowToken.address, pool.address, amount);
+            await savingsAccount.connect(lender).approve(amount, borrowToken.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
 
@@ -352,7 +352,7 @@ describe('Pool Collection stage', async () => {
 
             const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
             const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
-            await savingsAccount.connect(lender1).approve(borrowToken.address, pool.address, amount);
+            await savingsAccount.connect(lender1).approve(amount, borrowToken.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
 

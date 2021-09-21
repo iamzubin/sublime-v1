@@ -364,7 +364,7 @@ describe('Credit Lines', async () => {
             await savingsAccount
                 .connect(borrower)
                 .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
-            await savingsAccount.connect(borrower).approve(Contracts.LINK, creditLine.address, valueToTest.mul(2));
+            await savingsAccount.connect(borrower).approve(valueToTest.mul(2), Contracts.LINK, creditLine.address);
 
             await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
         });
@@ -594,7 +594,7 @@ describe('Credit Lines', async () => {
                 await savingsAccount
                     .connect(borrower)
                     .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
-                await savingsAccount.connect(borrower).approve(Contracts.LINK, creditLine.address, valueToTest.mul(2));
+                await savingsAccount.connect(borrower).approve(valueToTest.mul(2), Contracts.LINK, creditLine.address);
 
                 await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
             });

@@ -214,7 +214,7 @@ export async function compoundPoolCollectionStage(
             await Collateral.connect(borrower).approve(env.yields.compoundYield.address, liquidityShares.mul(100));
 
             // Approving the Savings Account for deposit of tokens
-            await env.savingsAccount.connect(borrower).approve(Collateral.address, pool.address, liquidityShares.mul(100));
+            await env.savingsAccount.connect(borrower).approve(liquidityShares.mul(100), Collateral.address, pool.address);
             await env.savingsAccount
                 .connect(borrower)
                 .deposit(liquidityShares.mul(100), Collateral.address, env.yields.compoundYield.address, borrower.address);
@@ -283,7 +283,7 @@ export async function compoundPoolCollectionStage(
             await env.savingsAccount
                 .connect(lender)
                 .deposit(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender.address);
-            await env.savingsAccount.connect(lender).approve(env.mockTokenContracts[0].contract.address, pool.address, amount);
+            await env.savingsAccount.connect(lender).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
@@ -321,7 +321,7 @@ export async function compoundPoolCollectionStage(
             await env.savingsAccount
                 .connect(lender1)
                 .deposit(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender1.address);
-            await env.savingsAccount.connect(lender1).approve(env.mockTokenContracts[0].contract.address, pool.address, amount);
+            await env.savingsAccount.connect(lender1).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);

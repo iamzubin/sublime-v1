@@ -507,7 +507,7 @@ describe('Pool', async () => {
 
                 await collateralToken.connect(borrower).approve(aaveYield.address, liquidityShares.mul(2));
 
-                await savingsAccount.connect(borrower).approve(Contracts.LINK, pool.address, liquidityShares.mul(2));
+                await savingsAccount.connect(borrower).approve(liquidityShares.mul(2), Contracts.LINK, pool.address);
 
                 await savingsAccount
                     .connect(borrower)
