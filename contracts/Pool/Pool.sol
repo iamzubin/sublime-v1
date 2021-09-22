@@ -175,7 +175,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      * @notice checks if the _user is pool's valid borrower
      * @param _user address of the borrower
      */
-    modifier OnlyBorrower(address _user) {
+    modifier onlyBorrower(address _user) {
         require(_user == poolConstants.borrower, '1');
         _;
     }
@@ -266,6 +266,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     /*
      * @notice Each pool has a unique pool token deployed by PoolFactory, lender verifier to filter lender is also set by PoolFactory
      * @param _poolToken address of the PoolToken contract deployed for a loan request
+     * @param _lenderVerifier address of the verifier with which lender should be verified
      */
     function setConstants(address _poolToken, address _lenderVerifier) external override {
         require(msg.sender == PoolFactory, '6');
@@ -412,7 +413,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     /**
      * @notice used by the borrower to withdraw tokens from the open borrow pool when loan is active
      */
-    function withdrawBorrowedAmount() external override OnlyBorrower(msg.sender) nonReentrant {
+    function withdrawBorrowedAmount() external override onlyBorrower(msg.sender) nonReentrant {
         LoanStatus _poolStatus = poolVars.loanStatus;
         uint256 _tokensLent = poolToken.totalSupply();
         require(
@@ -667,9 +668,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
             '24'
         );
 
-        //get total repayments collected as per loan status (for closed, it returns 0)
-        // uint256 _due = calculateRepaymentWithdrawable(msg.sender);
-
         //gets amount through liquidity shares
         uint256 _actualBalance = poolToken.balanceOf(msg.sender);
         uint256 _toTransfer = _actualBalance;
@@ -689,11 +687,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
             _toTransfer = _toTransfer.add(_toTransfer.mul(poolVars.penalityLiquidityAmount).div(poolToken.totalSupply()));
         }
 
-        // _due = _balance.add(_due);
-
-        // lenders[msg.sender].amountWithdrawn = lenders[msg.sender]
-        //     .amountWithdrawn
-        //     .add(_due);
         delete lenders[msg.sender].principalWithdrawn;
         if (_loanStatus == LoanStatus.CLOSED) {
             //transfer repayment
@@ -731,19 +724,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
 
         emit MarginCalled(msg.sender);
     }
-
-    // function transferRepayImpl(address repayment) external onlyOwner {}
-
-    // function transferLenderImpl(address lenderImpl) external onlyOwner {
-    //     require(lenderImpl != address(0), "Borrower: Lender address");
-    //     _lender = lenderImpl;
-    // }
-
-    // event PoolLiquidated(bytes32 poolHash, address liquidator, uint256 amount);
-    // //todo: add more details here
-    // event Liquidated(address liquidator, address lender);
-
-    // function amountPerPeriod() public view returns (uint256) {}
 
     /**
      * @notice used to get the interest accrued till current time in the current loan duration
@@ -901,7 +881,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      * @return _lenderCollateralLPShare share of the lender in collateral tokens
      * @return _lenderBalance balance of lender in pool tokens
      */
-    function updateLenderSharesDuringLiquidation(address _lender)
+    function _updateLenderSharesDuringLiquidation(address _lender)
         internal
         returns (uint256 _lenderCollateralLPShare, uint256 _lenderBalance)
     {
@@ -958,7 +938,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         _canLenderBeLiquidated(_lender);
 
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
-        (uint256 _lenderCollateralLPShare, uint256 _lenderBalance) = updateLenderSharesDuringLiquidation(_lender);
+        (uint256 _lenderCollateralLPShare, uint256 _lenderBalance) = _updateLenderSharesDuringLiquidation(_lender);
 
         uint256 _lenderCollateralTokens = _lenderCollateralLPShare;
         if (_poolSavingsStrategy != address(0)) {
@@ -1035,7 +1015,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      * @param _lender address of the _lender
      * @return amount of withdrawable token from the borrow pool
      */
-    function calculateRepaymentWithdrawable(address _lender) internal view returns (uint256) {
+    function _calculateRepaymentWithdrawable(address _lender) internal view returns (uint256) {
         uint256 _totalRepaidAmount = IRepayment(IPoolFactory(PoolFactory).repaymentImpl()).getTotalRepaidAmount(address(this));
 
         uint256 _amountWithdrawable = (poolToken.balanceOf(_lender).mul(_totalRepaidAmount).div(poolToken.totalSupply())).sub(
@@ -1058,7 +1038,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      * @param _lender address of the _lender
      */
     function _withdrawRepayment(address _lender) internal {
-        uint256 _amountToWithdraw = calculateRepaymentWithdrawable(_lender);
+        uint256 _amountToWithdraw = _calculateRepaymentWithdrawable(_lender);
 
         if (_amountToWithdraw == 0) {
             return;
@@ -1101,38 +1081,6 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         IPoolToken _poolToken = poolToken;
         return (_poolToken.balanceOf(_lender), _poolToken.totalSupply());
     }
-
-    /*function updateNextDuePeriodAfterRepayment(uint256 _nextDuePeriod) 
-        external 
-        override 
-        returns (uint256)
-    {
-        require(msg.sender == IPoolFactory(PoolFactory).repaymentImpl(), "37");
-        poolVars.nextDuePeriod = _nextDuePeriod;
-    }*/
-
-    /*
-    function grantExtension()
-        external
-        override
-        onlyExtension
-        returns (uint256)
-    {
-        uint256 _nextDuePeriod = poolVars.nextDuePeriod.add(1);
-        poolVars.nextDuePeriod = _nextDuePeriod;
-        return _nextDuePeriod;
-    }
-    */
-    /*function updateNextRepaymentPeriodAfterExtension()
-        external 
-        override 
-        returns (uint256)
-    {
-        require(msg.sender == IPoolFactory(PoolFactory).extension(), "38");
-        uint256 _nextRepaymentPeriod = poolVars.nextDuePeriod.add(10**30);
-        poolVars.nextRepaymentPeriod = _nextDuePeriod;
-        return _nextDuePeriod;
-    }*/
 
     /**
      * @notice used to get the loan status of the borrow pool
