@@ -2,6 +2,7 @@ import { Signer } from 'ethers';
 
 import { SavingsAccount } from '../../typechain/SavingsAccount';
 import { StrategyRegistry } from '../../typechain/StrategyRegistry';
+import { NoYield } from '../../typechain/NoYield';
 import { AaveYield } from '../../typechain/AaveYield';
 import { CompoundYield } from '../../typechain/CompoundYield';
 import { YearnYield } from '../../typechain/YearnYield';
@@ -10,6 +11,7 @@ import { CreditLine } from '../../typechain/CreditLine';
 
 import { SavingsAccount__factory } from '../../typechain/factories/SavingsAccount__factory';
 import { StrategyRegistry__factory } from '../../typechain/factories/StrategyRegistry__factory';
+import { NoYield__factory } from '../../typechain/factories/NoYield__factory';
 import { AaveYield__factory } from '../../typechain/factories/AaveYield__factory';
 import { CompoundYield__factory } from '../../typechain/factories/CompoundYield__factory';
 import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
@@ -39,6 +41,14 @@ export default class DeployCoreContracts {
 
     public async getStrategyRegistry(strategyRegistryAddress: Address): Promise<StrategyRegistry> {
         return await new StrategyRegistry__factory(this._deployerSigner).attach(strategyRegistryAddress);
+    }
+
+    public async deployNoYield(): Promise<NoYield> {
+        return await new NoYield__factory(this._deployerSigner).deploy();
+    }
+
+    public async getNoYield(noYieldAddress: Address): Promise<NoYield> {
+        return new NoYield__factory(this._deployerSigner).attach(noYieldAddress);
     }
 
     public async deployAaveYield(): Promise<AaveYield> {

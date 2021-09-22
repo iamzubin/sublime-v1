@@ -15,7 +15,11 @@ export async function createVerificationWithInit(proxyAdmin: SignerWithAddress, 
     return verification;
 }
 
-export async function createAdminVerifierWithInit(proxyAdmin: SignerWithAddress, admin: SignerWithAddress, verification: Verification): Promise<AdminVerifier> {
+export async function createAdminVerifierWithInit(
+    proxyAdmin: SignerWithAddress,
+    admin: SignerWithAddress,
+    verification: Verification
+): Promise<AdminVerifier> {
     const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
     let adminVerifierLogic: AdminVerifier = await deployHelper.helper.deployAdminVerifier();
     let adminVerifierProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(adminVerifierLogic.address, proxyAdmin.address);
