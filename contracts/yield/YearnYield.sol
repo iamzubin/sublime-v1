@@ -27,7 +27,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
 
     event ProtocolAddressesUpdated(address asset, address protocolToken);
 
-    modifier onlySavingsAccount {
+    modifier onlySavingsAccount() {
         require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }

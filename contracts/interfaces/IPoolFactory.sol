@@ -14,6 +14,8 @@ interface IPoolFactory {
 
     function repaymentImpl() external view returns (address);
 
+    function userRegistry() external view returns (address);
+
     function collectionPeriod() external view returns (uint256);
 
     function matchCollateralRatioInterval() external view returns (uint256);

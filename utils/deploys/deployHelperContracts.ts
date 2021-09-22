@@ -1,10 +1,12 @@
 import { BytesLike, Signer } from 'ethers';
 
 import { Verification } from '../../typechain/Verification';
+import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { PriceOracle } from '../../typechain/PriceOracle';
 import { SublimeProxy } from '../../typechain/SublimeProxy';
 
 import { Verification__factory } from '../../typechain/factories/Verification__factory';
+import { AdminVerifier__factory } from '../../typechain/factories/AdminVerifier__factory';
 import { PriceOracle__factory } from '../../typechain/factories/PriceOracle__factory';
 import { SublimeProxy__factory } from '../../typechain/factories/SublimeProxy__factory';
 
@@ -23,6 +25,14 @@ export default class DeployHelperContracts {
 
     public async getVerification(verificationAddress: Address): Promise<Verification> {
         return await new Verification__factory(this._deployerSigner).attach(verificationAddress);
+    }
+
+    public async deployAdminVerifier(): Promise<AdminVerifier> {
+        return await new AdminVerifier__factory(this._deployerSigner).deploy();
+    }
+
+    public async getAdminVerifier(adminVerifierAddress: Address): Promise<AdminVerifier> {
+        return await new AdminVerifier__factory(this._deployerSigner).attach(adminVerifierAddress);
     }
 
     public async deployPriceOracle(): Promise<PriceOracle> {

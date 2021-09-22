@@ -13,12 +13,14 @@ import { Pool } from '@typechain/Pool';
 import { PoolToken } from '@typechain/PoolToken';
 import { BigNumberish, BytesLike } from 'ethers';
 import { IYield } from '@typechain/IYield';
+import { AdminVerifier } from '@typechain/AdminVerifier';
 
 export interface Environment {
     savingsAccount: SavingsAccount;
     strategyRegistry: StrategyRegistry;
     yields: Yields;
     verification: Verification;
+    adminVerifier: AdminVerifier;
     priceOracle: PriceOracle;
     extenstion: Extension;
     repayments: Repayments;

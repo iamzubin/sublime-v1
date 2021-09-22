@@ -17,7 +17,7 @@ contract GovernanceTester {
         value = _val;
     }
 
-    function update(uint256 _value) public onlyGov() {
+    function update(uint256 _value) public onlyGov {
         value = _value;
         emit valueUpdated(gov, msg.sender, _value);
     }

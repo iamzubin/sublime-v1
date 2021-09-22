@@ -40,6 +40,7 @@ import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { IYield } from '../../typechain/IYield';
+import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('Pool Borrow Withdrawal stage', async () => {
     let savingsAccount: SavingsAccount;
@@ -68,6 +69,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
     let DaiTokenContract: ERC20;
 
     let verification: Verification;
+    let adminVerifier: AdminVerifier;
     let priceOracle: PriceOracle;
 
     let Binance7: any;
@@ -138,7 +140,10 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
-        await verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
+        adminVerifier = await deployHelper.helper.deployAdminVerifier();
+        await verification.connect(admin).addVerifier(adminVerifier.address);
+        await adminVerifier.connect(admin).initialize(admin.address, verification.address);
+        await adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
 
         priceOracle = await deployHelper.helper.deployPriceOracle();
         await priceOracle.connect(admin).initialize(admin.address);
@@ -271,7 +276,9 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         poolStrategy.address,
                         _collateralAmount,
                         false,
-                        salt
+                        salt,
+                        adminVerifier.address,
+                        zeroAddress
                     );
 
                 poolToken = await deployHelper.pool.getPoolToken(newPoolToken);
@@ -405,7 +412,9 @@ describe('Pool Borrow Withdrawal stage', async () => {
                             poolStrategy.address,
                             _collateralAmount,
                             false,
-                            salt
+                            salt,
+                            adminVerifier.address,
+                            zeroAddress
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
@@ -1213,7 +1222,9 @@ describe('Pool Borrow Withdrawal stage', async () => {
                             poolStrategy.address,
                             _collateralAmount,
                             false,
-                            salt
+                            salt,
+                            adminVerifier.address,
+                            zeroAddress
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
@@ -1344,7 +1355,9 @@ describe('Pool Borrow Withdrawal stage', async () => {
                             poolStrategy.address,
                             _collateralAmount,
                             false,
-                            salt
+                            salt,
+                            adminVerifier.address,
+                            zeroAddress
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
