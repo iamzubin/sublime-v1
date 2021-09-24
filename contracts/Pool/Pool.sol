@@ -462,7 +462,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
         address _collateralAsset = poolConstants.collateralAsset;
         uint256 _collateralShares = 0;
-        if(poolVars.baseLiquidityShares.add(poolVars.extraLiquidityShares) > _penality) {
+        if (poolVars.baseLiquidityShares.add(poolVars.extraLiquidityShares) > _penality) {
             _collateralShares = poolVars.baseLiquidityShares.add(poolVars.extraLiquidityShares).sub(_penality);
         }
         uint256 _collateralTokens = _collateralShares;
@@ -553,7 +553,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _penalityTime = poolConstants.repaymentInterval;
         if (block.timestamp > _loanStartTime) {
             uint256 _penalityEndTime = block.timestamp;
-            if(block.timestamp > _loanWithdrawalDeadline) {
+            if (block.timestamp > _loanWithdrawalDeadline) {
                 _penalityEndTime = _loanWithdrawalDeadline;
             }
             _penalityTime = _penalityTime.add(_penalityEndTime.sub(_loanStartTime));

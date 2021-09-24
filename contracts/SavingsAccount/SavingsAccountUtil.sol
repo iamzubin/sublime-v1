@@ -72,7 +72,7 @@ library SavingsAccountUtil {
         address _strategy
     ) internal returns (uint256) {
         if (_from == address(this)) {
-            _savingsAccount.transfer(_amount, _token , _strategy, _to);
+            _savingsAccount.transfer(_amount, _token, _strategy, _to);
         } else {
             _savingsAccount.transferFrom(_amount, _token, _strategy, _from, _to);
         }

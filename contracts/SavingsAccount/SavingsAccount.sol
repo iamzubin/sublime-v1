@@ -269,10 +269,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0) {
                 uint256 _amount = balanceInShares[msg.sender][_token][_strategyList[i]];
                 if (_strategyList[i] != address(0)) {
-                    _amount = IYield(_strategyList[i]).unlockTokens(
-                        _token,
-                        balanceInShares[msg.sender][_token][_strategyList[i]]
-                    );
+                    _amount = IYield(_strategyList[i]).unlockTokens(_token, balanceInShares[msg.sender][_token][_strategyList[i]]);
                 }
                 _tokenReceived = _tokenReceived.add(_amount);
                 delete balanceInShares[msg.sender][_token][_strategyList[i]];
@@ -402,7 +399,5 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         }
     }
 
-    receive() external payable {
-
-    }
+    receive() external payable {}
 }
