@@ -10,6 +10,8 @@ import '../interfaces/ISavingsAccount.sol';
 import '../interfaces/IStrategyRegistry.sol';
 import '../interfaces/IYield.sol';
 
+import "hardhat/console.sol";
+
 /**
  * @title Savings account contract with Methods related to savings account
  * @notice Implements the functions related to savings account
@@ -234,7 +236,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) internal returns (address _tokenReceived, uint256 _amountReceived) {
         if (_strategy == address(0)) {
-            _transfer(_amountReceived, _token, _to);
+            _transfer(_amount, _token, _to);
             return (_token, _amount);
         }
 
