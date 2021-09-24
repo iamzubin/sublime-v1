@@ -20,6 +20,7 @@ import {
     repaymentParams,
     testPoolFactoryParams,
     createPoolParams,
+    WhaleAccount,
     zeroAddress,
     ChainLinkAggregators,
 } from '../constants-Additions';
@@ -167,15 +168,13 @@ export async function compound_MarginCalls(
             let minBorrowAmount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
             let amount = minBorrowAmount.mul(2).div(3);
             let amount1 = minBorrowAmount.add(10).div(3);
-            // console.log(amount.toString());
-            // console.log(amount1.toString());
+
             let lender1 = env.entities.extraLenders[3];
 
             // Approving Borrow tokens to the lender
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await borrowToken.connect(admin).transfer(lender.address, amount);
             await borrowToken.connect(lender).approve(poolAddress, amount);
-            // console.log('1st Lender approved!');
 
             // Lender lends into the pool
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
@@ -186,7 +185,6 @@ export async function compound_MarginCalls(
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount1);
             await borrowToken.connect(admin).transfer(lender1.address, amount1);
             await borrowToken.connect(lender1).approve(poolAddress, amount1);
-            // console.log('2nd Lender approved!');
 
             // Lender1 lends into the pool
             const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, false));
@@ -209,13 +207,11 @@ export async function compound_MarginCalls(
 
         it('Lender should be able to request margin call only if the price goes down', async function () {
             let { admin, borrower, lender } = env.entities;
-            let lender1 = env.entities.extraLenders[3];
-
             // Reducing the collateral ratio
             await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['BTC/USD']);
 
             // Requesting margin call
-            await pool.connect(lender1).requestMarginCall();
+            await pool.connect(lender).requestMarginCall();
 
             // Setting the collateral ratio to correct value
             await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, chainlinkBorrow);
@@ -230,7 +226,7 @@ export async function compound_MarginCalls(
 
             // Setting a lower collateral ratio and requesting for margin call
             await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['BTC/USD']);
-            await pool.connect(lender).requestMarginCall();
+            // await pool.connect(lender).requestMarginCall();
 
             await timeTravel(network, parseInt(testPoolFactoryParams._marginCallDuration.toString()));
 
@@ -274,11 +270,11 @@ export async function compound_MarginCalls(
                 collateralBalancePoolDif,
                 collateralToken.address
             );
-            console.log({ collateralTokenBalance: collateralTokenBalance.toString() });
+            // console.log({ collateralTokenBalance: collateralTokenBalance.toString() });
 
             // Checking for correct liquidator reward
             let rewardReceived = randomCollateralAfter.sub(randomCollateralBefore);
-            console.log({ rewardReceived: rewardReceived.toString() });
+            // console.log({ rewardReceived: rewardReceived.toString() });
 
             expectApproxEqual(collateralTokenBalance, rewardReceived, 10);
 
@@ -299,18 +295,15 @@ export async function compound_MarginCalls(
 
             // Setting a lower collateral ratio and requesting for margin call
             await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, ChainLinkAggregators['BTC/USD']);
-            await timeTravel(network, parseInt(testPoolFactoryParams._marginCallDuration.toString()));
+            await pool.connect(lender1).requestMarginCall();
 
-            let collateralBalancePoolBefore = await env.savingsAccount
-                .connect(admin)
-                .userLockedBalance(pool.address, collateralToken.address, strategy);
-            // console.log({collateralBalancePoolBefore: collateralBalancePoolBefore.toString()});
+            await timeTravel(network, parseInt(testPoolFactoryParams._marginCallDuration.toString()));
 
             const liquidationTokens = await poolToken.balanceOf(lender1.address);
             // console.log({LiquidationToken: liquidationTokens.toString()});
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, liquidationTokens.mul(2));
             await borrowToken.connect(admin).transfer(random.address, liquidationTokens.mul(2));
-            await borrowToken.connect(random).approve(pool.address, liquidationTokens.mul(2));
+            // await borrowToken.connect(random).approve(pool.address, liquidationTokens.mul(2));
 
             // Liquidate lender after margin call duration is over
             let liquidateExpect = expect(pool.connect(random).liquidateLender(lender1.address, false, false, false));
@@ -321,13 +314,9 @@ export async function compound_MarginCalls(
                 .userLockedBalance(pool.address, collateralToken.address, strategy);
             // console.log({collateralBalancePoolAfter: collateralBalancePoolAfter.toString()});
 
-            let finalPoolBalance = await env.yields.compoundYield.callStatic.getTokensForShares(
-                collateralBalancePoolAfter,
-                collateralToken.address
-            );
-            console.log({ finalPoolBalance: finalPoolBalance.toString() });
+            expectApproxEqual(collateralBalancePoolAfter, 0, 100);
 
-            // expectApproxEqual(finalPoolBalance,0,5);
+            await env.priceOracle.connect(admin).setChainlinkFeedAddress(BorrowToken, chainlinkBorrow);
         });
     });
 }
