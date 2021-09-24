@@ -51,11 +51,11 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     struct PoolConstants {
         address borrower;
         uint256 borrowAmountRequested;
-        uint256 minborrowAmount;
         uint256 loanStartTime;
         uint256 loanWithdrawalDeadline;
         address borrowAsset;
         uint256 idealCollateralRatio;
+        uint256 volatilityThreshold;
         uint256 borrowRate;
         uint256 noOfRepaymentIntervals;
         uint256 repaymentInterval;
@@ -214,7 +214,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     /**
      * @notice initializing the pool and adding initial collateral
      * @param _borrowAmountRequested the amount of borrow asset requested by the borrower
-     * @param _minborrowAmount the minimum borrow amount that can be requested
+     * @param _volatilityThreshold Maximum volatility that collateral ratio can go down before liquidation
      * @param _borrower address of the borrower
      * @param _borrowAsset address of the borrow asset
      * @param _collateralAsset address of the collateral asset
@@ -230,12 +230,12 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
      */
     function initialize(
         uint256 _borrowAmountRequested,
-        uint256 _minborrowAmount,
+        uint256 _borrowRate,
         address _borrower,
         address _borrowAsset,
         address _collateralAsset,
         uint256 _idealCollateralRatio,
-        uint256 _borrowRate,
+        uint256 _volatilityThreshold,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -247,12 +247,12 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         PoolFactory = msg.sender;
         poolConstants.borrowAsset = _borrowAsset;
         poolConstants.idealCollateralRatio = _idealCollateralRatio;
+        poolConstants.volatilityThreshold = _volatilityThreshold;
         poolConstants.collateralAsset = _collateralAsset;
         poolConstants.poolSavingsStrategy = _poolSavingsStrategy;
         poolConstants.borrowAmountRequested = _borrowAmountRequested;
         _initialDeposit(_borrower, _collateralAmount, _transferFromSavingsAccount);
         poolConstants.borrower = _borrower;
-        poolConstants.minborrowAmount = _minborrowAmount;
         poolConstants.borrowRate = _borrowRate;
         poolConstants.noOfRepaymentIntervals = _noOfRepaymentIntervals;
         poolConstants.repaymentInterval = _repaymentInterval;
@@ -420,14 +420,14 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
                 block.timestamp < poolConstants.loanWithdrawalDeadline,
             '12'
         );
-        require(_tokensLent >= poolConstants.minborrowAmount, '13');
+        IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
+        require(_tokensLent >= _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30), '13');
 
         poolVars.loanStatus = LoanStatus.ACTIVE;
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
-        IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
         require(
             _currentCollateralRatio >=
-                poolConstants.idealCollateralRatio.sub(_poolFactory.volatilityThreshold(poolConstants.collateralAsset)),
+                poolConstants.idealCollateralRatio.sub(poolConstants.volatilityThreshold),
             '14'
         );
 
@@ -568,8 +568,9 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         LoanStatus _poolStatus = poolVars.loanStatus;
         require(_poolStatus == LoanStatus.COLLECTION, 'CP1');
         uint256 _loanStartTime = poolConstants.loanStartTime;
+        IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
 
-        if (_loanStartTime < block.timestamp && poolToken.totalSupply() < poolConstants.minborrowAmount) {
+        if (_loanStartTime < block.timestamp && poolToken.totalSupply() < _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30)) {
             return _cancelPool(0);
         }
 
@@ -581,7 +582,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         // note: extra liquidity shares are not applicable as the loan never reaches active state
         uint256 _collateralLiquidityShare = poolVars.baseLiquidityShares;
         uint256 _penalityTime = _calculatePenaltyTime(_loanStartTime, _loanWithdrawalDeadline);
-        uint256 _cancelPenalityMultiple = IPoolFactory(PoolFactory).poolCancelPenalityFraction();
+        uint256 _cancelPenalityMultiple = _poolFactory.poolCancelPenalityFraction();
         uint256 penality = _cancelPenalityMultiple
             .mul(poolConstants.borrowRate)
             .mul(_collateralLiquidityShare)
@@ -726,7 +727,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _idealCollateralRatio = poolConstants.idealCollateralRatio;
         require(
             _idealCollateralRatio >
-                getCurrentCollateralRatio(msg.sender).add(_poolFactory.volatilityThreshold(poolConstants.collateralAsset)),
+                getCurrentCollateralRatio(msg.sender).add(poolConstants.volatilityThreshold),
             '26'
         );
 
@@ -878,7 +879,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         require(_marginCallEndTime < block.timestamp, '28');
 
         require(
-            poolConstants.idealCollateralRatio.sub(IPoolFactory(PoolFactory).volatilityThreshold(poolConstants.collateralAsset)) >
+            poolConstants.idealCollateralRatio.sub(poolConstants.volatilityThreshold) >
                 getCurrentCollateralRatio(_lender),
             '29'
         );

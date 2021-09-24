@@ -22,7 +22,7 @@ interface IPoolFactory {
 
     function marginCallDuration() external view returns (uint256);
 
-    function volatilityThreshold(address token) external view returns (uint256);
+    function minBorrowFraction() external view returns (uint256);
 
     function gracePeriodPenaltyFraction() external view returns (uint256);
 

@@ -104,9 +104,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     uint256 public override marginCallDuration;
 
     /**
-     * @notice the volatility threshold for the collateral asset
+     * @notice Fraction of the requested amount for pool below which pool is cancelled
      */
-    mapping(address => uint256) public override volatilityThreshold;
+    uint256 public override minBorrowFraction;
 
     /**
      * @notice the fraction used for calculating the grace period penalty
@@ -257,11 +257,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     event MarginCallDurationUpdated(uint256 updatedMarginCallDuration);
 
     /*
-     * @notice emitted when volatilityThreshold variable of a token is updated
-     * @param token is the token for which the volatilityThreshold is being changed
-     * @param updatedVolatilityThreshold Updated value of volatilityThreshold
+     * @notice emitted when miBorrowFraction variable is updated
+     * @param updatedMinBorrowFraction Updated value of miBorrowFraction
      */
-    event VolatilityThresholdUpdated(address indexed token, uint256 updatedVolatilityThreshold);
+    event MinBorrowFractionUpdated(uint256 updatedMinBorrowFraction);
 
     /**
      * @notice emitted when gracePeriodPenaltyFraction variable is updated
@@ -395,7 +394,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice invoked when a new borrow pool is created. deploys a new pool for every borrow request
      * @param _poolSize loan amount requested
-     * @param _minBorrowAmount minimum borrow amount for the loan to become active
+     * @param _volatilityThreshold Maximum volatility that collateral ratio can go down before liquidation
      * @param _borrowToken borrow asset requested
      * @param _collateralToken collateral asset requested
      * @param _collateralRatio ideal pool collateral ratio set by the borrower
@@ -409,11 +408,11 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      */
     function createPool(
         uint256 _poolSize,
-        uint256 _minBorrowAmount,
+        uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
         uint256 _collateralRatio,
-        uint256 _borrowRate,
+        uint256 _volatilityThreshold,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -426,8 +425,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         if (_collateralToken == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
-        require(_minBorrowAmount <= _poolSize, 'PoolFactory::createPool - invalid min borrow amount');
-        require(volatilityThreshold[_collateralToken] <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
+        require(_volatilityThreshold <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
         require(isBorrowToken[_borrowToken], 'PoolFactory::createPool - Invalid borrow token type');
         require(isCollateralToken[_collateralToken], 'PoolFactory::createPool - Invalid collateral token type');
         require(
@@ -454,11 +452,11 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         );
         _createPool(
             _poolSize,
-            _minBorrowAmount,
+            _borrowRate,
             _borrowToken,
             _collateralToken,
             _collateralRatio,
-            _borrowRate,
+            _volatilityThreshold,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -472,11 +470,11 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     // @dev These functions are used to avoid stack too deep
     function _createPool(
         uint256 _poolSize,
-        uint256 _minBorrowAmount,
+        uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
         uint256 _collateralRatio,
-        uint256 _borrowRate,
+        uint256 _volatilityThreshold,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -487,11 +485,11 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     ) internal {
         bytes memory data = _encodePoolInitCall(
             _poolSize,
-            _minBorrowAmount,
+            _borrowRate,
             _borrowToken,
             _collateralToken,
             _collateralRatio,
-            _borrowRate,
+            _volatilityThreshold,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -514,11 +512,11 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     // @dev These functions are used to avoid stack too deep
     function _encodePoolInitCall(
         uint256 _poolSize,
-        uint256 _minBorrowAmount,
+        uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
         uint256 _collateralRatio,
-        uint256 _borrowRate,
+        uint256 _volatilityThreshold,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -528,12 +526,12 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         data = abi.encodeWithSelector(
             poolInitFuncSelector,
             _poolSize,
-            _minBorrowAmount,
+            _borrowRate,
             msg.sender,
             _borrowToken,
             _collateralToken,
             _collateralRatio,
-            _borrowRate,
+            _volatilityThreshold,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -778,13 +776,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit MarginCallDurationUpdated(_marginCallDuration);
     }
 
-    function updateVolatilityThreshold(address _token, uint256 _volatilityThreshold) public onlyOwner {
-        _updateVolatilityThreshold(_token, _volatilityThreshold);
+    function updateMinBorrowFraction(uint256 _minBorrowFraction) public onlyOwner {
+        _updateMinBorrowFraction(_minBorrowFraction);
     }
 
-    function _updateVolatilityThreshold(address _token, uint256 _volatilityThreshold) internal {
-        volatilityThreshold[_token] = _volatilityThreshold;
-        emit VolatilityThresholdUpdated(_token, _volatilityThreshold);
+    function _updateMinBorrowFraction(uint256 _minBorrowFraction) internal {
+        minBorrowFraction = _minBorrowFraction;
+        emit MinBorrowFractionUpdated(_minBorrowFraction);
     }
 
     /**
