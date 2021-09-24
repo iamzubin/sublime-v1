@@ -549,6 +549,18 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         lenders[_to].extraLiquidityShares = lenders[_to].extraLiquidityShares.add(toTransfer);
     }
 
+    function _calculatePenaltyTime(uint256 _loanStartTime, uint256 _loanWithdrawalDeadline) internal returns (uint256) {
+        uint256 _penalityTime = poolConstants.repaymentInterval;
+        if (block.timestamp > _loanStartTime) {
+            uint256 _penalityEndTime = block.timestamp;
+            if(block.timestamp > _loanWithdrawalDeadline) {
+                _penalityEndTime = _loanWithdrawalDeadline;
+            }
+            _penalityTime = _penalityTime.add(_penalityEndTime.sub(_loanStartTime));
+        }
+        return _penalityTime;
+    }
+
     /**
      * @notice used to cancel pool when the minimum borrow amount is not met
      */
@@ -561,15 +573,14 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
             return _cancelPool(0);
         }
 
-        if (poolConstants.loanWithdrawalDeadline > block.timestamp) {
+        uint256 _loanWithdrawalDeadline = poolConstants.loanWithdrawalDeadline;
+
+        if (_loanWithdrawalDeadline > block.timestamp) {
             require(msg.sender == poolConstants.borrower, 'CP2');
         }
         // note: extra liquidity shares are not applicable as the loan never reaches active state
         uint256 _collateralLiquidityShare = poolVars.baseLiquidityShares;
-        uint256 _penalityTime = poolConstants.repaymentInterval;
-        if (block.timestamp > _loanStartTime) {
-            _penalityTime = _penalityTime.add(block.timestamp.sub(_loanStartTime));
-        }
+        uint256 _penalityTime = _calculatePenaltyTime(_loanStartTime, _loanWithdrawalDeadline);
         uint256 _cancelPenalityMultiple = IPoolFactory(PoolFactory).poolCancelPenalityFraction();
         uint256 penality = _cancelPenalityMultiple
             .mul(poolConstants.borrowRate)
