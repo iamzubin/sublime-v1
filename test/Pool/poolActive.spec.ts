@@ -782,7 +782,7 @@ describe('Pool Active stage', async () => {
 
                     await pool.connect(borrower).addCollateralInMarginCall(lender.address, amount, false);
 
-                    await expect(pool.liquidateLender(lender.address, false, false, false)).to.be.revertedWith(
+                    await expect(pool.liquidateForLender(lender.address, false, false, false)).to.be.revertedWith(
                         'No margin call has been called.'
                     );
                 });
@@ -794,7 +794,7 @@ describe('Pool Active stage', async () => {
 
                     await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
 
-                    await expect(pool.liquidateLender(lender.address, false, false, false)).to.be.revertedWith('29');
+                    await expect(pool.liquidateForLender(lender.address, false, false, false)).to.be.revertedWith('29');
                 });
 
                 it("If collateral ratio below ideal after margin call time, Anyone can liquidate lender's part of collateral", async () => {
@@ -820,7 +820,7 @@ describe('Pool Active stage', async () => {
                     await borrowToken.connect(admin).transfer(random.address, liquidationTokens);
                     await borrowToken.connect(random).approve(pool.address, liquidationTokens);
 
-                    await pool.connect(random).liquidateLender(lender.address, false, false, false);
+                    await pool.connect(random).liquidateForLender(lender.address, false, false, false);
                 });
 
                 context('Collateral added in margin call is specific to lender', async () => {

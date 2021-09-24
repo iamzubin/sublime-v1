@@ -367,7 +367,7 @@ describe('Pool With Compound Strategy', async () => {
 
         let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
-        expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
+        expect(await newlyCreatedToken.name()).eq('Pool Tokens');
         expect(await newlyCreatedToken.symbol()).eq('OBPT');
         expect(await newlyCreatedToken.decimals()).eq(18);
         poolToken = newlyCreatedToken;
@@ -455,7 +455,7 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(1).mul(86400)).toString()));
 
-            let interestFromChain = await pool.callStatic.interestTillNow();
+            let interestFromChain = await pool.callStatic.interestToPay();
             let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
@@ -471,7 +471,7 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(30).mul(86400)).toString()));
 
-            let interestFromChain = await pool.callStatic.interestTillNow();
+            let interestFromChain = await pool.callStatic.interestToPay();
             let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
@@ -488,7 +488,7 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(182).mul(86400)).toString()));
 
-            let interestFromChain = await pool.callStatic.interestTillNow();
+            let interestFromChain = await pool.callStatic.interestToPay();
             let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
@@ -505,7 +505,7 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(365).mul(86400)).toString()));
 
-            let interestFromChain = await pool.callStatic.interestTillNow();
+            let interestFromChain = await pool.callStatic.interestToPay();
             let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30));

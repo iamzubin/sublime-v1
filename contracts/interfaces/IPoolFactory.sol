@@ -6,7 +6,7 @@ interface IPoolFactory {
 
     function owner() external view returns (address);
 
-    function openBorrowPoolRegistry(address pool) external view returns (bool);
+    function poolRegistry(address pool) external view returns (bool);
 
     function priceOracle() external view returns (address);
 

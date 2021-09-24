@@ -152,7 +152,7 @@ export async function compoundPoolCollectionStage(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -446,7 +446,7 @@ export async function compoundPoolCollectionStage(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -633,7 +633,7 @@ export async function compoundPoolCollectionStage(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -813,7 +813,7 @@ export async function compoundPoolCollectionStage(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -835,7 +835,7 @@ export async function compoundPoolCollectionStage(
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            await expect(pool.connect(admin).terminateOpenBorrowPool()).to.emit(pool, 'OpenBorrowPoolTerminated');
+            await expect(pool.connect(admin).terminatePool()).to.emit(pool, 'PoolTerminated');
 
             // Check if loan status is set to 'TERMINATED' (5)
             let LoanStatus = (await pool.poolVars()).loanStatus;

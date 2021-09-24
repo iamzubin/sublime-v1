@@ -162,7 +162,7 @@ export async function poolCreationTest(
             let poolTokenAddress = await pool.poolToken();
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
         });

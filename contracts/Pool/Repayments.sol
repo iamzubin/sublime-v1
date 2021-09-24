@@ -101,9 +101,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     }
 
     /// @notice modifier used to determine whether the current pool is valid or not
-    /// @dev openBorrowPoolRegistry from IPoolFactory interface returns a bool
+    /// @dev poolRegistry from IPoolFactory interface returns a bool
     modifier onlyValidPool() {
-        require(poolFactory.openBorrowPoolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
+        require(poolFactory.poolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
         _;
     }
 
@@ -203,7 +203,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
      */
 
     function getInterestPerSecond(address _poolID) public view returns (uint256) {
-        uint256 _activePrincipal = IPool(_poolID).getTotalSupply();
+        uint256 _activePrincipal = IPool(_poolID).getTokensLent();
         uint256 _interestPerSecond = _activePrincipal.mul(repaymentConstants[_poolID].borrowRate).div(yearInSeconds);
         return _interestPerSecond;
     }
@@ -315,7 +315,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         override
         returns (uint256)
     {
-        uint256 activePrincipal = IPool(poolID).getTotalSupply();
+        uint256 activePrincipal = IPool(poolID).getTokensLent();
         // assuming repaymentInterval is in seconds
         //uint256 currentPeriod = (block.timestamp.sub(repaymentConstants[poolID].loanStartTime)).div(repaymentConstants[poolID].repaymentInterval);
 
@@ -459,7 +459,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
             'Repayments:repayPrincipal Unpaid interest'
         );
 
-        uint256 _activePrincipal = _pool.getTotalSupply();
+        uint256 _activePrincipal = _pool.getTokensLent();
         require(_amount == _activePrincipal, 'Repayments:repayPrincipal Amount should match the principal');
 
         address _asset = repaymentConstants[_poolID].repayAsset;

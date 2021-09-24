@@ -335,7 +335,7 @@ describe('Template 2', async () => {
 
             let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
-            expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await newlyCreatedToken.name()).eq('Pool Tokens');
             expect(await newlyCreatedToken.symbol()).eq('OBPT');
             expect(await newlyCreatedToken.decimals()).eq(18);
 
@@ -448,7 +448,7 @@ describe('Template 2', async () => {
 
             // let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
-            // expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
+            // expect(await newlyCreatedToken.name()).eq('Pool Tokens');
             // expect(await newlyCreatedToken.symbol()).eq('OBPT');
             // expect(await newlyCreatedToken.decimals()).eq(18);
 

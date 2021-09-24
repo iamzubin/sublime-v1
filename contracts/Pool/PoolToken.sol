@@ -19,7 +19,7 @@ contract PoolToken is Initializable, ERC20PresetMinterPauserUpgradeable {
     bytes32 public constant BURNER_ROLE = keccak256('BURNER_ROLE');
 
     /**
-     * @notice address of the open borrow pool
+     * @notice address of the pool
      */
     address public pool;
 
@@ -27,7 +27,7 @@ contract PoolToken is Initializable, ERC20PresetMinterPauserUpgradeable {
      * @notice initializing the pool and assigning minter, pauser and burner roles
      * @param name name of the pool token
      * @param symbol symbol of the pool token
-     * @param _pool address of the open borrow pool
+     * @param _pool address of the pool
      */
     function initialize(
         string memory name,

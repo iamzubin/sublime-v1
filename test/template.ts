@@ -282,7 +282,7 @@ describe.skip('Template For Test cases', async () => {
 
                 let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
-                expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
+                expect(await newlyCreatedToken.name()).eq('Pool Tokens');
                 expect(await newlyCreatedToken.symbol()).eq('OBPT');
                 expect(await newlyCreatedToken.decimals()).eq(18);
 
