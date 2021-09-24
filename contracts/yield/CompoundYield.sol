@@ -9,6 +9,7 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 import '../interfaces/IYield.sol';
 import '../interfaces/Invest/ICEther.sol';
 import '../interfaces/Invest/ICToken.sol';
+import '../interfaces/IWETH9.sol';
 
 /**
  * @title Yield contract
@@ -20,7 +21,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     using SafeMath for uint256;
 
     address payable public savingsAccount;
-
+    IWETH9 public iweth;
     /**
      * @dev stores the address of contract to invest in
      */
@@ -40,6 +41,11 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         _updateSavingsAccount(_savingsAccount);
     }
 
+    function updateIweth9(address payable _iwethAddress) public onlyOwner {
+        require(_iwethAddress != address(0), '_iwethAddress address cannot be zero');
+        iweth = IWETH9(_iwethAddress);
+    }
+
     function updateSavingsAccount(address payable _savingsAccount) public onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
@@ -51,22 +57,19 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     }
 
     function updateProtocolAddresses(address _asset, address _to) external onlyOwner {
+        require(_asset != address(0), 'asset cannot be address(0)');
         liquidityToken[_asset] = _to;
         emit ProtocolAddressesUpdated(_asset, _to);
     }
 
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+        require(_asset != address(0), 'asset cannot be address(0)');
+
         address investedTo = liquidityToken[_asset];
         uint256 amount = IERC20(investedTo).balanceOf(address(this));
 
-        if (_asset == address(0)) {
-            received = _withdrawETH(investedTo, amount);
-            (bool success, ) = _wallet.call{value: received}('');
-            require(success, 'Transfer failed');
-        } else {
-            received = _withdrawERC(_asset, investedTo, amount);
-            IERC20(_asset).safeTransfer(_wallet, received);
-        }
+        received = _withdrawERC(_asset, investedTo, amount);
+        IERC20(_asset).safeTransfer(_wallet, received);
     }
 
     /**
@@ -83,12 +86,14 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         uint256 amount
     ) public payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
+        require(asset != address(0), 'asset cannot be address(0)');
+
         address investedTo = liquidityToken[asset];
-        if (asset == address(0)) {
-            require(msg.value == amount, 'Invest: ETH amount');
+        IERC20(asset).safeTransferFrom(user, address(this), amount);
+        if (asset == address(iweth)) {
+            iweth.withdraw(amount);
             sharesReceived = _depositETH(investedTo, amount);
         } else {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
             sharesReceived = _depositERC20(asset, investedTo, amount);
         }
         emit LockedTokens(user, investedTo, sharesReceived);
@@ -102,26 +107,28 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      **/
     function unlockTokens(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256 received) {
         require(amount != 0, 'Invest: amount');
+        require(asset != address(0), 'asset cannot be address(0)');
+
         address investedTo = liquidityToken[asset];
 
-        if (asset == address(0)) {
+        if (asset == address(iweth)) {
             received = _withdrawETH(investedTo, amount);
-            (bool success, ) = savingsAccount.call{value: received}('');
-            require(success, 'Transfer failed');
+            iweth.deposit{value: received, gas: 90000}();
         } else {
             received = _withdrawERC(asset, investedTo, amount);
-            IERC20(asset).safeTransfer(savingsAccount, received);
         }
+        IERC20(asset).safeTransfer(savingsAccount, received);
 
         emit UnlockedTokens(asset, received);
     }
 
     function unlockShares(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256) {
+        require(asset != address(0), 'Asset address cannot be address(0)');
+
         if (amount == 0) {
             return 0;
         }
 
-        require(asset != address(0), 'Asset address cannot be address(0)');
         IERC20(asset).safeTransfer(savingsAccount, amount);
 
         emit UnlockedShares(asset, amount);

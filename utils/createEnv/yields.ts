@@ -13,6 +13,7 @@ import { SavingsAccount } from '@typechain/SavingsAccount';
 import { CompoundPair, YearnPair } from '../../utils/types';
 import { IYield } from '@typechain/IYield';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
+import { WETH9 } from '../../existingContracts/tokens.json';
 
 export async function createAaveYieldWithInit(
     proxyAdmin: SignerWithAddress,
@@ -56,6 +57,7 @@ export async function createCompoundYieldWithInit(
         await compoundYield.connect(admin).updateProtocolAddresses(pair.asset, pair.liquidityToken);
     }
 
+    await compoundYield.connect(admin).updateIweth9(WETH9);
     return IYield__factory.connect(compoundYield.address, admin);
 }
 
@@ -76,5 +78,6 @@ export async function createYearnYieldWithInit(
         const pair = pairs[index];
         await yearnYield.connect(admin).updateProtocolAddresses(pair.asset, pair.liquidityToken);
     }
+    await yearnYield.connect(admin).updateIweth9(WETH9);
     return IYield__factory.connect(yearnYield.address, admin);
 }

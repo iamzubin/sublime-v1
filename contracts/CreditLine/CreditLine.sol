@@ -438,12 +438,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
                     IERC20(_collateralAsset).approve(_strategy, _collateralAmount);
                 }
             }
-            uint256 _sharesReceived = _savingsAccount.depositTo{value: msg.value}(
-                _collateralAmount,
-                _collateralAsset,
-                _strategy,
-                address(this)
-            );
+            uint256 _sharesReceived = _savingsAccount.depositTo(_collateralAmount, _collateralAsset, _strategy, address(this));
             collateralShareInStrategy[_creditLineHash][_strategy] = collateralShareInStrategy[_creditLineHash][_strategy].add(
                 _sharesReceived
             );
@@ -575,7 +570,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
                 require(msg.value >= _repayAmount, 'creditLine::repay - value should be eq or more than repay amount');
                 (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_repayAmount)}(''); // transfer the remaining amount
                 require(success, 'creditLine::repay - remainig value transfered successfully');
-                _savingsAccount.depositTo{value: _repayAmount}(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
+                _savingsAccount.depositTo(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             } else {
                 _savingsAccount.depositTo(_repayAmount, _borrowAsset, _defaultStrategy, _lender);
             }

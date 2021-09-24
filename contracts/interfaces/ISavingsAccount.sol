@@ -19,7 +19,7 @@ interface ISavingsAccount {
         address asset,
         address strategy,
         address to
-    ) external payable returns (uint256 sharesReceived);
+    ) external returns (uint256 sharesReceived);
 
     /**
      * @dev Used to switch saving strategy of an asset
@@ -44,7 +44,7 @@ interface ISavingsAccount {
      * @param withdrawShares boolean indicating to withdraw in liquidity share or underlying token
      */
     function withdraw(
-        address payable withdrawTo,
+        address withdrawTo,
         uint256 amount,
         address asset,
         address strategy,
@@ -100,7 +100,7 @@ interface ISavingsAccount {
 
     function withdrawFrom(
         address from,
-        address payable to,
+        address to,
         uint256 amount,
         address asset,
         address strategy,

@@ -2,12 +2,14 @@ import { BigNumberish, Signer } from 'ethers';
 
 import { ERC20 } from '../../typechain/ERC20';
 import { IWETHGateway } from '../../typechain/IWETHGateway';
+import { IWETH9 } from '../../typechain/IWETH9';
 import { IyVault } from '../../typechain/IyVault';
 import { ICEther } from '../../typechain/ICEther';
 import { Token } from '../../typechain/Token';
 
 import { ERC20__factory } from '../../typechain/factories/ERC20__factory';
 import { IWETHGateway__factory } from '../../typechain/factories/IWETHGateway__factory';
+import { IWETH9__factory } from '../../typechain/factories/IWETH9__factory';
 import { IyVault__factory } from '../../typechain/factories/IyVault__factory';
 import { ICEther__factory } from '../../typechain/factories/ICEther__factory';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
@@ -41,6 +43,10 @@ export default class DeployMockContracts {
 
     public async getMockICEther(cethAddress: Address): Promise<ICEther> {
         return await ICEther__factory.connect(cethAddress, this._deployerSigner);
+    }
+
+    public async getIWETH9(contractAddress: Address): Promise<IWETH9> {
+        return await IWETH9__factory.connect(contractAddress, this._deployerSigner);
     }
 
     public async getYield(yieldAddress: Address): Promise<IYield> {

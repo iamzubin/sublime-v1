@@ -1,4 +1,5 @@
 import { Contracts } from '../../existingContracts/compound.json';
+import { WETH9 } from '../../existingContracts/tokens.json';
 
 import { USDTWhale, USDCWhale, DAIWhale, LINKWhale, ChainLinkAggregators, WBTCWhale, WhaleAccount, UNIWhale } from '../constants-rahul';
 
