@@ -354,7 +354,7 @@ export async function compoundPoolCollectionStage(
 
         const scaler = BigNumber.from('10').pow(30);
 
-        before(async () => {
+        beforeEach(async () => {
             env = await createEnvironment(
                 hre,
                 [WhaleAccount1, WhaleAccount2],
@@ -391,7 +391,7 @@ export async function compoundPoolCollectionStage(
                 { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
             );
 
-            let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
+            let salt = sha256(Buffer.from('borrower' + Math.random() * 10000000));
             let { admin, borrower, lender } = env.entities;
             deployHelper = new DeployHelper(admin);
             BorrowAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address);
@@ -453,8 +453,7 @@ export async function compoundPoolCollectionStage(
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
 
-        // This case is when loan stage returns to withdraw after the withdrawal interval
-        xit('Borrower should not be able to withdraw token when amount < minimum borrow amount', async function () {
+        it('Borrower should not be able to withdraw token when amount < minimum borrow amount', async function () {
             let { admin, borrower, lender } = env.entities;
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let amount = BigNumber.from(1).mul(BigNumber.from(10).pow(BTDecimals)); // 1 Borrow Token
@@ -557,7 +556,7 @@ export async function compoundPoolCollectionStage(
 
         const scaler = BigNumber.from('10').pow(30);
 
-        before(async () => {
+        beforeEach(async () => {
             env = await createEnvironment(
                 hre,
                 [WhaleAccount1, WhaleAccount2],
@@ -594,7 +593,7 @@ export async function compoundPoolCollectionStage(
                 { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
             );
 
-            let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
+            let salt = sha256(Buffer.from('borrower' + Math.random() * 10000000));
             let { admin, borrower, lender } = env.entities;
             deployHelper = new DeployHelper(admin);
             BorrowAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address);
@@ -649,15 +648,8 @@ export async function compoundPoolCollectionStage(
             expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
-        });
 
-        it('Anyone should be able to Liquidate the loan, if borrower misses repayment', async function () {
-            let { admin, borrower, lender } = env.entities;
-            let random = env.entities.extraLenders[10]; // Random address
-            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
-            let collateralToken = env.mockTokenContracts[1].contract;
             let borrowToken = env.mockTokenContracts[0].contract;
-            let poolStrategy = env.yields.compoundYield;
             let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
 
             // Approving Borrow tokens to the lender
@@ -676,6 +668,16 @@ export async function compoundPoolCollectionStage(
 
             // Borrower withdraws borrow tokens
             await pool.connect(borrower).withdrawBorrowedAmount();
+        });
+
+        it('Anyone should be able to Liquidate the loan, if borrower misses repayment. Directly using wallets', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let poolStrategy = env.yields.compoundYield;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
 
             // Borrower should default payment, either misses or margin calls happen
             const interestForCurrentPeriod = (
@@ -717,6 +719,196 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
             await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
             await pool.connect(random).liquidatePool(false, false, false);
+
+            // Loan status should be 4
+            let LoanStatus = (await pool.poolVars()).loanStatus;
+            assert(
+                LoanStatus.toString() == BigNumber.from('4').toString(),
+                `Pool should be in Collection Stage. Expected: ${BigNumber.from('4').toString()}
+                Actual: ${LoanStatus}`
+            );
+        });
+
+        it('Anyone should be able to Liquidate the loan, if borrower misses repayment. From savings account', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let poolStrategy = env.yields.compoundYield;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+
+            // Borrower should default payment, either misses or margin calls happen
+            const interestForCurrentPeriod = (
+                await env.repayments.connect(borrower).getInterestDueTillInstalmentDeadline(pool.address)
+            ).div(scaler);
+
+            const repayAmount = createPoolParams._borrowRate
+                .mul(amount)
+                .mul(createPoolParams._repaymentInterval)
+                .div(60 * 60 * 24 * 365)
+                .div(scaler);
+
+            // Checking calculated and received interest to be paid
+            assert(
+                interestForCurrentPeriod.toString() == repayAmount.toString(),
+                `Incorrect interest for period. Actual: ${interestForCurrentPeriod.toString()} Expected: ${repayAmount.toString()}`
+            );
+
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, repayAmount);
+            await borrowToken.connect(admin).transfer(random.address, repayAmount);
+            await borrowToken.connect(random).approve(env.repayments.address, repayAmount);
+
+            // Repayment done for period 1
+            await env.repayments.connect(random).repayAmount(pool.address, repayAmount);
+
+            const endOfPeriod: BigNumber = (await env.repayments.connect(borrower).getNextInstalmentDeadline(pool.address)).div(scaler);
+
+            // Travel beyond the current repayment period, borrower misses next repayment
+            await blockTravel(network, parseInt(endOfPeriod.add(1001).toString()));
+
+            const collateralShares = await env.savingsAccount
+                .connect(borrower)
+                .userLockedBalance(pool.address, collateralToken.address, poolStrategy.address);
+            let collateralTokens = await poolStrategy.callStatic.getTokensForShares(collateralShares.sub(2), collateralToken.address);
+            let borrowTokensForCollateral = await pool.getEquivalentTokens(collateralToken.address, borrowToken.address, collateralTokens);
+
+            // Calling liquidate pool
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
+            await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
+            await borrowToken.connect(random).approve(env.savingsAccount.address, borrowTokensForCollateral);
+            console.log('Approve');
+            await env.savingsAccount
+                .connect(random)
+                .depositTo(borrowTokensForCollateral, borrowToken.address, zeroAddress, random.address);
+            console.log('Deposit');
+            await env.savingsAccount.connect(random).approve(borrowToken.address, pool.address, borrowTokensForCollateral);
+            console.log('Approve Pool');
+            // await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
+            await pool.connect(random).liquidatePool(true, false, false);
+
+            // Loan status should be 4
+            let LoanStatus = (await pool.poolVars()).loanStatus;
+            assert(
+                LoanStatus.toString() == BigNumber.from('4').toString(),
+                `Pool should be in Collection Stage. Expected: ${BigNumber.from('4').toString()}
+                Actual: ${LoanStatus}`
+            );
+        });
+
+        it('Anyone should be able to Liquidate the loan, if borrower misses repayment. To savings account', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let poolStrategy = env.yields.compoundYield;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+
+            // Borrower should default payment, either misses or margin calls happen
+            const interestForCurrentPeriod = (
+                await env.repayments.connect(borrower).getInterestDueTillInstalmentDeadline(pool.address)
+            ).div(scaler);
+
+            const repayAmount = createPoolParams._borrowRate
+                .mul(amount)
+                .mul(createPoolParams._repaymentInterval)
+                .div(60 * 60 * 24 * 365)
+                .div(scaler);
+
+            // Checking calculated and received interest to be paid
+            assert(
+                interestForCurrentPeriod.toString() == repayAmount.toString(),
+                `Incorrect interest for period. Actual: ${interestForCurrentPeriod.toString()} Expected: ${repayAmount.toString()}`
+            );
+
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, repayAmount);
+            await borrowToken.connect(admin).transfer(random.address, repayAmount);
+            await borrowToken.connect(random).approve(env.repayments.address, repayAmount);
+
+            // Repayment done for period 1
+            await env.repayments.connect(random).repayAmount(pool.address, repayAmount);
+
+            const endOfPeriod: BigNumber = (await env.repayments.connect(borrower).getNextInstalmentDeadline(pool.address)).div(scaler);
+
+            // Travel beyond the current repayment period, borrower misses next repayment
+            await blockTravel(network, parseInt(endOfPeriod.add(1001).toString()));
+
+            const collateralShares = await env.savingsAccount
+                .connect(borrower)
+                .userLockedBalance(pool.address, collateralToken.address, poolStrategy.address);
+            let collateralTokens = await poolStrategy.callStatic.getTokensForShares(collateralShares.sub(2), collateralToken.address);
+            let borrowTokensForCollateral = await pool.getEquivalentTokens(collateralToken.address, borrowToken.address, collateralTokens);
+
+            // Calling liquidate pool
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
+            await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
+            await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
+            await pool.connect(random).liquidatePool(false, true, false);
+
+            // Loan status should be 4
+            let LoanStatus = (await pool.poolVars()).loanStatus;
+            assert(
+                LoanStatus.toString() == BigNumber.from('4').toString(),
+                `Pool should be in Collection Stage. Expected: ${BigNumber.from('4').toString()}
+                Actual: ${LoanStatus}`
+            );
+        });
+
+        it('Anyone should be able to Liquidate the loan, if borrower misses repayment. From and to savings account', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let poolStrategy = env.yields.compoundYield;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+
+            // Borrower should default payment, either misses or margin calls happen
+            const interestForCurrentPeriod = (
+                await env.repayments.connect(borrower).getInterestDueTillInstalmentDeadline(pool.address)
+            ).div(scaler);
+
+            const repayAmount = createPoolParams._borrowRate
+                .mul(amount)
+                .mul(createPoolParams._repaymentInterval)
+                .div(60 * 60 * 24 * 365)
+                .div(scaler);
+
+            // Checking calculated and received interest to be paid
+            assert(
+                interestForCurrentPeriod.toString() == repayAmount.toString(),
+                `Incorrect interest for period. Actual: ${interestForCurrentPeriod.toString()} Expected: ${repayAmount.toString()}`
+            );
+
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, repayAmount);
+            await borrowToken.connect(admin).transfer(random.address, repayAmount);
+            await borrowToken.connect(random).approve(env.repayments.address, repayAmount);
+
+            // Repayment done for period 1
+            await env.repayments.connect(random).repayAmount(pool.address, repayAmount);
+
+            const endOfPeriod: BigNumber = (await env.repayments.connect(borrower).getNextInstalmentDeadline(pool.address)).div(scaler);
+
+            // Travel beyond the current repayment period, borrower misses next repayment
+            await blockTravel(network, parseInt(endOfPeriod.add(1001).toString()));
+
+            const collateralShares = await env.savingsAccount
+                .connect(borrower)
+                .userLockedBalance(pool.address, collateralToken.address, poolStrategy.address);
+            let collateralTokens = await poolStrategy.callStatic.getTokensForShares(collateralShares.sub(2), collateralToken.address);
+            let borrowTokensForCollateral = await pool.getEquivalentTokens(collateralToken.address, borrowToken.address, collateralTokens);
+
+            // Calling liquidate pool
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
+            await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
+            await borrowToken.connect(random).approve(env.savingsAccount.address, borrowTokensForCollateral);
+            await env.savingsAccount
+                .connect(random)
+                .depositTo(borrowTokensForCollateral, borrowToken.address, zeroAddress, random.address);
+            await env.savingsAccount.connect(random).approve(borrowToken.address, pool.address, borrowTokensForCollateral);
+            // await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
+            await pool.connect(random).liquidatePool(true, true, false);
 
             // Loan status should be 4
             let LoanStatus = (await pool.poolVars()).loanStatus;
