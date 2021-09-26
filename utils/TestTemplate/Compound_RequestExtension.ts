@@ -245,5 +245,41 @@ export async function compound_RequestExtension(
                 'Pool::liquidatePool - No reason to liquidate the pool'
             );
         });
+
+        it("Should be able to repay after extension is passed", async () => {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10];
+            let borrowToken = env.mockTokenContracts[0].contract;
+            const scaler = BigNumber.from(10).pow(30);
+
+            await env.extenstion.connect(borrower).requestExtension(pool.address);
+            await env.extenstion.connect(lender).voteOnExtension(pool.address);
+            const { isLoanExtensionActive } = await env.repayments.connect(admin).repaymentVars(pool.address);
+            assert(isLoanExtensionActive, 'Extension not active');
+            
+            let interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
+            const endOfExtension: BigNumber = (await env.repayments.connect(admin).getNextInstalmentDeadline(pool.address)).div(scaler);
+
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestForCurrentPeriod);
+            await borrowToken.connect(admin).transfer(random.address, interestForCurrentPeriod);
+            await borrowToken.connect(random).approve(env.repayments.address, interestForCurrentPeriod);
+            await env.repayments.connect(random).repayAmount(pool.address, interestForCurrentPeriod);
+
+            const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction
+                .mul(createPoolParams._repaymentInterval)
+                .div(scaler);
+            await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
+
+            interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
+            assert(
+                interestForCurrentPeriod.toString() != '0',
+                `Interest not charged correctly. Actual: ${interestForCurrentPeriod.toString()} Expected: 0`
+            );
+
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestForCurrentPeriod);
+            await borrowToken.connect(admin).transfer(random.address, interestForCurrentPeriod);
+            await borrowToken.connect(random).approve(env.repayments.address, interestForCurrentPeriod);
+            await env.repayments.connect(random).repayAmount(pool.address, interestForCurrentPeriod);
+        });
     });
 }

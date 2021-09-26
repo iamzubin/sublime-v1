@@ -718,6 +718,8 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
             await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
             await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
+
+            const LiquidatorCollateralBalanceBefore = await collateralToken.balanceOf(random.address);
             await pool.connect(random).liquidatePool(false, false, false);
 
             // Loan status should be 4
@@ -727,6 +729,27 @@ export async function compoundPoolCollectionStage(
                 `Pool should be in Collection Stage. Expected: ${BigNumber.from('4').toString()}
                 Actual: ${LoanStatus}`
             );
+
+            const LenderBalanceBefore = await borrowToken.balanceOf(lender.address);
+            await pool.connect(lender).withdrawLiquidity();
+            // await pool.connect(lender).withdrawRepayment();
+            const LenderBalanceAfter = await borrowToken.balanceOf(lender.address);
+            const LiquidatorCollateralBalanceAfter = await collateralToken.balanceOf(random.address);
+            let LiquidatorCollateralBalDiff = LiquidatorCollateralBalanceAfter.sub(LiquidatorCollateralBalanceBefore);
+            const BorrowEquivalent = await pool.connect(admin).correspondingBorrowTokens(LiquidatorCollateralBalDiff,env.poolFactory.address,testPoolFactoryParams._liquidatorRewardFraction);
+            const Value = BorrowEquivalent.sub(BorrowEquivalent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler));
+            console.log({Value: Value.toString()});
+
+            let LenderBalanaceDiff = LenderBalanceAfter.sub(LenderBalanceBefore);
+            
+            const ExpectedReturn = amount.add(repayAmount);
+            let LiquidationReward = collateralShares.mul(testPoolFactoryParams._liquidatorRewardFraction).div(scaler);
+
+            console.log({ LenderBalanaceDiff: LenderBalanaceDiff.toString() });
+            console.log({ LiquidatorCollateralBalDiff: LiquidatorCollateralBalDiff.toString() });
+            console.log({ collateralShares: collateralShares.toString() });
+            console.log({ LiquidationReward: LiquidationReward.toString() });
+            console.log({ ExpectedReturn: ExpectedReturn.toString() });
         });
 
         it('Anyone should be able to Liquidate the loan, if borrower misses repayment. From savings account', async function () {
@@ -777,13 +800,10 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
             await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
             await borrowToken.connect(random).approve(env.savingsAccount.address, borrowTokensForCollateral);
-            console.log('Approve');
             await env.savingsAccount
                 .connect(random)
                 .depositTo(borrowTokensForCollateral, borrowToken.address, zeroAddress, random.address);
-            console.log('Deposit');
             await env.savingsAccount.connect(random).approve(borrowToken.address, pool.address, borrowTokensForCollateral);
-            console.log('Approve Pool');
             // await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
             await pool.connect(random).liquidatePool(true, false, false);
 
@@ -794,6 +814,21 @@ export async function compoundPoolCollectionStage(
                 `Pool should be in Collection Stage. Expected: ${BigNumber.from('4').toString()}
                 Actual: ${LoanStatus}`
             );
+
+            const LenderBalanceBefore = await borrowToken.balanceOf(lender.address);
+            const LenderCollateralBalanceBefore = await collateralToken.balanceOf(lender.address);
+            await pool.connect(lender).withdrawLiquidity();
+            // await pool.connect(lender).withdrawRepayment();
+            const LenderBalanceAfter = await borrowToken.balanceOf(lender.address);
+            const LenderCollateralBalanceAfter = await collateralToken.balanceOf(lender.address);
+
+            let LenderBalanaceDiff = LenderBalanceAfter.sub(LenderBalanceBefore);
+            let LenderCollateralBalDiff = LenderCollateralBalanceAfter.sub(LenderCollateralBalanceBefore);
+            const ExpectedReturn = amount.add(repayAmount);
+
+            console.log({ LenderBalanaceDiff: LenderBalanaceDiff.toString() });
+            console.log({ LenderCollateralBalDiff: LenderCollateralBalDiff.toString() });
+            console.log({ ExpectedReturn: ExpectedReturn.toString() });
         });
 
         it('Anyone should be able to Liquidate the loan, if borrower misses repayment. To savings account', async function () {
@@ -853,6 +888,21 @@ export async function compoundPoolCollectionStage(
                 `Pool should be in Collection Stage. Expected: ${BigNumber.from('4').toString()}
                 Actual: ${LoanStatus}`
             );
+
+            const LenderBalanceBefore = await borrowToken.balanceOf(lender.address);
+            const LenderCollateralBalanceBefore = await collateralToken.balanceOf(lender.address);
+            await pool.connect(lender).withdrawLiquidity();
+            // await pool.connect(lender).withdrawRepayment();
+            const LenderBalanceAfter = await borrowToken.balanceOf(lender.address);
+            const LenderCollateralBalanceAfter = await collateralToken.balanceOf(lender.address);
+
+            let LenderBalanaceDiff = LenderBalanceAfter.sub(LenderBalanceBefore);
+            let LenderCollateralBalDiff = LenderCollateralBalanceAfter.sub(LenderCollateralBalanceBefore);
+            const ExpectedReturn = amount.add(repayAmount);
+
+            console.log({ LenderBalanaceDiff: LenderBalanaceDiff.toString() });
+            console.log({ LenderCollateralBalDiff: LenderCollateralBalDiff.toString() });
+            console.log({ ExpectedReturn: ExpectedReturn.toString() });
         });
 
         it('Anyone should be able to Liquidate the loan, if borrower misses repayment. From and to savings account', async function () {
@@ -917,6 +967,21 @@ export async function compoundPoolCollectionStage(
                 `Pool should be in Collection Stage. Expected: ${BigNumber.from('4').toString()}
                 Actual: ${LoanStatus}`
             );
+
+            const LenderBalanceBefore = await borrowToken.balanceOf(lender.address);
+            const LenderCollateralBalanceBefore = await collateralToken.balanceOf(lender.address);
+            await pool.connect(lender).withdrawLiquidity();
+            // await pool.connect(lender).withdrawRepayment();
+            const LenderBalanceAfter = await borrowToken.balanceOf(lender.address);
+            const LenderCollateralBalanceAfter = await collateralToken.balanceOf(lender.address);
+
+            let LenderBalanaceDiff = LenderBalanceAfter.sub(LenderBalanceBefore);
+            let LenderCollateralBalDiff = LenderCollateralBalanceAfter.sub(LenderCollateralBalanceBefore);
+            const ExpectedReturn = amount.add(repayAmount);
+
+            console.log({ LenderBalanaceDiff: LenderBalanaceDiff.toString() });
+            console.log({ LenderCollateralBalDiff: LenderCollateralBalDiff.toString() });
+            console.log({ ExpectedReturn: ExpectedReturn.toString() });
         });
     });
 
