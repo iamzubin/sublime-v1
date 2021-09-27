@@ -154,7 +154,7 @@ describe('Pool Collection stage', async () => {
         let {
             _collectionPeriod,
             _marginCallDuration,
-            _collateralVolatilityThreshold,
+            _minborrowFraction,
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _matchCollateralRatioInterval,
@@ -175,15 +175,13 @@ describe('Pool Collection stage', async () => {
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
+                _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address
             );
         await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.LINK, true);
 
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
-
-        await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.DAI, testPoolFactoryParams._collateralVolatilityThreshold);
-        await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
 
         poolImpl = await deployHelper.pool.deployPool();
         poolTokenImpl = await deployHelper.pool.deployPoolToken();
@@ -248,7 +246,7 @@ describe('Pool Collection stage', async () => {
 
             let {
                 _poolSize,
-                _minborrowAmount,
+                _collateralVolatilityThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -263,11 +261,11 @@ describe('Pool Collection stage', async () => {
                 .connect(borrower)
                 .createPool(
                     _poolSize,
-                    _minborrowAmount,
+                    _borrowRate,
                     Contracts.LINK,
                     Contracts.DAI,
                     _collateralRatio,
-                    _borrowRate,
+                    _collateralVolatilityThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     poolStrategy.address,

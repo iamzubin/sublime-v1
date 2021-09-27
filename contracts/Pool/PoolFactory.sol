@@ -350,6 +350,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes4 _poolTokenInitFuncSelector,
         uint256 _liquidatorRewardFraction,
         uint256 _poolCancelPenalityFraction,
+        uint256 _minBorrowFraction,
         uint256 _protocolFeeFraction,
         address _protocolFeeCollector
     ) external initializer {
@@ -365,6 +366,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updatePoolTokenInitFuncSelector(_poolTokenInitFuncSelector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
         _updatePoolCancelPenalityFraction(_poolCancelPenalityFraction);
+        _updateMinBorrowFraction(_minBorrowFraction);
         _updateProtocolFeeFraction(_protocolFeeFraction);
         _updateProtocolFeeCollector(_protocolFeeCollector);
     }

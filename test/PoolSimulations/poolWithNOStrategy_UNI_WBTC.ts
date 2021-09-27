@@ -258,7 +258,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         let {
             _collectionPeriod,
             _marginCallDuration,
-            _collateralVolatilityThreshold,
+            _minborrowFraction,
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _matchCollateralRatioInterval,
@@ -280,6 +280,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
+                _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address
             );
@@ -343,7 +344,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
 
         let {
             _poolSize,
-            _minborrowAmount,
+            _collateralVolatilityThreshold,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
@@ -359,11 +360,11 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                 .connect(borrower)
                 .createPool(
                     _poolSize,
-                    _minborrowAmount,
+                    _borrowRate,
                     Contracts.UNI,
                     Contracts.WBTC,
                     _collateralRatio,
-                    _borrowRate,
+                    _collateralVolatilityThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     iyield.address,
@@ -414,7 +415,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
 
-            let { _minborrowAmount } = createPoolParams;
+            let _minborrowAmount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(BigNumber.from(10).pow(30));
             let borrowTokens = _minborrowAmount.sub(oneToken);
             await lenderLendsTokens(borrowTokens);
 
@@ -454,10 +455,11 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
     describe('Check Interest Rates', async () => {
         beforeEach(async () => {
             // lender supplies minimum DAI to the pool and lender.address is lender
+            const _minborrowAmount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(BigNumber.from(10).pow(30));
             await createPool();
-            await UNITokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
-            await UNITokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
-            await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false);
+            await UNITokenContract.connect(admin).transfer(lender.address, _minborrowAmount);
+            await UNITokenContract.connect(lender).approve(pool.address, _minborrowAmount);
+            await pool.connect(lender).lend(lender.address, _minborrowAmount, false);
         });
 
         it('Increase time by one day and check interest and total Debt', async () => {
@@ -468,7 +470,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(1).mul(86400)).toString()));
 
             let interestFromChain = await pool.callStatic.interestToPay();
-            let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
+            let expectedInterest = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(BigNumber.from(10).pow(30))
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
                 .div(365);
@@ -484,7 +486,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(30).mul(86400)).toString()));
 
             let interestFromChain = await pool.callStatic.interestToPay();
-            let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
+            let expectedInterest = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(BigNumber.from(10).pow(30))
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
                 .mul(30)
@@ -501,7 +503,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(182).mul(86400)).toString()));
 
             let interestFromChain = await pool.callStatic.interestToPay();
-            let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
+            let expectedInterest = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(BigNumber.from(10).pow(30))
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
                 .mul(182)
@@ -518,7 +520,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(365).mul(86400)).toString()));
 
             let interestFromChain = await pool.callStatic.interestToPay();
-            let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
+            let expectedInterest = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(BigNumber.from(10).pow(30))
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30));
             // console.table({ interestFromChain: interestFromChain.toString(), expectedInterest: expectedInterest.toString() });

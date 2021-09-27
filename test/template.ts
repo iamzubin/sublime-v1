@@ -157,7 +157,7 @@ describe.skip('Template For Test cases', async () => {
             let {
                 _collectionPeriod,
                 _marginCallDuration,
-                _collateralVolatilityThreshold,
+                _minborrowFraction,
                 _gracePeriodPenaltyFraction,
                 _liquidatorRewardFraction,
                 _matchCollateralRatioInterval,
@@ -178,6 +178,7 @@ describe.skip('Template For Test cases', async () => {
                     _poolTokenInitFuncSelector,
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
+                    _minborrowFraction,
                     _protocolFeeFraction,
                     protocolFeeCollector.address
                 );
@@ -193,13 +194,6 @@ describe.skip('Template For Test cases', async () => {
                 await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
 
                 await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
-
-                await poolFactory
-                    .connect(admin)
-                    .updateVolatilityThreshold(Contracts.DAI, testPoolFactoryParams._collateralVolatilityThreshold);
-                await poolFactory
-                    .connect(admin)
-                    .updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
 
                 await poolFactory
                     .connect(admin)
@@ -245,7 +239,7 @@ describe.skip('Template For Test cases', async () => {
 
                 let {
                     _poolSize,
-                    _minborrowAmount,
+                    _collateralVolatilityThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -262,11 +256,11 @@ describe.skip('Template For Test cases', async () => {
                         .connect(borrower)
                         .createPool(
                             _poolSize,
-                            _minborrowAmount,
+                            _borrowRate,
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _borrowRate,
+                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,

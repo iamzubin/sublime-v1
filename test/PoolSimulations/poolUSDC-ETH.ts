@@ -85,7 +85,7 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
 
         let poolAddress = await calculateNewPoolAddress(env, USDT, ETH, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)), // 10 usdt
+            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)), // 10 usdt
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
@@ -104,7 +104,7 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
 
         let pool = await createNewPool(env, USDT, ETH, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)), // 10 usdt
+            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28

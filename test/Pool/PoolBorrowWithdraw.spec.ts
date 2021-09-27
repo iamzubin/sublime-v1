@@ -156,7 +156,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
         let {
             _collectionPeriod,
             _marginCallDuration,
-            _collateralVolatilityThreshold,
+            _minborrowFraction,
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _matchCollateralRatioInterval,
@@ -177,14 +177,13 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
+                _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address
             );
         await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.LINK, true);
 
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
-        await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.DAI, testPoolFactoryParams._collateralVolatilityThreshold);
-        await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
 
         poolImpl = await deployHelper.pool.deployPool();
         poolTokenImpl = await deployHelper.pool.deployPoolToken();
@@ -251,7 +250,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 let {
                     _poolSize,
-                    _minborrowAmount,
+                    _collateralVolatilityThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -266,11 +265,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     .connect(borrower)
                     .createPool(
                         _poolSize,
-                        _minborrowAmount,
+                        _borrowRate,
                         Contracts.LINK,
                         Contracts.DAI,
                         _collateralRatio,
-                        _borrowRate,
+                        _collateralVolatilityThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         poolStrategy.address,
@@ -285,7 +284,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
-                amount = createPoolParams._minborrowAmount.sub(10);
+                amount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(scaler).sub(10);
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
                 await pool.connect(lender).lend(lender.address, amount, false);
@@ -385,7 +384,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 let {
                     _poolSize,
-                    _minborrowAmount,
+                    _collateralVolatilityThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -402,11 +401,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         .connect(borrower)
                         .createPool(
                             _poolSize,
-                            _minborrowAmount,
+                            _borrowRate,
                             Contracts.LINK,
                             Contracts.DAI,
                             _collateralRatio,
-                            _borrowRate,
+                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             poolStrategy.address,
@@ -424,7 +423,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
-                amount = createPoolParams._minborrowAmount.add(10);
+                amount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(scaler).add(10);
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
                 await pool.connect(lender).lend(lender.address, amount, false);
@@ -1195,7 +1194,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 let {
                     _poolSize,
-                    _minborrowAmount,
+                    _collateralVolatilityThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -1212,11 +1211,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         .connect(borrower)
                         .createPool(
                             _poolSize,
-                            _minborrowAmount,
+                            _borrowRate,
                             Contracts.LINK,
                             Contracts.DAI,
                             _collateralRatio,
-                            _borrowRate,
+                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             poolStrategy.address,
@@ -1234,7 +1233,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
-                const amount = createPoolParams._minborrowAmount;
+                const amount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(scaler);
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
                 await pool.connect(lender).lend(lender.address, amount, false);
@@ -1281,7 +1280,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
                 assert(tokensLent.toString() == tokensLentAfter.toString(), 'Tokens lent changing while withdrawing borrowed amount');
-                assert(tokensLent.toString() == createPoolParams._minborrowAmount.toString(), 'TokensLent is not same as minBorrowAmount');
+                assert(tokensLent.toString() == createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(scaler).toString(), 'TokensLent is not same as minBorrowAmount');
                 assert(
                     borrowAssetBalanceBorrower.add(tokensLent).sub(protocolFee).toString() == borrowAssetBalanceBorrowerAfter.toString(),
                     'Borrower not receiving correct lent amount'
@@ -1328,7 +1327,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 let {
                     _poolSize,
-                    _minborrowAmount,
+                    _collateralVolatilityThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -1345,11 +1344,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         .connect(borrower)
                         .createPool(
                             _poolSize,
-                            _minborrowAmount,
+                            _borrowRate,
                             Contracts.LINK,
                             Contracts.DAI,
                             _collateralRatio,
-                            _borrowRate,
+                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             poolStrategy.address,

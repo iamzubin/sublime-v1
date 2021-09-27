@@ -90,6 +90,7 @@ export interface PoolFactoryInitParams {
     _poolTokenInitFuncSelector: BytesLike;
     _liquidatorRewardFraction: BigNumberish;
     _poolCancelPenalityFraction: BigNumberish;
+    _minBorrowFraction: BigNumberish;
     _protocolFeeFraction: BigNumberish;
     protocolFeeCollector: Address;
 }
@@ -116,7 +117,7 @@ export interface YearnPair {
 
 export interface PoolCreateParams {
     _poolSize: BigNumberish;
-    _minborrowAmount: BigNumberish;
+    _volatilityThreshold: BigNumberish;
     _borrowRate: BigNumberish;
     _collateralAmount: BigNumberish;
     _collateralRatio: BigNumberish;

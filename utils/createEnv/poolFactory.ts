@@ -35,6 +35,7 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
         _poolTokenInitFuncSelector,
         _liquidatorRewardFraction,
         _poolCancelPenalityFraction,
+        _minBorrowFraction,
         _protocolFeeFraction,
         protocolFeeCollector,
     } = initParams;
@@ -50,6 +51,7 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
             _poolTokenInitFuncSelector,
             _liquidatorRewardFraction,
             _poolCancelPenalityFraction,
+            _minBorrowFraction,
             _protocolFeeFraction,
             protocolFeeCollector
         );

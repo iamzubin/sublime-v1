@@ -182,7 +182,7 @@ describe('WBTC-DAI Credit Lines', async () => {
         let {
             _collectionPeriod,
             _marginCallDuration,
-            _collateralVolatilityThreshold,
+            _minborrowFraction,
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _matchCollateralRatioInterval,
@@ -209,6 +209,7 @@ describe('WBTC-DAI Credit Lines', async () => {
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
+                _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address
             );
