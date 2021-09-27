@@ -94,6 +94,7 @@ export async function poolCreationTest(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {

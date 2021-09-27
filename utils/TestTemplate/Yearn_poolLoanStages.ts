@@ -84,6 +84,7 @@ export async function yearnPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
                 {
@@ -451,6 +452,7 @@ export async function yearnPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
                 {

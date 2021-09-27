@@ -65,6 +65,7 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', 
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
+                _minBorrowFraction: testPoolFactoryParams._minborrowFraction
             } as PoolFactoryInitParams,
             CreditLineDefaultStrategy.Compound,
             {
