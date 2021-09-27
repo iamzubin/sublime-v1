@@ -243,8 +243,7 @@ describe('Pool With Compound Strategy', async () => {
             .initialize(
                 poolFactory.address,
                 repaymentParams.gracePenalityRate,
-                repaymentParams.gracePeriodFraction,
-                savingsAccount.address
+                repaymentParams.gracePeriodFraction
             );
 
         let {

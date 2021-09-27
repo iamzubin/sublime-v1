@@ -194,8 +194,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             .initialize(
                 poolFactory.address,
                 repaymentParams.gracePenalityRate,
-                repaymentParams.gracePeriodFraction,
-                savingsAccount.address
+                repaymentParams.gracePeriodFraction
             );
 
         await poolFactory
@@ -852,7 +851,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
                 await pool.connect(random).liquidateCancelPenality(false, false);
 
-                const { penalityLiquidityAmount } = await pool.poolVars();
+                const { penaltyLiquidityAmount:penalityLiquidityAmount } = await pool.poolVars();
                 const lenderCancelBonus = penalityLiquidityAmount
                     .mul(await poolToken.balanceOf(lender.address))
                     .div(await poolToken.totalSupply());
@@ -1121,8 +1120,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
                 await pool.connect(random).liquidateCancelPenality(false, false);
 
-                const { penalityLiquidityAmount } = await pool.poolVars();
-                const lenderCancelBonus = penalityLiquidityAmount
+                const { penaltyLiquidityAmount } = await pool.poolVars();
+                const lenderCancelBonus = penaltyLiquidityAmount
                     .mul(await poolToken.balanceOf(lender.address))
                     .div(await poolToken.totalSupply());
 

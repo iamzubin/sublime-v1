@@ -126,7 +126,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice the fraction used for calculating the penalty when the pool is cancelled
      */
-    uint256 public override poolCancelPenalityFraction;
+    uint256 public override poolCancelPenaltyFraction;
     uint256 protocolFeeFraction;
     address protocolFeeCollector;
 
@@ -275,10 +275,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     event LiquidatorRewardFractionUpdated(uint256 updatedLiquidatorRewardFraction);
 
     /*
-     * @notice emitted when poolCancelPenalityFraction variable is updated
-     * @param updatedPoolCancelPenalityFraction updated value of poolCancelPenalityFraction
+     * @notice emitted when poolCancelPenaltyFraction variable is updated
+     * @param updatedPoolCancelPenaltyFraction updated value of poolCancelPenaltyFraction
      */
-    event PoolCancelPenalityFractionUpdated(uint256 updatedPoolCancelPenalityFraction);
+    event PoolCancelPenaltyFractionUpdated(uint256 updatedPoolCancelPenaltyFraction);
 
     /*
      * @notice emitted when fee that protocol changes for pools is updated
@@ -349,7 +349,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes4 _poolInitFuncSelector,
         bytes4 _poolTokenInitFuncSelector,
         uint256 _liquidatorRewardFraction,
-        uint256 _poolCancelPenalityFraction,
+        uint256 _poolCancelPenaltyFraction,
         uint256 _minBorrowFraction,
         uint256 _protocolFeeFraction,
         address _protocolFeeCollector
@@ -365,7 +365,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updatepoolInitFuncSelector(_poolInitFuncSelector);
         _updatePoolTokenInitFuncSelector(_poolTokenInitFuncSelector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
-        _updatePoolCancelPenalityFraction(_poolCancelPenalityFraction);
+        _updatePoolCancelPenaltyFraction(_poolCancelPenaltyFraction);
         _updateMinBorrowFraction(_minBorrowFraction);
         _updateProtocolFeeFraction(_protocolFeeFraction);
         _updateProtocolFeeCollector(_protocolFeeCollector);
@@ -813,13 +813,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit LiquidatorRewardFractionUpdated(_liquidatorRewardFraction);
     }
 
-    function updatePoolCancelPenalityFraction(uint256 _poolCancelPenalityFraction) external onlyOwner {
-        _updatePoolCancelPenalityFraction(_poolCancelPenalityFraction);
+    function updatePoolCancelPenaltyFraction(uint256 _poolCancelPenaltyFraction) external onlyOwner {
+        _updatePoolCancelPenaltyFraction(_poolCancelPenaltyFraction);
     }
 
-    function _updatePoolCancelPenalityFraction(uint256 _poolCancelPenalityFraction) internal {
-        poolCancelPenalityFraction = _poolCancelPenalityFraction;
-        emit PoolCancelPenalityFractionUpdated(_poolCancelPenalityFraction);
+    function _updatePoolCancelPenaltyFraction(uint256 _poolCancelPenaltyFraction) internal {
+        poolCancelPenaltyFraction = _poolCancelPenaltyFraction;
+        emit PoolCancelPenaltyFractionUpdated(_poolCancelPenaltyFraction);
     }
 
     function updateProtocolFeeFraction(uint256 _protocolFee) external onlyOwner {

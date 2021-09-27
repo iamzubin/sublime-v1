@@ -192,8 +192,7 @@ describe('Pool Collection stage', async () => {
             .initialize(
                 poolFactory.address,
                 repaymentParams.gracePenalityRate,
-                repaymentParams.gracePeriodFraction,
-                savingsAccount.address
+                repaymentParams.gracePeriodFraction
             );
 
         await poolFactory

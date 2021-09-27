@@ -251,8 +251,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             .initialize(
                 poolFactory.address,
                 repaymentParams.gracePenalityRate,
-                repaymentParams.gracePeriodFraction,
-                savingsAccount.address
+                repaymentParams.gracePeriodFraction
             );
 
         let {
