@@ -276,7 +276,7 @@ export async function compoundPoolCollectionStage(
             //Lenders can lend borrow Tokens into the pool
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
-            await env.mockTokenContracts[0].contract.connect(lender).approve(env.savingsAccount.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(env.yields.noYield.address, amount);
             await env.savingsAccount
                 .connect(lender)
                 .depositTo(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender.address);
