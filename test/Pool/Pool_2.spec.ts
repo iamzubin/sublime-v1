@@ -39,6 +39,7 @@ import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
+import { NoYield } from '../../typechain/NoYield';
 
 describe('Pool', async () => {
     let savingsAccount: SavingsAccount;
@@ -53,6 +54,7 @@ describe('Pool', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -125,6 +127,10 @@ describe('Pool', async () => {
         await compoundYield.initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
+
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
@@ -292,7 +298,7 @@ describe('Pool', async () => {
                 await DaiTokenContract.transfer(lender.address, OperationalAmounts._amountLent);
                 await DaiTokenContract.connect(lender).approve(pool.address, OperationalAmounts._amountLent);
 
-                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false))
+                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false, noYield.address))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(OperationalAmounts._amountLent, lender.address);
             });

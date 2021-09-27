@@ -6,7 +6,6 @@ import { expect } from 'chai';
 import {
     aaveYieldParams,
     depositValueToTest,
-    zeroAddress,
     Binance7 as binance7,
     WhaleAccount as whaleAccount,
     DAI_Yearn_Protocol_Address,
@@ -28,6 +27,7 @@ import { Address } from 'hardhat-deploy/dist/types';
 import { AaveYield } from '../../typechain/AaveYield';
 import { YearnYield } from '../../typechain/YearnYield';
 import { CompoundYield } from '../../typechain/CompoundYield';
+import { NoYield } from '../../typechain/NoYield';
 import { Pool } from '../../typechain/Pool';
 import { Verification } from '../../typechain/Verification';
 import { PoolFactory } from '../../typechain/PoolFactory';
@@ -58,6 +58,7 @@ describe('Credit Lines', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -78,8 +79,8 @@ describe('Credit Lines', async () => {
         strategyRegistry = await deployHelper.core.deployStrategyRegistry();
 
         //initialize
-        savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLines.address);
-        strategyRegistry.initialize(admin.address, 10);
+        await savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLines.address);
+        await strategyRegistry.initialize(admin.address, 10);
 
         await network.provider.request({
             method: 'hardhat_impersonateAccount',
@@ -132,6 +133,10 @@ describe('Credit Lines', async () => {
         await compoundYield.initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
+
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
@@ -343,11 +348,11 @@ describe('Credit Lines', async () => {
             let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
-            await LinkTokenContract.connect(borrower).approve(savingsAccount.address, valueToTest);
+            await LinkTokenContract.connect(borrower).approve(noYield.address, valueToTest);
 
             await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-            await savingsAccount.connect(borrower).depositTo(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+            await savingsAccount.connect(borrower).depositTo(valueToTest, LinkTokenContract.address, noYield.address, borrower.address);
             await savingsAccount
                 .connect(borrower)
                 .depositTo(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
@@ -560,11 +565,11 @@ describe('Credit Lines', async () => {
                 let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
-                await LinkTokenContract.connect(borrower).approve(savingsAccount.address, valueToTest);
+                await LinkTokenContract.connect(borrower).approve(noYield.address, valueToTest);
 
                 await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-                await savingsAccount.connect(borrower).depositTo(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+                await savingsAccount.connect(borrower).depositTo(valueToTest, LinkTokenContract.address, noYield.address, borrower.address);
                 await savingsAccount
                     .connect(borrower)
                     .depositTo(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);

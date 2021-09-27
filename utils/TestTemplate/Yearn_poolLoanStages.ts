@@ -273,7 +273,7 @@ export async function yearnPoolCollectionStage(
             await env.mockTokenContracts[0].contract.connect(lender).approve(env.savingsAccount.address, amount);
             await env.savingsAccount
                 .connect(lender)
-                .depositTo(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender.address);
+                .depositTo(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender.address);
             await env.savingsAccount.connect(lender).approve(env.mockTokenContracts[0].contract.address, pool.address, amount);
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
@@ -311,7 +311,7 @@ export async function yearnPoolCollectionStage(
             await env.mockTokenContracts[0].contract.connect(lender1).approve(env.savingsAccount.address, amount);
             await env.savingsAccount
                 .connect(lender1)
-                .depositTo(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender1.address);
+                .depositTo(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender1.address);
             await env.savingsAccount.connect(lender1).approve(env.mockTokenContracts[0].contract.address, pool.address, amount);
 
             const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));

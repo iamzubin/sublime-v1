@@ -95,12 +95,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     ) internal returns (uint256 sharesReceived) {
         require(amount != 0, 'SavingsAccount::_deposit Amount must be greater than zero');
 
-        if (strategy != address(0)) {
-            sharesReceived = _depositToYield(amount, asset, strategy);
-        } else {
-            sharesReceived = amount;
-            IERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
-        }
+        sharesReceived = _depositToYield(amount, asset, strategy);
     }
 
     function _depositToYield(
@@ -128,10 +123,10 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         require(currentStrategy != newStrategy, 'SavingsAccount::switchStrategy Same strategy');
         require(amount != 0, 'SavingsAccount::switchStrategy Amount must be greater than zero');
         require(asset != address(0), 'asset cannot be address(0)');
+        require(currentStrategy != address(0), 'Savings Accountt::currentStrategy cannot be address(0)');
+        require(newStrategy != address(0), 'Savings Accountt::currentStrategy cannot be address(0)');
 
-        if (currentStrategy != address(0)) {
-            amount = IYield(currentStrategy).getSharesForTokens(amount, asset);
-        }
+        amount = IYield(currentStrategy).getSharesForTokens(amount, asset);
 
         userLockedBalance[msg.sender][asset][currentStrategy] = userLockedBalance[msg.sender][asset][currentStrategy].sub(
             amount,
@@ -139,15 +134,11 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         );
 
         uint256 tokensReceived = amount;
-        if (currentStrategy != address(0)) {
-            tokensReceived = IYield(currentStrategy).unlockTokens(asset, amount);
-        }
+        tokensReceived = IYield(currentStrategy).unlockTokens(asset, amount);
 
         uint256 sharesReceived = tokensReceived;
-        if (newStrategy != address(0)) {
-            IERC20(asset).safeApprove(newStrategy, tokensReceived);
-            sharesReceived = _depositToYield(tokensReceived, asset, newStrategy);
-        }
+        IERC20(asset).safeApprove(newStrategy, tokensReceived);
+        sharesReceived = _depositToYield(tokensReceived, asset, newStrategy);
 
         userLockedBalance[msg.sender][asset][newStrategy] = userLockedBalance[msg.sender][asset][newStrategy].add(sharesReceived);
 
@@ -171,10 +162,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     ) external override nonReentrant returns (uint256 amountReceived) {
         require(amount != 0, 'SavingsAccount::withdraw Amount must be greater than zero');
         require(asset != address(0), 'asset cannot be address(0)');
+        require(strategy != address(0), 'SavingsAccount:: strategy should not be address(0)');
 
-        if (strategy != address(0)) {
-            amount = IYield(strategy).getSharesForTokens(amount, asset);
-        }
+        amount = IYield(strategy).getSharesForTokens(amount, asset);
 
         userLockedBalance[msg.sender][asset][strategy] = userLockedBalance[msg.sender][asset][strategy].sub(
             amount,
@@ -197,14 +187,14 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     ) external override nonReentrant returns (uint256 amountReceived) {
         require(amount != 0, 'SavingsAccount::withdrawFrom Amount must be greater than zero');
         require(asset != address(0), 'asset cannot be address(0)');
+        require(strategy != address(0), 'SavingsAccount:: strategy should not be address(0)');
 
         allowance[from][asset][msg.sender] = allowance[from][asset][msg.sender].sub(
             amount,
             'SavingsAccount::withdrawFrom allowance limit exceeding'
         );
-        if (strategy != address(0)) {
-            amount = IYield(strategy).getSharesForTokens(amount, asset);
-        }
+
+        amount = IYield(strategy).getSharesForTokens(amount, asset);
 
         //reduce sender's balance
         userLockedBalance[from][asset][strategy] = userLockedBalance[from][asset][strategy].sub(
@@ -223,22 +213,17 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address strategy,
         bool withdrawShares
     ) internal returns (address token, uint256 amountReceived) {
-        if (strategy == address(0)) {
-            amountReceived = amount;
-            _transfer(asset, withdrawTo, amountReceived);
-            token = asset;
-            amountReceived = amount;
+        require(strategy != address(0), 'SavingsAccount:: strategy should not be address(0)');
+
+        if (withdrawShares) {
+            token = IYield(strategy).liquidityToken(asset);
+            require(token != address(0), 'Liquidity Tokens address cannot be address(0)');
+            amountReceived = IYield(strategy).unlockShares(token, amount);
+            _transfer(token, withdrawTo, amountReceived);
         } else {
-            if (withdrawShares) {
-                token = IYield(strategy).liquidityToken(asset);
-                require(token != address(0), 'Liquidity Tokens address cannot be address(0)');
-                amountReceived = IYield(strategy).unlockShares(token, amount);
-                _transfer(token, withdrawTo, amountReceived);
-            } else {
-                token = asset;
-                amountReceived = IYield(strategy).unlockTokens(asset, amount);
-                _transfer(token, withdrawTo, amountReceived);
-            }
+            token = asset;
+            amountReceived = IYield(strategy).unlockTokens(asset, amount);
+            _transfer(token, withdrawTo, amountReceived);
         }
     }
 
@@ -335,10 +320,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     ) external override returns (uint256) {
         require(amount != 0, 'SavingsAccount::transfer zero amount');
         require(token != address(0), 'asset cannot be address(0)');
+        require(strategy != address(0), 'SavingsAccount:: strategy should not be address(0)');
 
-        if (strategy != address(0)) {
-            amount = IYield(strategy).getSharesForTokens(amount, token);
-        }
+        amount = IYield(strategy).getSharesForTokens(amount, token);
 
         //reduce msg.sender balance
         userLockedBalance[msg.sender][token][strategy] = userLockedBalance[msg.sender][token][strategy].sub(
@@ -362,17 +346,16 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 amount
     ) external override returns (uint256) {
         require(token != address(0), 'asset cannot be address(0)');
-
         require(amount != 0, 'SavingsAccount::transferFrom zero amount');
+        require(strategy != address(0), 'SavingsAccount:: strategy should not be address(0)');
+
         //update allowance
         allowance[from][token][msg.sender] = allowance[from][token][msg.sender].sub(
             amount,
             'SavingsAccount::transferFrom allowance limit exceeding'
         );
 
-        if (strategy != address(0)) {
-            amount = IYield(strategy).getSharesForTokens(amount, token);
-        }
+        amount = IYield(strategy).getSharesForTokens(amount, token);
 
         //reduce sender's balance
         userLockedBalance[from][token][strategy] = userLockedBalance[from][token][strategy].sub(

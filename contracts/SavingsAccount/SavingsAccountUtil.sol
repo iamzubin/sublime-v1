@@ -51,9 +51,6 @@ library SavingsAccountUtil {
     ) internal returns (uint256 _sharesReceived) {
         transferTokens(_asset, _amount, _from, address(this));
         address _approveTo = _strategy;
-        if (_strategy == address(0)) {
-            _approveTo = address(_savingsAccount);
-        }
         IERC20(_asset).safeApprove(_approveTo, _amount);
         _sharesReceived = _savingsAccount.depositTo(_amount, _asset, _strategy, _to);
     }

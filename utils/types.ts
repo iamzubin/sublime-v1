@@ -47,7 +47,7 @@ export interface Yields {
     aaveYield: IYield;
     yearnYield: IYield;
     compoundYield: IYield;
-    noStrategy: Address;
+    noYield: IYield;
 }
 
 export interface MockTokenContract {

@@ -49,7 +49,6 @@ import { Contracts } from '../existingContracts/compound.json';
 //     await strategyRegistry.connect(admin).addStrategy(contracts.aaveYield.proxy);
 //     await strategyRegistry.connect(admin).addStrategy(contracts.compoundYield.proxy);
 //     await strategyRegistry.connect(admin).addStrategy(contracts.yearnYield.proxy);
-//     await strategyRegistry.connect(admin).addStrategy(zeroAddress);
 //     return 'Done';
 // }
 

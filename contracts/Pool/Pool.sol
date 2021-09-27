@@ -494,7 +494,8 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     function lend(
         address _lender,
         uint256 _amountLent,
-        bool _fromSavingsAccount
+        bool _fromSavingsAccount,
+        address yieldContract
     ) external payable nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
         if (_lenderVerifier != address(0)) {
@@ -502,15 +503,17 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         }
         require(poolVars.loanStatus == LoanStatus.COLLECTION, '15');
         require(block.timestamp < poolConstants.loanStartTime, '16');
+
         uint256 _amount = _amountLent;
         uint256 _borrowAmountNeeded = poolConstants.borrowAmountRequested;
         uint256 _lentAmount = poolToken.totalSupply();
+
         if (_amountLent.add(_lentAmount) > _borrowAmountNeeded) {
             _amount = _borrowAmountNeeded.sub(_lentAmount);
         }
 
         address _borrowToken = poolConstants.borrowAsset;
-        _deposit(_fromSavingsAccount, false, _borrowToken, _amount, address(0), msg.sender, address(this));
+        _deposit(_fromSavingsAccount, false, _borrowToken, _amount, yieldContract, msg.sender, address(this));
         poolToken.mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);
     }

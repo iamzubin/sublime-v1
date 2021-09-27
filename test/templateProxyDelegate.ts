@@ -44,6 +44,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '../typechain/SublimeProxy';
 import { Token } from '../typechain/Token';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
 describe('Template 2', async () => {
     let savingsAccount: SavingsAccount;
@@ -66,6 +67,9 @@ describe('Template 2', async () => {
 
     let compoundYield: CompoundYield;
     let compoundYieldLogic: CompoundYield;
+
+    let noYield: NoYield;
+    let noYieldLogic: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -179,9 +183,13 @@ describe('Template 2', async () => {
             await compoundYield.connect(admin).initialize(admin.address, savingsAccount.address);
             await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
             await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
-        }
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
+            noYieldLogic = await deployHelper.core.deployNoYield();
+            let noYieldProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
+            noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
+            await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+            await strategyRegistry.connect(admin).addStrategy(noYield.address);
+        }
 
         console.log('Deploying verification');
         verificationLogic = await deployHelper.helper.deployVerification();

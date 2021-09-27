@@ -44,6 +44,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { BytesLike } from '@ethersproject/bytes';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '../../typechain/NoYield';
 
 describe('Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -59,6 +60,7 @@ describe('Credit Lines', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -120,8 +122,6 @@ describe('Credit Lines', async () => {
                 aaveYieldParams._lendingPoolAddressesProvider
             );
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
-
         await strategyRegistry.connect(admin).addStrategy(aaveYield.address);
 
         yearnYield = await deployHelper.core.deployYearnYield();
@@ -135,6 +135,10 @@ describe('Credit Lines', async () => {
         await compoundYield.initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
+
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
@@ -303,9 +307,9 @@ describe('Credit Lines', async () => {
         it('Borrow From Credit Line', async () => {
             await DaiTokenContract.connect(admin).transfer(lender.address, largeAmount.mul(100));
 
-            await DaiTokenContract.connect(lender).approve(savingsAccount.address, largeAmount.mul(100));
+            await DaiTokenContract.connect(lender).approve(noYield.address, largeAmount.mul(100));
 
-            await savingsAccount.connect(lender).depositTo(largeAmount.mul(100), DaiTokenContract.address, zeroAddress, lender.address);
+            await savingsAccount.connect(lender).depositTo(largeAmount.mul(100), DaiTokenContract.address, noYield.address, lender.address);
 
             await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
 

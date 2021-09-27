@@ -45,6 +45,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { BytesLike } from '@ethersproject/bytes';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '../../typechain/NoYield';
 
 describe('WBTC-DAI Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -61,6 +62,7 @@ describe('WBTC-DAI Credit Lines', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -149,8 +151,6 @@ describe('WBTC-DAI Credit Lines', async () => {
                 aaveYieldParams._lendingPoolAddressesProvider
             );
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
-
         await strategyRegistry.connect(admin).addStrategy(aaveYield.address);
 
         compoundYield = await deployHelper.core.deployCompoundYield();
@@ -158,6 +158,10 @@ describe('WBTC-DAI Credit Lines', async () => {
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
+
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);

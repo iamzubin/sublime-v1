@@ -13,6 +13,8 @@ import { SavingsAccount } from '@typechain/SavingsAccount';
 import { CompoundPair, YearnPair } from '../../utils/types';
 import { IYield } from '@typechain/IYield';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
+import { NoYield } from '../../typechain/NoYield';
+
 import { WETH9 } from '../../existingContracts/tokens.json';
 
 export async function createAaveYieldWithInit(
@@ -80,4 +82,19 @@ export async function createYearnYieldWithInit(
     }
     await yearnYield.connect(admin).updateIweth9(WETH9);
     return IYield__factory.connect(yearnYield.address, admin);
+}
+
+export async function createNoYieldWithInit(
+    proxyAdmin: SignerWithAddress,
+    admin: SignerWithAddress,
+    savingsAccount: SavingsAccount
+): Promise<IYield> {
+    let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
+    let noYieldLogic: NoYield = await deployHelper.core.deployNoYield();
+    let noYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
+    let noYield: NoYield = await deployHelper.core.getNoYield(noYieldProxy.address);
+
+    await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+
+    return IYield__factory.connect(noYield.address, admin);
 }

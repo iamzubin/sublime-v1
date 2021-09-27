@@ -36,6 +36,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _strategy address of the strategy contract
      **/
     function addStrategy(address _strategy) external override onlyOwner {
+        require(_strategy != address(0), 'address(0) cannot be a strategy');
         require(strategies.length.add(1) <= maxStrategies, "StrategyRegistry::addStrategy - Can't add more strategies");
         require(!registry[_strategy], 'StrategyRegistry::addStrategy - Strategy already exists');
         registry[_strategy] = true;

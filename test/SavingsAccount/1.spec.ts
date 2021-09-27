@@ -3,7 +3,7 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { expect } from 'chai';
 
-import { aaveYieldParams, depositValueToTest, ETH_Yearn_Protocol_Address, zeroAddress } from '../../utils/constants';
+import { aaveYieldParams, depositValueToTest, ETH_Yearn_Protocol_Address } from '../../utils/constants';
 
 import DeployHelper from '../../utils/deploys';
 import { SavingsAccount } from '../../typechain/SavingsAccount';
@@ -14,6 +14,8 @@ import { Address } from 'hardhat-deploy/dist/types';
 import { AaveYield } from '../../typechain/AaveYield';
 import { YearnYield } from '../../typechain/YearnYield';
 import { CompoundYield } from '../../typechain/CompoundYield';
+import { NoYield } from '../../typechain/NoYield';
+
 import { Contracts } from '../../existingContracts/compound.json';
 import { WETH9 } from '../../existingContracts/tokens.json';
 
@@ -30,6 +32,7 @@ describe('Test Savings Account (with ETH)', async () => {
     let admin: SignerWithAddress;
 
     let iweth: IWETH9;
+    let noYield: NoYield;
 
     before(async () => {
         [proxyAdmin, admin, mockCreditLinesAddress] = await ethers.getSigners();
@@ -39,8 +42,12 @@ describe('Test Savings Account (with ETH)', async () => {
 
         iweth = await deployHelper.mock.getIWETH9(WETH9);
         //initialize
-        savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
-        strategyRegistry.initialize(admin.address, 10);
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+
+        await savingsAccount.connect(admin).initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
+        await strategyRegistry.connect(admin).initialize(admin.address, 10);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
     });
 
     describe('# When NO STRATEGY is preferred', async () => {
@@ -60,17 +67,17 @@ describe('Test Savings Account (with ETH)', async () => {
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 randomAccount.address,
                 iweth.address,
-                zeroAddress
+                noYield.address
             );
 
             await iweth.connect(userAccount).deposit({ value: depositValueToTest });
-            await iweth.connect(userAccount).approve(savingsAccount.address, depositValueToTest);
-            await savingsAccount.connect(userAccount).depositTo(depositValueToTest, iweth.address, zeroAddress, randomAccount.address);
+            await iweth.connect(userAccount).approve(noYield.address, depositValueToTest);
+            await savingsAccount.connect(userAccount).depositTo(depositValueToTest, iweth.address, noYield.address, randomAccount.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 randomAccount.address,
                 iweth.address,
-                zeroAddress
+                noYield.address
             );
 
             expect(balanceLockedAfterTransaction.sub(balanceLockedBeforeTransaction)).eq(depositValueToTest);
@@ -80,31 +87,33 @@ describe('Test Savings Account (with ETH)', async () => {
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 userAccount.address,
                 iweth.address,
-                zeroAddress
+                noYield.address
             );
 
             await iweth.connect(userAccount).deposit({ value: depositValueToTest });
-            await iweth.connect(userAccount).approve(savingsAccount.address, depositValueToTest);
-            await expect(savingsAccount.connect(userAccount).depositTo(depositValueToTest, iweth.address, zeroAddress, userAccount.address))
+            await iweth.connect(userAccount).approve(noYield.address, depositValueToTest);
+            await expect(
+                savingsAccount.connect(userAccount).depositTo(depositValueToTest, iweth.address, noYield.address, userAccount.address)
+            )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(userAccount.address, depositValueToTest, iweth.address, zeroAddress);
+                .withArgs(userAccount.address, depositValueToTest, iweth.address, noYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 userAccount.address,
                 iweth.address,
-                zeroAddress
+                noYield.address
             );
 
             expect(balanceLockedAfterTransaction.sub(balanceLockedBeforeTransaction)).eq(depositValueToTest);
         });
 
         async function subject(to: Address, depositValue: BigNumberish): Promise<any> {
-            return savingsAccount.connect(userAccount).depositTo(depositValue, iweth.address, zeroAddress, to);
+            return savingsAccount.connect(userAccount).depositTo(depositValue, iweth.address, noYield.address, to);
         }
 
         describe('Failed cases', async () => {
             it('Should throw error or revert if receiver address is zero_address', async () => {
-                await expect(subject(zeroAddress, depositValueToTest)).to.be.revertedWith(
+                await expect(subject('0x0000000000000000000000000000000000000000', depositValueToTest)).to.be.revertedWith(
                     'SavingsAccount::depositTo receiver address should not be zero address'
                 );
             });
@@ -156,19 +165,19 @@ describe('Test Savings Account (with ETH)', async () => {
         it('Should deposit into another account', async () => {
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 randomAccount.address,
-                zeroAddress,
+                iweth.address,
                 aaveYield.address
             );
 
             await expect(
-                savingsAccount.connect(userAccount).depositTo(depositValueToTest, zeroAddress, aaveYield.address, randomAccount.address)
+                savingsAccount.connect(userAccount).depositTo(depositValueToTest, iweth.address, aaveYield.address, randomAccount.address)
             )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(randomAccount.address, depositValueToTest, zeroAddress, aaveYield.address);
+                .withArgs(randomAccount.address, depositValueToTest, iweth.address, aaveYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 randomAccount.address,
-                zeroAddress,
+                iweth.address,
                 aaveYield.address
             );
 
@@ -186,10 +195,10 @@ describe('Test Savings Account (with ETH)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address, false, {})
+                        .withdraw(withdrawAccount.address, sharesToWithdraw, iweth.address, aaveYield.address, false, {})
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
-                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address);
+                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, iweth.address, aaveYield.address);
 
                 const balanceAfterWithdraw = await withdrawAccount.getBalance();
 
@@ -199,7 +208,7 @@ describe('Test Savings Account (with ETH)', async () => {
 
                 const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
                     randomAccount.address,
-                    zeroAddress,
+                    iweth.address,
                     aaveYield.address
                 );
 
@@ -211,7 +220,7 @@ describe('Test Savings Account (with ETH)', async () => {
             });
 
             it('Withdraw half of shares received to account (withdrawShares = true)', async () => {
-                let aaveEthLiquidityToken: string = await aaveYield.liquidityToken(zeroAddress);
+                let aaveEthLiquidityToken: string = await aaveYield.liquidityToken(iweth.address);
                 await incrementChain(network, 12000);
 
                 //can be any random number less than the available shares
@@ -226,7 +235,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address, true, {})
+                        .withdraw(withdrawAccount.address, sharesToWithdraw, iweth.address, aaveYield.address, true, {})
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
                     .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, aaveEthLiquidityToken, aaveYield.address);
@@ -303,7 +312,7 @@ describe('Test Savings Account (with ETH)', async () => {
                 await incrementChain(network, 12000);
                 const sharesToWithdraw = BigNumber.from(sharesReceivedWithYearn).div(2);
                 //gas price is put to zero to check amount received
-                let yearnEthLiquidityToken: string = await yearnYield.liquidityToken(zeroAddress);
+                let yearnEthLiquidityToken: string = await yearnYield.liquidityToken(iweth.address);
                 let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
                 let vault: IyVault = await deployHelper.mock.getMockIyVault(yearnEthLiquidityToken);
 

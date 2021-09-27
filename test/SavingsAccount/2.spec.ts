@@ -6,7 +6,6 @@ import { expect } from 'chai';
 import {
     aaveYieldParams,
     depositValueToTest,
-    zeroAddress,
     Binance7 as binance7,
     WhaleAccount as whaleAccount,
     DAI_Yearn_Protocol_Address,
@@ -23,6 +22,7 @@ import { CompoundYield } from '../../typechain/CompoundYield';
 import { ERC20 } from '../../typechain/ERC20';
 
 import { Contracts } from '../../existingContracts/compound.json';
+import { NoYield } from '../../typechain/NoYield';
 
 describe('Test Savings Account (with ERC20 Token)', async () => {
     let savingsAccount: SavingsAccount;
@@ -31,6 +31,8 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
     let mockCreditLinesAddress: SignerWithAddress;
     let proxyAdmin: SignerWithAddress;
     let admin: SignerWithAddress;
+
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -48,6 +50,10 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
         //initialize
         savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
         strategyRegistry.initialize(admin.address, 1000);
+
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         await network.provider.request({
             method: 'hardhat_impersonateAccount',
@@ -89,25 +95,25 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 userAccount = getRandomFromArray(await ethers.getSigners());
             }
             await BatTokenContract.connect(admin).transfer(userAccount.address, depositValueToTest);
-            await BatTokenContract.connect(userAccount).approve(savingsAccount.address, depositValueToTest);
+            await BatTokenContract.connect(userAccount).approve(noYield.address, depositValueToTest);
         });
 
         it('Should successfully deposit into account another account', async () => {
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 randomAccount.address,
                 Contracts.BAT,
-                zeroAddress
+                noYield.address
             );
             await expect(
-                savingsAccount.connect(userAccount).depositTo(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address)
+                savingsAccount.connect(userAccount).depositTo(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address)
             )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress);
+                .withArgs(randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 randomAccount.address,
                 Contracts.BAT,
-                zeroAddress
+                noYield.address
             );
 
             expect(balanceLockedAfterTransaction.sub(balanceLockedBeforeTransaction)).eq(depositValueToTest);
@@ -117,28 +123,30 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 userAccount.address,
                 Contracts.BAT,
-                zeroAddress
+                noYield.address
             );
-            await expect(savingsAccount.connect(userAccount).depositTo(depositValueToTest, Contracts.BAT, zeroAddress, userAccount.address))
+            await expect(
+                savingsAccount.connect(userAccount).depositTo(depositValueToTest, Contracts.BAT, noYield.address, userAccount.address)
+            )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(userAccount.address, depositValueToTest, Contracts.BAT, zeroAddress);
+                .withArgs(userAccount.address, depositValueToTest, Contracts.BAT, noYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.userLockedBalance(
                 userAccount.address,
                 Contracts.BAT,
-                zeroAddress
+                noYield.address
             );
 
             expect(balanceLockedAfterTransaction.sub(balanceLockedBeforeTransaction)).eq(depositValueToTest);
         });
 
         async function subject(to: Address, depositValue: BigNumberish, ethValue?: BigNumberish): Promise<any> {
-            return savingsAccount.connect(userAccount).depositTo(depositValue, Contracts.BAT, zeroAddress, to);
+            return savingsAccount.connect(userAccount).depositTo(depositValue, Contracts.BAT, noYield.address, to);
         }
 
         describe('Failed cases', async () => {
             it('Should throw error or revert if receiver address is zero_address', async () => {
-                await expect(subject(zeroAddress, depositValueToTest)).to.be.revertedWith(
+                await expect(subject('0x0000000000000000000000000000000000000000', depositValueToTest)).to.be.revertedWith(
                     'SavingsAccount::depositTo receiver address should not be zero address'
                 );
             });
@@ -149,25 +157,27 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 );
             });
             it.skip('should fail/revert when shares are withdrawn with no strategy (withdrawShares = true)', async () => {
-                await savingsAccount.connect(userAccount).depositTo(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address);
+                await savingsAccount
+                    .connect(userAccount)
+                    .depositTo(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address);
 
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress, true)
+                        .withdraw(randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address, true)
                 ).to.be.revertedWith('Cannot withdraw shared when No strategy is used');
             });
         });
 
         it('Withdraw Token (withdrawShares = false)', async () => {
-            await savingsAccount.connect(userAccount).depositTo(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address);
+            await savingsAccount.connect(userAccount).depositTo(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address);
 
             const balanceLockedBeforeTransaction: BigNumber = await BatTokenContract.balanceOf(randomAccount.address);
 
             await expect(
                 savingsAccount
                     .connect(randomAccount)
-                    .withdraw(randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress, false, {})
+                    .withdraw(randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address, false, {})
             ).to.emit(savingsAccount, 'Withdrawn');
             //     .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress);
 
@@ -204,7 +214,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 userAccount = getRandomFromArray(await ethers.getSigners());
             }
             await LinkTokenContract.connect(admin).transfer(userAccount.address, depositValueToTest);
-            await LinkTokenContract.connect(userAccount).approve(savingsAccount.address, depositValueToTest);
+            await LinkTokenContract.connect(userAccount).approve(noYield.address, depositValueToTest);
             await LinkTokenContract.connect(userAccount).approve(aaveYield.address, depositValueToTest);
         });
 
@@ -255,7 +265,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
 
         describe('Failed cases', async () => {
             it('Should throw error or revert if receiver address is zero_address', async () => {
-                await expect(subject(zeroAddress, depositValueToTest)).to.be.revertedWith(
+                await expect(subject('0x0000000000000000000000000000000000000000', depositValueToTest)).to.be.revertedWith(
                     'SavingsAccount::depositTo receiver address should not be zero address'
                 );
             });
@@ -373,7 +383,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 userAccount = getRandomFromArray(await ethers.getSigners());
             }
             await DaiTokenContract.connect(admin).transfer(userAccount.address, depositValueToTest);
-            await DaiTokenContract.connect(userAccount).approve(savingsAccount.address, depositValueToTest);
+            await DaiTokenContract.connect(userAccount).approve(noYield.address, depositValueToTest);
             await DaiTokenContract.connect(userAccount).approve(yearnYield.address, depositValueToTest);
         });
 
@@ -435,7 +445,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
 
         describe('Failed cases', async () => {
             it('Should throw error or revert if receiver address is zero_address', async () => {
-                await expect(subject(zeroAddress, depositValueToTest)).to.be.revertedWith(
+                await expect(subject('0x0000000000000000000000000000000000000000', depositValueToTest)).to.be.revertedWith(
                     'SavingsAccount::depositTo receiver address should not be zero address'
                 );
             });
@@ -556,7 +566,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 userAccount = getRandomFromArray(await ethers.getSigners());
             }
             await DaiTokenContract.connect(admin).transfer(userAccount.address, depositValueToTest);
-            await DaiTokenContract.connect(userAccount).approve(savingsAccount.address, depositValueToTest);
+            await DaiTokenContract.connect(userAccount).approve(noYield.address, depositValueToTest);
             await DaiTokenContract.connect(userAccount).approve(compoundYield.address, depositValueToTest);
         });
 
@@ -615,7 +625,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
 
         describe('Failed cases', async () => {
             it('Should throw error or revert if receiver address is zero_address', async () => {
-                await expect(subject(zeroAddress, depositValueToTest)).to.be.revertedWith(
+                await expect(subject('0x0000000000000000000000000000000000000000', depositValueToTest)).to.be.revertedWith(
                     'SavingsAccount::depositTo receiver address should not be zero address'
                 );
             });

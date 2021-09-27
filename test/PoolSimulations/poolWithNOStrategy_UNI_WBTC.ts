@@ -49,6 +49,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
 describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
@@ -73,6 +74,9 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
 
     let compoundYield: CompoundYield;
     let compoundYieldLogic: CompoundYield;
+
+    let noYield: NoYield;
+    let noYieldLogic: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -210,7 +214,11 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.UNI, Contracts.cUNI);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
+        noYieldLogic = await deployHelper.core.deployNoYield();
+        let noYieldProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
+        noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verificationLogic = await deployHelper.helper.deployVerification();
         let verificationProxy = await deployHelper.helper.deploySublimeProxy(verificationLogic.address, proxyAdmin.address);
@@ -392,7 +400,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         async function lenderLendsTokens(amount: BigNumberish, fromSavingsAccount = false): Promise<void> {
             await UNITokenContract.connect(admin).transfer(lender.address, amount);
             await UNITokenContract.connect(lender).approve(pool.address, amount);
-            await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount);
+            await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount, noYield.address);
             return;
         }
 
@@ -457,7 +465,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await createPool();
             await UNITokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
             await UNITokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
-            await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false);
+            await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false, noYield.address);
         });
 
         it('Increase time by one day and check interest and total Debt', async () => {
