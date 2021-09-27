@@ -25,8 +25,7 @@ export async function createRepaymentsWithInit(
         .initialize(
             poolFactory.address,
             repaymentsInitParams.gracePenalityRate,
-            repaymentsInitParams.gracePeriodFraction,
-            savingsAccount.address
+            repaymentsInitParams.gracePeriodFraction
         );
     return repayments;
 }
