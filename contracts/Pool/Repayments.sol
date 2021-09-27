@@ -66,18 +66,36 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     mapping(address => RepaymentVars) public repaymentVars;
     mapping(address => RepaymentConstants) public repaymentConstants;
 
-    /// @notice Event emitted during current period interest repayment
+    /// @notice Event emitted when interest for the loann is partially repaid
+    /// @param poolID The address of the pool to which interest was paid
+    /// @param repayAmount Amount being repayed
+    event InterestRepaid(address poolID, uint256 repayAmount);
+
+    /// @notice Event emitted when all interest for the pool is repaid
+    /// @param poolID The address of the pool to which interest was paid
+    /// @param repayAmount Amount being repayed
+    event InterestRepaymentComplete(address poolID, uint256 repayAmount);
+
+
+    /// @notice Event emitted when pricipal is repaid
+    /// @param poolID The address of the pool to which principal was paid
+    /// @param repayAmount Amount being repayed
+    event PrincipalRepaid(address poolID, uint256 repayAmount);
+
+    /// @notice Event emitted when Grace penality and interest for previous period is completely repaid
+    /// @param poolID The address of the pool to which repayment was made
+    /// @param repayAmount Amount being repayed
+    event GracePenalityRepaid(address poolID, uint256 repayAmount);
+
+    /// @notice Event emitted when repayment for extension is partially done
+    /// @param poolID The address of the pool to which the partial repayment was made
+    /// @param repayAmount Amount being repayed
+    event PartialExtensionRepaid(address poolID, uint256 repayAmount);
+
+    /// @notice Event emitted when repayment for extension is completely done
     /// @param poolID The address of the pool to which interest was paid
     /// @param repayAmount Amount being re-payed by the borrower
-    event InterestRepaid(address poolID, uint256 repayAmount); // Made during current period interest repayment
-
-    /// @notice Event emitted when previous period's interest is repaid fully
-    /// @param poolID The address of the pool to which repayment was made
-    event MissedRepaymentRepaid(address poolID);
-
-    /// @notice Event emitted when previous period's interest is repaid partially
-    /// @param poolID The address of the pool to which the partial repayment was made
-    event PartialExtensionRepaymentMade(address poolID);
+    event ExtensionRepaymentComplete(address poolID, uint256 repayAmount); // Made during current period interest repayment
 
     /// @notice Event to denote changes in the configurations of the pool factory
     event PoolFactoryUpdated(address poolFactory);
@@ -389,11 +407,13 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
                 repaymentVars[_poolID].loanDurationCovered = (getInstalmentsCompleted(_poolID).add(10**30))
                     .mul(repaymentConstants[_poolID].repaymentInterval)
                     .div(10**30);
+                emit ExtensionRepaymentComplete(_poolID, _interestOverdue);
             } else {
                 _amountRequired = _amountRequired.add(_amount);
                 repaymentVars[_poolID].loanDurationCovered = repaymentVars[_poolID].loanDurationCovered.add(
                     _amount.mul(10**30).div(_interestPerSecond)
                 );
+                emit PartialExtensionRepaid(_poolID, _amount);
                 _amount = 0;
             }
         }
@@ -409,16 +429,19 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
                 );
                 _amount = _amount.sub(_penalty);
                 _amountRequired = _amountRequired.add(_penalty);
+                emit GracePenalityRepaid(_poolID, _penalty);
             }
 
             if (_amount < _interestLeft) {
                 uint256 _loanDurationCovered = _amount.mul(10**30).div(_interestPerSecond); // dividing exponents
                 repaymentVars[_poolID].loanDurationCovered = repaymentVars[_poolID].loanDurationCovered.add(_loanDurationCovered);
                 _amountRequired = _amountRequired.add(_amount);
+                emit InterestRepaid(_poolID, _amount);
             } else {
                 repaymentVars[_poolID].loanDurationCovered = repaymentConstants[_poolID].loanDuration; // full interest repaid
                 _amount = _amount.sub(_interestLeft);
                 _amountRequired = _amountRequired.add(_interestLeft);
+                emit InterestRepaymentComplete(_poolID, _amount);
             }
         }
         address _asset = repaymentConstants[_poolID].repayAsset;
@@ -471,6 +494,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         } else {
             IERC20(_asset).safeTransferFrom(msg.sender, _poolID, _amount);
         }
+        emit PrincipalRepaid(_poolID, _amount);
 
         IPool(_poolID).closeLoan();
     }
