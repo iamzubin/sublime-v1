@@ -6,7 +6,6 @@ import { expect } from 'chai';
 import {
     aaveYieldParams,
     depositValueToTest,
-    zeroAddress,
     Binance7 as binance7,
     WhaleAccount as whaleAccount,
     DAI_Yearn_Protocol_Address,
@@ -35,6 +34,7 @@ import { PriceOracle } from '../typechain/PriceOracle';
 import { Extension } from '../typechain/Extension';
 
 import { Contracts } from '../existingContracts/compound.json';
+import { WETH9 } from '../existingContracts/tokens.json';
 import { sha256 } from '@ethersproject/sha2';
 import { PoolToken } from '../typechain/PoolToken';
 import { Repayments } from '../typechain/Repayments';
@@ -45,6 +45,7 @@ import { SublimeProxy } from '../typechain/SublimeProxy';
 import { Token } from '../typechain/Token';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
+import { IWETH9 } from '@typechain/IWETH9';
 
 describe('Template 2', async () => {
     let savingsAccount: SavingsAccount;
@@ -100,6 +101,8 @@ describe('Template 2', async () => {
     let pool: Pool;
     let testToken1: Token;
     let testToken2: Token;
+
+    let iweth: IWETH9;
 
     before(async () => {
         [proxyAdmin, admin, mockCreditLines, borrower, lender, protocolFeeCollector] = await ethers.getSigners();
@@ -189,6 +192,8 @@ describe('Template 2', async () => {
             noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
             await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
             await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
+            iweth = await deployHelper.mock.getIWETH9(WETH9);
         }
 
         console.log('Deploying verification');
@@ -290,7 +295,7 @@ describe('Template 2', async () => {
                 borrower.address,
                 Contracts.DAI,
                 Contracts.LINK,
-                zeroAddress,
+                noYield.address,
                 poolFactory.address,
                 sha256(Buffer.from('borrower')),
                 poolLogic.address,
@@ -330,12 +335,12 @@ describe('Template 2', async () => {
                         _borrowRate,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
-                        zeroAddress,
+                        noYield.address,
                         _collateralAmount,
                         false,
                         sha256(Buffer.from('borrower')),
                         adminVerifier.address,
-                        zeroAddress
+                        '0x0000000000000000000000000000000000000000'
                     )
             )
                 .to.emit(poolFactory, 'PoolCreated')
@@ -363,19 +368,20 @@ describe('Template 2', async () => {
             console.log('Pool Factory Updating Borrow Tokens');
             await poolFactory.connect(admin).updateSupportedBorrowTokens(testToken1.address, true); //test token 1
             await poolFactory.connect(admin).updateSupportedBorrowTokens(testToken2.address, true); // test token 2
-            await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true); // for ether
+            await poolFactory.connect(admin).updateSupportedBorrowTokens(iweth.address, true); // for ether
+
             await poolFactory
                 .connect(admin)
                 .updateVolatilityThreshold(testToken1.address, testPoolFactoryParams._collateralVolatilityThreshold);
             await poolFactory
                 .connect(admin)
                 .updateVolatilityThreshold(testToken2.address, testPoolFactoryParams._collateralVolatilityThreshold);
-            await poolFactory.connect(admin).updateVolatilityThreshold(zeroAddress, testPoolFactoryParams._collateralVolatilityThreshold);
+            await poolFactory.connect(admin).updateVolatilityThreshold(iweth.address, testPoolFactoryParams._collateralVolatilityThreshold);
 
             console.log('Pool Factory Updating Collateral Tokens');
             await poolFactory.connect(admin).updateSupportedCollateralTokens(testToken1.address, true); // test token 1
             await poolFactory.connect(admin).updateSupportedCollateralTokens(testToken2.address, true); // test token 2
-            await poolFactory.connect(admin).updateSupportedCollateralTokens(zeroAddress, true); // for ether
+            await poolFactory.connect(admin).updateSupportedCollateralTokens(iweth.address, true); // for ether
 
             deployHelper = new DeployHelper(borrower);
             let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(testToken2.address); // test token 1
@@ -386,7 +392,7 @@ describe('Template 2', async () => {
                 borrower.address,
                 testToken2.address, // test token 2
                 testToken1.address, // test token 1
-                zeroAddress,
+                noYield.address,
                 poolFactory.address,
                 salt,
                 poolLogic.address,
@@ -429,7 +435,7 @@ describe('Template 2', async () => {
                 _borrowRate: _borrowRate.toString(),
                 _repaymentInterval: _repaymentInterval.toString(),
                 _noOfRepaymentIntervals: _noOfRepaymentIntervals.toString(),
-                zeroAddress,
+                noYield: noYield.address,
                 _collateralAmount: _collateralAmount.toString(),
                 _savingsAccount: false,
                 salt,

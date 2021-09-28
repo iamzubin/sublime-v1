@@ -9,7 +9,6 @@ import { blockTravel, timeTravel } from '../../utils/time';
 import {
     aaveYieldParams,
     depositValueToTest,
-    zeroAddress,
     Binance7 as binance7,
     WhaleAccount as whaleAccount,
     WBTCWhale as wbtcwhale,
@@ -40,6 +39,7 @@ import { PriceOracle } from '@typechain/PriceOracle';
 import { Extension } from '@typechain/Extension';
 
 import { Contracts } from '../../existingContracts/compound.json';
+import { WETH9 } from '../../existingContracts/tokens.json';
 import { sha256 } from '@ethersproject/sha2';
 import { PoolToken } from '@typechain/PoolToken';
 import { Repayments } from '@typechain/Repayments';
@@ -50,6 +50,7 @@ import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
+import { IWETH9 } from '@typechain/IWETH9';
 
 describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
@@ -111,6 +112,8 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
     let pool: Pool;
 
     let poolToken: PoolToken;
+
+    let iweth: IWETH9;
 
     before(async () => {
         [proxyAdmin, admin, mockCreditLines, borrower, lender, protocolFeeCollector] = await ethers.getSigners();
@@ -217,7 +220,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         noYieldLogic = await deployHelper.core.deployNoYield();
         let noYieldProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
         noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
-        await noYield.initialize(admin.address, savingsAccount.address);
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verificationLogic = await deployHelper.helper.deployVerification();
@@ -297,17 +300,18 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
 
         // await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
         // await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
+        iweth = await deployHelper.mock.getIWETH9(WETH9);
 
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.UNI, true);
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.WBTC, true);
-        await poolFactory.connect(admin).updateSupportedCollateralTokens(zeroAddress, true);
+        await poolFactory.connect(admin).updateSupportedCollateralTokens(iweth.address, true);
 
         // await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
         // await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.LINK, true);
 
         await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.UNI, true);
         await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.WBTC, true);
-        await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true);
+        await poolFactory.connect(admin).updateSupportedBorrowTokens(iweth.address, true);
 
         await poolFactory
             .connect(admin)
@@ -321,12 +325,13 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                 savingsAccount.address,
                 extenstion.address
             );
+        await poolFactory.connect(admin).updateNoYield(noYield.address);
     });
 
     async function createPool() {
         let deployHelper = new DeployHelper(borrower);
         let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-        let iyield: IYield = await deployHelper.mock.getYield(zeroAddress);
+        let iyield: IYield = await deployHelper.mock.getYield(noYield.address);
 
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
         // let salt = sha256(Buffer.from(`borrower}`));
@@ -379,7 +384,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                     false,
                     salt,
                     adminVerifier.address,
-                    zeroAddress
+                    '0x0000000000000000000000000000000000000000'
                 )
         )
             .to.emit(poolFactory, 'PoolCreated')
@@ -400,7 +405,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         async function lenderLendsTokens(amount: BigNumberish, fromSavingsAccount = false): Promise<void> {
             await UNITokenContract.connect(admin).transfer(lender.address, amount);
             await UNITokenContract.connect(lender).approve(pool.address, amount);
-            await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount, noYield.address);
+            await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount);
             return;
         }
 
@@ -465,7 +470,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await createPool();
             await UNITokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
             await UNITokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
-            await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false, noYield.address);
+            await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false);
         });
 
         it('Increase time by one day and check interest and total Debt', async () => {

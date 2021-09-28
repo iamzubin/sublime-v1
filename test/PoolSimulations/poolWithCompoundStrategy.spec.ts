@@ -211,7 +211,7 @@ describe('Pool With Compound Strategy', async () => {
         noYieldLogic = await deployHelper.core.deployNoYield();
         let noYieldProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
         noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
-        await noYield.initialize(admin.address, savingsAccount.address);
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verificationLogic = await deployHelper.helper.deployVerification();
@@ -309,6 +309,8 @@ describe('Pool With Compound Strategy', async () => {
                 savingsAccount.address,
                 extenstion.address
             );
+
+        await poolFactory.connect(admin).updateNoYield(noYield.address);
     });
 
     async function createPool() {
@@ -388,7 +390,7 @@ describe('Pool With Compound Strategy', async () => {
         async function lenderLendsTokens(amount: BigNumberish, fromSavingsAccount = false): Promise<void> {
             await DaiTokenContract.connect(admin).transfer(lender.address, amount);
             await DaiTokenContract.connect(lender).approve(pool.address, amount);
-            await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount, noYield.address);
+            await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount);
             return;
         }
 
@@ -453,7 +455,7 @@ describe('Pool With Compound Strategy', async () => {
             await createPool();
             await DaiTokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
             await DaiTokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
-            await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false, noYield.address);
+            await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false);
         });
 
         it('Increase time by one day and check interest and total Debt', async () => {

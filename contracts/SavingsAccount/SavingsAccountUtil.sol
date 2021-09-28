@@ -81,9 +81,9 @@ library SavingsAccountUtil {
         bool _withdrawShares
     ) internal returns (uint256 _amountReceived) {
         if (_from == address(this)) {
-            _amountReceived = _savingsAccount.withdraw(payable(_to), _amount, _asset, _strategy, _withdrawShares);
+            _amountReceived = _savingsAccount.withdraw(_to, _amount, _asset, _strategy, _withdrawShares);
         } else {
-            _amountReceived = _savingsAccount.withdrawFrom(_from, payable(_to), _amount, _asset, _strategy, _withdrawShares);
+            _amountReceived = _savingsAccount.withdrawFrom(_from, _to, _amount, _asset, _strategy, _withdrawShares);
         }
     }
 

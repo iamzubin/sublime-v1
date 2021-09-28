@@ -64,7 +64,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     }
 
     function unlockShares(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256 received) {
-        received = unlockTokens(asset, amount);
+        received = _unlockTokens(asset, amount);
     }
 
     function _unlockTokens(address asset, uint256 amount) internal returns (uint256 received) {

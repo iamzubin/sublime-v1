@@ -216,6 +216,8 @@ describe('Pool', async () => {
                         extenstion.address
                     );
 
+                await poolFactory.connect(admin).updateNoYield(noYield.address);
+
                 let deployHelper: DeployHelper = new DeployHelper(borrower);
                 let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.LINK);
 
@@ -298,7 +300,7 @@ describe('Pool', async () => {
                 await DaiTokenContract.transfer(lender.address, OperationalAmounts._amountLent);
                 await DaiTokenContract.connect(lender).approve(pool.address, OperationalAmounts._amountLent);
 
-                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false, noYield.address))
+                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(OperationalAmounts._amountLent, lender.address);
             });

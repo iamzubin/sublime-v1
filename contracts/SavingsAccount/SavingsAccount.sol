@@ -214,7 +214,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool withdrawShares
     ) internal returns (address token, uint256 amountReceived) {
         require(strategy != address(0), 'SavingsAccount:: strategy should not be address(0)');
-
         if (withdrawShares) {
             token = IYield(strategy).liquidityToken(asset);
             require(token != address(0), 'Liquidity Tokens address cannot be address(0)');

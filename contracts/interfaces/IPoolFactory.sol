@@ -2,6 +2,8 @@
 pragma solidity 0.7.0;
 
 interface IPoolFactory {
+    function noYield() external view returns (address);
+
     function savingsAccount() external view returns (address);
 
     function owner() external view returns (address);

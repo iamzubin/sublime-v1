@@ -217,6 +217,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 savingsAccount.address,
                 extenstion.address
             );
+
+        await poolFactory.connect(admin).updateNoYield(noYield.address);
     });
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
@@ -294,7 +296,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 amount = createPoolParams._minborrowAmount.sub(10);
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
-                await pool.connect(lender).lend(lender.address, amount, false, noYield.address);
+                await pool.connect(lender).lend(lender.address, amount, false);
 
                 const { loanStartTime } = await pool.poolConstants();
                 await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
@@ -433,7 +435,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 amount = createPoolParams._minborrowAmount.add(10);
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
-                await pool.connect(lender).lend(lender.address, amount, false, noYield.address);
+                await pool.connect(lender).lend(lender.address, amount, false);
 
                 const { loanStartTime } = await pool.poolConstants();
                 await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
@@ -1243,7 +1245,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const amount = createPoolParams._minborrowAmount;
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
-                await pool.connect(lender).lend(lender.address, amount, false, noYield.address);
+                await pool.connect(lender).lend(lender.address, amount, false);
 
                 const { loanStartTime } = await pool.poolConstants();
                 await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
@@ -1376,7 +1378,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const amount = createPoolParams._borrowAmountRequested;
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
-                await pool.connect(lender).lend(lender.address, amount, false, noYield.address);
+                await pool.connect(lender).lend(lender.address, amount, false);
             });
 
             async function subject() {
@@ -1417,7 +1419,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
-                await pool.connect(lender).lend(lender.address, amount, false, noYield.address);
+                await pool.connect(lender).lend(lender.address, amount, false);
                 await subject();
 
                 await pool.connect(borrower).withdrawBorrowedAmount();

@@ -27,7 +27,7 @@ import { randomAddress, zeroAddress } from '../../utils/constants';
 import { createAaveYieldWithInit, createCompoundYieldWithInit, createNoYieldWithInit, createYearnYieldWithInit } from './yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from './verification';
 import { createPriceOracle, setPriceOracleFeeds } from './priceOracle';
-import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from './poolFactory';
+import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations, updatePoolFactotyWithNoYield } from './poolFactory';
 import { createExtenstionWithInit } from './extension';
 import { createRepaymentsWithInit } from './repayments';
 import { createPool } from './poolLogic';
@@ -157,6 +157,8 @@ export async function createEnvironment(
         env.savingsAccount,
         env.extenstion
     );
+
+    await updatePoolFactotyWithNoYield(env.poolFactory, admin, yields.noYield);
 
     env.creditLine = await createCreditLines(proxyAdmin);
 

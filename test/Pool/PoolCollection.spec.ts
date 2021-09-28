@@ -215,6 +215,8 @@ describe('Pool Collection stage', async () => {
                 savingsAccount.address,
                 extenstion.address
             );
+
+        await poolFactory.connect(admin).updateNoYield(noYield.address);
     });
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
@@ -295,7 +297,7 @@ describe('Pool Collection stage', async () => {
             await borrowToken.connect(admin).transfer(lender.address, amount);
             await borrowToken.connect(lender).approve(pool.address, amount);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false, noYield.address));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
@@ -327,11 +329,11 @@ describe('Pool Collection stage', async () => {
             const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
             await savingsAccount.connect(lender).approve(borrowToken.address, pool.address, amount);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true, noYield.address));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(noYield.address, lender.address, amount);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs('0x0000000000000000000000000000000000000000', lender.address, amount);
 
             const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
             const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
@@ -359,11 +361,11 @@ describe('Pool Collection stage', async () => {
             const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
             await savingsAccount.connect(lender1).approve(borrowToken.address, pool.address, amount);
 
-            const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true, noYield.address));
+            const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(noYield.address, lender.address, amount);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs('0x0000000000000000000000000000000000000000', lender.address, amount);
 
             const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
             const poolTokenTotalSupplyAfter = await poolToken.totalSupply();

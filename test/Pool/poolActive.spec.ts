@@ -216,6 +216,8 @@ describe('Pool Active stage', async () => {
                 savingsAccount.address,
                 extenstion.address
             );
+
+        await poolFactory.connect(admin).updateNoYield(noYield.address);
     });
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
@@ -296,11 +298,11 @@ describe('Pool Active stage', async () => {
                 // console.log({amount: amount.toString(), amount1: amount1.toString()});
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
-                await pool.connect(lender).lend(lender.address, amount, false, noYield.address);
+                await pool.connect(lender).lend(lender.address, amount, false);
 
                 await borrowToken.connect(admin).transfer(lender1.address, amount1);
                 await borrowToken.connect(lender1).approve(pool.address, amount1);
-                await pool.connect(lender1).lend(lender1.address, amount1, false, noYield.address);
+                await pool.connect(lender1).lend(lender1.address, amount1, false);
 
                 const { loanStartTime } = await pool.poolConstants();
                 await blockTravel(network, parseInt(loanStartTime.add(1).toString()));

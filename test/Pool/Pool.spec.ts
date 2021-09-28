@@ -200,6 +200,8 @@ describe('Pool', async () => {
                     savingsAccount.address,
                     extenstion.address
                 );
+
+            await poolFactory.connect(admin).updateNoYield(noYield.address);
         });
 
         describe('Failed Cases', async () => {
@@ -634,7 +636,7 @@ describe('Pool', async () => {
                 await DaiTokenContract.transfer(lender.address, OperationalAmounts._amountLent);
                 await DaiTokenContract.connect(lender).approve(pool.address, OperationalAmounts._amountLent);
 
-                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false, noYield.address))
+                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(OperationalAmounts._amountLent, lender.address);
             });

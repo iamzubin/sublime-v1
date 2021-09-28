@@ -15,6 +15,7 @@ import { SavingsAccount } from '@typechain/SavingsAccount';
 import { Extension } from '@typechain/Extension';
 import { PoolFactoryInitParams } from '@utils/types';
 import { zeroAddress } from '../../utils/constants';
+import { IYield } from '@typechain/IYield';
 
 export async function createPoolFactory(proxyAdmin: SignerWithAddress): Promise<PoolFactory> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -97,4 +98,8 @@ export async function setImplementations(
             savingsAccount.address,
             extension.address
         );
+}
+
+export async function updatePoolFactotyWithNoYield(poolFactory: PoolFactory, admin: SignerWithAddress, noYield: IYield) {
+    await poolFactory.connect(admin).updateNoYield(noYield.address);
 }

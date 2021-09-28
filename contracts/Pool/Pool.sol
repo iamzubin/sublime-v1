@@ -494,9 +494,8 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
     function lend(
         address _lender,
         uint256 _amountLent,
-        bool _fromSavingsAccount,
-        address yieldContract
-    ) external payable nonReentrant {
+        bool _fromSavingsAccount
+    ) external nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
         if (_lenderVerifier != address(0)) {
             require(IVerification(IPoolFactory(PoolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'invalid lender');
@@ -512,8 +511,9 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
             _amount = _borrowAmountNeeded.sub(_lentAmount);
         }
 
+        address noYieldContract = IPoolFactory(PoolFactory).noYield();
         address _borrowToken = poolConstants.borrowAsset;
-        _deposit(_fromSavingsAccount, false, _borrowToken, _amount, yieldContract, msg.sender, address(this));
+        _deposit(_fromSavingsAccount, false, _borrowToken, _amount, noYieldContract, msg.sender, address(this));
         poolToken.mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);
     }

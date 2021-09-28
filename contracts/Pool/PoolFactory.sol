@@ -130,6 +130,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     uint256 protocolFeeFraction;
     address protocolFeeCollector;
 
+    address public override noYield;
+
     /*
      * @notice Used to mark assets supported for borrowing
      */
@@ -888,6 +890,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function updateNoOfRepaymentIntervalsLimit(uint256 _min, uint256 _max) external onlyOwner {
         noOfRepaymentIntervalsLimit = Limits(_min, _max);
         emit LimitsUpdated('NoOfRepaymentIntervals', _min, _max);
+    }
+
+    function updateNoYield(address _noYield) external onlyOwner {
+        noYield = _noYield;
     }
 
     function getProtocolFeeData() external view override returns (uint256, address) {
