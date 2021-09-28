@@ -202,7 +202,7 @@ export async function compound_RequestExtension(
 
             console.log('Borrow Token: ', env.mockTokenContracts[0].name);
             console.log('Collateral Token: ', env.mockTokenContracts[1].name);
-            
+
             // Requesting margin call
             await expect(env.extenstion.connect(random).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
             await expect(env.extenstion.connect(lender).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
@@ -233,7 +233,7 @@ export async function compound_RequestExtension(
             );
         });
 
-        it("Cannot liquidate pool after extension is passed", async () => {
+        it('Cannot liquidate pool after extension is passed', async () => {
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
 
@@ -246,7 +246,7 @@ export async function compound_RequestExtension(
             );
         });
 
-        it("Should be able to repay after extension is passed", async () => {
+        it('Should be able to repay after extension is passed', async () => {
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
             let borrowToken = env.mockTokenContracts[0].contract;
@@ -256,8 +256,10 @@ export async function compound_RequestExtension(
             await env.extenstion.connect(lender).voteOnExtension(pool.address);
             const { isLoanExtensionActive } = await env.repayments.connect(admin).repaymentVars(pool.address);
             assert(isLoanExtensionActive, 'Extension not active');
-            
-            let interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
+
+            let interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(
+                scaler
+            );
             const endOfExtension: BigNumber = (await env.repayments.connect(admin).getNextInstalmentDeadline(pool.address)).div(scaler);
 
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestForCurrentPeriod);
@@ -265,9 +267,7 @@ export async function compound_RequestExtension(
             await borrowToken.connect(random).approve(env.repayments.address, interestForCurrentPeriod);
             await env.repayments.connect(random).repayAmount(pool.address, interestForCurrentPeriod);
 
-            const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction
-                .mul(createPoolParams._repaymentInterval)
-                .div(scaler);
+            const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
             await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
 
             interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
