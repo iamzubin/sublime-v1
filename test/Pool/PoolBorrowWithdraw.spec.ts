@@ -580,7 +580,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
                 const borrowTokenRandom = await borrowToken.balanceOf(random.address);
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
-                await pool.connect(random).liquidateCancelPenality(false, false);
+                await pool.connect(random).liquidateCancelPenalty(false, false);
                 collateralTokensPool = await poolStrategy.callStatic.getTokensForShares(
                     collateralSharesPool.sub(2),
                     collateralToken.address
@@ -655,7 +655,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const borrowTokenRandom = await borrowToken.balanceOf(random.address);
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
 
-                await pool.connect(random).liquidateCancelPenality(false, true);
+                await pool.connect(random).liquidateCancelPenalty(false, true);
 
                 const collateralSharesRandomAfter = await yToken.balanceOf(random.address);
                 const collateralSharesPoolAfter = await savingsAccount.balanceInShares(
@@ -721,7 +721,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
                 const borrowTokenRandom = await borrowToken.balanceOf(random.address);
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
-                await pool.connect(random).liquidateCancelPenality(true, true);
+                await pool.connect(random).liquidateCancelPenalty(true, true);
 
                 const collateralSavingsRandomAfter = await savingsAccount.balanceInShares(
                     random.address,
@@ -788,8 +788,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 );
                 await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
-                await pool.connect(random).liquidateCancelPenality(false, false);
-                await expect(pool.connect(random).liquidateCancelPenality(false, false)).to.be.revertedWith('');
+                await pool.connect(random).liquidateCancelPenalty(false, false);
+                await expect(pool.connect(random).liquidateCancelPenalty(false, false)).to.be.revertedWith('');
             });
 
             it("Lender who withdraws lent amount before pool cancel penality doesn't get share of cancel penality", async () => {
@@ -849,7 +849,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 );
                 await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
-                await pool.connect(random).liquidateCancelPenality(false, false);
+                await pool.connect(random).liquidateCancelPenalty(false, false);
 
                 const { penaltyLiquidityAmount:penalityLiquidityAmount } = await pool.poolVars();
                 const lenderCancelBonus = penalityLiquidityAmount
@@ -998,7 +998,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
                 const borrowTokenRandom = await borrowToken.balanceOf(random.address);
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
-                await pool.connect(random).liquidateCancelPenality(false, false);
+                await pool.connect(random).liquidateCancelPenalty(false, false);
                 collateralTokensPool = await poolStrategy.callStatic.getTokensForShares(
                     collateralSharesPool.sub(2),
                     collateralToken.address
@@ -1118,7 +1118,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 );
                 await borrowToken.connect(admin).transfer(random.address, borrowTokensForCollateral);
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
-                await pool.connect(random).liquidateCancelPenality(false, false);
+                await pool.connect(random).liquidateCancelPenalty(false, false);
 
                 const { penaltyLiquidityAmount } = await pool.poolVars();
                 const lenderCancelBonus = penaltyLiquidityAmount

@@ -5,12 +5,9 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
-
 import '../interfaces/ISavingsAccount.sol';
 import '../interfaces/IStrategyRegistry.sol';
 import '../interfaces/IYield.sol';
-
-import "hardhat/console.sol";
 
 /**
  * @title Savings account contract with Methods related to savings account
