@@ -923,7 +923,11 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const loanStartTime = (await pool.poolConstants()).loanStartTime;
                 let extraPenalityTime = 0;
                 if (loanStartTime.lt(blockTime)) {
-                    extraPenalityTime = BigNumber.from(blockTime).sub(loanStartTime).toNumber();
+                    let penalityEndTime = BigNumber.from(blockTime);
+                    if(loanWithdrawalDeadline.lt(blockTime)) {
+                        penalityEndTime = loanWithdrawalDeadline;
+                    }
+                    extraPenalityTime = penalityEndTime.sub(loanStartTime).toNumber();
                 }
 
                 const penality = baseLiquidityShares
