@@ -42,6 +42,7 @@ import { Repayments } from '../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
 describe.skip('Template For Test cases', async () => {
     let savingsAccount: SavingsAccount;
@@ -56,6 +57,7 @@ describe.skip('Template For Test cases', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -128,6 +130,10 @@ describe.skip('Template For Test cases', async () => {
         await compoundYield.initialize(admin.address, savingsAccount.address);
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
+
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
@@ -211,7 +217,8 @@ describe.skip('Template For Test cases', async () => {
                         strategyRegistry.address,
                         priceOracle.address,
                         savingsAccount.address,
-                        extenstion.address
+                        extenstion.address,
+                        noYield.address
                     );
 
                 let deployHelper: DeployHelper = new DeployHelper(borrower);

@@ -381,7 +381,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _strategyRegistry,
         address _priceOracle,
         address _savingsAccount,
-        address _extension
+        address _extension,
+        address _noYield
     ) external onlyOwner {
         _updatePoolLogic(_poolImpl);
         _updateRepaymentImpl(_repaymentImpl);
@@ -391,6 +392,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updateUserRegistry(_userRegistry);
         _updateStrategyRegistry(_strategyRegistry);
         _updatePriceoracle(_priceOracle);
+        _updateNoYield(_noYield);
     }
 
     // check _collateralAmount
@@ -894,6 +896,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function updateNoYield(address _noYield) external onlyOwner {
+        _updateNoYield(_noYield);
+    }
+
+    function _updateNoYield(address _noYield) internal {
         noYield = _noYield;
         emit UpdateNoYield(_noYield);
     }

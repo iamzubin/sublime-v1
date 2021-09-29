@@ -198,7 +198,8 @@ describe('Pool', async () => {
                     strategyRegistry.address,
                     priceOracle.address,
                     savingsAccount.address,
-                    extenstion.address
+                    extenstion.address,
+                    noYield.address
                 );
 
             await poolFactory.connect(admin).updateNoYield(noYield.address);
@@ -282,7 +283,8 @@ describe('Pool', async () => {
                             strategyRegistry.address,
                             priceOracle.address,
                             savingsAccount.address,
-                            extenstion.address
+                            extenstion.address,
+                            noYield.address
                         )
                 ).to.be.revertedWith('Ownable: caller is not the owner');
             });
@@ -320,7 +322,8 @@ describe('Pool', async () => {
                     strategyRegistry.address,
                     priceOracle.address,
                     savingsAccount.address,
-                    extenstion.address
+                    extenstion.address,
+                    noYield.address
                 );
 
             let deployHelper: DeployHelper = new DeployHelper(borrower);
@@ -420,7 +423,8 @@ describe('Pool', async () => {
                         strategyRegistry.address,
                         priceOracle.address,
                         savingsAccount.address,
-                        extenstion.address
+                        extenstion.address,
+                        noYield.address
                     );
 
                 let deployHelper: DeployHelper = new DeployHelper(borrower);
@@ -551,7 +555,8 @@ describe('Pool', async () => {
                         strategyRegistry.address,
                         priceOracle.address,
                         savingsAccount.address,
-                        extenstion.address
+                        extenstion.address,
+                        noYield.address
                     );
 
                 let deployHelper: DeployHelper = new DeployHelper(borrower);

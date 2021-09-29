@@ -16,6 +16,7 @@ import { Extension } from '@typechain/Extension';
 import { PoolFactoryInitParams } from '@utils/types';
 import { zeroAddress } from '../../utils/constants';
 import { IYield } from '@typechain/IYield';
+import { NoYield } from '@typechain/NoYield';
 
 export async function createPoolFactory(proxyAdmin: SignerWithAddress): Promise<PoolFactory> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -84,7 +85,8 @@ export async function setImplementations(
     strategyRegistry: StrategyRegistry,
     priceOracle: PriceOracle,
     savingsAccount: SavingsAccount,
-    extension: Extension
+    extension: Extension,
+    noYield: IYield
 ) {
     await poolFactory
         .connect(admin)
@@ -96,7 +98,8 @@ export async function setImplementations(
             strategyRegistry.address,
             priceOracle.address,
             savingsAccount.address,
-            extension.address
+            extension.address,
+            noYield.address
         );
 }
 

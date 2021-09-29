@@ -42,7 +42,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         _updateSavingsAccount(_savingsAccount);
     }
 
-        function updateIweth9(address payable _iwethAddress) public onlyOwner {
+    function updateIweth9(address payable _iwethAddress) public onlyOwner {
         _updateIweth9(_iwethAddress);
     }
 

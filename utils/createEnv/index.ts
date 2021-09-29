@@ -155,7 +155,8 @@ export async function createEnvironment(
         env.strategyRegistry,
         env.priceOracle,
         env.savingsAccount,
-        env.extenstion
+        env.extenstion,
+        yields.noYield
     );
 
     await updatePoolFactotyWithNoYield(env.poolFactory, admin, yields.noYield);

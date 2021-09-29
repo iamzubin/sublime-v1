@@ -284,7 +284,8 @@ describe('Template 2', async () => {
                 strategyRegistry.address,
                 priceOracle.address,
                 savingsAccount.address,
-                extenstion.address
+                extenstion.address,
+                noYield.address
             );
 
         if (network.name === 'hardhat') {

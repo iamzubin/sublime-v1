@@ -215,7 +215,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 strategyRegistry.address,
                 priceOracle.address,
                 savingsAccount.address,
-                extenstion.address
+                extenstion.address,
+                noYield.address
             );
 
         await poolFactory.connect(admin).updateNoYield(noYield.address);

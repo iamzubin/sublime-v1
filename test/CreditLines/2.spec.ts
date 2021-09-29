@@ -217,7 +217,8 @@ describe('Credit Lines', async () => {
                     strategyRegistry.address,
                     priceOracle.address,
                     savingsAccount.address,
-                    extenstion.address
+                    extenstion.address,
+                    noYield.address
                 );
 
             await creditLine

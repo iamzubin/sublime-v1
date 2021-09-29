@@ -323,7 +323,8 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                 strategyRegistry.address,
                 priceOracle.address,
                 savingsAccount.address,
-                extenstion.address
+                extenstion.address,
+                noYield.address
             );
         await poolFactory.connect(admin).updateNoYield(noYield.address);
     });
