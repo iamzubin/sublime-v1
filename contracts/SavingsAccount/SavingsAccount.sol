@@ -133,12 +133,10 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             'SavingsAccount::switchStrategy Insufficient balance'
         );
 
-        uint256 tokensReceived = amount;
-        tokensReceived = IYield(currentStrategy).unlockTokens(asset, amount);
-
-        uint256 sharesReceived = tokensReceived;
+        uint256 tokensReceived = IYield(currentStrategy).unlockTokens(asset, amount);
         IERC20(asset).safeApprove(newStrategy, tokensReceived);
-        sharesReceived = _depositToYield(tokensReceived, asset, newStrategy);
+
+        uint256 sharesReceived = _depositToYield(tokensReceived, asset, newStrategy);
 
         userLockedBalance[msg.sender][asset][newStrategy] = userLockedBalance[msg.sender][asset][newStrategy].add(sharesReceived);
 

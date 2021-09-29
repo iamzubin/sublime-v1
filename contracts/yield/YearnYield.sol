@@ -28,6 +28,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     mapping(address => address) public override liquidityToken;
 
     event ProtocolAddressesUpdated(address asset, address protocolToken);
+    event UpdatedWeth(address weth);
 
     modifier onlySavingsAccount() {
         require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
@@ -41,9 +42,14 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         _updateSavingsAccount(_savingsAccount);
     }
 
-    function updateIweth9(address payable _iwethAddress) public onlyOwner {
+        function updateIweth9(address payable _iwethAddress) public onlyOwner {
+        _updateIweth9(_iwethAddress);
+    }
+
+    function _updateIweth9(address payable _iwethAddress) internal {
         require(_iwethAddress != address(0), '_iwethAddress address cannot be zero');
         iweth = IWETH9(_iwethAddress);
+        emit UpdatedWeth(_iwethAddress);
     }
 
     function updateSavingsAccount(address payable _savingsAccount) public onlyOwner {

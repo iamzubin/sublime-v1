@@ -317,6 +317,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      */
     event CollateralTokenUpdated(address collateralToken, bool isSupported);
 
+    event UpdateNoYield(address noYield);
     /**
      * @notice functions affected by this modifier can only be invoked by the Pool
      */
@@ -894,6 +895,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
     function updateNoYield(address _noYield) external onlyOwner {
         noYield = _noYield;
+        emit UpdateNoYield(_noYield);
     }
 
     function getProtocolFeeData() external view override returns (uint256, address) {
