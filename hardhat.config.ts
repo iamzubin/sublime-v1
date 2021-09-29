@@ -95,6 +95,8 @@ const config: HardhatUserConfig = {
         kovan_custom_accounts: {
             chainId: 42,
             url: 'https://kovan.infura.io/v3/' + INFURA_TOKEN,
+            // url: 'http://127.0.0.1:8545',
+            gasPrice: 1000000000,
             // @ts-ignore
             accounts: kovanPrivateKeys,
             saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,

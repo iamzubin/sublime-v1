@@ -1,7 +1,7 @@
 import hre from 'hardhat';
-import { contracts } from './contractsToVerify';
+import { getAddressesToVerify } from "./populateLogicAddresses";
 
-async function verifyProxy() {
+async function verifyProxy(contracts: any) {
     let [proxyAdmin] = await hre.ethers.getSigners();
 
     console.log(`Verifying contracts on network ${hre.network.name}`);
@@ -17,7 +17,7 @@ async function verifyProxy() {
     return 'Proxy Verified';
 }
 
-async function verifyLogic() {
+async function verifyLogic(contracts: any) {
     console.log(`Verifying strategy logic ${contracts.strategyRegistry.logic}`);
     await hre.run('verify:verify', {
         address: contracts.strategyRegistry.logic,
@@ -85,7 +85,7 @@ async function verifyLogic() {
     await hre.run('verify:verify', {
         address: contracts.repayments.logic,
         constructorArguments: [],
-        contract: 'contracts/Repayments/Repayments.sol:Repayments',
+        contract: 'contracts/Pool/Repayments.sol:Repayments',
     });
 
     console.log(`Verifying extenstions logic ${contracts.extension.logic}`);
@@ -95,16 +95,16 @@ async function verifyLogic() {
         contract: 'contracts/Pool/Extension.sol:Extension',
     });
 
-    console.log(`Verifying pool logic ${contracts.pool.logic}`);
+    console.log(`Verifying pool logic ${contracts.pool.proxy}`);
     await hre.run('verify:verify', {
-        address: contracts.pool.logic,
+        address: contracts.pool.proxy,
         constructorArguments: [],
         contract: 'contracts/Pool/Pool.sol:Pool',
     });
 
-    console.log(`Verifying pool token logic ${contracts.poolToken.logic}`);
+    console.log(`Verifying pool token logic ${contracts.poolToken.proxy}`);
     await hre.run('verify:verify', {
-        address: contracts.poolToken.logic,
+        address: contracts.poolToken.proxy,
         constructorArguments: [],
         contract: 'contracts/Pool/PoolToken.sol:PoolToken',
     });
@@ -113,8 +113,9 @@ async function verifyLogic() {
 }
 
 async function verify() {
-    await verifyProxy();
-    await verifyLogic();
+    let contracts = await getAddressesToVerify();
+    await verifyProxy(contracts);
+    await verifyLogic(contracts);
     return 'All Verified';
 }
 

@@ -20,7 +20,7 @@ export async function createAdminVerifierWithInit(proxyAdmin: SignerWithAddress,
     let adminVerifierLogic: AdminVerifier = await deployHelper.helper.deployAdminVerifier();
     let adminVerifierProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(adminVerifierLogic.address, proxyAdmin.address);
     let adminVerifier = await deployHelper.helper.getAdminVerifier(adminVerifierProxy.address);
-    await adminVerifier.connect(admin).initialize(admin.address, verification.address);
+    await (await adminVerifier.connect(admin).initialize(admin.address, verification.address)).wait();
     // await verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
     return adminVerifier;
 }

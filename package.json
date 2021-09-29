@@ -14,7 +14,7 @@
     "flatten": "npx waffle flatten",
     "lint-sol": "npx prettier --write 'contracts/**/*.sol'",
     "lint-ts": "tslint -c tslint.json -p tsconfig.json '{utils,test}/**/*.{ts}' --fix",
-    "deploy": "npx hardhat run scripts/deploy.ts --network",
+    "deploy": "npx hardhat run scripts/deploy --network",
     "chain": "npx hardhat node --no-deploy",
     "listAccount": "npx hardhat accounts --network",
     "verify": "npx hardhat run scripts/verify.ts --network",

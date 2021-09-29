@@ -9,7 +9,7 @@ import { Address } from 'hardhat-deploy/dist/types';
 
 export async function createStrategyRegistry(proxyAdmin: SignerWithAddress): Promise<StrategyRegistry> {
     const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    const strategyRegistryLogic: StrategyRegistry = await deployHelper.core.deployStrategyRegistry();
+    const strategyRegistryLogic: StrategyRegistry = await (await deployHelper.core.deployStrategyRegistry()).deployed();
     const strategyRegistryProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(
         strategyRegistryLogic.address,
         proxyAdmin.address
@@ -24,5 +24,5 @@ export async function initStrategyRegistry(
     admin: Address,
     maxStrategies: BigNumberish
 ) {
-    await strategyRegistry.connect(signer).initialize(admin, maxStrategies);
+    await (await strategyRegistry.connect(signer).initialize(admin, maxStrategies)).wait();
 }

@@ -61,6 +61,18 @@ export enum CreditLineDefaultStrategy {
     NoStrategy,
 }
 
+export interface DeploymentParams {
+    signers: SignerWithAddress[],
+    strategyRegistryParams: StrategyRegistryParams,
+    aaveYieldParams: AaveYieldParams,
+    yearnYieldPairs: YearnPair[],
+    compoundPairs: CompoundPair[],
+    priceFeeds: PriceOracleSource[],
+    extensionInitParams: ExtensionInitParams,
+    repaymentsInitParams: RepaymentsInitParams,
+    poolFactoryInitParams: PoolFactoryInitParams,
+}
+
 export interface InputParams {
     extenstionInitParams: ExtensionInitParams;
     creditLineInitParams: CreditLineInitParams;
@@ -78,6 +90,7 @@ export interface ExtensionInitParams {
 export interface CreditLineInitParams {
     _protocolFeeFraction: BigNumberish;
     _liquidatorRewardFraction: BigNumberish;
+    // protocolFeeCollector: Address;
 }
 
 export interface PoolFactoryInitParams {
@@ -125,4 +138,14 @@ export interface PoolCreateParams {
     _matchCollateralRatioInterval: BigNumberish;
     _noOfRepaymentIntervals: BigNumberish;
     _repaymentInterval: BigNumberish;
+}
+
+export interface StrategyRegistryParams {
+    maxStrategies: number;
+}
+
+export interface AaveYieldParams {
+    wethGateway: Address;
+    protocolDataProvider: Address;
+    lendingPoolAddressesProvider: Address;
 }

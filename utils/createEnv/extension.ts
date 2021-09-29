@@ -17,6 +17,6 @@ export async function createExtenstionWithInit(
     let extenstionLogic: Extension = await deployHelper.pool.deployExtenstion();
     let extenstionProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(extenstionLogic.address, proxyAdmin.address);
     let extenstion: Extension = await deployHelper.pool.getExtension(extenstionProxy.address);
-    await extenstion.connect(admin).initialize(poolFactory.address, extensionInitParams.votingPassRatio);
+    await (await extenstion.connect(admin).initialize(poolFactory.address, extensionInitParams.votingPassRatio)).wait();
     return extenstion;
 }

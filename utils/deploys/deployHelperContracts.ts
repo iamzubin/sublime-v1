@@ -20,7 +20,7 @@ export default class DeployHelperContracts {
     }
 
     public async deployVerification(): Promise<Verification> {
-        return await new Verification__factory(this._deployerSigner).deploy();
+        return await (await new Verification__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getVerification(verificationAddress: Address): Promise<Verification> {
@@ -28,7 +28,7 @@ export default class DeployHelperContracts {
     }
 
     public async deployAdminVerifier(): Promise<AdminVerifier> {
-        return await new AdminVerifier__factory(this._deployerSigner).deploy();
+        return await (await new AdminVerifier__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getAdminVerifier(adminVerifierAddress: Address): Promise<AdminVerifier> {
@@ -36,7 +36,7 @@ export default class DeployHelperContracts {
     }
 
     public async deployPriceOracle(): Promise<PriceOracle> {
-        return await new PriceOracle__factory(this._deployerSigner).deploy();
+        return await (await new PriceOracle__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getPriceOracle(priceOracleAddress: Address): Promise<PriceOracle> {
@@ -44,7 +44,7 @@ export default class DeployHelperContracts {
     }
 
     public async deploySublimeProxy(logic: Address, admin: Address): Promise<SublimeProxy> {
-        return await new SublimeProxy__factory(this._deployerSigner).deploy(logic, admin, Buffer.from(''));
+        return await (await new SublimeProxy__factory(this._deployerSigner).deploy(logic, admin, Buffer.from(''))).deployed();
     }
     public async getSublimeProxy(proxy: Address): Promise<SublimeProxy> {
         return await new SublimeProxy__factory(this._deployerSigner).attach(proxy);

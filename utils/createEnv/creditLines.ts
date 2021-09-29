@@ -29,7 +29,7 @@ export async function initCreditLine(
     creditLineInitParams: CreditLineInitParams,
     protocolFeeCollector: SignerWithAddress
 ) {
-    await creditLine
+    await (await creditLine
         .connect(admin)
         .initialize(
             defaultStrategy,
@@ -40,5 +40,5 @@ export async function initCreditLine(
             creditLineInitParams._protocolFeeFraction,
             protocolFeeCollector.address,
             creditLineInitParams._liquidatorRewardFraction
-        );
+        )).wait();
 }
