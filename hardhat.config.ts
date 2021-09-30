@@ -11,6 +11,7 @@ import 'solidity-coverage';
 import 'hardhat-deploy';
 import 'hardhat-tracer';
 import 'hardhat-log-remover';
+import 'hardhat-gas-reporter';
 
 import { task } from 'hardhat/config';
 import { HardhatUserConfig } from 'hardhat/types';
@@ -61,7 +62,8 @@ const config: HardhatUserConfig = {
             saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,
             loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
             tags: ['hardhat'],
-            initialBaseFeePerGas: 1,
+            initialBaseFeePerGas: 1000000000,
+            gasPrice: 1000000000
         },
         localhost: {
             url: 'http://127.0.0.1:8545',
@@ -179,6 +181,11 @@ const config: HardhatUserConfig = {
     },
     etherscan: {
         apiKey: etherscanKey,
+    },
+    gasReporter: {
+        enabled: process.env.REPORT_GAS?.toLowerCase() === 'true' ? true : false,
+        gasPrice: 1000000000,
+        currency: 'CHF'
     },
 };
 
