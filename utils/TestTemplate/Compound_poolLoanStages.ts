@@ -542,7 +542,7 @@ export async function compoundPoolCollectionStage(
         });
     });
 
-    describe.only('Pool Simulations: Defaulted Stage', async () => {
+    describe('Pool Simulations: Defaulted Stage', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -670,7 +670,7 @@ export async function compoundPoolCollectionStage(
             await pool.connect(borrower).withdrawBorrowedAmount();
         });
 
-        it.only('Anyone should be able to Liquidate the loan, if borrower misses repayment. Directly using wallets', async function () {
+        it('Anyone should be able to Liquidate the loan, if borrower misses repayment. Directly using wallets', async function () {
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10]; // Random address
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
