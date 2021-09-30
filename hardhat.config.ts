@@ -62,7 +62,9 @@ const config: HardhatUserConfig = {
             live: true,
             saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,
             loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
-            tags: ['hardhat']
+            tags: ['hardhat'],
+            initialBaseFeePerGas: 1,
+            gasPrice: 1,
         },
         localhost: {
             url: 'http://127.0.0.1:8545',
@@ -183,7 +185,7 @@ const config: HardhatUserConfig = {
     },
     gasReporter: {
         enabled: process.env.REPORT_GAS?.toLowerCase() === 'true' ? true : false,
-        gasPrice: 1000000000,
+        gasPrice: 1,
         currency: 'CHF',
     },
 };
