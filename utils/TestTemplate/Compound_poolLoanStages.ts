@@ -359,7 +359,7 @@ export async function compoundPoolCollectionStage(
 
         const scaler = BigNumber.from('10').pow(30);
 
-        before(async () => {
+        beforeEach(async () => {
             env = await createEnvironment(
                 hre,
                 [WhaleAccount1, WhaleAccount2],
