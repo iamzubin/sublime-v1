@@ -64,7 +64,6 @@ const config: HardhatUserConfig = {
             loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
             tags: ['hardhat'],
             initialBaseFeePerGas: 1000000000,
-            gasPrice: 1000000000,
         },
         localhost: {
             url: 'http://127.0.0.1:8545',
