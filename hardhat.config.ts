@@ -186,7 +186,7 @@ const config: HardhatUserConfig = {
     gasReporter: {
         enabled: process.env.REPORT_GAS?.toLowerCase() === 'true' ? true : false,
         gasPrice: 1,
-        currency: 'CHF',
+        currency: 'USD',
     },
 };
 
