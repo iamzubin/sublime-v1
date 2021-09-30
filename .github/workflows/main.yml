@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: docker://node:12.14.1
+      - uses: docker://node:12.22.5
       - name: Install dependencies
-        run: npm install --include-dev --save-exact
+        run: npm install --save-dev --save-exact
       - name: Build the contracts
         run: npm run build
       - name: Run tests and get coverage
