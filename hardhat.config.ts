@@ -16,8 +16,8 @@ import 'hardhat-gas-reporter';
 import { task } from 'hardhat/config';
 import { HardhatUserConfig } from 'hardhat/types';
 
-import { privateKeys, kovanPrivateKeys } from './utils/wallet';
 
+import { privateKeys, kovanPrivateKeys } from './utils/wallet';
 
 import {
     etherscanKey,
@@ -63,8 +63,8 @@ const config: HardhatUserConfig = {
             saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,
             loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
             tags: ['hardhat'],
-            initialBaseFeePerGas: 1000000000,
-            gasPrice: 1000000000
+            initialBaseFeePerGas: 1,
+            gasPrice: 1,
         },
         localhost: {
             url: 'http://127.0.0.1:8545',
@@ -185,8 +185,8 @@ const config: HardhatUserConfig = {
     },
     gasReporter: {
         enabled: process.env.REPORT_GAS?.toLowerCase() === 'true' ? true : false,
-        gasPrice: 1000000000,
-        currency: 'CHF'
+        gasPrice: 1,
+        currency: 'USD',
     },
 };
 
