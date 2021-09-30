@@ -24,7 +24,7 @@ export default class DeployMockContracts {
     }
 
     public async deployMockERC20(): Promise<ERC20> {
-        return await new ERC20__factory(this._deployerSigner).deploy();
+        return await (await new ERC20__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getMockERC20(tokenAddress: Address): Promise<ERC20> {
@@ -48,7 +48,7 @@ export default class DeployMockContracts {
     }
 
     public async deployToken(name: string, symbol: string, initSupply: BigNumberish): Promise<Token> {
-        return await new Token__factory(this._deployerSigner).deploy(name, symbol, initSupply);
+        return await (await new Token__factory(this._deployerSigner).deploy(name, symbol, initSupply)).deployed();
     }
 
     public async getToken(token: Address): Promise<Token> {

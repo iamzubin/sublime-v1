@@ -359,7 +359,7 @@ export async function compoundPoolCollectionStage(
 
         const scaler = BigNumber.from('10').pow(30);
 
-        before(async () => {
+        beforeEach(async () => {
             env = await createEnvironment(
                 hre,
                 [WhaleAccount1, WhaleAccount2],
@@ -434,7 +434,7 @@ export async function compoundPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -456,7 +456,7 @@ export async function compoundPoolCollectionStage(
         });
 
         // This case is when loan stage returns to withdraw after the withdrawal interval
-        xit('Borrower should not be able to withdraw token when amount < minimum borrow amount', async function () {
+        it('Borrower should not be able to withdraw token when amount < minimum borrow amount', async function () {
             let { admin, borrower, lender } = env.entities;
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let amount = BigNumber.from(1).mul(BigNumber.from(10).pow(BTDecimals)); // 1 Borrow Token

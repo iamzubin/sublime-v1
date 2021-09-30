@@ -1,4 +1,6 @@
-{
+import { BigNumber } from '@ethersproject/bignumber';
+
+module.exports = {
     "mainnet": {
         "blockchain": {
             "url": ""
@@ -59,65 +61,24 @@
         "strategies": {
             "max": 5,
             "aave": {
-                "wethGateway": "0xf8aC10E65F2073460aAD5f28E1EABE807DC287CF",
+                "wethGateway": "0xA61ca04DF33B72b235a8A28CfB535bb7A5271B70",
                 "protocolDataProvider": "0x3c73A5E5785cAC854D468F727c606C07488a29D6",
                 "lendingPoolAddressesProvider": "0x88757f2f99175387aB4C6a4b3067c77A695b0349"
             }
         },
         "repayments": {
-            "votingPassRatio": 50000000,
-            "votingExtensionlength":5000,
-            "gracePenalty": 500000000,
-            "gracePeriodFraction":5000000
+            "gracePenaltyRate": BigNumber.from(10).mul(BigNumber.from(10).pow(28)),
+            "gracePeriodFraction": BigNumber.from(10).mul(BigNumber.from(10).pow(28))
         },
         "pool": {
-            "collectionPeriod": 900,
-            "matchCollateralRatioInterval": 120,
-            "marginCallDuration": 120,
-            "collateralVolatilityThreshold": 10000000,
-            "gracePeriodPenaltyFraction": 5000000,
-            "liquidatorRewardFraction": 5000000,
-            "poolCancelPenalityFraction": 10000000
-        },
-        "OpenBorrowPool": {
-            "poolSize": "40000000000000000",
-            "minBorrowAmountFraction": 50000000,
-            "borrowTokenType": "0x8d40f9B7fd9AF24AAf8F8871af7026AeCCFB2b1e",
-            "collateralTokenType": "0x0000000000000000000000000000000000000000",
-            "collateralRatio": 10000000,
-            "borrowRate": "6000000",
-            "repaymentInterval": "86400",
-            "noOfRepaymentIntervals": 15,
-            "investedTo": "0x0000000000000000000000000000000000000000",
-            "collateralAmount": "50000000000000000",
-            "transferFromSavingsAccount": false,
-            "salt": "borrower"
-        },
-        "creditLines": {
-            "defaultStrategy": "0x0000000000000000000000000000000000000000"
-        },
-        "creditLinesDeploy": {
-            "borrowLimit": "10000000000000000000",
-            "liquidationThreshold": "10",
-            "borrowRate": "6000000000000000000",
-            "autoLiquidation": true,
-            "collateralRatio": "50000000000000000000",
-            "borrowAsset": "0x8d40f9B7fd9AF24AAf8F8871af7026AeCCFB2b1e",
-            "collateralAsset": "0x0000000000000000000000000000000000000000"
-        },
-        "deployedAddress": {
-            "strategyRegistry": "0xDE4dA0ca536a6974A17fB6Bc7D8B6975237F79b9",
-            "savingsAccount": "0xBbD4558d69df4F0F411AeF2353aB622107C946Fa",
-            "aaveYield": "0xebea40F142ff5b9a9b17b8DfBD99c5A2f5125dD6",
-            "compoundYield": "0x0B4E5243f461cB5B2F746dA8964d74E4d9d0279F",
-            "yearnYield": "0x69BedEBfF32c00076Fa433E63BA403aec558f0D9",
-            "priceOracle": "0x8C8cA9C01392e6124D31713A1e3895b43770d1Ed",
-            "verification": "0x4A3Ad240634e9590014900313Ffc5493752Ac339",
-            "poolFactory": "0xa4Eca2Eae5A6A90fb32868E050986Ea3B900c95d",
-            "repayments": "0x37cd92d504cf64c12b1C8621e30870ac9fBfB119",
-            "extension": "0x9CD3128eb4BA5Dbb21c1CD9c787E0D7C96351c14",
-            "pool": "0x646094e1f024A0e0851D66966FCDD93b49C3F031",
-            "creditLines": "0xa454683Aed13A3D117408c61477b40677E227C6e"
+            _collectionPeriod: BigNumber.from(10000),
+            _matchCollateralRatioInterval: BigNumber.from(200),
+            _marginCallDuration: BigNumber.from(300),
+            _minborrowFraction: BigNumber.from(1).mul(BigNumber.from(10).pow(29)),
+            _gracePeriodPenaltyFraction: BigNumber.from(5).mul(BigNumber.from(10).pow(28)),
+            _liquidatorRewardFraction: BigNumber.from(15).mul(BigNumber.from(10).pow(28)),
+            _poolCancelPenalityFraction: BigNumber.from(10).mul(BigNumber.from(10).pow(28)),
+            _protocolFeeFraction: BigNumber.from(1).mul(BigNumber.from(10).pow(26)),
         },
         "oracle": {
             "usd": "0x9326BFA02ADD2366b30bacB125260Af641031331"
