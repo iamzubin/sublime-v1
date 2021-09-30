@@ -39,22 +39,24 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
         _protocolFeeFraction,
         protocolFeeCollector,
     } = initParams;
-    await (await poolFactory
-        .connect(signer)
-        .initialize(
-            admin,
-            _collectionPeriod,
-            _matchCollateralRatioInterval,
-            _marginCallDuration,
-            _gracePeriodPenaltyFraction,
-            _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
-            _liquidatorRewardFraction,
-            _poolCancelPenalityFraction,
-            _minBorrowFraction,
-            _protocolFeeFraction,
-            protocolFeeCollector
-        )).wait();
+    await (
+        await poolFactory
+            .connect(signer)
+            .initialize(
+                admin,
+                _collectionPeriod,
+                _matchCollateralRatioInterval,
+                _marginCallDuration,
+                _gracePeriodPenaltyFraction,
+                _poolInitFuncSelector,
+                _poolTokenInitFuncSelector,
+                _liquidatorRewardFraction,
+                _poolCancelPenalityFraction,
+                _minBorrowFraction,
+                _protocolFeeFraction,
+                protocolFeeCollector
+            )
+    ).wait();
 }
 
 export async function addSupportedTokens(

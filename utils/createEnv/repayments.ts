@@ -20,12 +20,10 @@ export async function createRepaymentsWithInit(
     let repaymentProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(repaymentLogic.address, proxyAdmin.address);
     let repayments: Repayments = await deployHelper.pool.getRepayments(repaymentProxy.address);
 
-    await (await repayments
-        .connect(admin)
-        .initialize(
-            poolFactory.address,
-            repaymentsInitParams.gracePenalityRate,
-            repaymentsInitParams.gracePeriodFraction
-        )).wait();
+    await (
+        await repayments
+            .connect(admin)
+            .initialize(poolFactory.address, repaymentsInitParams.gracePenalityRate, repaymentsInitParams.gracePeriodFraction)
+    ).wait();
     return repayments;
 }

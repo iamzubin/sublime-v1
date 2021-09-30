@@ -190,11 +190,7 @@ describe('Pool Active stage', async () => {
 
         await repaymentImpl
             .connect(admin)
-            .initialize(
-                poolFactory.address,
-                repaymentParams.gracePenalityRate,
-                repaymentParams.gracePeriodFraction
-            );
+            .initialize(poolFactory.address, repaymentParams.gracePenalityRate, repaymentParams.gracePeriodFraction);
 
         await poolFactory
             .connect(admin)
@@ -766,7 +762,9 @@ describe('Pool Active stage', async () => {
                 it("Margin call can't be liquidated, if borrower adds collateral for margin call", async () => {
                     await pool.connect(lender).requestMarginCall();
                     const price = await priceOracle.getLatestPrice(Contracts.LINK, Contracts.DAI);
-                    const totalDeficit: BigNumber = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(scaler)
+                    const totalDeficit: BigNumber = createPoolParams._poolSize
+                        .mul(testPoolFactoryParams._minborrowFraction)
+                        .div(scaler)
                         .mul(price[0])
                         .div(BigNumber.from(10).pow(price[1]))
                         .sub(createPoolParams._collateralAmount);
@@ -798,7 +796,9 @@ describe('Pool Active stage', async () => {
                 it("If collateral ratio below ideal after margin call time, Anyone can liquidate lender's part of collateral", async () => {
                     await pool.connect(lender).requestMarginCall();
                     const price = await priceOracle.getLatestPrice(Contracts.LINK, Contracts.DAI);
-                    const totalDeficit: BigNumber = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(scaler)
+                    const totalDeficit: BigNumber = createPoolParams._poolSize
+                        .mul(testPoolFactoryParams._minborrowFraction)
+                        .div(scaler)
                         .mul(price[0])
                         .mul(createPoolParams._collateralRatio.sub(createPoolParams._collateralVolatilityThreshold))
                         .div(scaler)

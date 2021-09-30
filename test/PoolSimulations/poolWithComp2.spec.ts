@@ -22,7 +22,7 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
-    creditLineFactoryParams
+    creditLineFactoryParams,
 } from '../../utils/constants';
 
 import DeployHelper from '../../utils/deploys';
@@ -65,12 +65,12 @@ describe('Pool With Compound Strategy 2', async () => {
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
-                _minBorrowFraction: testPoolFactoryParams._minborrowFraction
+                _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
             } as PoolFactoryInitParams,
             CreditLineDefaultStrategy.Compound,
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
-                _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
             } as CreditLineInitParams
         );
     });

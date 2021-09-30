@@ -1,7 +1,7 @@
-import { BytesLike } from "@ethersproject/providers/node_modules/@ethersproject/bytes";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Address } from "hardhat-deploy/dist/types";
-import { PoolCreateParams } from "../../utils/types";
+import { BytesLike } from '@ethersproject/providers/node_modules/@ethersproject/bytes';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { Address } from 'hardhat-deploy/dist/types';
+import { PoolCreateParams } from '../../utils/types';
 
 export interface Contracts {
     savingsAccount: Address;
@@ -22,11 +22,11 @@ export interface Contracts {
 }
 
 export interface PoolData {
-    borrower: SignerWithAddress,
-    borrowToken: Address,
-    collateralToken: Address,
-    strategy: Address,
-    salt: BytesLike,
-    transferFromSavingsAccount: boolean,
-    poolCreateParams: PoolCreateParams,
+    borrower: SignerWithAddress;
+    borrowToken: Address;
+    collateralToken: Address;
+    strategy: Address;
+    salt: BytesLike;
+    transferFromSavingsAccount: boolean;
+    poolCreateParams: PoolCreateParams;
 }

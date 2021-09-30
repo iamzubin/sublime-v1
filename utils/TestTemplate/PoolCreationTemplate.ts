@@ -21,7 +21,7 @@ import {
     aaveYieldParams,
     createPoolParams,
     zeroAddress,
-    creditLineFactoryParams
+    creditLineFactoryParams,
 } from '../constants-rahul';
 
 import hre from 'hardhat';
@@ -94,12 +94,12 @@ export async function poolCreationTest(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
-                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
-                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams
             );
 

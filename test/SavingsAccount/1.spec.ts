@@ -397,11 +397,9 @@ describe('Test Savings Account (with ETH)', async () => {
                 compoundYield.address
             );
             await expect(
-                savingsAccount
-                    .connect(userAccount)
-                    .deposit(depositValueToTest, zeroAddress, compoundYield.address, randomAccount.address, {
-                        value: depositValueToTest,
-                    })
+                savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, compoundYield.address, randomAccount.address, {
+                    value: depositValueToTest,
+                })
             )
                 .to.emit(savingsAccount, 'Deposited')
                 .withArgs(randomAccount.address, depositValueToTest, zeroAddress, compoundYield.address);

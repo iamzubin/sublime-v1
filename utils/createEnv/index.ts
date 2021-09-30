@@ -113,7 +113,7 @@ export async function createEnvironment(
     await env.strategyRegistry.connect(admin).addStrategy(yields.noStrategy);
 
     env.verification = await createVerificationWithInit(proxyAdmin, admin);
-    env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification)
+    env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification);
 
     await env.verification.connect(admin).addVerifier(env.adminVerifier.address);
     await env.adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);

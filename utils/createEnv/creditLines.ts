@@ -29,16 +29,18 @@ export async function initCreditLine(
     creditLineInitParams: CreditLineInitParams,
     protocolFeeCollector: SignerWithAddress
 ) {
-    await (await creditLine
-        .connect(admin)
-        .initialize(
-            defaultStrategy,
-            priceOracle.address,
-            savingsAccount.address,
-            strategyRegistry.address,
-            admin.address,
-            creditLineInitParams._protocolFeeFraction,
-            protocolFeeCollector.address,
-            creditLineInitParams._liquidatorRewardFraction
-        )).wait();
+    await (
+        await creditLine
+            .connect(admin)
+            .initialize(
+                defaultStrategy,
+                priceOracle.address,
+                savingsAccount.address,
+                strategyRegistry.address,
+                admin.address,
+                creditLineInitParams._protocolFeeFraction,
+                protocolFeeCollector.address,
+                creditLineInitParams._liquidatorRewardFraction
+            )
+    ).wait();
 }

@@ -62,15 +62,15 @@ export enum CreditLineDefaultStrategy {
 }
 
 export interface DeploymentParams {
-    signers: SignerWithAddress[],
-    strategyRegistryParams: StrategyRegistryParams,
-    aaveYieldParams: AaveYieldParams,
-    yearnYieldPairs: YearnPair[],
-    compoundPairs: CompoundPair[],
-    priceFeeds: PriceOracleSource[],
-    extensionInitParams: ExtensionInitParams,
-    repaymentsInitParams: RepaymentsInitParams,
-    poolFactoryInitParams: PoolFactoryInitParams,
+    signers: SignerWithAddress[];
+    strategyRegistryParams: StrategyRegistryParams;
+    aaveYieldParams: AaveYieldParams;
+    yearnYieldPairs: YearnPair[];
+    compoundPairs: CompoundPair[];
+    priceFeeds: PriceOracleSource[];
+    extensionInitParams: ExtensionInitParams;
+    repaymentsInitParams: RepaymentsInitParams;
+    poolFactoryInitParams: PoolFactoryInitParams;
 }
 
 export interface InputParams {

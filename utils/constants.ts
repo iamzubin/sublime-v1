@@ -61,8 +61,8 @@ export const testPoolFactoryParams = {
 
 export const creditLineFactoryParams = {
     _liquidatorRewardFraction: BigNumber.from(10).mul(BigNumber.from(10).pow(28)),
-    _protocolFeeFraction: BigNumber.from(2).mul(BigNumber.from(10).pow(26))
-}
+    _protocolFeeFraction: BigNumber.from(2).mul(BigNumber.from(10).pow(26)),
+};
 
 export const repaymentParams = {
     gracePenalityRate: BigNumber.from(10).mul(BigNumber.from(10).pow(28)),

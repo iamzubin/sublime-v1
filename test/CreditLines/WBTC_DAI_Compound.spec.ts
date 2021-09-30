@@ -192,10 +192,7 @@ describe('WBTC-DAI Credit Lines', async () => {
             _protocolFeeFraction,
         } = testPoolFactoryParams;
 
-        let {
-            _protocolFeeFraction: clProtocolFeeFraction,
-            _liquidatorRewardFraction: clLiquidatorRewardFraction
-        } = testPoolFactoryParams;
+        let { _protocolFeeFraction: clProtocolFeeFraction, _liquidatorRewardFraction: clLiquidatorRewardFraction } = testPoolFactoryParams;
 
         await poolFactory
             .connect(admin)

@@ -57,7 +57,7 @@
         "votingPassRatio": 0.5
     },
     "repayments": {
-        "gracePenalityRate":  3,
+        "gracePenalityRate": 3,
         "gracePeriodFraction": 0.4
     },
     "poolFactory": {

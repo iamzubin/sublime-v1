@@ -189,11 +189,7 @@ describe('Pool Collection stage', async () => {
 
         await repaymentImpl
             .connect(admin)
-            .initialize(
-                poolFactory.address,
-                repaymentParams.gracePenalityRate,
-                repaymentParams.gracePeriodFraction
-            );
+            .initialize(poolFactory.address, repaymentParams.gracePenalityRate, repaymentParams.gracePeriodFraction);
 
         await poolFactory
             .connect(admin)

@@ -1,5 +1,5 @@
 import hre from 'hardhat';
-import { getAddressesToVerify } from "./populateLogicAddresses";
+import { getAddressesToVerify } from './populateLogicAddresses';
 
 async function verifyProxy(contracts: any) {
     let [proxyAdmin] = await hre.ethers.getSigners();

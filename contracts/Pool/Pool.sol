@@ -425,11 +425,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
 
         poolVars.loanStatus = LoanStatus.ACTIVE;
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
-        require(
-            _currentCollateralRatio >=
-                poolConstants.idealCollateralRatio.sub(poolConstants.volatilityThreshold),
-            '14'
-        );
+        require(_currentCollateralRatio >= poolConstants.idealCollateralRatio.sub(poolConstants.volatilityThreshold), '14');
 
         uint256 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
         uint256 _repaymentInterval = poolConstants.repaymentInterval;
@@ -570,7 +566,10 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         uint256 _loanStartTime = poolConstants.loanStartTime;
         IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
 
-        if (_loanStartTime < block.timestamp && poolToken.totalSupply() < _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30)) {
+        if (
+            _loanStartTime < block.timestamp &&
+            poolToken.totalSupply() < _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30)
+        ) {
             return _cancelPool(0);
         }
 
@@ -725,11 +724,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
         require(getMarginCallEndTime(msg.sender) == 0, 'RMC1');
         uint256 _idealCollateralRatio = poolConstants.idealCollateralRatio;
-        require(
-            _idealCollateralRatio >
-                getCurrentCollateralRatio(msg.sender).add(poolConstants.volatilityThreshold),
-            '26'
-        );
+        require(_idealCollateralRatio > getCurrentCollateralRatio(msg.sender).add(poolConstants.volatilityThreshold), '26');
 
         lenders[msg.sender].marginCallEndTime = block.timestamp.add(_poolFactory.marginCallDuration());
 
@@ -878,11 +873,7 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         require(getMarginCallEndTime(_lender) != 0, 'No margin call has been called.');
         require(_marginCallEndTime < block.timestamp, '28');
 
-        require(
-            poolConstants.idealCollateralRatio.sub(poolConstants.volatilityThreshold) >
-                getCurrentCollateralRatio(_lender),
-            '29'
-        );
+        require(poolConstants.idealCollateralRatio.sub(poolConstants.volatilityThreshold) > getCurrentCollateralRatio(_lender), '29');
         require(poolToken.balanceOf(_lender) != 0, '30');
     }
 

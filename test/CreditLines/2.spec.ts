@@ -184,10 +184,8 @@ describe('Credit Lines', async () => {
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
 
-            let {
-                _protocolFeeFraction: clProtocolFeeFraction,
-                _liquidatorRewardFraction: clLiquidatorRewardFraction
-            } = testPoolFactoryParams;
+            let { _protocolFeeFraction: clProtocolFeeFraction, _liquidatorRewardFraction: clLiquidatorRewardFraction } =
+                testPoolFactoryParams;
 
             await poolFactory
                 .connect(admin)
@@ -332,9 +330,9 @@ describe('Credit Lines', async () => {
             it('Cannot borrow more if amount more than borrow limit', async () => {
                 await savingsAccount.connect(lender).approve(amountToBorrow, DaiTokenContract.address, creditLine.address);
 
-                await expect(
-                    creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow.mul(100))
-                ).to.be.revertedWith('CreditLine: Amount exceeds borrow limit.');
+                await expect(creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow.mul(100))).to.be.revertedWith(
+                    'CreditLine: Amount exceeds borrow limit.'
+                );
             });
         });
 

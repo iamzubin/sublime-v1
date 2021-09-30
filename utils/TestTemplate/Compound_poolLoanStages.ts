@@ -15,7 +15,14 @@ import hre from 'hardhat';
 const { ethers, network } = hre;
 import { expect, assert } from 'chai';
 
-import { extensionParams, repaymentParams, testPoolFactoryParams, creditLineFactoryParams, createPoolParams, zeroAddress } from '../constants-Additions';
+import {
+    extensionParams,
+    repaymentParams,
+    testPoolFactoryParams,
+    creditLineFactoryParams,
+    createPoolParams,
+    zeroAddress,
+} from '../constants-Additions';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -84,12 +91,12 @@ export async function compoundPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
-                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
-                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams
             );
 
@@ -391,12 +398,12 @@ export async function compoundPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
-                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
-                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams
             );
 
@@ -579,12 +586,12 @@ export async function compoundPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
-                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
-                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams
             );
 
@@ -600,7 +607,7 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold:  BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -760,12 +767,12 @@ export async function compoundPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
-                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
-                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams
             );
 

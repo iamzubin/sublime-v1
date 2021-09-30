@@ -26,23 +26,25 @@ export async function createAaveYieldWithInit(
     let aaveYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(aaveYieldLogic.address, proxyAdmin.address);
     let aaveYield: AaveYield = await deployHelper.core.getAaveYield(aaveYieldProxy.address);
 
-    if(!aaveYieldParams) {
+    if (!aaveYieldParams) {
         aaveYieldParams = {
             wethGateway: defaultAaveYieldParams._wethGateway,
             protocolDataProvider: defaultAaveYieldParams._protocolDataProvider,
-            lendingPoolAddressesProvider: defaultAaveYieldParams._lendingPoolAddressesProvider
-        }
+            lendingPoolAddressesProvider: defaultAaveYieldParams._lendingPoolAddressesProvider,
+        };
     }
 
-    await (await aaveYield
-        .connect(admin)
-        .initialize(
-            admin.address,
-            savingsAccount.address,
-            aaveYieldParams.wethGateway,
-            aaveYieldParams.protocolDataProvider,
-            aaveYieldParams.lendingPoolAddressesProvider
-        )).wait();
+    await (
+        await aaveYield
+            .connect(admin)
+            .initialize(
+                admin.address,
+                savingsAccount.address,
+                aaveYieldParams.wethGateway,
+                aaveYieldParams.protocolDataProvider,
+                aaveYieldParams.lendingPoolAddressesProvider
+            )
+    ).wait();
 
     return IYield__factory.connect(aaveYield.address, admin);
 }

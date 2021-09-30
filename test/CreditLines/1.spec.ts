@@ -179,10 +179,8 @@ describe('Credit Lines', async () => {
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
 
-            let {
-                _protocolFeeFraction: clProtocolFeeFraction,
-                _liquidatorRewardFraction: clLiquidatorRewardFraction
-            } = testPoolFactoryParams;
+            let { _protocolFeeFraction: clProtocolFeeFraction, _liquidatorRewardFraction: clLiquidatorRewardFraction } =
+                testPoolFactoryParams;
 
             await poolFactory
                 .connect(admin)
@@ -296,7 +294,7 @@ describe('Credit Lines', async () => {
 
             const allowance = await DaiTokenContract.allowance(lender.address, creditLine.address);
             await DaiTokenContract.connect(lender).approve(creditLine.address, allowance.add(_borrowLimit));
-            console.log("allowance done")
+            console.log('allowance done');
             let values = await creditLine
                 .connect(lender)
                 .callStatic.request(
@@ -310,7 +308,7 @@ describe('Credit Lines', async () => {
                     _collateralAsset,
                     true
                 );
-            console.log("credit line id is", values)
+            console.log('credit line id is', values);
             await expect(
                 creditLine
                     .connect(lender)
@@ -328,7 +326,7 @@ describe('Credit Lines', async () => {
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
-            console.log("credit lines created")
+            console.log('credit lines created');
             borrowerCreditLine = values;
             let creditLineConstants = await creditLine.creditLineConstants(values);
             // console.log({ creditLineConstants });
@@ -409,10 +407,8 @@ describe('Credit Lines', async () => {
                     _protocolFeeFraction,
                 } = testPoolFactoryParams;
 
-                let {
-                    _protocolFeeFraction: clProtocolFeeFraction,
-                    _liquidatorRewardFraction: clLiquidatorRewardFraction
-                } = testPoolFactoryParams;
+                let { _protocolFeeFraction: clProtocolFeeFraction, _liquidatorRewardFraction: clLiquidatorRewardFraction } =
+                    testPoolFactoryParams;
 
                 await poolFactory
                     .connect(admin)
@@ -611,9 +607,7 @@ describe('Credit Lines', async () => {
                 it('Cannot deposit into invalid credit line hash', async () => {
                     let randomInvalidHash = '0x0000000011111111000000001111111100000000111111110000000011111111';
                     await expect(
-                        creditLine
-                            .connect(borrower)
-                            .depositCollateral(randomInvalidHash, BigNumber.from('123123123'), false)
+                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), false)
                     ).to.be.revertedWith('Credit line does not exist');
 
                     await expect(

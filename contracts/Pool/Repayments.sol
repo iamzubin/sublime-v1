@@ -69,7 +69,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param repayAmount Amount being repayed
     event InterestRepaymentComplete(address poolID, uint256 repayAmount);
 
-
     /// @notice Event emitted when pricipal is repaid
     /// @param poolID The address of the pool to which principal was paid
     /// @param repayAmount Amount being repayed
@@ -372,9 +371,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
             // adding grace penalty if applicable
             if (_isBorrowerLate) {
-                uint256 _penalty = repayInfo[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(
-                    10**30
-                );
+                uint256 _penalty = repayInfo[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
                 _amount = _amount.sub(_penalty);
                 _amountRequired = _amountRequired.add(_penalty);
                 emit GracePenaltyRepaid(_poolID, _penalty);
@@ -424,10 +421,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
         require(repayState[_poolID].isLoanExtensionActive == false, 'Repayments:repayPrincipal Repayment overdue unpaid');
 
-        require(
-            repayInfo[_poolID].loanDuration == repayState[_poolID].loanDurationCovered,
-            'Repayments:repayPrincipal Unpaid interest'
-        );
+        require(repayInfo[_poolID].loanDuration == repayState[_poolID].loanDurationCovered, 'Repayments:repayPrincipal Unpaid interest');
 
         uint256 _amount = _pool.getTokensLent();
 

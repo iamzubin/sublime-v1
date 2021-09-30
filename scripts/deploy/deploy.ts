@@ -9,8 +9,8 @@ import {
     PriceOracleSource,
     RepaymentsInitParams,
     StrategyRegistryParams,
-    YearnPair
-} from "../../utils/types";
+    YearnPair,
+} from '../../utils/types';
 
 import { createSavingsAccount, initSavingsAccount } from '../../utils/createEnv/savingsAccount';
 import { createStrategyRegistry, initStrategyRegistry } from '../../utils/createEnv/strategyRegistry';
@@ -41,7 +41,7 @@ import { CreditLine } from '../../typechain/CreditLine';
 import { IYield } from '../../typechain/IYield';
 import { zeroAddress } from '../../utils/constants';
 
-export async function deployer (signers: SignerWithAddress[], config: DeploymentParams) {
+export async function deployer(signers: SignerWithAddress[], config: DeploymentParams) {
     const {
         strategyRegistryParams,
         aaveYieldParams,
@@ -75,7 +75,7 @@ export async function deployer (signers: SignerWithAddress[], config: Deployment
 
     await initStrategyRegistry(strategyRegistry, deployer, admin.address, strategyRegistryParams.maxStrategies);
 
-    console.log("Deploy and initialize aaveYield");
+    console.log('Deploy and initialize aaveYield');
 
     await (await strategyRegistry.connect(admin).addStrategy(zeroAddress)).wait();
 
@@ -87,7 +87,7 @@ export async function deployer (signers: SignerWithAddress[], config: Deployment
     // const yearnYield: IYield = await createYearnYieldWithInit(proxyAdmin, admin, savingsAccount, yearnYieldPairs);
     // await strategyRegistry.connect(admin).addStrategy(yearnYield.address);
 
-    console.log("Deploy and initialize compoundYield");
+    console.log('Deploy and initialize compoundYield');
 
     const compoundYield: IYield = await createCompoundYieldWithInit(proxyAdmin, admin, savingsAccount, compoundPairs);
     await (await strategyRegistry.connect(admin).addStrategy(compoundYield.address)).wait();
@@ -95,14 +95,14 @@ export async function deployer (signers: SignerWithAddress[], config: Deployment
     console.log('Deploying verification');
 
     const verification: Verification = await createVerificationWithInit(proxyAdmin, admin);
-    const adminVerifier: AdminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin,  verification);
+    const adminVerifier: AdminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, verification);
     await (await verification.connect(admin).addVerifier(adminVerifier.address)).wait();
 
     console.log('Deploying price oracle');
 
     const priceOracle: PriceOracle = await createPriceOracle(proxyAdmin, admin);
 
-    console.log("setting price feeds");
+    console.log('setting price feeds');
 
     await setPriceOracleFeeds(priceOracle, admin, priceFeeds);
 
@@ -134,15 +134,15 @@ export async function deployer (signers: SignerWithAddress[], config: Deployment
     console.log('Set implementations in Pool Factory');
 
     await setImplementations(
-        poolFactory, 
-        admin, 
-        poolLogic, 
-        repaymentLogic, 
-        poolTokenLogic, 
-        verification, 
-        strategyRegistry, 
-        priceOracle, 
-        savingsAccount, 
+        poolFactory,
+        admin,
+        poolLogic,
+        repaymentLogic,
+        poolTokenLogic,
+        verification,
+        strategyRegistry,
+        priceOracle,
+        savingsAccount,
         extension
     );
 
@@ -157,8 +157,8 @@ export async function deployer (signers: SignerWithAddress[], config: Deployment
         compoundPairs.map((a) => a.asset)
     );
 
-    console.log("initialize credit lines");
-        // TODO
+    console.log('initialize credit lines');
+    // TODO
     // await initCreditLine(creditLine, admin, );
 
     return {
@@ -177,6 +177,6 @@ export async function deployer (signers: SignerWithAddress[], config: Deployment
         poolLogic: poolLogic.address,
         poolTokenLogic: poolTokenLogic.address,
         repaymentLogic: repaymentLogic.address,
-        poolFactory: poolFactory.address
+        poolFactory: poolFactory.address,
     };
-};
+}
