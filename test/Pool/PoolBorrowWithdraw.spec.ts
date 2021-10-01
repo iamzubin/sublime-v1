@@ -319,7 +319,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const { baseLiquidityShares } = await pool.poolVars();
+                const { baseLiquidityShares } = await pool.poolVariables();
                 await pool.connect(borrower).cancelPool();
                 const collateralBalanceBorrowerSavingsAfter = await savingsAccount.balanceInShares(
                     borrower.address,
@@ -489,7 +489,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const { baseLiquidityShares } = await pool.poolVars();
+                const { baseLiquidityShares } = await pool.poolVariables();
                 await expect(pool.connect(lender).cancelPool()).to.revertedWith('CP2');
                 const tx = await pool.connect(borrower).cancelPool();
 
@@ -842,7 +842,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
                 await pool.connect(random).liquidateCancelPenalty(false, false);
 
-                const { penaltyLiquidityAmount: penalityLiquidityAmount } = await pool.poolVars();
+                const { penaltyLiquidityAmount: penalityLiquidityAmount } = await pool.poolVariables();
                 const lenderCancelBonus = penalityLiquidityAmount
                     .mul(await poolToken.balanceOf(lender.address))
                     .div(await poolToken.totalSupply());
@@ -904,7 +904,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     collateralToken.address,
                     poolStrategy.address
                 );
-                const { baseLiquidityShares } = await pool.poolVars();
+                const { baseLiquidityShares } = await pool.poolVariables();
                 const tx = await pool.connect(borrower).cancelPool();
 
                 let blockTime = 0;
@@ -1115,7 +1115,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await borrowToken.connect(random).approve(pool.address, borrowTokensForCollateral);
                 await pool.connect(random).liquidateCancelPenalty(false, false);
 
-                const { penaltyLiquidityAmount } = await pool.poolVars();
+                const { penaltyLiquidityAmount } = await pool.poolVariables();
                 const lenderCancelBonus = penaltyLiquidityAmount
                     .mul(await poolToken.balanceOf(lender.address))
                     .div(await poolToken.totalSupply());

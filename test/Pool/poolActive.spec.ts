@@ -292,7 +292,7 @@ describe('Pool Active stage', async () => {
                 const { loanStartTime } = await pool.poolConstants();
                 await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
                 await pool.connect(borrower).withdrawBorrowedAmount();
-                const { loanStatus } = await pool.poolVars();
+                const { loanStatus } = await pool.poolVariables();
                 assert(loanStatus == 1, 'Loan is not active');
                 await borrowToken.connect(admin).transfer(random.address, BigNumber.from(10).pow(21));
             });
@@ -441,14 +441,14 @@ describe('Pool Active stage', async () => {
                     await extenstion.connect(borrower).requestExtension(pool.address);
                     await extenstion.connect(lender1).voteOnExtension(pool.address);
                     await extenstion.connect(lender).voteOnExtension(pool.address);
-                    const { isLoanExtensionActive } = await repaymentImpl.repayState(pool.address);
+                    const { isLoanExtensionActive } = await repaymentImpl.repayVariables(pool.address);
                     assert(isLoanExtensionActive, 'Extension not active');
                 });
 
                 it("Can't vote after extension passed", async () => {
                     await extenstion.connect(borrower).requestExtension(pool.address);
                     await extenstion.connect(lender).voteOnExtension(pool.address);
-                    const { isLoanExtensionActive } = await repaymentImpl.repayState(pool.address);
+                    const { isLoanExtensionActive } = await repaymentImpl.repayVariables(pool.address);
                     assert(isLoanExtensionActive, 'Extension not active');
                     await expect(extenstion.connect(lender1).voteOnExtension(pool.address)).to.be.revertedWith(
                         'Pool::voteOnExtension - Voting is over'

@@ -179,13 +179,13 @@ export async function compoundPoolCollectionStage(
             await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, depositAmount);
 
             // Checking balance before deposit
-            let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
+            let SharesBefore = (await pool.poolVariables()).baseLiquidityShares;
 
             // Direct Collateral deposit
             await pool.connect(borrower).depositCollateral(depositAmount, false);
 
             // Checking balance after deposit
-            let SharesAfter = (await pool.poolVars()).baseLiquidityShares;
+            let SharesAfter = (await pool.poolVariables()).baseLiquidityShares;
 
             // Getting additional Shares
             let SharesReceived = SharesAfter.sub(SharesBefore);
@@ -196,7 +196,7 @@ export async function compoundPoolCollectionStage(
             // console.log({ LiquidityShares: liquidityShares.toNumber() });
             expectApproxEqual(liquidityShares.toNumber(), SharesReceived, 50);
 
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             // console.log(LoanStatus);
             assert(
                 LoanStatus.toString() == BigNumber.from('0').toString(),
@@ -228,13 +228,13 @@ export async function compoundPoolCollectionStage(
                 .deposit(liquidityShares.mul(100), Collateral.address, env.yields.compoundYield.address, borrower.address);
 
             // Checking balance before deposit
-            let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
+            let SharesBefore = (await pool.poolVariables()).baseLiquidityShares;
 
             // Depositing Tokens
             await expect(pool.connect(borrower).depositCollateral(AmountForDeposit, true)).to.emit(env.savingsAccount, 'Transfer');
 
             // Checking balance after deposit
-            let SharesAfter = (await pool.poolVars()).baseLiquidityShares;
+            let SharesAfter = (await pool.poolVariables()).baseLiquidityShares;
 
             // Getting additional Shares
             let SharesReceived = SharesAfter.sub(SharesBefore);
@@ -482,7 +482,7 @@ export async function compoundPoolCollectionStage(
 
             await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('');
 
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('0').toString(),
                 `Pool should be in Collection Stage. Expected: ${BigNumber.from('0').toString()} 
@@ -533,7 +533,7 @@ export async function compoundPoolCollectionStage(
                     .toString()}`
             );
 
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('1').toString(),
                 `Pool is not in Active Stage. Expected: ${BigNumber.from('1').toString()} 
@@ -714,7 +714,7 @@ export async function compoundPoolCollectionStage(
             Expected: ${borrowTokenBalancebefore.add(borrowTokenBalancePool).toString()} 
             Actual: ${borrowTokenBalanceAfterCancel}`
             );
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('3').toString(),
                 `Pool not terminated correctly. Expected: ${BigNumber.from('3').toString()} 
@@ -849,7 +849,7 @@ export async function compoundPoolCollectionStage(
             await expect(pool.connect(admin).terminatePool()).to.emit(pool, 'PoolTerminated');
 
             // Check if loan status is set to 'TERMINATED' (5)
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('5').toString(),
                 `Pool not terminated correctly. Expected: ${BigNumber.from('5').toString()} 
