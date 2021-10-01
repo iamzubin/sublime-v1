@@ -25,7 +25,7 @@ async function run() {
     //         _collateralAmount: 10000000000,
     //         _collateralRatio: ethers.utils.parseUnits(0.5+"", 30),
     //         _collectionPeriod: 0,
-    //         _matchCollateralRatioInterval: 0,
+    //         _loanWithdrawalDuration: 0,
     //         _noOfRepaymentIntervals: 15,
     //         _repaymentInterval: 3600
     //     }

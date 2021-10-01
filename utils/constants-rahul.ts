@@ -60,9 +60,8 @@ export const createPoolParams = {
     _collateralAmountForUNI: BigNumber.from('10000000000000000000'), // 1 UNI
     _collateralAmountForUSDC: BigNumber.from('1000000000000000000'), // 1 USDC
     _collateralAmountForWBTC: BigNumber.from('100000000'), // 1 BTC
-    _loanWithdrawalDuration: BigNumber.from(15000000),
     _collectionPeriod: BigNumber.from(5000000),
-    _matchCollateralRatioInterval: 200,
+    _loanWithdrawalDuration: BigNumber.from(100000),
 };
 
 export const createPoolParamsExpt = {
@@ -79,9 +78,8 @@ export const createPoolParamsExpt = {
     _collateralAmountForUSDC: BigNumber.from('1000000000000000000'), // 1 USDC
     _collateralAmountForWBTC: BigNumber.from('100000000'), // 1 BTC
     _collateralAmountForLINK: BigNumber.from(1).mul(BigNumber.from(10).pow(18)),
-    _loanWithdrawalDuration: BigNumber.from(15000000),
     _collectionPeriod: BigNumber.from(10000),
-    _matchCollateralRatioInterval: BigNumber.from(200),
+    _loanWithdrawalDuration: BigNumber.from(200),
 };
 
 // address _borrowTokenType,
@@ -92,7 +90,7 @@ export const createPoolParamsExpt = {
 
 export const testPoolFactoryParams = {
     _collectionPeriod: BigNumber.from(10000),
-    _matchCollateralRatioInterval: BigNumber.from(200),
+    _loanWithdrawalDuration: BigNumber.from(200),
     _marginCallDuration: BigNumber.from(300),
     _minborrowFraction: BigNumber.from(1).mul(BigNumber.from(10).pow(29)),
     _gracePeriodPenaltyFraction: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), //10%

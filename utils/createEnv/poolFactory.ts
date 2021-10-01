@@ -28,9 +28,8 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
     let {
         admin,
         _collectionPeriod,
-        _matchCollateralRatioInterval,
+        _loanWithdrawalDuration,
         _marginCallDuration,
-        _gracePeriodPenaltyFraction,
         _poolInitFuncSelector,
         _poolTokenInitFuncSelector,
         _liquidatorRewardFraction,
@@ -45,9 +44,8 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
             .initialize(
                 admin,
                 _collectionPeriod,
-                _matchCollateralRatioInterval,
+                _loanWithdrawalDuration,
                 _marginCallDuration,
-                _gracePeriodPenaltyFraction,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,

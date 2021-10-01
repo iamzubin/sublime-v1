@@ -96,7 +96,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice the time interval for the borrower to withdraw the loan from pool
      */
-    uint256 public override matchCollateralRatioInterval;
+    uint256 public override loanWithdrawalDuration;
 
     /**
      * @notice the time interval for the active stage of the margin call
@@ -107,11 +107,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @notice Fraction of the requested amount for pool below which pool is cancelled
      */
     uint256 public override minBorrowFraction;
-
-    /**
-     * @notice the fraction used for calculating the grace period penalty
-     */
-    uint256 public override gracePeriodPenaltyFraction;
 
     /**
      * @notice the fraction used for calculating the liquidator reward
@@ -246,9 +241,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
     /**
      * @notice emitted when the loan withdrawal parameter for Pools is updated
-     * @param updatedMatchCollateralRatioInterval the new value of the loan withdrawal period for Pools
+     * @param updatedLoanWithdrawalDuration the new value of the loan withdrawal period for Pools
      */
-    event MatchCollateralRatioIntervalUpdated(uint256 updatedMatchCollateralRatioInterval);
+    event LoanWithdrawalDurationUpdated(uint256 updatedLoanWithdrawalDuration);
 
     /**
      * @notice emitted when the marginCallDuration variable is updated
@@ -261,12 +256,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param updatedMinBorrowFraction Updated value of miBorrowFraction
      */
     event MinBorrowFractionUpdated(uint256 updatedMinBorrowFraction);
-
-    /**
-     * @notice emitted when gracePeriodPenaltyFraction variable is updated
-     * @param updatedGracePeriodPenaltyFraction updated value of gracePeriodPenaltyFraction
-     */
-    event GracePeriodPenaltyFractionUpdated(uint256 updatedGracePeriodPenaltyFraction);
 
     /**
      * @notice emitted when liquidatorRewardFraction variable is updated
@@ -343,9 +332,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function initialize(
         address _admin,
         uint256 _collectionPeriod,
-        uint256 _matchCollateralRatioInterval,
+        uint256 _loanWithdrawalDuration,
         uint256 _marginCallDuration,
-        uint256 _gracePeriodPenaltyFraction,
         bytes4 _poolInitFuncSelector,
         bytes4 _poolTokenInitFuncSelector,
         uint256 _liquidatorRewardFraction,
@@ -359,9 +347,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             OwnableUpgradeable.transferOwnership(_admin);
         }
         _updateCollectionPeriod(_collectionPeriod);
-        _updateMatchCollateralRatioInterval(_matchCollateralRatioInterval);
+        _updateLoanWithdrawalDuration(_loanWithdrawalDuration);
         _updateMarginCallDuration(_marginCallDuration);
-        _updateGracePeriodPenaltyFraction(_gracePeriodPenaltyFraction);
         _updatepoolInitFuncSelector(_poolInitFuncSelector);
         _updatePoolTokenInitFuncSelector(_poolTokenInitFuncSelector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
@@ -539,7 +526,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _poolSavingsStrategy,
             _collateralAmount,
             _transferFromSavingsAccount,
-            matchCollateralRatioInterval,
+            loanWithdrawalDuration,
             collectionPeriod
         );
     }
@@ -756,13 +743,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit CollectionPeriodUpdated(_collectionPeriod);
     }
 
-    function updateMatchCollateralRatioInterval(uint256 _matchCollateralRatioInterval) external onlyOwner {
-        _updateMatchCollateralRatioInterval(_matchCollateralRatioInterval);
+    function updateLoanWithdrawalDuration(uint256 _loanWithdrawalDuration) external onlyOwner {
+        _updateLoanWithdrawalDuration(_loanWithdrawalDuration);
     }
 
-    function _updateMatchCollateralRatioInterval(uint256 _matchCollateralRatioInterval) internal {
-        matchCollateralRatioInterval = _matchCollateralRatioInterval;
-        emit MatchCollateralRatioIntervalUpdated(_matchCollateralRatioInterval);
+    function _updateLoanWithdrawalDuration(uint256 _loanWithdrawalDuration) internal {
+        loanWithdrawalDuration = _loanWithdrawalDuration;
+        emit LoanWithdrawalDurationUpdated(_loanWithdrawalDuration);
     }
 
     /**
@@ -785,19 +772,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function _updateMinBorrowFraction(uint256 _minBorrowFraction) internal {
         minBorrowFraction = _minBorrowFraction;
         emit MinBorrowFractionUpdated(_minBorrowFraction);
-    }
-
-    /**
-     * @notice used to update the grace period penalty fraction of the Pool
-     * @param _gracePeriodPenaltyFraction updated value of the grace period penalty fraction
-     */
-    function updateGracePeriodPenaltyFraction(uint256 _gracePeriodPenaltyFraction) external onlyOwner {
-        _updateGracePeriodPenaltyFraction(_gracePeriodPenaltyFraction);
-    }
-
-    function _updateGracePeriodPenaltyFraction(uint256 _gracePeriodPenaltyFraction) internal {
-        gracePeriodPenaltyFraction = _gracePeriodPenaltyFraction;
-        emit GracePeriodPenaltyFractionUpdated(_gracePeriodPenaltyFraction);
     }
 
     /**

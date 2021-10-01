@@ -31,7 +31,7 @@ module.exports = {
         },
         "pool": {
             "collectionPeriod": "",
-            "matchCollateralRatioInterval": "",
+            "loanWithdrawalDuration": "",
             "marginCallDuration": "",
             "collateralVolatilityThreshold": "",
             "gracePeriodPenaltyFraction": "",
@@ -72,7 +72,7 @@ module.exports = {
         },
         "pool": {
             _collectionPeriod: BigNumber.from(10000),
-            _matchCollateralRatioInterval: BigNumber.from(200),
+            _loanWithdrawalDuration: BigNumber.from(200),
             _marginCallDuration: BigNumber.from(300),
             _minborrowFraction: BigNumber.from(1).mul(BigNumber.from(10).pow(29)),
             _gracePeriodPenaltyFraction: BigNumber.from(5).mul(BigNumber.from(10).pow(28)),
@@ -117,7 +117,7 @@ module.exports = {
         },
         "pool": {
             "collectionPeriod": 900,
-            "matchCollateralRatioInterval": 120,
+            "loanWithdrawalDuration": 120,
             "marginCallDuration": 120,
             "collateralVolatilityThreshold": 10000000,
             "gracePeriodPenaltyFraction": 5000000,

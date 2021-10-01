@@ -36,7 +36,7 @@ function createConfig(rawConfig: any): DeploymentParams {
     config.poolFactoryInitParams = {
         admin: '',
         _collectionPeriod: rawConfig.poolFactory.collectionPeriod,
-        _matchCollateralRatioInterval: rawConfig.poolFactory.matchCollateralRatioInterval,
+        _loanWithdrawalDuration: rawConfig.poolFactory.loanWithdrawalDuration,
         _marginCallDuration: rawConfig.poolFactory.marginCallDuration,
         _gracePeriodPenaltyFraction: ethers.utils.parseUnits(rawConfig.poolFactory.gracePeriodPenaltyFraction + '', 30),
         _poolInitFuncSelector: poolInitFuncSelector,

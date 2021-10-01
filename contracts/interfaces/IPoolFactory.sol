@@ -18,13 +18,11 @@ interface IPoolFactory {
 
     function collectionPeriod() external view returns (uint256);
 
-    function matchCollateralRatioInterval() external view returns (uint256);
+    function loanWithdrawalDuration() external view returns (uint256);
 
     function marginCallDuration() external view returns (uint256);
 
     function minBorrowFraction() external view returns (uint256);
-
-    function gracePeriodPenaltyFraction() external view returns (uint256);
 
     function liquidatorRewardFraction() external view returns (uint256);
 

@@ -48,7 +48,7 @@ export const createPoolParams = {
 
 export const testPoolFactoryParams = {
     _collectionPeriod: BigNumber.from(10000),
-    _matchCollateralRatioInterval: BigNumber.from(200),
+    _loanWithdrawalDuration: BigNumber.from(200),
     _marginCallDuration: BigNumber.from(300),
     _minborrowFraction: BigNumber.from(1).mul(BigNumber.from(10).pow(29)),
     _gracePeriodPenaltyFraction: BigNumber.from(5).mul(BigNumber.from(10).pow(28)),

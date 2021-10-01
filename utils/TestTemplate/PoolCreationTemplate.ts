@@ -85,7 +85,7 @@ export async function poolCreationTest(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -125,7 +125,7 @@ export async function poolCreationTest(
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -155,7 +155,7 @@ export async function poolCreationTest(
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });

@@ -16,7 +16,7 @@ import '../interfaces/IRepayment.sol';
 contract Extension is Initializable, IExtension {
     using SafeMath for uint256;
 
-    struct ExtensionState {
+    struct ExtensionVariables {
         uint256 periodWhenExtensionIsPassed;
         uint256 totalExtensionSupport;
         uint256 extensionVoteEndTime;
@@ -27,7 +27,7 @@ contract Extension is Initializable, IExtension {
     /**
      * @notice used to keep track of Pool details
      */
-    mapping(address => ExtensionState) public extensions;
+    mapping(address => ExtensionVariables) public extensions;
     IPoolFactory poolFactory;
     uint256 votingPassRatio;
 

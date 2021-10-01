@@ -10,23 +10,9 @@ interface IRepayment {
         uint256 loanStartTime,
         address lentAsset
     ) external;
-
-    /*
-    function calculateRepayAmount(address poolID)
-        external
-        view
-        returns (uint256);
-    */
-
     function getTotalRepaidAmount(address poolID) external view returns (uint256);
 
-    //function getRepaymentPeriodCovered(address poolID) external view returns(uint256);
-    //function getRepaymentOverdue(address poolID) external view returns(uint256);
-    //function repaymentExtended(address poolID) external;
-
     function getInterestCalculationVars(address poolID) external view returns (uint256, uint256);
-
-    //function getOngoingLoanInterval(address poolID) external view returns(uint256);
 
     function getCurrentLoanInterval(address poolID) external view returns (uint256);
 

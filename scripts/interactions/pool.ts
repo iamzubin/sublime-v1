@@ -29,7 +29,7 @@ export async function precalculatePoolAddress(poolData: PoolData, contracts: Con
             _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
             _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
             _collectionPeriod: BigNumber.from(poolCreateParams._collectionPeriod),
-            _matchCollateralRatioInterval: BigNumber.from(poolCreateParams._matchCollateralRatioInterval),
+            _loanWithdrawalDuration: BigNumber.from(poolCreateParams._loanWithdrawalDuration),
             _noOfRepaymentIntervals: BigNumber.from(poolCreateParams._noOfRepaymentIntervals),
             _repaymentInterval: BigNumber.from(poolCreateParams._repaymentInterval),
         }

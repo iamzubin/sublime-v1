@@ -62,7 +62,7 @@
     },
     "poolFactory": {
         "collectionPeriod": 600,
-        "matchCollateralRatioInterval": 120,
+        "loanWithdrawalDuration": 120,
         "marginCallDuration": 300,
         "gracePeriodPenaltyFraction": 0,
         "liquidatorRewardFraction": 0.05,

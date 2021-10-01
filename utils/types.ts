@@ -96,9 +96,8 @@ export interface CreditLineInitParams {
 export interface PoolFactoryInitParams {
     admin: Address;
     _collectionPeriod: BigNumberish;
-    _matchCollateralRatioInterval: BigNumberish;
+    _loanWithdrawalDuration: BigNumberish;
     _marginCallDuration: BigNumberish;
-    _gracePeriodPenaltyFraction: BigNumberish;
     _poolInitFuncSelector: BytesLike;
     _poolTokenInitFuncSelector: BytesLike;
     _liquidatorRewardFraction: BigNumberish;
@@ -135,7 +134,7 @@ export interface PoolCreateParams {
     _collateralAmount: BigNumberish;
     _collateralRatio: BigNumberish;
     _collectionPeriod: BigNumberish;
-    _matchCollateralRatioInterval: BigNumberish;
+    _loanWithdrawalDuration: BigNumberish;
     _noOfRepaymentIntervals: BigNumberish;
     _repaymentInterval: BigNumberish;
 }

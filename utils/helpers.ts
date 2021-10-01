@@ -48,7 +48,7 @@ export async function getPoolAddress(
         _repaymentInterval = createPoolParams._repaymentInterval,
         _noOfRepaymentIntervals = createPoolParams._noOfRepaymentIntervals,
         _collateralAmount = createPoolParams._collateralAmount,
-        _matchCollateralRatioInterval = testPoolFactoryParams._matchCollateralRatioInterval,
+        _loanWithdrawalDuration = testPoolFactoryParams._loanWithdrawalDuration,
         _collectionPeriod = testPoolFactoryParams._collectionPeriod,
     }
 ) {
@@ -65,7 +65,7 @@ export async function getPoolAddress(
         strategy,
         _collateralAmount,
         transferFromSavingsAccount,
-        _matchCollateralRatioInterval,
+        _loanWithdrawalDuration,
         _collectionPeriod,
     ]);
 
