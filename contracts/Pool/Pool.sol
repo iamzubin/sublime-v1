@@ -34,7 +34,8 @@ contract Pool is Initializable, IPool, ReentrancyGuard {
         TERMINATED // Pool terminated by admin
     }
 
-    address public PoolFactory; // setting as public to create
+    address public PoolFactory; // setting as public to create testing again
+
 
     /**
      * @notice instance of IPooltoken
