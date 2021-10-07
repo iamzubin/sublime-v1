@@ -28,6 +28,7 @@ contract adminVerifier is Initializable, OwnableUpgradeable {
     ) external onlyOwner {
         require(bytes(userData[_user]).length == 0, 'User already exists');
         verification.registerMasterAddress(_user, _isMasterLinked);
+        userData[_user] = _metadata;
         emit UserRegistered(_user, _isMasterLinked, _metadata);
     }
 
