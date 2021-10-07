@@ -17,7 +17,7 @@ import { task } from 'hardhat/config';
 import { HardhatUserConfig } from 'hardhat/types';
 
 
-import { privateKeys, kovanPrivateKeys } from './utils/wallet';
+import { privateKeys, kovanPrivateKeys, rinkebyPrivateKeys } from './utils/wallet';
 
 import {
     etherscanKey,
@@ -29,6 +29,7 @@ import {
     KOVAN_DEPLOY_MNEMONIC,
     KOVAN_DEPLOY_PRIVATE_KEY,
 } from './utils/keys';
+import { ethers } from 'ethers';
 
 function getHardhatPrivateKeys() {
     return privateKeys.map((key) => {
@@ -137,6 +138,23 @@ const config: HardhatUserConfig = {
             saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,
             loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
             tags: ['ropsten_fork'],
+        },
+        rinkeby: {
+            chainId: 4,
+            url: 'https://rinkeby.infura.io/v3/' + INFURA_TOKEN,
+            accounts: rinkebyPrivateKeys,
+            gasPrice: 1001000000,
+            saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,
+            loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
+            tags: ['ropsten'],
+        },
+        rinkeby_fork: {
+            url: 'http://127.0.0.1:8545',
+            accounts: rinkebyPrivateKeys,
+            gasPrice: 1,
+            saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,
+            loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
+            tags: ['ropsten'],
         },
         mainnet: {
             chainId: 1,

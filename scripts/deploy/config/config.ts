@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import { DeploymentParams } from '../../../utils/types';
 
 import kovanConfig from './kovan.json';
+import rinkebyConfig from './rinkeby.json';
 
 import poolMeta from '../../../artifacts/contracts/Pool/Pool.sol/Pool.json';
 import poolTokenMeta from '../../../artifacts/contracts/Pool/PoolToken.sol/PoolToken.json';
@@ -13,8 +14,10 @@ const poolTokenInitFuncSelector = poolTokenInterface.getSighash('initialize(stri
 
 function getConfig(network: string): DeploymentParams {
     let networkConfig;
-    if (network == 'kovan_custom_accounts') {
+    if (network.includes("kovan")) {
         networkConfig = kovanConfig;
+    } else if(network.includes("rinkeby")) {
+        networkConfig = rinkebyConfig;
     }
     return createConfig(networkConfig);
 }
@@ -23,8 +26,8 @@ function createConfig(rawConfig: any): DeploymentParams {
     let config = {} as DeploymentParams;
     config.strategyRegistryParams = rawConfig.StrategyRegistry;
     config.aaveYieldParams = rawConfig.yields.aave;
-    config.yearnYieldPairs = rawConfig.yields.yearn.pairs;
-    config.compoundPairs = rawConfig.yields.compound.pairs;
+    config.yearnYieldPairs = rawConfig.yields.yearn?.pairs;
+    config.compoundPairs = rawConfig.yields.compound?.pairs;
     config.priceFeeds = rawConfig.priceFeeds;
     config.extensionInitParams = {
         votingPassRatio: ethers.utils.parseUnits(rawConfig.extension.votingPassRatio + '', 30),
@@ -38,7 +41,6 @@ function createConfig(rawConfig: any): DeploymentParams {
         _collectionPeriod: rawConfig.poolFactory.collectionPeriod,
         _loanWithdrawalDuration: rawConfig.poolFactory.loanWithdrawalDuration,
         _marginCallDuration: rawConfig.poolFactory.marginCallDuration,
-        _gracePeriodPenaltyFraction: ethers.utils.parseUnits(rawConfig.poolFactory.gracePeriodPenaltyFraction + '', 30),
         _poolInitFuncSelector: poolInitFuncSelector,
         _poolTokenInitFuncSelector: poolTokenInitFuncSelector,
         _liquidatorRewardFraction: ethers.utils.parseUnits(rawConfig.poolFactory.liquidatorRewardFraction + '', 30),

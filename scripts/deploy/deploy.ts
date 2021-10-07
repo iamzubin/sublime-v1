@@ -40,6 +40,8 @@ import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { CreditLine } from '../../typechain/CreditLine';
 import { IYield } from '../../typechain/IYield';
 import { zeroAddress } from '../../utils/constants';
+import { IYield__factory } from '../../typechain/factories/IYield__factory';
+import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
 
 export async function deployer(signers: SignerWithAddress[], config: DeploymentParams) {
     const {
@@ -75,22 +77,37 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     await initStrategyRegistry(strategyRegistry, deployer, admin.address, strategyRegistryParams.maxStrategies);
 
-    console.log('Deploy and initialize aaveYield');
-
     await (await strategyRegistry.connect(admin).addStrategy(zeroAddress)).wait();
 
-    const aaveYield: IYield = await createAaveYieldWithInit(proxyAdmin, admin, savingsAccount, aaveYieldParams);
-    await (await strategyRegistry.connect(admin).addStrategy(aaveYield.address)).wait();
+    let aaveYield: IYield ;
+    if(aaveYieldParams?.wethGateway) {
+        console.log('Deploy and initialize aaveYield');
 
-    // console.log("Deploy and initialize yearnYield");
+        aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, savingsAccount, aaveYieldParams);
+        await (await strategyRegistry.connect(admin).addStrategy(aaveYield.address)).wait();
+    } else {
+        aaveYield = IYield__factory.connect(zeroAddress, admin);
+    }
 
-    // const yearnYield: IYield = await createYearnYieldWithInit(proxyAdmin, admin, savingsAccount, yearnYieldPairs);
-    // await strategyRegistry.connect(admin).addStrategy(yearnYield.address);
+    let yearnYield: IYield;
+    if(yearnYieldPairs && yearnYieldPairs.length != 0) {
+        console.log("Deploy and initialize yearnYield");
 
-    console.log('Deploy and initialize compoundYield');
+        yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, savingsAccount, yearnYieldPairs);
+        await strategyRegistry.connect(admin).addStrategy(yearnYield.address);
+    } else {
+        yearnYield = IYield__factory.connect(zeroAddress, admin);
+    }
 
-    const compoundYield: IYield = await createCompoundYieldWithInit(proxyAdmin, admin, savingsAccount, compoundPairs);
-    await (await strategyRegistry.connect(admin).addStrategy(compoundYield.address)).wait();
+    let compoundYield: IYield;
+    if(compoundPairs && compoundPairs?.length != 0) {
+        console.log('Deploy and initialize compoundYield');
+
+        compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, savingsAccount, compoundPairs);
+        await (await strategyRegistry.connect(admin).addStrategy(compoundYield.address)).wait();
+    } else {
+        compoundYield = IYield__factory.connect(zeroAddress, admin);
+    }
 
     console.log('Deploying verification');
 
@@ -168,7 +185,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         proxyAdmin: proxyAdmin.address,
         admin: admin.address,
         aaveYield: aaveYield ? aaveYield.address : 'Contract not deployed in this network',
-        // yearnYield: yearnYield ? yearnYield.address : 'Contract not deployed in this network',
+        yearnYield: yearnYield ? yearnYield.address : 'Contract not deployed in this network',
         compoundYield: compoundYield ? compoundYield.address : 'Contract not deployed in this network',
         verification: verification.address,
         adminVerifier: adminVerifier.address,
