@@ -42,30 +42,30 @@ export async function getPoolAddress(
     transferFromSavingsAccount: Boolean,
     {
         _poolSize = createPoolParams._poolSize,
-        _minborrowAmount = createPoolParams._minborrowAmount,
+        _collateralVolatilityThreshold = createPoolParams._collateralVolatilityThreshold,
         _collateralRatio = createPoolParams._collateralRatio,
         _borrowRate = createPoolParams._borrowRate,
         _repaymentInterval = createPoolParams._repaymentInterval,
         _noOfRepaymentIntervals = createPoolParams._noOfRepaymentIntervals,
         _collateralAmount = createPoolParams._collateralAmount,
-        _matchCollateralRatioInterval = testPoolFactoryParams._matchCollateralRatioInterval,
+        _loanWithdrawalDuration = testPoolFactoryParams._loanWithdrawalDuration,
         _collectionPeriod = testPoolFactoryParams._collectionPeriod,
     }
 ) {
     const poolData = _interface.encodeFunctionData(initializeFragement, [
         _poolSize,
-        _minborrowAmount,
+        _borrowRate,
         borrower,
         borrowToken,
         collateralToken,
         _collateralRatio,
-        _borrowRate,
+        _collateralVolatilityThreshold,
         _repaymentInterval,
         _noOfRepaymentIntervals,
         strategy,
         _collateralAmount,
         transferFromSavingsAccount,
-        _matchCollateralRatioInterval,
+        _loanWithdrawalDuration,
         _collectionPeriod,
     ]);
 

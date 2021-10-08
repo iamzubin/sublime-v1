@@ -222,12 +222,12 @@ export async function calculateNewPoolAddress(
         _transferFromSavingsAccount,
         {
             _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _minborrowAmount: BigNumber.from(poolCreateParams._minborrowAmount),
+            _collateralVolatilityThreshold: BigNumber.from(poolCreateParams._volatilityThreshold),
             _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
             _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
             _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
             _collectionPeriod: BigNumber.from(poolCreateParams._collectionPeriod),
-            _matchCollateralRatioInterval: BigNumber.from(poolCreateParams._matchCollateralRatioInterval),
+            _loanWithdrawalDuration: BigNumber.from(poolCreateParams._loanWithdrawalDuration),
             _noOfRepaymentIntervals: BigNumber.from(poolCreateParams._noOfRepaymentIntervals),
             _repaymentInterval: BigNumber.from(poolCreateParams._repaymentInterval),
         }
@@ -258,12 +258,12 @@ export async function createNewPool(
         _transferFromSavingsAccount,
         {
             _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _minborrowAmount: BigNumber.from(poolCreateParams._minborrowAmount),
+            _collateralVolatilityThreshold: BigNumber.from(poolCreateParams._volatilityThreshold),
             _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
             _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
             _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
             _collectionPeriod: BigNumber.from(poolCreateParams._collectionPeriod),
-            _matchCollateralRatioInterval: BigNumber.from(poolCreateParams._matchCollateralRatioInterval),
+            _loanWithdrawalDuration: BigNumber.from(poolCreateParams._loanWithdrawalDuration),
             _noOfRepaymentIntervals: BigNumber.from(poolCreateParams._noOfRepaymentIntervals),
             _repaymentInterval: BigNumber.from(poolCreateParams._repaymentInterval),
         }
@@ -273,11 +273,11 @@ export async function createNewPool(
         .connect(env.entities.borrower)
         .createPool(
             poolCreateParams._poolSize,
-            poolCreateParams._minborrowAmount,
+            poolCreateParams._borrowRate,
             borrowToken.address,
             collateralToken.address,
             poolCreateParams._collateralRatio,
-            poolCreateParams._borrowRate,
+            poolCreateParams._volatilityThreshold,
             poolCreateParams._repaymentInterval,
             poolCreateParams._noOfRepaymentIntervals,
             strategy.address,

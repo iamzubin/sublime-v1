@@ -6,7 +6,7 @@ interface IPoolFactory {
 
     function owner() external view returns (address);
 
-    function openBorrowPoolRegistry(address pool) external view returns (bool);
+    function poolRegistry(address pool) external view returns (bool);
 
     function priceOracle() external view returns (address);
 
@@ -18,19 +18,17 @@ interface IPoolFactory {
 
     function collectionPeriod() external view returns (uint256);
 
-    function matchCollateralRatioInterval() external view returns (uint256);
+    function loanWithdrawalDuration() external view returns (uint256);
 
     function marginCallDuration() external view returns (uint256);
 
-    function volatilityThreshold(address token) external view returns (uint256);
-
-    function gracePeriodPenaltyFraction() external view returns (uint256);
+    function minBorrowFraction() external view returns (uint256);
 
     function liquidatorRewardFraction() external view returns (uint256);
 
     function votingPassRatio() external view returns (uint256);
 
-    function poolCancelPenalityFraction() external view returns (uint256);
+    function poolCancelPenaltyFraction() external view returns (uint256);
 
     function getProtocolFeeData() external view returns (uint256, address);
 }

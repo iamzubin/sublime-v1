@@ -154,10 +154,10 @@ describe('Pool', async () => {
             let {
                 _collectionPeriod,
                 _marginCallDuration,
-                _collateralVolatilityThreshold,
+                _minborrowFraction,
                 _gracePeriodPenaltyFraction,
                 _liquidatorRewardFraction,
-                _matchCollateralRatioInterval,
+                _loanWithdrawalDuration,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _poolCancelPenalityFraction,
@@ -168,13 +168,13 @@ describe('Pool', async () => {
                 .initialize(
                     admin.address,
                     _collectionPeriod,
-                    _matchCollateralRatioInterval,
+                    _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _gracePeriodPenaltyFraction,
                     _poolInitFuncSelector,
                     _poolTokenInitFuncSelector,
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
+                    _minborrowFraction,
                     _protocolFeeFraction,
                     protocolFeeCollector.address
                 );
@@ -189,13 +189,6 @@ describe('Pool', async () => {
                 await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
 
                 await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
-
-                await poolFactory
-                    .connect(admin)
-                    .updateVolatilityThreshold(Contracts.DAI, testPoolFactoryParams._collateralVolatilityThreshold);
-                await poolFactory
-                    .connect(admin)
-                    .updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
 
                 await poolFactory
                     .connect(admin)
@@ -241,7 +234,7 @@ describe('Pool', async () => {
 
                 let {
                     _poolSize,
-                    _minborrowAmount,
+                    _collateralVolatilityThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -258,11 +251,11 @@ describe('Pool', async () => {
                         .connect(borrower)
                         .createPool(
                             _poolSize,
-                            _minborrowAmount,
+                            _borrowRate,
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _borrowRate,
+                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,
@@ -278,7 +271,7 @@ describe('Pool', async () => {
 
                 let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
-                expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
+                expect(await newlyCreatedToken.name()).eq('Pool Tokens');
                 expect(await newlyCreatedToken.symbol()).eq('OBPT');
                 expect(await newlyCreatedToken.decimals()).eq(18);
 
@@ -298,7 +291,7 @@ describe('Pool', async () => {
             });
 
             it('Lender should not be able to withdraw the tokens lent (collection stage)', async () => {
-                //   console.log(await pool.connect(lender).poolVars());
+                //   console.log(await pool.connect(lender).poolVariables());
                 await expect(pool.connect(lender).withdrawLiquidity()).to.be.revertedWith('24');
             });
         });

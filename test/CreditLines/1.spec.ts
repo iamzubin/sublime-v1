@@ -12,6 +12,7 @@ import {
     DAI_Yearn_Protocol_Address,
     LINK_Yearn_Protocol_Address,
     testPoolFactoryParams,
+    creditLineFactoryParams,
     createPoolParams,
     ChainLinkAggregators,
     OperationalAmounts,
@@ -42,7 +43,6 @@ import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
-import { BytesLike } from '@ethersproject/bytes';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('Credit Lines', async () => {
@@ -151,8 +151,8 @@ describe('Credit Lines', async () => {
         let poolFactory: PoolFactory;
         let extenstion: Extension;
 
-        let borrowerCreditLine: BytesLike;
-        let lenderCreditLine: BytesLike;
+        let borrowerCreditLine: BigNumber;
+        let lenderCreditLine: BigNumber;
 
         before(async () => {
             const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -169,28 +169,31 @@ describe('Credit Lines', async () => {
             let {
                 _collectionPeriod,
                 _marginCallDuration,
-                _collateralVolatilityThreshold,
+                _minborrowFraction,
                 _gracePeriodPenaltyFraction,
                 _liquidatorRewardFraction,
-                _matchCollateralRatioInterval,
+                _loanWithdrawalDuration,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
 
+            let { _protocolFeeFraction: clProtocolFeeFraction, _liquidatorRewardFraction: clLiquidatorRewardFraction } =
+                testPoolFactoryParams;
+
             await poolFactory
                 .connect(admin)
                 .initialize(
                     admin.address,
                     _collectionPeriod,
-                    _matchCollateralRatioInterval,
+                    _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _gracePeriodPenaltyFraction,
                     _poolInitFuncSelector,
                     _poolTokenInitFuncSelector,
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
+                    _minborrowFraction,
                     _protocolFeeFraction,
                     protocolFeeCollector.address
                 );
@@ -219,8 +222,9 @@ describe('Credit Lines', async () => {
                     savingsAccount.address,
                     strategyRegistry.address,
                     admin.address,
-                    _protocolFeeFraction,
-                    protocolFeeCollector.address
+                    clProtocolFeeFraction,
+                    protocolFeeCollector.address,
+                    clLiquidatorRewardFraction
                 );
         });
 
@@ -242,7 +246,7 @@ describe('Credit Lines', async () => {
 
             let values = await creditLine
                 .connect(borrower)
-                .callStatic.requestCreditLineToLender(
+                .callStatic.request(
                     _lender,
                     _borrowLimit,
                     _liquidationThreshold,
@@ -250,13 +254,14 @@ describe('Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    false
                 );
 
             await expect(
                 creditLine
                     .connect(borrower)
-                    .requestCreditLineToLender(
+                    .request(
                         _lender,
                         _borrowLimit,
                         _liquidationThreshold,
@@ -264,15 +269,16 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        false
                     )
             )
-                .to.emit(creditLine, 'CreditLineRequestedToLender')
+                .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
 
             lenderCreditLine = values;
-            let creditLineInfo = await creditLine.creditLineInfo(values);
-            //   console.log({ creditLineInfo });
+            let creditLineConstants = await creditLine.creditLineConstants(values);
+            //   console.log({ creditLineConstants });
         });
 
         it('Request Credit Line to borrower', async () => {
@@ -285,9 +291,12 @@ describe('Credit Lines', async () => {
             let _borrowAsset: string = Contracts.DAI;
             let _collateralAsset: string = Contracts.LINK;
 
+            const allowance = await DaiTokenContract.allowance(lender.address, creditLine.address);
+            await DaiTokenContract.connect(lender).approve(creditLine.address, allowance.add(_borrowLimit));
+            console.log('allowance done');
             let values = await creditLine
                 .connect(lender)
-                .callStatic.requestCreditLineToBorrower(
+                .callStatic.request(
                     _borrower,
                     _borrowLimit,
                     _liquidationThreshold,
@@ -295,13 +304,14 @@ describe('Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    true
                 );
-
+            console.log('credit line id is', values);
             await expect(
                 creditLine
                     .connect(lender)
-                    .requestCreditLineToBorrower(
+                    .request(
                         _borrower,
                         _borrowLimit,
                         _liquidationThreshold,
@@ -309,37 +319,38 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        true
                     )
             )
-                .to.emit(creditLine, 'CreditLineRequestedToBorrower')
+                .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
-
+            console.log('credit lines created');
             borrowerCreditLine = values;
-            let creditLineInfo = await creditLine.creditLineInfo(values);
-            // console.log({ creditLineInfo });
+            let creditLineConstants = await creditLine.creditLineConstants(values);
+            // console.log({ creditLineConstants });
         });
 
         it('Accept Credit Line (Borrower)', async () => {
-            await expect(creditLine.connect(borrower).acceptCreditLineBorrower(borrowerCreditLine))
+            await expect(creditLine.connect(borrower).accept(borrowerCreditLine))
                 .to.emit(creditLine, 'CreditLineAccepted')
                 .withArgs(borrowerCreditLine);
         });
 
         it('Deposit Collateral into existing credit line (not from savings account)', async () => {
             // console.log({ borrowerCreditLine, lenderCreditLine });
-            // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+            // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
             let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
             await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-            await creditLine.connect(borrower).depositCollateral(Contracts.LINK, valueToTest, borrowerCreditLine, false);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
         });
 
         it('Deposit Collateral into existing credit line (from savings account)', async () => {
             // console.log({ borrowerCreditLine, lenderCreditLine });
-            // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+            // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
             let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
@@ -347,17 +358,17 @@ describe('Credit Lines', async () => {
 
             await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-            await savingsAccount.connect(borrower).depositTo(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+            await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
             await savingsAccount
                 .connect(borrower)
-                .depositTo(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
-            await savingsAccount.connect(borrower).approve(Contracts.LINK, creditLine.address, valueToTest.mul(2));
+                .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
+            await savingsAccount.connect(borrower).approve(valueToTest.mul(2), Contracts.LINK, creditLine.address);
 
-            await creditLine.connect(borrower).depositCollateral(Contracts.LINK, valueToTest, borrowerCreditLine, true);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
         });
 
         it('Close Credit Line', async () => {
-            await expect(creditLine.connect(borrower).closeCreditLine(borrowerCreditLine))
+            await expect(creditLine.connect(borrower).close(borrowerCreditLine))
                 .to.emit(creditLine, 'CreditLineClosed')
                 .withArgs(borrowerCreditLine);
         });
@@ -367,8 +378,8 @@ describe('Credit Lines', async () => {
             let poolFactory: PoolFactory;
             let extenstion: Extension;
 
-            let borrowerCreditLine: BytesLike;
-            let lenderCreditLine: BytesLike;
+            let borrowerCreditLine: BigNumber;
+            let lenderCreditLine: BigNumber;
 
             before(async () => {
                 const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -385,28 +396,31 @@ describe('Credit Lines', async () => {
                 let {
                     _collectionPeriod,
                     _marginCallDuration,
-                    _collateralVolatilityThreshold,
+                    _minborrowFraction,
                     _gracePeriodPenaltyFraction,
                     _liquidatorRewardFraction,
-                    _matchCollateralRatioInterval,
+                    _loanWithdrawalDuration,
                     _poolInitFuncSelector,
                     _poolTokenInitFuncSelector,
                     _poolCancelPenalityFraction,
                     _protocolFeeFraction,
                 } = testPoolFactoryParams;
 
+                let { _protocolFeeFraction: clProtocolFeeFraction, _liquidatorRewardFraction: clLiquidatorRewardFraction } =
+                    testPoolFactoryParams;
+
                 await poolFactory
                     .connect(admin)
                     .initialize(
                         admin.address,
                         _collectionPeriod,
-                        _matchCollateralRatioInterval,
+                        _loanWithdrawalDuration,
                         _marginCallDuration,
-                        _gracePeriodPenaltyFraction,
                         _poolInitFuncSelector,
                         _poolTokenInitFuncSelector,
                         _liquidatorRewardFraction,
                         _poolCancelPenalityFraction,
+                        _minborrowFraction,
                         _protocolFeeFraction,
                         protocolFeeCollector.address
                     );
@@ -435,8 +449,9 @@ describe('Credit Lines', async () => {
                         savingsAccount.address,
                         strategyRegistry.address,
                         admin.address,
-                        _protocolFeeFraction,
-                        protocolFeeCollector.address
+                        clProtocolFeeFraction,
+                        protocolFeeCollector.address,
+                        clLiquidatorRewardFraction
                     );
             });
 
@@ -459,7 +474,7 @@ describe('Credit Lines', async () => {
 
                 let values = await creditLine
                     .connect(borrower)
-                    .callStatic.requestCreditLineToLender(
+                    .callStatic.request(
                         _lender,
                         _borrowLimit,
                         _liquidationThreshold,
@@ -467,13 +482,14 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        false
                     );
 
                 await expect(
                     creditLine
                         .connect(borrower)
-                        .requestCreditLineToLender(
+                        .request(
                             _lender,
                             _borrowLimit,
                             _liquidationThreshold,
@@ -481,15 +497,16 @@ describe('Credit Lines', async () => {
                             _autoLiquidation,
                             _collateralRatio,
                             _borrowAsset,
-                            _collateralAsset
+                            _collateralAsset,
+                            false
                         )
                 )
-                    .to.emit(creditLine, 'CreditLineRequestedToLender')
+                    .to.emit(creditLine, 'CreditLineRequested')
                     .withArgs(values, lender.address, borrower.address);
 
                 lenderCreditLine = values;
-                let creditLineInfo = await creditLine.creditLineInfo(values);
-                //   console.log({ creditLineInfo });
+                let creditLineConstants = await creditLine.creditLineConstants(values);
+                //   console.log({ creditLineConstants });
             });
 
             it('Request Credit Line to borrower', async () => {
@@ -502,9 +519,12 @@ describe('Credit Lines', async () => {
                 let _borrowAsset: string = Contracts.DAI;
                 let _collateralAsset: string = Contracts.LINK;
 
+                const allowance = await DaiTokenContract.allowance(lender.address, creditLine.address);
+                await DaiTokenContract.connect(lender).approve(creditLine.address, allowance.add(_borrowLimit));
+
                 let values = await creditLine
                     .connect(lender)
-                    .callStatic.requestCreditLineToBorrower(
+                    .callStatic.request(
                         _borrower,
                         _borrowLimit,
                         _liquidationThreshold,
@@ -512,13 +532,14 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        true
                     );
 
                 await expect(
                     creditLine
                         .connect(lender)
-                        .requestCreditLineToBorrower(
+                        .request(
                             _borrower,
                             _borrowLimit,
                             _liquidationThreshold,
@@ -526,37 +547,38 @@ describe('Credit Lines', async () => {
                             _autoLiquidation,
                             _collateralRatio,
                             _borrowAsset,
-                            _collateralAsset
+                            _collateralAsset,
+                            true
                         )
                 )
-                    .to.emit(creditLine, 'CreditLineRequestedToBorrower')
+                    .to.emit(creditLine, 'CreditLineRequested')
                     .withArgs(values, lender.address, borrower.address);
 
                 borrowerCreditLine = values;
-                let creditLineInfo = await creditLine.creditLineInfo(values);
-                // console.log({ creditLineInfo });
+                let creditLineConstants = await creditLine.creditLineConstants(values);
+                // console.log({ creditLineConstants });
             });
 
             it('Accept Credit Line (Borrower)', async () => {
-                await expect(creditLine.connect(borrower).acceptCreditLineBorrower(borrowerCreditLine))
+                await expect(creditLine.connect(borrower).accept(borrowerCreditLine))
                     .to.emit(creditLine, 'CreditLineAccepted')
                     .withArgs(borrowerCreditLine);
             });
 
             it('Deposit Collateral into existing credit line (not from savings account)', async () => {
                 // console.log({ borrowerCreditLine, lenderCreditLine });
-                // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+                // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
                 let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
                 await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-                await creditLine.connect(borrower).depositCollateral(Contracts.LINK, valueToTest, borrowerCreditLine, false);
+                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
             });
 
             it('Deposit Collateral into existing credit line (from savings account)', async () => {
                 // console.log({ borrowerCreditLine, lenderCreditLine });
-                // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+                // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
                 let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
@@ -564,17 +586,17 @@ describe('Credit Lines', async () => {
 
                 await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-                await savingsAccount.connect(borrower).depositTo(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+                await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
                 await savingsAccount
                     .connect(borrower)
-                    .depositTo(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
-                await savingsAccount.connect(borrower).approve(Contracts.LINK, creditLine.address, valueToTest.mul(2));
+                    .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
+                await savingsAccount.connect(borrower).approve(valueToTest.mul(2), Contracts.LINK, creditLine.address);
 
-                await creditLine.connect(borrower).depositCollateral(Contracts.LINK, valueToTest, borrowerCreditLine, true);
+                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
             });
 
             it('Close Credit Line', async () => {
-                await expect(creditLine.connect(borrower).closeCreditLine(borrowerCreditLine))
+                await expect(creditLine.connect(borrower).close(borrowerCreditLine))
                     .to.emit(creditLine, 'CreditLineClosed')
                     .withArgs(borrowerCreditLine);
             });
@@ -583,19 +605,17 @@ describe('Credit Lines', async () => {
                 it('Cannot deposit into invalid credit line hash', async () => {
                     let randomInvalidHash = '0x0000000011111111000000001111111100000000111111110000000011111111';
                     await expect(
-                        creditLine
-                            .connect(borrower)
-                            .depositCollateral(Contracts.LINK, BigNumber.from('123123123'), randomInvalidHash, false)
+                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), false)
                     ).to.be.revertedWith('Credit line does not exist');
 
                     await expect(
-                        creditLine.connect(borrower).depositCollateral(Contracts.LINK, BigNumber.from('123123123'), randomInvalidHash, true)
+                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), true)
                     ).to.be.revertedWith('Credit line does not exist');
                 });
 
                 it('should fail if any other user/address is trying to accept the credit line', async () => {
-                    await expect(creditLine.connect(lender).acceptCreditLineBorrower(borrowerCreditLine)).to.be.revertedWith(
-                        'Only credit line Borrower can access'
+                    await expect(creditLine.connect(lender).accept(borrowerCreditLine)).to.be.revertedWith(
+                        'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
                     );
                 });
             });

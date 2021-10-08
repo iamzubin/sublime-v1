@@ -22,7 +22,7 @@ export default class DeployPoolContracts {
     }
 
     public async deployRepayments(): Promise<Repayments> {
-        return await new Repayments__factory(this._deployerSigner).deploy();
+        return await (await new Repayments__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getRepayments(repaymentAddress: Address): Promise<Repayments> {
@@ -30,7 +30,7 @@ export default class DeployPoolContracts {
     }
 
     public async deployExtenstion(): Promise<Extension> {
-        return await new Extension__factory(this._deployerSigner).deploy();
+        return await (await new Extension__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getExtension(extensionAddress: Address): Promise<Extension> {
@@ -38,7 +38,7 @@ export default class DeployPoolContracts {
     }
 
     public async deployPool(): Promise<Pool> {
-        return await new Pool__factory(this._deployerSigner).deploy();
+        return await (await new Pool__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getPool(poolAddress: Address): Promise<Pool> {
@@ -46,7 +46,7 @@ export default class DeployPoolContracts {
     }
 
     public async deployPoolToken(): Promise<PoolToken> {
-        return await new PoolToken__factory(this._deployerSigner).deploy();
+        return await (await new PoolToken__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getPoolToken(poolTokenAddress: Address): Promise<PoolToken> {
@@ -54,7 +54,7 @@ export default class DeployPoolContracts {
     }
 
     public async deployPoolFactory(): Promise<PoolFactory> {
-        return await new PoolFactory__factory(this._deployerSigner).deploy();
+        return await (await new PoolFactory__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getPoolFactory(poolFactoryAddress: Address): Promise<PoolFactory> {

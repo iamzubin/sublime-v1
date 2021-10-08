@@ -43,7 +43,6 @@ import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
-import { BytesLike } from '@ethersproject/bytes';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('WBTC-DAI Credit Lines', async () => {
@@ -80,8 +79,8 @@ describe('WBTC-DAI Credit Lines', async () => {
     let WBTCTokenContract: ERC20;
     let WBTCWhale: any;
 
-    let borrowerCreditLine: BytesLike;
-    let lenderCreditLine: BytesLike;
+    let borrowerCreditLine: BigNumber;
+    let lenderCreditLine: BigNumber;
 
     let extraAccounts: SignerWithAddress[];
 
@@ -183,28 +182,29 @@ describe('WBTC-DAI Credit Lines', async () => {
         let {
             _collectionPeriod,
             _marginCallDuration,
-            _collateralVolatilityThreshold,
-            _gracePeriodPenaltyFraction,
+            _minborrowFraction,
             _liquidatorRewardFraction,
-            _matchCollateralRatioInterval,
+            _loanWithdrawalDuration,
             _poolInitFuncSelector,
             _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
 
+        let { _protocolFeeFraction: clProtocolFeeFraction, _liquidatorRewardFraction: clLiquidatorRewardFraction } = testPoolFactoryParams;
+
         await poolFactory
             .connect(admin)
             .initialize(
                 admin.address,
                 _collectionPeriod,
-                _matchCollateralRatioInterval,
+                _loanWithdrawalDuration,
                 _marginCallDuration,
-                _gracePeriodPenaltyFraction,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
+                _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address
             );
@@ -233,8 +233,9 @@ describe('WBTC-DAI Credit Lines', async () => {
                 savingsAccount.address,
                 strategyRegistry.address,
                 admin.address,
-                _protocolFeeFraction,
-                protocolFeeCollector.address
+                clProtocolFeeFraction,
+                protocolFeeCollector.address,
+                clLiquidatorRewardFraction
             );
     });
 
@@ -251,7 +252,7 @@ describe('WBTC-DAI Credit Lines', async () => {
 
             let values = await creditLine
                 .connect(lender)
-                .callStatic.requestCreditLineToBorrower(
+                .callStatic.request(
                     _borrower,
                     borrowLimit,
                     _liquidationThreshold,
@@ -259,13 +260,14 @@ describe('WBTC-DAI Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    true
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .requestCreditLineToBorrower(
+                    .request(
                         _borrower,
                         borrowLimit,
                         _liquidationThreshold,
@@ -273,18 +275,19 @@ describe('WBTC-DAI Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        true
                     )
             )
-                .to.emit(creditLine, 'CreditLineRequestedToBorrower')
+                .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
 
             lenderCreditLine = values;
         });
 
         it('Check Credit Line Info', async () => {
-            let creditLineInfo = await creditLine.creditLineInfo(lenderCreditLine);
-            print(creditLineInfo);
+            let creditLineConstants = await creditLine.creditLineConstants(lenderCreditLine);
+            print(creditLineConstants);
         });
 
         it('Borrow From Credit Line only borrower', async () => {
@@ -294,7 +297,7 @@ describe('WBTC-DAI Credit Lines', async () => {
 
             let unlimited = BigNumber.from(10).pow(60);
 
-            await creditLine.connect(borrower).acceptCreditLineBorrower(lenderCreditLine);
+            await creditLine.connect(borrower).accept(lenderCreditLine);
 
             await DaiTokenContract.connect(admin).transfer(lender.address, lenderAmount);
             await DaiTokenContract.connect(lender).approve(compoundYield.address, lenderAmount);
@@ -302,12 +305,12 @@ describe('WBTC-DAI Credit Lines', async () => {
             await WBTCTokenContract.connect(admin).transfer(borrower.address, borrowerCollateral);
             await WBTCTokenContract.connect(borrower).approve(creditLine.address, borrowerCollateral);
 
-            await creditLine.connect(borrower).depositCollateral(Contracts.WBTC, borrowerCollateral, lenderCreditLine, false);
+            await creditLine.connect(borrower).depositCollateral(lenderCreditLine, borrowerCollateral, false);
 
-            await savingsAccount.connect(lender).depositTo(lenderAmount, DaiTokenContract.address, compoundYield.address, lender.address);
-            await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, unlimited);
+            await savingsAccount.connect(lender).deposit(lenderAmount, DaiTokenContract.address, compoundYield.address, lender.address);
+            await savingsAccount.connect(lender).approve(unlimited, DaiTokenContract.address, creditLine.address);
 
-            await creditLine.connect(borrower).borrowFromCreditLine(borrowAmount, lenderCreditLine);
+            await creditLine.connect(borrower).borrow(lenderCreditLine, borrowAmount);
         });
     });
 });

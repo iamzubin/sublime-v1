@@ -26,12 +26,9 @@ interface IPool {
 
     function getMarginCallEndTime(address _lender) external returns (uint256);
 
-    //function grantExtension() external returns (uint256); adding updateNextDuePeriodAfterExtension() for replacement
-    //function updateNextDuePeriodAfterExtension() external returns (uint256);
-
     function getBalanceDetails(address _lender) external view returns (uint256, uint256);
 
-    function getTotalSupply() external view returns (uint256);
+    function getTokensLent() external view returns (uint256);
 
     function closeLoan() external payable;
 }

@@ -61,6 +61,18 @@ export enum CreditLineDefaultStrategy {
     NoStrategy,
 }
 
+export interface DeploymentParams {
+    signers: SignerWithAddress[];
+    strategyRegistryParams: StrategyRegistryParams;
+    aaveYieldParams: AaveYieldParams;
+    yearnYieldPairs: YearnPair[];
+    compoundPairs: CompoundPair[];
+    priceFeeds: PriceOracleSource[];
+    extensionInitParams: ExtensionInitParams;
+    repaymentsInitParams: RepaymentsInitParams;
+    poolFactoryInitParams: PoolFactoryInitParams;
+}
+
 export interface InputParams {
     extenstionInitParams: ExtensionInitParams;
     creditLineInitParams: CreditLineInitParams;
@@ -77,18 +89,20 @@ export interface ExtensionInitParams {
 
 export interface CreditLineInitParams {
     _protocolFeeFraction: BigNumberish;
+    _liquidatorRewardFraction: BigNumberish;
+    // protocolFeeCollector: Address;
 }
 
 export interface PoolFactoryInitParams {
     admin: Address;
     _collectionPeriod: BigNumberish;
-    _matchCollateralRatioInterval: BigNumberish;
+    _loanWithdrawalDuration: BigNumberish;
     _marginCallDuration: BigNumberish;
-    _gracePeriodPenaltyFraction: BigNumberish;
     _poolInitFuncSelector: BytesLike;
     _poolTokenInitFuncSelector: BytesLike;
     _liquidatorRewardFraction: BigNumberish;
     _poolCancelPenalityFraction: BigNumberish;
+    _minBorrowFraction: BigNumberish;
     _protocolFeeFraction: BigNumberish;
     protocolFeeCollector: Address;
 }
@@ -115,12 +129,22 @@ export interface YearnPair {
 
 export interface PoolCreateParams {
     _poolSize: BigNumberish;
-    _minborrowAmount: BigNumberish;
+    _volatilityThreshold: BigNumberish;
     _borrowRate: BigNumberish;
     _collateralAmount: BigNumberish;
     _collateralRatio: BigNumberish;
     _collectionPeriod: BigNumberish;
-    _matchCollateralRatioInterval: BigNumberish;
+    _loanWithdrawalDuration: BigNumberish;
     _noOfRepaymentIntervals: BigNumberish;
     _repaymentInterval: BigNumberish;
+}
+
+export interface StrategyRegistryParams {
+    maxStrategies: number;
+}
+
+export interface AaveYieldParams {
+    wethGateway: Address;
+    protocolDataProvider: Address;
+    lendingPoolAddressesProvider: Address;
 }

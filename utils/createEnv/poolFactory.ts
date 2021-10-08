@@ -28,31 +28,33 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
     let {
         admin,
         _collectionPeriod,
-        _matchCollateralRatioInterval,
+        _loanWithdrawalDuration,
         _marginCallDuration,
-        _gracePeriodPenaltyFraction,
         _poolInitFuncSelector,
         _poolTokenInitFuncSelector,
         _liquidatorRewardFraction,
         _poolCancelPenalityFraction,
+        _minBorrowFraction,
         _protocolFeeFraction,
         protocolFeeCollector,
     } = initParams;
-    await poolFactory
-        .connect(signer)
-        .initialize(
-            admin,
-            _collectionPeriod,
-            _matchCollateralRatioInterval,
-            _marginCallDuration,
-            _gracePeriodPenaltyFraction,
-            _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
-            _liquidatorRewardFraction,
-            _poolCancelPenalityFraction,
-            _protocolFeeFraction,
-            protocolFeeCollector
-        );
+    await (
+        await poolFactory
+            .connect(signer)
+            .initialize(
+                admin,
+                _collectionPeriod,
+                _loanWithdrawalDuration,
+                _marginCallDuration,
+                _poolInitFuncSelector,
+                _poolTokenInitFuncSelector,
+                _liquidatorRewardFraction,
+                _poolCancelPenalityFraction,
+                _minBorrowFraction,
+                _protocolFeeFraction,
+                protocolFeeCollector
+            )
+    ).wait();
 }
 
 export async function addSupportedTokens(
@@ -63,14 +65,14 @@ export async function addSupportedTokens(
 ) {
     for (let index = 0; index < collateralTokens.length; index++) {
         const col = collateralTokens[index];
-        await poolFactory.connect(admin).updateSupportedCollateralTokens(col, true);
+        await (await poolFactory.connect(admin).updateSupportedCollateralTokens(col, true)).wait();
     }
     for (let index = 0; index < borrowTokens.length; index++) {
         const bor = borrowTokens[index];
-        await poolFactory.connect(admin).updateSupportedBorrowTokens(bor, true);
+        await (await poolFactory.connect(admin).updateSupportedBorrowTokens(bor, true)).wait();
     }
-    await poolFactory.connect(admin).updateSupportedCollateralTokens(zeroAddress, true);
-    await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true);
+    await (await poolFactory.connect(admin).updateSupportedCollateralTokens(zeroAddress, true)).wait();
+    await (await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true)).wait();
 }
 
 export async function setImplementations(

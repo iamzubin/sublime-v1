@@ -240,20 +240,15 @@ describe('Pool With Compound Strategy', async () => {
         repayments = await deployHelper.pool.getRepayments(repaymentProxy.address);
         await repayments
             .connect(admin)
-            .initialize(
-                poolFactory.address,
-                repaymentParams.gracePenalityRate,
-                repaymentParams.gracePeriodFraction,
-                savingsAccount.address
-            );
+            .initialize(poolFactory.address, repaymentParams.gracePenalityRate, repaymentParams.gracePeriodFraction);
 
         let {
             _collectionPeriod,
             _marginCallDuration,
-            _collateralVolatilityThreshold,
+            _minborrowFraction,
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
-            _matchCollateralRatioInterval,
+            _loanWithdrawalDuration,
             _poolInitFuncSelector,
             _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
@@ -265,13 +260,13 @@ describe('Pool With Compound Strategy', async () => {
             .initialize(
                 admin.address,
                 _collectionPeriod,
-                _matchCollateralRatioInterval,
+                _loanWithdrawalDuration,
                 _marginCallDuration,
-                _gracePeriodPenaltyFraction,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
+                _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address
             );
@@ -331,7 +326,7 @@ describe('Pool With Compound Strategy', async () => {
 
         let {
             _poolSize,
-            _minborrowAmount,
+            _collateralVolatilityThreshold,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
@@ -347,11 +342,11 @@ describe('Pool With Compound Strategy', async () => {
                 .connect(borrower)
                 .createPool(
                     _poolSize,
-                    _minborrowAmount,
+                    _borrowRate,
                     Contracts.DAI,
                     Contracts.WBTC,
                     _collateralRatio,
-                    _borrowRate,
+                    _collateralVolatilityThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     iyield.address,
@@ -367,7 +362,7 @@ describe('Pool With Compound Strategy', async () => {
 
         let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
-        expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
+        expect(await newlyCreatedToken.name()).eq('Pool Tokens');
         expect(await newlyCreatedToken.symbol()).eq('OBPT');
         expect(await newlyCreatedToken.decimals()).eq(18);
         poolToken = newlyCreatedToken;
@@ -402,7 +397,7 @@ describe('Pool With Compound Strategy', async () => {
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
 
-            let { _minborrowAmount } = createPoolParams;
+            let _minborrowAmount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(BigNumber.from(10).pow(30));
             let borrowTokens = _minborrowAmount.sub(oneToken);
             await lenderLendsTokens(borrowTokens);
 
@@ -442,10 +437,11 @@ describe('Pool With Compound Strategy', async () => {
     describe('Check Interest Rates', async () => {
         beforeEach(async () => {
             // lender supplies minimum DAI to the pool and lender.address is lender
+            let _minborrowAmount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(BigNumber.from(10).pow(30));
             await createPool();
-            await DaiTokenContract.connect(admin).transfer(lender.address, createPoolParams._minborrowAmount);
-            await DaiTokenContract.connect(lender).approve(pool.address, createPoolParams._minborrowAmount);
-            await pool.connect(lender).lend(lender.address, createPoolParams._minborrowAmount, false);
+            await DaiTokenContract.connect(admin).transfer(lender.address, _minborrowAmount);
+            await DaiTokenContract.connect(lender).approve(pool.address, _minborrowAmount);
+            await pool.connect(lender).lend(lender.address, _minborrowAmount, false);
         });
 
         it('Increase time by one day and check interest and total Debt', async () => {
@@ -455,8 +451,10 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(1).mul(86400)).toString()));
 
-            let interestFromChain = await pool.callStatic.interestTillNow();
-            let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
+            let interestFromChain = await pool.callStatic.interestToPay();
+            let expectedInterest = createPoolParams._poolSize
+                .mul(testPoolFactoryParams._minborrowFraction)
+                .div(BigNumber.from(10).pow(30))
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
                 .div(365);
@@ -471,8 +469,10 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(30).mul(86400)).toString()));
 
-            let interestFromChain = await pool.callStatic.interestTillNow();
-            let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
+            let interestFromChain = await pool.callStatic.interestToPay();
+            let expectedInterest = createPoolParams._poolSize
+                .mul(testPoolFactoryParams._minborrowFraction)
+                .div(BigNumber.from(10).pow(30))
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
                 .mul(30)
@@ -488,8 +488,10 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(182).mul(86400)).toString()));
 
-            let interestFromChain = await pool.callStatic.interestTillNow();
-            let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
+            let interestFromChain = await pool.callStatic.interestToPay();
+            let expectedInterest = createPoolParams._poolSize
+                .mul(testPoolFactoryParams._minborrowFraction)
+                .div(BigNumber.from(10).pow(30))
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30))
                 .mul(182)
@@ -505,8 +507,10 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
             await blockTravel(network, parseInt(loanStartTime.add(BigNumber.from(365).mul(86400)).toString()));
 
-            let interestFromChain = await pool.callStatic.interestTillNow();
-            let expectedInterest = BigNumber.from(createPoolParams._minborrowAmount)
+            let interestFromChain = await pool.callStatic.interestToPay();
+            let expectedInterest = createPoolParams._poolSize
+                .mul(testPoolFactoryParams._minborrowFraction)
+                .div(BigNumber.from(10).pow(30))
                 .mul(createPoolParams._borrowRate)
                 .div(BigNumber.from(10).pow(30));
             // console.table({ interestFromChain: interestFromChain.toString(), expectedInterest: expectedInterest.toString() });

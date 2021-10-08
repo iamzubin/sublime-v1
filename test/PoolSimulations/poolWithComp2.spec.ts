@@ -22,6 +22,7 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
+    creditLineFactoryParams,
 } from '../../utils/constants';
 
 import DeployHelper from '../../utils/deploys';
@@ -55,7 +56,7 @@ describe('Pool With Compound Strategy 2', async () => {
             {
                 admin: '',
                 _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                 _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                 _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                 _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -64,9 +65,13 @@ describe('Pool With Compound Strategy 2', async () => {
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
+                _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
             } as PoolFactoryInitParams,
             CreditLineDefaultStrategy.Compound,
-            { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+            {
+                _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+            } as CreditLineInitParams
         );
     });
 
@@ -80,12 +85,12 @@ describe('Pool With Compound Strategy 2', async () => {
 
         let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
+            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
             _collectionPeriod: 10000,
-            _matchCollateralRatioInterval: 200,
+            _loanWithdrawalDuration: 200,
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
@@ -99,12 +104,12 @@ describe('Pool With Compound Strategy 2', async () => {
 
         let pool = await createNewPool(env, DAI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(18)),
+            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
             _collectionPeriod: 10000,
-            _matchCollateralRatioInterval: 200,
+            _loanWithdrawalDuration: 200,
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });

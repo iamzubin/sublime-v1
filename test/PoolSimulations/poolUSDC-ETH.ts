@@ -22,6 +22,7 @@ import {
     extensionParams,
     repaymentParams,
     testPoolFactoryParams,
+    creditLineFactoryParams,
 } from '../../utils/constants-rahul';
 
 import DeployHelper from '../../utils/deploys';
@@ -56,7 +57,7 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
             {
                 admin: '',
                 _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                 _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                 _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                 _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -65,9 +66,13 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
+                _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
             } as PoolFactoryInitParams,
             CreditLineDefaultStrategy.Compound,
-            { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+            {
+                _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+            } as CreditLineInitParams
         );
     });
 
@@ -81,12 +86,12 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
 
         let poolAddress = await calculateNewPoolAddress(env, USDT, ETH, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)), // 10 usdt
+            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)), // 10 usdt
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
             _collectionPeriod: 10000,
-            _matchCollateralRatioInterval: 200,
+            _loanWithdrawalDuration: 200,
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
@@ -100,12 +105,12 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
 
         let pool = await createNewPool(env, USDT, ETH, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
-            _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(6)), // 10 usdt
+            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
             _collectionPeriod: 10000,
-            _matchCollateralRatioInterval: 200,
+            _loanWithdrawalDuration: 200,
             _noOfRepaymentIntervals: 100,
             _repaymentInterval: 1000,
         });
