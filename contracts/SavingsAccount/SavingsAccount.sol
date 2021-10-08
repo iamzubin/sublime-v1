@@ -192,7 +192,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             'SavingsAccount::withdraw Insufficient amount'
         );
 
-        (address _token, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
+        (, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
 
         emit Withdrawn(msg.sender, _to, _amountReceived, _token, _strategy);
         return _amountReceived;
@@ -220,7 +220,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _amount,
             'SavingsAccount::withdrawFrom insufficient balance'
         );
-        (address _token, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
+        (, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
         emit Withdrawn(_from, msg.sender, _amountReceived, _token, _strategy);
         return _amountReceived;
     }

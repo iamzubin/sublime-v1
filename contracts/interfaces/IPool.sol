@@ -14,13 +14,7 @@ interface IPool {
 
     function withdrawBorrowedAmount() external;
 
-    function beforeTransfer(
-        address _from,
-        address _to,
-        uint256 _amount
-    ) external;
-
-    function setConstants(address _poolToken, address _lenderVerifier) external;
+    function setConstants(address _lenderVerifier) external;
 
     function borrower() external returns (address);
 
