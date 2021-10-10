@@ -41,7 +41,6 @@ import { Extension } from '@typechain/Extension';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '@typechain/PoolToken';
 import { Repayments } from '@typechain/Repayments';
 
 import { getContractAddress } from '@ethersproject/address';
@@ -95,7 +94,6 @@ describe('Pool With Compound Strategy', async () => {
     let extenstion: Extension;
 
     let poolLogic: Pool;
-    let poolTokenLogic: PoolToken;
 
     let repaymentLogic: Repayments;
     let repayments: Repayments;
@@ -104,8 +102,6 @@ describe('Pool With Compound Strategy', async () => {
     let poolFactory: PoolFactory;
 
     let pool: Pool;
-
-    let poolToken: PoolToken;
 
     before(async () => {
         [proxyAdmin, admin, mockCreditLines, borrower, lender, protocolFeeCollector] = await ethers.getSigners();
@@ -250,7 +246,6 @@ describe('Pool With Compound Strategy', async () => {
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
             _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -263,7 +258,6 @@ describe('Pool With Compound Strategy', async () => {
                 _loanWithdrawalDuration,
                 _marginCallDuration,
                 _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
@@ -272,7 +266,6 @@ describe('Pool With Compound Strategy', async () => {
             );
 
         poolLogic = await deployHelper.pool.deployPool();
-        poolTokenLogic = await deployHelper.pool.deployPoolToken();
 
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
@@ -289,7 +282,6 @@ describe('Pool With Compound Strategy', async () => {
             .setImplementations(
                 poolLogic.address,
                 repayments.address,
-                poolTokenLogic.address,
                 verification.address,
                 strategyRegistry.address,
                 priceOracle.address,
@@ -317,12 +309,6 @@ describe('Pool With Compound Strategy', async () => {
             false,
             { _collateralAmount: createPoolParams._collateralAmountForWBTC }
         );
-
-        const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-        let newPoolToken: string = getContractAddress({
-            from: poolFactory.address,
-            nonce,
-        });
 
         let {
             _poolSize,
@@ -358,14 +344,7 @@ describe('Pool With Compound Strategy', async () => {
                 )
         )
             .to.emit(poolFactory, 'PoolCreated')
-            .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-        let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
-        expect(await newlyCreatedToken.name()).eq('Pool Tokens');
-        expect(await newlyCreatedToken.symbol()).eq('OBPT');
-        expect(await newlyCreatedToken.decimals()).eq(18);
-        poolToken = newlyCreatedToken;
+            .withArgs(generatedPoolAddress, borrower.address);
 
         pool = await deployHelper.pool.getPool(generatedPoolAddress);
         // await pool.connect(borrower).depositCollateral(_collateralAmount, false);
@@ -383,7 +362,7 @@ describe('Pool With Compound Strategy', async () => {
             // lender supplies 1 DAI to the pool and lender.address is lender
             await createPool();
             let deployHelper = new DeployHelper(borrower);
-            let token: PoolToken = await deployHelper.pool.getPoolToken(DaiTokenContract.address);
+            let token: ERC20 = await deployHelper.mock.getMockERC20(DaiTokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -392,7 +371,7 @@ describe('Pool With Compound Strategy', async () => {
 
         it('Check Ratio after borrowing borrow total 10 DAI with 1 WBTC Collateral', async () => {
             let deployHelper = new DeployHelper(borrower);
-            let token: PoolToken = await deployHelper.pool.getPoolToken(DaiTokenContract.address);
+            let token: ERC20 = await deployHelper.mock.getMockERC20(DaiTokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -408,10 +387,10 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
 
             let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(Contracts.WBTC, Contracts.DAI);
-            let token1: PoolToken = await deployHelper.pool.getPoolToken(Contracts.WBTC);
+            let token1: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
             let token1Exp = BigNumber.from(10).pow(await token1.decimals());
 
-            let token2: PoolToken = await deployHelper.pool.getPoolToken(Contracts.DAI);
+            let token2: ERC20 = await deployHelper.mock.getMockERC20(Contracts.DAI);
             let token2Exp = BigNumber.from(10).pow(await token2.decimals());
 
             let ratio = await pool.callStatic['getCurrentCollateralRatio()']();

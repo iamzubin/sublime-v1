@@ -10,7 +10,6 @@ import { ERC20 } from '@typechain/ERC20';
 import { Verification } from '@typechain/Verification';
 import { PriceOracle } from '@typechain/PriceOracle';
 import { Pool } from '@typechain/Pool';
-import { PoolToken } from '@typechain/PoolToken';
 import { BigNumberish, BytesLike } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
@@ -28,7 +27,6 @@ export interface Environment {
     creditLine: CreditLine;
     entities: Entities;
     poolLogic: Pool;
-    poolTokenLogic: PoolToken;
     impersonatedAccounts: any[];
     mockTokenContracts: MockTokenContract[];
     inputParams: InputParams;
@@ -52,7 +50,7 @@ export interface Yields {
 
 export interface MockTokenContract {
     name: string;
-    contract: ERC20 | PoolToken;
+    contract: ERC20;
 }
 
 export enum CreditLineDefaultStrategy {
@@ -99,7 +97,6 @@ export interface PoolFactoryInitParams {
     _loanWithdrawalDuration: BigNumberish;
     _marginCallDuration: BigNumberish;
     _poolInitFuncSelector: BytesLike;
-    _poolTokenInitFuncSelector: BytesLike;
     _liquidatorRewardFraction: BigNumberish;
     _poolCancelPenalityFraction: BigNumberish;
     _minBorrowFraction: BigNumberish;

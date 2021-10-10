@@ -36,7 +36,6 @@ import { Extension } from '../typechain/Extension';
 
 import { Contracts } from '../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../typechain/PoolToken';
 import { Repayments } from '../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
@@ -87,7 +86,6 @@ describe('Template 2', async () => {
     let extenstion: Extension;
 
     let poolLogic: Pool;
-    let poolTokenLogic: PoolToken;
     let repaymentLogic: Repayments;
 
     let poolFactoryLogic: PoolFactory;
@@ -225,7 +223,6 @@ describe('Template 2', async () => {
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
             _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -237,7 +234,6 @@ describe('Template 2', async () => {
                 _loanWithdrawalDuration,
                 _marginCallDuration,
                 _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
@@ -247,7 +243,6 @@ describe('Template 2', async () => {
         console.log('Deploying pool logic');
         poolLogic = await deployHelper.pool.deployPool();
         console.log('Deploying pool token logic');
-        poolTokenLogic = await deployHelper.pool.deployPoolToken();
         console.log('Deploying repayment logic');
         repaymentLogic = await deployHelper.pool.deployRepayments();
 
@@ -261,7 +256,6 @@ describe('Template 2', async () => {
             .setImplementations(
                 poolLogic.address,
                 repaymentLogic.address,
-                poolTokenLogic.address,
                 verification.address,
                 strategyRegistry.address,
                 priceOracle.address,
@@ -284,12 +278,6 @@ describe('Template 2', async () => {
                 false,
                 {}
             );
-
-            const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-            let newPoolToken: string = getContractAddress({
-                from: poolFactory.address,
-                nonce,
-            });
 
             let {
                 _poolSize,
@@ -326,15 +314,14 @@ describe('Template 2', async () => {
                     )
             )
                 .to.emit(poolFactory, 'PoolCreated')
-                .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-            let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
-            expect(await newlyCreatedToken.name()).eq('Pool Tokens');
-            expect(await newlyCreatedToken.symbol()).eq('OBPT');
-            expect(await newlyCreatedToken.decimals()).eq(18);
+                .withArgs(generatedPoolAddress, borrower.address);
 
             pool = await deployHelper.pool.getPool(generatedPoolAddress);
+
+            expect(await pool.name()).eq('Pool Tokens');
+            expect(await pool.symbol()).eq('OBPT');
+            expect(await pool.decimals()).eq(18);
+            
             await pool.connect(borrower).depositCollateral(_collateralAmount, false);
         } else {
             let tokenDeployer = new DeployHelper(admin);
@@ -373,12 +360,6 @@ describe('Template 2', async () => {
                 false,
                 {}
             );
-
-            const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-            let newPoolToken: string = getContractAddress({
-                from: poolFactory.address,
-                nonce,
-            });
 
             let {
                 _poolSize,
@@ -432,15 +413,14 @@ describe('Template 2', async () => {
             //     )
             // )
             //     .to.emit(poolFactory, 'PoolCreated')
-            //     .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-            // let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
-            // expect(await newlyCreatedToken.name()).eq('Pool Tokens');
-            // expect(await newlyCreatedToken.symbol()).eq('OBPT');
-            // expect(await newlyCreatedToken.decimals()).eq(18);
+            //     .withArgs(generatedPoolAddress, borrower.address);
 
             // pool = await deployHelper.pool.getPool(generatedPoolAddress);
+
+            // expect(await pool.name()).eq('Pool Tokens');
+            // expect(await pool.symbol()).eq('OBPT');
+            // expect(await pool.decimals()).eq(18);
+
             // console.log('Depositing Collateral');
             // await pool.connect(borrower).depositCollateral(_collateralAmount, false);
         }
@@ -473,7 +453,6 @@ describe('Template 2', async () => {
             testToken2: testToken2 ? testToken2.address : 'Contract not deployed in this network',
             extenstion: extenstion.address,
             poolLogic: poolLogic.address,
-            poolTokenLogic: poolTokenLogic.address,
             repaymentLogic: repaymentLogic.address,
             poolFactoryLogic: poolFactoryLogic.address,
             poolFactory: poolFactory.address,

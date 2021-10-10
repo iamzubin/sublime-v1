@@ -58,6 +58,7 @@
     "ethereumjs-wallet": "^1.0.1",
     "ethers": "^5.4.1",
     "hardhat": "^2.4.3",
+    "hardhat-contract-sizer": "^2.1.1",
     "hardhat-deploy": "^0.7.5",
     "hardhat-log-remover": "^2.0.2",
     "hardhat-tracer": "^1.0.0-alpha.6",

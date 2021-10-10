@@ -7,7 +7,6 @@ import { SublimeProxy } from '@typechain/SublimeProxy';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { Repayments } from '@typechain/Repayments';
-import { PoolToken } from '@typechain/PoolToken';
 import { Verification } from '@typechain/Verification';
 import { StrategyRegistry } from '@typechain/StrategyRegistry';
 import { PriceOracle } from '@typechain/PriceOracle';
@@ -31,7 +30,6 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
         _loanWithdrawalDuration,
         _marginCallDuration,
         _poolInitFuncSelector,
-        _poolTokenInitFuncSelector,
         _liquidatorRewardFraction,
         _poolCancelPenalityFraction,
         _minBorrowFraction,
@@ -47,7 +45,6 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
                 _loanWithdrawalDuration,
                 _marginCallDuration,
                 _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minBorrowFraction,
@@ -80,7 +77,6 @@ export async function setImplementations(
     admin: SignerWithAddress,
     poolLogic: Pool,
     repayments: Repayments,
-    poolTokenLogic: PoolToken,
     verification: Verification,
     strategyRegistry: StrategyRegistry,
     priceOracle: PriceOracle,
@@ -92,7 +88,6 @@ export async function setImplementations(
         .setImplementations(
             poolLogic.address,
             repayments.address,
-            poolTokenLogic.address,
             verification.address,
             strategyRegistry.address,
             priceOracle.address,

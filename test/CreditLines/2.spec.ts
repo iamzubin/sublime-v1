@@ -38,7 +38,6 @@ import { CreditLine } from '../../typechain/CreditLine';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
@@ -178,7 +177,6 @@ describe('Credit Lines', async () => {
                 _liquidatorRewardFraction,
                 _loanWithdrawalDuration,
                 _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
@@ -194,7 +192,6 @@ describe('Credit Lines', async () => {
                     _loanWithdrawalDuration,
                     _marginCallDuration,
                     _poolInitFuncSelector,
-                    _poolTokenInitFuncSelector,
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
@@ -202,14 +199,12 @@ describe('Credit Lines', async () => {
                     protocolFeeCollector.address
                 );
             const poolImpl = await deployHelper.pool.deployPool();
-            const poolTokenImpl = await deployHelper.pool.deployPoolToken();
             const repaymentImpl = await deployHelper.pool.deployRepayments();
             await poolFactory
                 .connect(admin)
                 .setImplementations(
                     poolImpl.address,
                     repaymentImpl.address,
-                    poolTokenImpl.address,
                     verification.address,
                     strategyRegistry.address,
                     priceOracle.address,

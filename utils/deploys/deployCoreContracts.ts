@@ -6,7 +6,6 @@ import { NoYield } from '../../typechain/NoYield';
 import { AaveYield } from '../../typechain/AaveYield';
 import { CompoundYield } from '../../typechain/CompoundYield';
 import { YearnYield } from '../../typechain/YearnYield';
-import { PoolToken } from '../../typechain/PoolToken';
 import { CreditLine } from '../../typechain/CreditLine';
 
 import { SavingsAccount__factory } from '../../typechain/factories/SavingsAccount__factory';
@@ -15,7 +14,6 @@ import { NoYield__factory } from '../../typechain/factories/NoYield__factory';
 import { AaveYield__factory } from '../../typechain/factories/AaveYield__factory';
 import { CompoundYield__factory } from '../../typechain/factories/CompoundYield__factory';
 import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
-import { PoolToken__factory } from '../../typechain/factories/PoolToken__factory';
 import { CreditLine__factory } from '../../typechain/factories/CreditLine__factory';
 
 import { Address } from 'hardhat-deploy/dist/types';
@@ -73,14 +71,6 @@ export default class DeployCoreContracts {
 
     public async getYearnYield(yearnYieldAddress: Address): Promise<YearnYield> {
         return await new YearnYield__factory(this._deployerSigner).attach(yearnYieldAddress);
-    }
-
-    public async deployPoolToken(): Promise<PoolToken> {
-        return await (await new PoolToken__factory(this._deployerSigner).deploy()).deployed();
-    }
-
-    public async getPoolToken(poolTokenAddress: Address): Promise<PoolToken> {
-        return await new PoolToken__factory(this._deployerSigner).attach(poolTokenAddress);
     }
 
     public async deployCreditLines(): Promise<CreditLine> {

@@ -5,12 +5,9 @@ import kovanConfig from './kovan.json';
 import rinkebyConfig from './rinkeby.json';
 
 import poolMeta from '../../../artifacts/contracts/Pool/Pool.sol/Pool.json';
-import poolTokenMeta from '../../../artifacts/contracts/Pool/PoolToken.sol/PoolToken.json';
 
 const poolInterface = new ethers.utils.Interface(poolMeta.abi);
-const poolTokenInterface = new ethers.utils.Interface(poolTokenMeta.abi);
 const poolInitFuncSelector = poolInterface.getSighash('initialize');
-const poolTokenInitFuncSelector = poolTokenInterface.getSighash('initialize(string, string, address)');
 
 function getConfig(network: string): DeploymentParams {
     let networkConfig;
@@ -42,7 +39,6 @@ function createConfig(rawConfig: any): DeploymentParams {
         _loanWithdrawalDuration: rawConfig.poolFactory.loanWithdrawalDuration,
         _marginCallDuration: rawConfig.poolFactory.marginCallDuration,
         _poolInitFuncSelector: poolInitFuncSelector,
-        _poolTokenInitFuncSelector: poolTokenInitFuncSelector,
         _liquidatorRewardFraction: ethers.utils.parseUnits(rawConfig.poolFactory.liquidatorRewardFraction + '', 30),
         _poolCancelPenalityFraction: ethers.utils.parseUnits(rawConfig.poolFactory.poolCancelPenalityFraction + '', 30),
         _minBorrowFraction: ethers.utils.parseUnits(rawConfig.poolFactory.minBorrowFraction + '', 30),

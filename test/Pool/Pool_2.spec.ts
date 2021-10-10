@@ -35,7 +35,6 @@ import { Extension } from '../../typechain/Extension';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
@@ -142,7 +141,6 @@ describe('Pool', async () => {
     describe('Use Pool', async () => {
         let extenstion: Extension;
         let poolImpl: Pool;
-        let poolTokenImpl: PoolToken;
         let poolFactory: PoolFactory;
         let repaymentImpl: Repayments;
 
@@ -159,7 +157,6 @@ describe('Pool', async () => {
                 _liquidatorRewardFraction,
                 _loanWithdrawalDuration,
                 _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
@@ -171,7 +168,6 @@ describe('Pool', async () => {
                     _loanWithdrawalDuration,
                     _marginCallDuration,
                     _poolInitFuncSelector,
-                    _poolTokenInitFuncSelector,
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
@@ -179,7 +175,6 @@ describe('Pool', async () => {
                     protocolFeeCollector.address
                 );
             poolImpl = await deployHelper.pool.deployPool();
-            poolTokenImpl = await deployHelper.pool.deployPoolToken();
             repaymentImpl = await deployHelper.pool.deployRepayments();
         });
 
@@ -195,7 +190,6 @@ describe('Pool', async () => {
                     .setImplementations(
                         poolImpl.address,
                         repaymentImpl.address,
-                        poolTokenImpl.address,
                         verification.address,
                         strategyRegistry.address,
                         priceOracle.address,
@@ -218,16 +212,9 @@ describe('Pool', async () => {
                     {}
                 );
 
-                const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-                let newPoolToken: string = getContractAddress({
-                    from: poolFactory.address,
-                    nonce,
-                });
-
                 // console.log({
                 //   generatedPoolAddress,
                 //   msgSender: borrower.address,
-                //   newPoolToken,
                 //   savingsAccountFromPoolFactory: await poolFactory.savingsAccount(),
                 //   savingsAccount: savingsAccount.address
                 // });
@@ -267,15 +254,14 @@ describe('Pool', async () => {
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
-                    .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-                let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
-                expect(await newlyCreatedToken.name()).eq('Pool Tokens');
-                expect(await newlyCreatedToken.symbol()).eq('OBPT');
-                expect(await newlyCreatedToken.decimals()).eq(18);
+                    .withArgs(generatedPoolAddress, borrower.address);
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
+
+                expect(await pool.name()).eq('Pool Tokens');
+                expect(await pool.symbol()).eq('OBPT');
+                expect(await pool.decimals()).eq(18);
+
                 await pool.connect(borrower).depositCollateral(_collateralAmount, false);
             });
 
