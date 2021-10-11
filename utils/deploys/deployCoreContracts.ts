@@ -28,7 +28,7 @@ export default class DeployCoreContracts {
     }
 
     public async deploySavingsAccount(): Promise<SavingsAccount> {
-        return await new SavingsAccount__factory(this._deployerSigner).deploy();
+        return await (await new SavingsAccount__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getSavingsAccount(savingsAccountAddress: Address): Promise<SavingsAccount> {
@@ -36,7 +36,7 @@ export default class DeployCoreContracts {
     }
 
     public async deployStrategyRegistry(): Promise<StrategyRegistry> {
-        return await new StrategyRegistry__factory(this._deployerSigner).deploy();
+        return await (await new StrategyRegistry__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getStrategyRegistry(strategyRegistryAddress: Address): Promise<StrategyRegistry> {
@@ -52,7 +52,7 @@ export default class DeployCoreContracts {
     }
 
     public async deployAaveYield(): Promise<AaveYield> {
-        return await new AaveYield__factory(this._deployerSigner).deploy();
+        return await (await new AaveYield__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getAaveYield(aaveYieldAddress: Address): Promise<AaveYield> {
@@ -60,7 +60,7 @@ export default class DeployCoreContracts {
     }
 
     public async deployCompoundYield(): Promise<CompoundYield> {
-        return await new CompoundYield__factory(this._deployerSigner).deploy();
+        return await (await new CompoundYield__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getCompoundYield(compoundYieldAddress: Address): Promise<CompoundYield> {
@@ -68,7 +68,7 @@ export default class DeployCoreContracts {
     }
 
     public async deployYearnYield(): Promise<YearnYield> {
-        return await new YearnYield__factory(this._deployerSigner).deploy();
+        return await (await new YearnYield__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getYearnYield(yearnYieldAddress: Address): Promise<YearnYield> {
@@ -76,7 +76,7 @@ export default class DeployCoreContracts {
     }
 
     public async deployPoolToken(): Promise<PoolToken> {
-        return await new PoolToken__factory(this._deployerSigner).deploy();
+        return await (await new PoolToken__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getPoolToken(poolTokenAddress: Address): Promise<PoolToken> {
@@ -84,7 +84,7 @@ export default class DeployCoreContracts {
     }
 
     public async deployCreditLines(): Promise<CreditLine> {
-        return await new CreditLine__factory(this._deployerSigner).deploy();
+        return await (await new CreditLine__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getCreditLines(creditLinesAddress: Address): Promise<CreditLine> {

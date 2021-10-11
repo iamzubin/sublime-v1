@@ -5,7 +5,6 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
-
 import '../interfaces/ISavingsAccount.sol';
 import '../interfaces/IStrategyRegistry.sol';
 import '../interfaces/IYield.sol';
@@ -20,16 +19,16 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     using SafeMath for uint256;
 
     address public strategyRegistry;
-    address public CreditLine;
+    address public creditLine;
 
-    //user -> asset -> strategy (underlying address) -> amount (shares)
-    mapping(address => mapping(address => mapping(address => uint256))) public override userLockedBalance;
+    //user -> token -> strategy (underlying address) -> amount (shares)
+    mapping(address => mapping(address => mapping(address => uint256))) public override balanceInShares;
 
-    //user => asset => to => amount
+    //user => token => to => amount
     mapping(address => mapping(address => mapping(address => uint256))) public allowance;
 
     modifier onlyCreditLine(address _caller) {
-        require(_caller == CreditLine, 'Invalid caller');
+        require(_caller == creditLine, 'Invalid caller');
         _;
     }
 
@@ -58,7 +57,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
     function _updateCreditLine(address _creditLine) internal {
         require(_creditLine != address(0), 'SavingsAccount::initialize zero address');
-        CreditLine = _creditLine;
+        creditLine = _creditLine;
         emit CreditLineUpdated(_creditLine);
     }
 
@@ -72,333 +71,326 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit StrategyRegistryUpdated(_strategyRegistry);
     }
 
-    function depositTo(
-        uint256 amount,
-        address asset,
-        address strategy,
-        address to
-    ) external payable override nonReentrant returns (uint256 sharesReceived) {
-        require(to != address(0), 'SavingsAccount::depositTo receiver address should not be zero address');
+    function deposit(
+        uint256 _amount,
+        address _token,
+        address _strategy,
+        address _to
+    ) external payable override nonReentrant returns (uint256) {
+        require(_to != address(0), 'SavingsAccount::deposit receiver address should not be zero address');
 
-        sharesReceived = _deposit(amount, asset, strategy);
+        uint256 _sharesReceived = _deposit(_amount, _token, _strategy);
 
-        userLockedBalance[to][asset][strategy] = userLockedBalance[to][asset][strategy].add(sharesReceived);
+        balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_sharesReceived);
 
-        emit Deposited(to, amount, asset, strategy);
+        emit Deposited(_to, _amount, _token, _strategy);
+
+        return _sharesReceived;
     }
 
     function _deposit(
-        uint256 amount,
-        address asset,
-        address strategy
-    ) internal returns (uint256 sharesReceived) {
-        require(amount != 0, 'SavingsAccount::_deposit Amount must be greater than zero');
+        uint256 _amount,
+        address _token,
+        address _strategy
+    ) internal returns (uint256 _sharesReceived) {
+        require(_amount != 0, 'SavingsAccount::_deposit Amount must be greater than zero');
 
-        if (strategy != address(0)) {
-            sharesReceived = _depositToYield(amount, asset, strategy);
+        if (_strategy != address(0)) {
+            _sharesReceived = _depositToYield(_amount, _token, _strategy);
         } else {
-            sharesReceived = amount;
-            if (asset != address(0)) {
-                IERC20(asset).safeTransferFrom(msg.sender, address(this), amount);
+            _sharesReceived = _amount;
+            if (_token != address(0)) {
+                IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
             } else {
-                require(msg.value == amount, 'SavingsAccount::deposit ETH sent must be equal to amount');
+                require(msg.value == _amount, 'SavingsAccount::deposit ETH sent must be equal to amount');
             }
         }
     }
 
     function _depositToYield(
-        uint256 amount,
-        address asset,
-        address strategy
-    ) internal returns (uint256 sharesReceived) {
-        require(IStrategyRegistry(strategyRegistry).registry(strategy), 'SavingsAccount::deposit strategy do not exist');
+        uint256 _amount,
+        address _token,
+        address _strategy
+    ) internal returns (uint256 _sharesReceived) {
+        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
+        uint256 _ethValue;
 
-        if (asset == address(0)) {
-            sharesReceived = IYield(strategy).lockTokens{value: amount}(msg.sender, asset, amount);
-        } else {
-            sharesReceived = IYield(strategy).lockTokens(msg.sender, asset, amount);
+        if (_token == address(0)) {
+            _ethValue = _amount;
         }
+
+        _sharesReceived = IYield(_strategy).lockTokens{value: _ethValue}(msg.sender, _token, _amount);
     }
 
     /**
-     * @dev Used to switch saving strategy of an asset
-     * @param currentStrategy initial strategy of asset
-     * @param newStrategy new strategy to invest
-     * @param asset address of the asset
-     * @param amount amount of **liquidity shares** to be reinvested
+     * @dev Used to switch saving strategy of an _token
+     * @param _currentStrategy initial strategy of token
+     * @param _newStrategy new strategy to invest
+     * @param _token address of the token
+     * @param _amount amount of **liquidity shares** to be reinvested
      */
     function switchStrategy(
-        address currentStrategy,
-        address newStrategy,
-        address asset,
-        uint256 amount
+        uint256 _amount,
+        address _token,
+        address _currentStrategy,
+        address _newStrategy
     ) external override nonReentrant {
-        require(currentStrategy != newStrategy, 'SavingsAccount::switchStrategy Same strategy');
-        require(amount != 0, 'SavingsAccount::switchStrategy Amount must be greater than zero');
+        require(_currentStrategy != _newStrategy, 'SavingsAccount::switchStrategy Same strategy');
+        require(_amount != 0, 'SavingsAccount::switchStrategy Amount must be greater than zero');
 
-        if (currentStrategy != address(0)) {
-            amount = IYield(currentStrategy).getSharesForTokens(amount, asset);
+        if (_currentStrategy != address(0)) {
+            _amount = IYield(_currentStrategy).getSharesForTokens(_amount, _token);
         }
 
-        userLockedBalance[msg.sender][asset][currentStrategy] = userLockedBalance[msg.sender][asset][currentStrategy].sub(
-            amount,
+        balanceInShares[msg.sender][_token][_currentStrategy] = balanceInShares[msg.sender][_token][_currentStrategy].sub(
+            _amount,
             'SavingsAccount::switchStrategy Insufficient balance'
         );
 
-        uint256 tokensReceived = amount;
-        if (currentStrategy != address(0)) {
-            tokensReceived = IYield(currentStrategy).unlockTokens(asset, amount);
+        uint256 _tokensReceived = _amount;
+        if (_currentStrategy != address(0)) {
+            _tokensReceived = IYield(_currentStrategy).unlockTokens(_token, _amount);
         }
 
-        uint256 sharesReceived = tokensReceived;
-        if (newStrategy != address(0)) {
-            if (asset != address(0)) {
-                IERC20(asset).safeApprove(newStrategy, tokensReceived);
+        uint256 _sharesReceived = _tokensReceived;
+        if (_newStrategy != address(0)) {
+            if (_token != address(0)) {
+                IERC20(_token).safeApprove(_newStrategy, _tokensReceived);
             }
 
-            sharesReceived = _depositToYield(tokensReceived, asset, newStrategy);
+            _sharesReceived = _depositToYield(_tokensReceived, _token, _newStrategy);
         }
 
-        userLockedBalance[msg.sender][asset][newStrategy] = userLockedBalance[msg.sender][asset][newStrategy].add(sharesReceived);
+        balanceInShares[msg.sender][_token][_newStrategy] = balanceInShares[msg.sender][_token][_newStrategy].add(_sharesReceived);
 
-        emit StrategySwitched(msg.sender, asset, currentStrategy, newStrategy);
+        emit StrategySwitched(msg.sender, _token, _currentStrategy, _newStrategy);
     }
 
     /**
-     * @dev Used to withdraw asset from Saving Account
-     * @param withdrawTo address to which asset should be sent
-     * @param amount amount of liquidity shares to withdraw
-     * @param asset address of the asset to be withdrawn
-     * @param strategy strategy from where asset has to withdrawn(ex:- compound,Aave etc)
-     * @param withdrawShares boolean indicating to withdraw in liquidity share or underlying token
+     * @dev Used to withdraw token from Saving Account
+     * @param _to address to which token should be sent
+     * @param _amount amount of liquidity shares to withdraw
+     * @param _token address of the token to be withdrawn
+     * @param _strategy strategy from where token has to withdrawn(ex:- compound,Aave etc)
+     * @param _withdrawShares boolean indicating to withdraw in liquidity share or underlying token
      */
     function withdraw(
-        address payable withdrawTo,
-        uint256 amount,
-        address asset,
-        address strategy,
-        bool withdrawShares
-    ) external override nonReentrant returns (uint256 amountReceived) {
-        require(amount != 0, 'SavingsAccount::withdraw Amount must be greater than zero');
+        uint256 _amount,
+        address _token,
+        address _strategy,
+        address payable _to,
+        bool _withdrawShares
+    ) external override nonReentrant returns (uint256) {
+        require(_amount != 0, 'SavingsAccount::withdraw Amount must be greater than zero');
 
-        if (strategy != address(0)) {
-            amount = IYield(strategy).getSharesForTokens(amount, asset);
+        if (_strategy != address(0)) {
+            _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
         }
 
-        userLockedBalance[msg.sender][asset][strategy] = userLockedBalance[msg.sender][asset][strategy].sub(
-            amount,
+        balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
+            _amount,
             'SavingsAccount::withdraw Insufficient amount'
         );
 
-        address token;
-        (token, amountReceived) = _withdraw(withdrawTo, amount, asset, strategy, withdrawShares);
+        (address _token, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
 
-        emit Withdrawn(msg.sender, withdrawTo, amountReceived, token, strategy);
+        emit Withdrawn(msg.sender, _to, _amountReceived, _token, _strategy);
+        return _amountReceived;
     }
 
     function withdrawFrom(
-        address from,
-        address payable to,
-        uint256 amount,
-        address asset,
-        address strategy,
-        bool withdrawShares
-    ) external override nonReentrant returns (uint256 amountReceived) {
-        require(amount != 0, 'SavingsAccount::withdrawFrom Amount must be greater than zero');
+        uint256 _amount,
+        address _token,
+        address _strategy,
+        address _from,
+        address payable _to,
+        bool _withdrawShares
+    ) external override nonReentrant returns (uint256) {
+        require(_amount != 0, 'SavingsAccount::withdrawFrom Amount must be greater than zero');
 
-        allowance[from][asset][msg.sender] = allowance[from][asset][msg.sender].sub(
-            amount,
+        allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
+            _amount,
             'SavingsAccount::withdrawFrom allowance limit exceeding'
         );
-        if (strategy != address(0)) {
-            amount = IYield(strategy).getSharesForTokens(amount, asset);
+        if (_strategy != address(0)) {
+            _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
         }
 
-        //reduce sender's balance
-        userLockedBalance[from][asset][strategy] = userLockedBalance[from][asset][strategy].sub(
-            amount,
+        balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
+            _amount,
             'SavingsAccount::withdrawFrom insufficient balance'
         );
-        address token;
-        (token, amountReceived) = _withdraw(to, amount, asset, strategy, withdrawShares);
-        emit Withdrawn(from, msg.sender, amountReceived, token, strategy);
+        (address _token, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
+        emit Withdrawn(_from, msg.sender, _amountReceived, _token, _strategy);
+        return _amountReceived;
     }
 
     function _withdraw(
-        address payable withdrawTo,
-        uint256 amount,
-        address asset,
-        address strategy,
-        bool withdrawShares
-    ) internal returns (address token, uint256 amountReceived) {
-        if (strategy == address(0)) {
-            amountReceived = amount;
-            _transfer(asset, withdrawTo, amountReceived);
-            token = asset;
-            amountReceived = amount;
-        } else {
-            if (withdrawShares) {
-                token = IYield(strategy).liquidityToken(asset);
-                require(token != address(0), 'Liquidity Tokens address cannot be address(0)');
-                amountReceived = IYield(strategy).unlockShares(token, amount);
-                _transfer(token, withdrawTo, amountReceived);
-            } else {
-                token = asset;
-                amountReceived = IYield(strategy).unlockTokens(asset, amount);
-                _transfer(token, withdrawTo, amountReceived);
-            }
+        uint256 _amount,
+        address _token,
+        address _strategy,
+        address payable _to,
+        bool _withdrawShares
+    ) internal returns (address _tokenReceived, uint256 _amountReceived) {
+        if (_strategy == address(0)) {
+            _transfer(_amount, _token, _to);
+            return (_token, _amount);
         }
+
+        if (_withdrawShares) {
+            _tokenReceived = IYield(_strategy).liquidityToken(_token);
+            require(_tokenReceived != address(0), 'Liquidity Tokens address cannot be address(0)');
+            _amountReceived = IYield(_strategy).unlockShares(_tokenReceived, _amount);
+        } else {
+            _tokenReceived = _token;
+            _amountReceived = IYield(_strategy).unlockTokens(_token, _amount);
+        }
+        _transfer(_amountReceived, _tokenReceived, _to);
     }
 
     function _transfer(
-        address token,
-        address payable withdrawTo,
-        uint256 amount
+        uint256 _amount,
+        address _token,
+        address payable _to
     ) internal {
-        if (token == address(0)) {
-            (bool success, ) = withdrawTo.call{value: amount}('');
-            require(success, 'Transfer failed');
+        if (_token == address(0)) {
+            (bool _success, ) = _to.call{value: _amount}('');
+            require(_success, 'Transfer failed');
         } else {
-            IERC20(token).safeTransfer(withdrawTo, amount);
+            IERC20(_token).safeTransfer(_to, _amount);
         }
     }
 
-    function withdrawAll(address _asset) external override nonReentrant returns (uint256 tokenReceived) {
-        // Withdraw tokens
+    function withdrawAll(address _token) external override nonReentrant returns (uint256 _tokenReceived) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
-        for (uint256 index = 0; index < _strategyList.length; index++) {
-            if (userLockedBalance[msg.sender][_asset][_strategyList[index]] != 0) {
-                uint256 _amount = userLockedBalance[msg.sender][_asset][_strategyList[index]];
-                if (_strategyList[index] != address(0)) {
-                    _amount = IYield(_strategyList[index]).unlockTokens(
-                        _asset,
-                        userLockedBalance[msg.sender][_asset][_strategyList[index]]
-                    );
+        for (uint256 i = 0; i < _strategyList.length; i++) {
+            if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0) {
+                uint256 _amount = balanceInShares[msg.sender][_token][_strategyList[i]];
+                if (_strategyList[i] != address(0)) {
+                    _amount = IYield(_strategyList[i]).unlockTokens(_token, balanceInShares[msg.sender][_token][_strategyList[i]]);
                 }
-                tokenReceived = tokenReceived.add(_amount);
-                delete userLockedBalance[msg.sender][_asset][_strategyList[index]];
+                _tokenReceived = _tokenReceived.add(_amount);
+                delete balanceInShares[msg.sender][_token][_strategyList[i]];
             }
         }
 
-        if (tokenReceived == 0) return 0;
+        if (_tokenReceived == 0) return 0;
 
-        _transfer(_asset, payable(msg.sender), tokenReceived);
+        _transfer(_tokenReceived, _token, payable(msg.sender));
 
-        emit WithdrawnAll(msg.sender, tokenReceived, _asset);
+        emit WithdrawnAll(msg.sender, _tokenReceived, _token);
     }
 
     function approve(
-        address token,
-        address to,
-        uint256 amount
+        uint256 _amount,
+        address _token,
+        address _to
     ) external override {
-        allowance[msg.sender][token][to] = amount;
+        allowance[msg.sender][_token][_to] = _amount;
 
-        emit Approved(token, msg.sender, to, amount);
+        emit Approved(_token, msg.sender, _to, _amount);
     }
 
     function increaseAllowance(
-        address token,
-        address to,
-        uint256 amount
+        uint256 _amount,
+        address _token,
+        address _to
     ) external override {
-        uint256 _updatedAllowance = allowance[msg.sender][token][to].add(amount);
-        allowance[msg.sender][token][to] = _updatedAllowance;
+        uint256 _updatedAllowance = allowance[msg.sender][_token][_to].add(_amount);
+        allowance[msg.sender][_token][_to] = _updatedAllowance;
 
-        emit Approved(token, msg.sender, to, _updatedAllowance);
+        emit Approved(_token, msg.sender, _to, _updatedAllowance);
     }
 
     function decreaseAllowance(
-        address token,
-        address to,
-        uint256 amount
+        uint256 _amount,
+        address _token,
+        address _to
     ) external override {
-        uint256 _updatedAllowance = allowance[msg.sender][token][to].sub(amount);
-        allowance[msg.sender][token][to] = _updatedAllowance;
+        uint256 _updatedAllowance = allowance[msg.sender][_token][_to].sub(_amount);
+        allowance[msg.sender][_token][_to] = _updatedAllowance;
 
-        emit Approved(token, msg.sender, to, _updatedAllowance);
+        emit Approved(_token, msg.sender, _to, _updatedAllowance);
     }
 
-    function approveFromToCreditLine(
-        address token,
-        address from,
-        uint256 amount
+    function increaseAllowanceToCreditLine(
+        uint256 _amount,
+        address _token,
+        address _from
     ) external override onlyCreditLine(msg.sender) {
-        allowance[from][token][msg.sender] = allowance[from][token][msg.sender].add(amount);
+        allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].add(_amount);
 
-        emit CreditLineAllowanceRefreshed(token, from, amount);
+        emit CreditLineAllowanceRefreshed(_token, _from, _amount);
     }
 
     function transfer(
-        address token,
-        address to,
-        address strategy,
-        uint256 amount
+        uint256 _amount,
+        address _token,
+        address _strategy,
+        address _to
     ) external override returns (uint256) {
-        require(amount != 0, 'SavingsAccount::transfer zero amount');
+        require(_amount != 0, 'SavingsAccount::transfer zero amount');
 
-        if (strategy != address(0)) {
-            amount = IYield(strategy).getSharesForTokens(amount, token);
+        if (_strategy != address(0)) {
+            _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
         }
 
-        //reduce msg.sender balance
-        userLockedBalance[msg.sender][token][strategy] = userLockedBalance[msg.sender][token][strategy].sub(
-            amount,
+        balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
+            _amount,
             'SavingsAccount::transfer insufficient funds'
         );
 
         //update receiver's balance
-        userLockedBalance[to][token][strategy] = userLockedBalance[to][token][strategy].add(amount);
+        balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_amount);
 
-        emit Transfer(token, strategy, msg.sender, to, amount);
-        //not sure
-        return amount;
+        emit Transfer(_token, _strategy, msg.sender, _to, _amount);
+
+        return _amount;
     }
 
     function transferFrom(
-        address token,
-        address from,
-        address to,
-        address strategy,
-        uint256 amount
+        uint256 _amount,
+        address _token,
+        address _strategy,
+        address _from,
+        address _to
     ) external override returns (uint256) {
-        require(amount != 0, 'SavingsAccount::transferFrom zero amount');
+        require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
         //update allowance
-        allowance[from][token][msg.sender] = allowance[from][token][msg.sender].sub(
-            amount,
+        allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
+            _amount,
             'SavingsAccount::transferFrom allowance limit exceeding'
         );
 
-        if (strategy != address(0)) {
-            amount = IYield(strategy).getSharesForTokens(amount, token);
+        if (_strategy != address(0)) {
+            _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
         }
 
         //reduce sender's balance
-        userLockedBalance[from][token][strategy] = userLockedBalance[from][token][strategy].sub(
-            amount,
+        balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
+            _amount,
             'SavingsAccount::transferFrom insufficient allowance'
         );
 
         //update receiver's balance
-        userLockedBalance[to][token][strategy] = (userLockedBalance[to][token][strategy]).add(amount);
+        balanceInShares[_to][_token][_strategy] = (balanceInShares[_to][_token][_strategy]).add(_amount);
 
-        emit Transfer(token, strategy, from, to, amount);
+        emit Transfer(_token, _strategy, _from, _to, _amount);
 
-        //not sure
-        return amount;
+        return _amount;
     }
 
-    function getTotalAsset(address _user, address _asset) public override returns (uint256 _totalTokens) {
+    function getTotalTokens(address _user, address _token) public override returns (uint256 _totalTokens) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
-            uint256 _liquidityShares = userLockedBalance[_user][_asset][_strategyList[_index]];
+        for (uint256 i = 0; i < _strategyList.length; i++) {
+            uint256 _liquidityShares = balanceInShares[_user][_token][_strategyList[i]];
 
             if (_liquidityShares != 0) {
                 uint256 _tokenInStrategy = _liquidityShares;
-                if (_strategyList[_index] != address(0)) {
-                    _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
+                if (_strategyList[i] != address(0)) {
+                    _tokenInStrategy = IYield(_strategyList[i]).getTokensForShares(_liquidityShares, _token);
                 }
 
                 _totalTokens = _totalTokens.add(_tokenInStrategy);
@@ -406,11 +398,5 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         }
     }
 
-    receive() external payable {
-        // require(
-        //     IStrategyRegistry(strategyRegistry).registry(msg.sender),
-        //     "SavingsAccount::receive invalid transaction"
-        // );
-        // the above snippet of code causes gas issues. Commented till solution is found
-    }
+    receive() external payable {}
 }

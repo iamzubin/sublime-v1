@@ -220,10 +220,10 @@ describe('Template 2', async () => {
         let {
             _collectionPeriod,
             _marginCallDuration,
-            _collateralVolatilityThreshold,
+            _minborrowFraction,
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
-            _matchCollateralRatioInterval,
+            _loanWithdrawalDuration,
             _poolInitFuncSelector,
             _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
@@ -234,13 +234,13 @@ describe('Template 2', async () => {
             .initialize(
                 admin.address,
                 _collectionPeriod,
-                _matchCollateralRatioInterval,
+                _loanWithdrawalDuration,
                 _marginCallDuration,
-                _gracePeriodPenaltyFraction,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
+                _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address
             );
@@ -254,11 +254,6 @@ describe('Template 2', async () => {
         if (network.name == 'hardhat') {
             await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
             await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
-
-            await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.DAI, testPoolFactoryParams._collateralVolatilityThreshold);
-            await poolFactory
-                .connect(admin)
-                .updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
         }
 
         await poolFactory
@@ -298,7 +293,7 @@ describe('Template 2', async () => {
 
             let {
                 _poolSize,
-                _minborrowAmount,
+                _collateralVolatilityThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -315,11 +310,11 @@ describe('Template 2', async () => {
                     .connect(borrower)
                     .createPool(
                         _poolSize,
-                        _minborrowAmount,
+                        _borrowRate,
                         Contracts.DAI,
                         Contracts.LINK,
                         _collateralRatio,
-                        _borrowRate,
+                        _collateralVolatilityThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         zeroAddress,
@@ -335,7 +330,7 @@ describe('Template 2', async () => {
 
             let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
-            expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await newlyCreatedToken.name()).eq('Pool Tokens');
             expect(await newlyCreatedToken.symbol()).eq('OBPT');
             expect(await newlyCreatedToken.decimals()).eq(18);
 
@@ -356,13 +351,6 @@ describe('Template 2', async () => {
             await poolFactory.connect(admin).updateSupportedBorrowTokens(testToken1.address, true); //test token 1
             await poolFactory.connect(admin).updateSupportedBorrowTokens(testToken2.address, true); // test token 2
             await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true); // for ether
-            await poolFactory
-                .connect(admin)
-                .updateVolatilityThreshold(testToken1.address, testPoolFactoryParams._collateralVolatilityThreshold);
-            await poolFactory
-                .connect(admin)
-                .updateVolatilityThreshold(testToken2.address, testPoolFactoryParams._collateralVolatilityThreshold);
-            await poolFactory.connect(admin).updateVolatilityThreshold(zeroAddress, testPoolFactoryParams._collateralVolatilityThreshold);
 
             console.log('Pool Factory Updating Collateral Tokens');
             await poolFactory.connect(admin).updateSupportedCollateralTokens(testToken1.address, true); // test token 1
@@ -394,7 +382,7 @@ describe('Template 2', async () => {
 
             let {
                 _poolSize,
-                _minborrowAmount,
+                _collateralVolatilityThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -414,7 +402,7 @@ describe('Template 2', async () => {
             console.log('Need to create Pool with params');
             console.log({
                 _poolSize: _poolSize.toString(),
-                _minborrowAmount: _minborrowAmount.toString(),
+                _collateralVolatilityThreshold: _collateralVolatilityThreshold.toString(),
                 topken1Address: testToken1.address, // test token 1
                 topken2Address: testToken2.address, // test token 2
                 _collateralRatio: _collateralRatio.toString(),
@@ -430,11 +418,11 @@ describe('Template 2', async () => {
             // await expect(
             //     poolFactory.connect(borrower).createPool(
             //         _poolSize,
-            //         _minborrowAmount,
+            //         _borrowRate,
             //         testToken1.address, // test token 1
             //         testToken2.address, // test token 2
             //         _collateralRatio,
-            //         _borrowRate,
+            //         _collateralVolatilityThreshold,
             //         _repaymentInterval,
             //         _noOfRepaymentIntervals,
             //         zeroAddress,
@@ -448,7 +436,7 @@ describe('Template 2', async () => {
 
             // let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
 
-            // expect(await newlyCreatedToken.name()).eq('Open Borrow Pool Tokens');
+            // expect(await newlyCreatedToken.name()).eq('Pool Tokens');
             // expect(await newlyCreatedToken.symbol()).eq('OBPT');
             // expect(await newlyCreatedToken.decimals()).eq(18);
 

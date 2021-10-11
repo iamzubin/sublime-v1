@@ -154,10 +154,10 @@ describe('Pool Collection stage', async () => {
         let {
             _collectionPeriod,
             _marginCallDuration,
-            _collateralVolatilityThreshold,
+            _minborrowFraction,
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
-            _matchCollateralRatioInterval,
+            _loanWithdrawalDuration,
             _poolInitFuncSelector,
             _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
@@ -168,13 +168,13 @@ describe('Pool Collection stage', async () => {
             .initialize(
                 admin.address,
                 _collectionPeriod,
-                _matchCollateralRatioInterval,
+                _loanWithdrawalDuration,
                 _marginCallDuration,
-                _gracePeriodPenaltyFraction,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
+                _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address
             );
@@ -182,21 +182,13 @@ describe('Pool Collection stage', async () => {
 
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
 
-        await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.DAI, testPoolFactoryParams._collateralVolatilityThreshold);
-        await poolFactory.connect(admin).updateVolatilityThreshold(Contracts.LINK, testPoolFactoryParams._collateralVolatilityThreshold);
-
         poolImpl = await deployHelper.pool.deployPool();
         poolTokenImpl = await deployHelper.pool.deployPoolToken();
         repaymentImpl = await deployHelper.pool.deployRepayments();
 
         await repaymentImpl
             .connect(admin)
-            .initialize(
-                poolFactory.address,
-                repaymentParams.gracePenalityRate,
-                repaymentParams.gracePeriodFraction,
-                savingsAccount.address
-            );
+            .initialize(poolFactory.address, repaymentParams.gracePenalityRate, repaymentParams.gracePeriodFraction);
 
         await poolFactory
             .connect(admin)
@@ -248,7 +240,7 @@ describe('Pool Collection stage', async () => {
 
             let {
                 _poolSize,
-                _minborrowAmount,
+                _collateralVolatilityThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -263,11 +255,11 @@ describe('Pool Collection stage', async () => {
                 .connect(borrower)
                 .createPool(
                     _poolSize,
-                    _minborrowAmount,
+                    _borrowRate,
                     Contracts.LINK,
                     Contracts.DAI,
                     _collateralRatio,
-                    _borrowRate,
+                    _collateralVolatilityThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     poolStrategy.address,
@@ -316,11 +308,11 @@ describe('Pool Collection stage', async () => {
             const amount = createPoolParams._poolSize.div(10);
             await borrowToken.connect(admin).transfer(lender.address, amount);
             await borrowToken.connect(lender).approve(savingsAccount.address, amount);
-            await savingsAccount.connect(lender).depositTo(amount, borrowToken.address, zeroAddress, lender.address);
+            await savingsAccount.connect(lender).deposit(amount, borrowToken.address, zeroAddress, lender.address);
 
             const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
             const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
-            await savingsAccount.connect(lender).approve(borrowToken.address, pool.address, amount);
+            await savingsAccount.connect(lender).approve(amount, borrowToken.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
 
@@ -348,11 +340,11 @@ describe('Pool Collection stage', async () => {
             const amount = createPoolParams._poolSize.div(10);
             await borrowToken.connect(admin).transfer(lender1.address, amount);
             await borrowToken.connect(lender1).approve(savingsAccount.address, amount);
-            await savingsAccount.connect(lender1).depositTo(amount, borrowToken.address, zeroAddress, lender1.address);
+            await savingsAccount.connect(lender1).deposit(amount, borrowToken.address, zeroAddress, lender1.address);
 
             const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
             const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
-            await savingsAccount.connect(lender1).approve(borrowToken.address, pool.address, amount);
+            await savingsAccount.connect(lender1).approve(amount, borrowToken.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
 

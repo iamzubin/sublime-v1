@@ -42,7 +42,6 @@ import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
-import { BytesLike } from '@ethersproject/bytes';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 
 describe('Credit Lines', async () => {
@@ -154,8 +153,8 @@ describe('Credit Lines', async () => {
         let poolFactory: PoolFactory;
         let extenstion: Extension;
 
-        let borrowerCreditLine: BytesLike;
-        let lenderCreditLine: BytesLike;
+        let borrowerCreditLine: BigNumber;
+        let lenderCreditLine: BigNumber;
 
         let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
 
@@ -175,28 +174,30 @@ describe('Credit Lines', async () => {
             let {
                 _collectionPeriod,
                 _marginCallDuration,
-                _collateralVolatilityThreshold,
-                _gracePeriodPenaltyFraction,
+                _minborrowFraction,
                 _liquidatorRewardFraction,
-                _matchCollateralRatioInterval,
+                _loanWithdrawalDuration,
                 _poolInitFuncSelector,
                 _poolTokenInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
 
+            let { _protocolFeeFraction: clProtocolFeeFraction, _liquidatorRewardFraction: clLiquidatorRewardFraction } =
+                testPoolFactoryParams;
+
             await poolFactory
                 .connect(admin)
                 .initialize(
                     admin.address,
                     _collectionPeriod,
-                    _matchCollateralRatioInterval,
+                    _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _gracePeriodPenaltyFraction,
                     _poolInitFuncSelector,
                     _poolTokenInitFuncSelector,
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
+                    _minborrowFraction,
                     _protocolFeeFraction,
                     protocolFeeCollector.address
                 );
@@ -224,8 +225,9 @@ describe('Credit Lines', async () => {
                     savingsAccount.address,
                     strategyRegistry.address,
                     admin.address,
-                    _protocolFeeFraction,
-                    protocolFeeCollector.address
+                    clProtocolFeeFraction,
+                    protocolFeeCollector.address,
+                    clLiquidatorRewardFraction
                 );
         });
 
@@ -240,7 +242,7 @@ describe('Credit Lines', async () => {
 
             let values = await creditLine
                 .connect(lender)
-                .callStatic.requestCreditLineToBorrower(
+                .callStatic.request(
                     _borrower,
                     borrowLimit,
                     _liquidationThreshold,
@@ -248,13 +250,14 @@ describe('Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    true
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .requestCreditLineToBorrower(
+                    .request(
                         _borrower,
                         borrowLimit,
                         _liquidationThreshold,
@@ -262,32 +265,33 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        true
                     )
             )
-                .to.emit(creditLine, 'CreditLineRequestedToBorrower')
+                .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
 
             borrowerCreditLine = values;
-            let creditLineInfo = await creditLine.creditLineInfo(values);
-            // console.log({ creditLineInfo });
+            let creditLineConstants = await creditLine.creditLineConstants(values);
+            // console.log({ creditLineConstants });
         });
 
         it('Accept Credit Line (Borrower)', async () => {
-            await expect(creditLine.connect(borrower).acceptCreditLineBorrower(borrowerCreditLine))
+            await expect(creditLine.connect(borrower).accept(borrowerCreditLine))
                 .to.emit(creditLine, 'CreditLineAccepted')
                 .withArgs(borrowerCreditLine);
         });
 
         it('Deposit Collateral into existing credit line (not from savings account)', async () => {
             // console.log({ borrowerCreditLine, lenderCreditLine });
-            // console.log(await creditLine.creditLineInfo(borrowerCreditLine));
+            // console.log(await creditLine.creditLineConstants(borrowerCreditLine));
             let valueToTest: BigNumberish = collateralAmountToUse;
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
             await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-            await creditLine.connect(borrower).depositCollateral(Contracts.LINK, valueToTest, borrowerCreditLine, false);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
         });
 
         it('Calculate Interest', async () => {
@@ -305,11 +309,11 @@ describe('Credit Lines', async () => {
 
             await DaiTokenContract.connect(lender).approve(savingsAccount.address, largeAmount.mul(100));
 
-            await savingsAccount.connect(lender).depositTo(largeAmount.mul(100), DaiTokenContract.address, zeroAddress, lender.address);
+            await savingsAccount.connect(lender).deposit(largeAmount.mul(100), DaiTokenContract.address, zeroAddress, lender.address);
 
-            await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
+            await savingsAccount.connect(lender).approve(amountToBorrow, DaiTokenContract.address, creditLine.address);
 
-            await creditLine.connect(borrower).borrowFromCreditLine(amountToBorrow, borrowerCreditLine);
+            await creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow);
         });
 
         it('Check Collateralization Ratio', async () => {
@@ -322,17 +326,17 @@ describe('Credit Lines', async () => {
 
         describe('Failed Cases', async () => {
             it('Cannot borrow more if amount more than borrow limit', async () => {
-                await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, amountToBorrow);
+                await savingsAccount.connect(lender).approve(amountToBorrow, DaiTokenContract.address, creditLine.address);
 
-                await expect(
-                    creditLine.connect(borrower).borrowFromCreditLine(amountToBorrow.mul(100), borrowerCreditLine)
-                ).to.be.revertedWith('CreditLine: Amount exceeds borrow limit.');
+                await expect(creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow.mul(100))).to.be.revertedWith(
+                    'CreditLine: Amount exceeds borrow limit.'
+                );
             });
         });
 
         it('Cannot liquidate if overcollateralized', async () => {
             await DaiTokenContract.connect(admin).approve(creditLine.address, largeAmount.mul(100));
-            await expect(creditLine.connect(admin).liquidation(borrowerCreditLine)).to.be.revertedWith(
+            await expect(creditLine.connect(admin).liquidate(borrowerCreditLine)).to.be.revertedWith(
                 'CreditLine: Collateral ratio is higher than liquidation threshold'
             );
         });
@@ -345,9 +349,9 @@ describe('Credit Lines', async () => {
                 //     _borrowableAmountInBefore: _borrowableAmount.toString(),
                 // });
 
-                await savingsAccount.connect(lender).approve(DaiTokenContract.address, creditLine.address, _borrowableAmount.mul(5).div(4));
+                await savingsAccount.connect(lender).approve(_borrowableAmount.mul(5).div(4), DaiTokenContract.address, creditLine.address);
 
-                await creditLine.connect(borrower).borrowFromCreditLine(_borrowableAmount.mul(9).div(10), borrowerCreditLine); // 90% of borrowable amount
+                await creditLine.connect(borrower).borrow(borrowerCreditLine, _borrowableAmount.mul(9).div(10)); // 90% of borrowable amount
 
                 // increase blocks/time
             });
@@ -376,7 +380,7 @@ describe('Credit Lines', async () => {
                 //     _borrowableAmount: _borrowableAmount.toString(),
                 // });
 
-                await expect(creditLine.connect(admin).liquidation(borrowerCreditLine)).to.emit(creditLine, 'CreditLineLiquidated');
+                await expect(creditLine.connect(admin).liquidate(borrowerCreditLine)).to.emit(creditLine, 'CreditLineLiquidated');
             });
         });
     });

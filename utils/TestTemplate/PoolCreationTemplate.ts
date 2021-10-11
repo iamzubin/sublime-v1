@@ -21,6 +21,7 @@ import {
     aaveYieldParams,
     createPoolParams,
     zeroAddress,
+    creditLineFactoryParams,
 } from '../constants-rahul';
 
 import hre from 'hardhat';
@@ -84,7 +85,7 @@ export async function poolCreationTest(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -93,9 +94,13 @@ export async function poolCreationTest(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             console.log('createEnvironment() executed successfully.');
@@ -115,12 +120,12 @@ export async function poolCreationTest(
 
             generatedPoolAddress = await calculateNewPoolAddress(env, borrowToken, collateralToken, iYield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -145,12 +150,12 @@ export async function poolCreationTest(
 
             pool = await createNewPool(env, borrowToken, collateralToken, iYield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BorrowDecimals)), //10 DAI,
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -158,7 +163,7 @@ export async function poolCreationTest(
             let poolTokenAddress = await pool.poolToken();
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
         });

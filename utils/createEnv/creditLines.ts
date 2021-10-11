@@ -9,6 +9,7 @@ import { SavingsAccount } from '@typechain/SavingsAccount';
 import { StrategyRegistry } from '@typechain/StrategyRegistry';
 import { Address } from 'hardhat-deploy/dist/types';
 import { CreditLineInitParams } from '@utils/types';
+import { creditLineFactoryParams } from '@utils/constants';
 
 export async function createCreditLines(proxyAdmin: SignerWithAddress): Promise<CreditLine> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -28,15 +29,18 @@ export async function initCreditLine(
     creditLineInitParams: CreditLineInitParams,
     protocolFeeCollector: SignerWithAddress
 ) {
-    await creditLine
-        .connect(admin)
-        .initialize(
-            defaultStrategy,
-            priceOracle.address,
-            savingsAccount.address,
-            strategyRegistry.address,
-            admin.address,
-            creditLineInitParams._protocolFeeFraction,
-            protocolFeeCollector.address
-        );
+    await (
+        await creditLine
+            .connect(admin)
+            .initialize(
+                defaultStrategy,
+                priceOracle.address,
+                savingsAccount.address,
+                strategyRegistry.address,
+                admin.address,
+                creditLineInitParams._protocolFeeFraction,
+                protocolFeeCollector.address,
+                creditLineInitParams._liquidatorRewardFraction
+            )
+    ).wait();
 }

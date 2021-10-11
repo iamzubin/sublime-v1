@@ -15,7 +15,14 @@ import hre from 'hardhat';
 const { ethers, network } = hre;
 import { expect, assert } from 'chai';
 
-import { extensionParams, repaymentParams, testPoolFactoryParams, createPoolParams, zeroAddress } from '../constants-Additions';
+import {
+    extensionParams,
+    repaymentParams,
+    testPoolFactoryParams,
+    creditLineFactoryParams,
+    createPoolParams,
+    zeroAddress,
+} from '../constants-Additions';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -75,7 +82,7 @@ export async function compoundPoolCollectionStage(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -84,9 +91,13 @@ export async function compoundPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -101,13 +112,13 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -130,13 +141,13 @@ export async function compoundPoolCollectionStage(
             // console.log("Tokens present!");
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -147,7 +158,7 @@ export async function compoundPoolCollectionStage(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -166,13 +177,13 @@ export async function compoundPoolCollectionStage(
             await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, depositAmount);
 
             // Checking balance before deposit
-            let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
+            let SharesBefore = (await pool.poolVariables()).baseLiquidityShares;
 
             // Direct Collateral deposit
             await pool.connect(borrower).depositCollateral(depositAmount, false);
 
             // Checking balance after deposit
-            let SharesAfter = (await pool.poolVars()).baseLiquidityShares;
+            let SharesAfter = (await pool.poolVariables()).baseLiquidityShares;
 
             // Getting additional Shares
             let SharesReceived = SharesAfter.sub(SharesBefore);
@@ -183,7 +194,7 @@ export async function compoundPoolCollectionStage(
             // console.log({ LiquidityShares: liquidityShares.toNumber() });
             expectApproxEqual(liquidityShares.toNumber(), SharesReceived, 50);
 
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             // console.log(LoanStatus);
             assert(
                 LoanStatus.toString() == BigNumber.from('0').toString(),
@@ -209,19 +220,19 @@ export async function compoundPoolCollectionStage(
             await Collateral.connect(borrower).approve(env.yields.compoundYield.address, liquidityShares.mul(100));
 
             // Approving the Savings Account for deposit of tokens
-            await env.savingsAccount.connect(borrower).approve(Collateral.address, pool.address, liquidityShares.mul(100));
+            await env.savingsAccount.connect(borrower).approve(liquidityShares.mul(100), Collateral.address, pool.address);
             await env.savingsAccount
                 .connect(borrower)
-                .depositTo(liquidityShares.mul(100), Collateral.address, env.yields.compoundYield.address, borrower.address);
+                .deposit(liquidityShares.mul(100), Collateral.address, env.yields.compoundYield.address, borrower.address);
 
             // Checking balance before deposit
-            let SharesBefore = (await pool.poolVars()).baseLiquidityShares;
+            let SharesBefore = (await pool.poolVariables()).baseLiquidityShares;
 
             // Depositing Tokens
             await expect(pool.connect(borrower).depositCollateral(AmountForDeposit, true)).to.emit(env.savingsAccount, 'Transfer');
 
             // Checking balance after deposit
-            let SharesAfter = (await pool.poolVars()).baseLiquidityShares;
+            let SharesAfter = (await pool.poolVariables()).baseLiquidityShares;
 
             // Getting additional Shares
             let SharesReceived = SharesAfter.sub(SharesBefore);
@@ -278,8 +289,8 @@ export async function compoundPoolCollectionStage(
             await env.mockTokenContracts[0].contract.connect(lender).approve(env.savingsAccount.address, amount);
             await env.savingsAccount
                 .connect(lender)
-                .depositTo(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender.address);
-            await env.savingsAccount.connect(lender).approve(env.mockTokenContracts[0].contract.address, pool.address, amount);
+                .deposit(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender.address);
+            await env.savingsAccount.connect(lender).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
@@ -316,8 +327,8 @@ export async function compoundPoolCollectionStage(
             await env.mockTokenContracts[0].contract.connect(lender1).approve(env.savingsAccount.address, amount);
             await env.savingsAccount
                 .connect(lender1)
-                .depositTo(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender1.address);
-            await env.savingsAccount.connect(lender1).approve(env.mockTokenContracts[0].contract.address, pool.address, amount);
+                .deposit(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender1.address);
+            await env.savingsAccount.connect(lender1).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
@@ -377,7 +388,7 @@ export async function compoundPoolCollectionStage(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -386,9 +397,13 @@ export async function compoundPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from('borrower' + Math.random() * 10000000));
@@ -403,12 +418,12 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -430,12 +445,12 @@ export async function compoundPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -446,7 +461,7 @@ export async function compoundPoolCollectionStage(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -472,7 +487,7 @@ export async function compoundPoolCollectionStage(
 
             await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('');
 
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('0').toString(),
                 `Pool should be in Collection Stage. Expected: ${BigNumber.from('0').toString()} 
@@ -533,7 +548,7 @@ export async function compoundPoolCollectionStage(
                 `Savings account changing instead of token balance`
             );
 
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('1').toString(),
                 `Pool is not in Active Stage. Expected: ${BigNumber.from('1').toString()} 
@@ -1285,7 +1300,7 @@ export async function compoundPoolCollectionStage(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -1294,9 +1309,13 @@ export async function compoundPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -1311,12 +1330,12 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -1338,12 +1357,12 @@ export async function compoundPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -1354,7 +1373,7 @@ export async function compoundPoolCollectionStage(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -1425,7 +1444,7 @@ export async function compoundPoolCollectionStage(
                 Expected: ${borrowTokenBalancebefore.add(borrowTokenBalancePool).toString()} 
                 Actual: ${borrowTokenBalanceAfterCancel}`
             );
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('3').toString(),
                 `Pool not terminated correctly. Expected: ${BigNumber.from('3').toString()} 
@@ -1469,7 +1488,7 @@ export async function compoundPoolCollectionStage(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -1478,9 +1497,13 @@ export async function compoundPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -1495,12 +1518,12 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -1522,12 +1545,12 @@ export async function compoundPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -1538,7 +1561,7 @@ export async function compoundPoolCollectionStage(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -1560,10 +1583,10 @@ export async function compoundPoolCollectionStage(
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            await expect(pool.connect(admin).terminateOpenBorrowPool()).to.emit(pool, 'OpenBorrowPoolTerminated');
+            await expect(pool.connect(admin).terminatePool()).to.emit(pool, 'PoolTerminated');
 
             // Check if loan status is set to 'TERMINATED' (5)
-            let LoanStatus = (await pool.poolVars()).loanStatus;
+            let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('5').toString(),
                 `Pool not terminated correctly. Expected: ${BigNumber.from('5').toString()} 
