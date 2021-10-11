@@ -515,7 +515,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _from,
         address _to,
         uint256 _amount
-    ) internal override nonReentrant {
+    ) internal override {
         if(_from == address(0) || _to == address(0)) {
             if (_to != address(0)) {
                 require(!paused(), 'ERC20Pausable: token transfer while paused');

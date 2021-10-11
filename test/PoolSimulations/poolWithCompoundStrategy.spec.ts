@@ -48,6 +48,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { ERC20Detailed } from '@typechain/ERC20Detailed';
 
 describe('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;
@@ -362,7 +363,7 @@ describe('Pool With Compound Strategy', async () => {
             // lender supplies 1 DAI to the pool and lender.address is lender
             await createPool();
             let deployHelper = new DeployHelper(borrower);
-            let token: ERC20 = await deployHelper.mock.getMockERC20(DaiTokenContract.address);
+            let token: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(DaiTokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -371,7 +372,7 @@ describe('Pool With Compound Strategy', async () => {
 
         it('Check Ratio after borrowing borrow total 10 DAI with 1 WBTC Collateral', async () => {
             let deployHelper = new DeployHelper(borrower);
-            let token: ERC20 = await deployHelper.mock.getMockERC20(DaiTokenContract.address);
+            let token: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(DaiTokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -387,10 +388,10 @@ describe('Pool With Compound Strategy', async () => {
             await pool.connect(borrower).withdrawBorrowedAmount();
 
             let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(Contracts.WBTC, Contracts.DAI);
-            let token1: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
+            let token1: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(Contracts.WBTC);
             let token1Exp = BigNumber.from(10).pow(await token1.decimals());
 
-            let token2: ERC20 = await deployHelper.mock.getMockERC20(Contracts.DAI);
+            let token2: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(Contracts.DAI);
             let token2Exp = BigNumber.from(10).pow(await token2.decimals());
 
             let ratio = await pool.callStatic['getCurrentCollateralRatio()']();
