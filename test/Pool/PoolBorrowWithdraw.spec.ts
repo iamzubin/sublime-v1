@@ -35,7 +35,6 @@ import { Extension } from '../../typechain/Extension';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
@@ -56,7 +55,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
     let extenstion: Extension;
     let poolImpl: Pool;
-    let poolTokenImpl: PoolToken;
     let poolFactory: PoolFactory;
     let repaymentImpl: Repayments;
 
@@ -161,7 +159,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
             _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -173,7 +170,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 _loanWithdrawalDuration,
                 _marginCallDuration,
                 _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
@@ -185,7 +181,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
 
         poolImpl = await deployHelper.pool.deployPool();
-        poolTokenImpl = await deployHelper.pool.deployPoolToken();
         repaymentImpl = await deployHelper.pool.deployRepayments();
 
         await repaymentImpl
@@ -197,7 +192,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
             .setImplementations(
                 poolImpl.address,
                 repaymentImpl.address,
-                poolTokenImpl.address,
                 verification.address,
                 strategyRegistry.address,
                 priceOracle.address,
@@ -208,7 +202,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
         let pool: Pool;
-        let poolToken: PoolToken;
         let collateralToken: ERC20;
         let borrowToken: ERC20;
         let amount: BigNumber;
@@ -235,12 +228,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     false,
                     {}
                 );
-
-                const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-                let newPoolToken: string = getContractAddress({
-                    from: poolFactory.address,
-                    nonce,
-                });
 
                 let {
                     _poolSize,
@@ -274,8 +261,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         zeroAddress
                     );
 
-                poolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
                 amount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(scaler).sub(10);
@@ -288,12 +273,12 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Lender pool tokens should be transferrable', async () => {
-                const balance = await poolToken.balanceOf(lender.address);
-                const balanceBefore = await poolToken.balanceOf(lender1.address);
-                await poolToken.connect(lender).transfer(lender1.address, balance);
-                const balanceAfter = await poolToken.balanceOf(lender1.address);
+                const balance = await pool.balanceOf(lender.address);
+                const balanceBefore = await pool.balanceOf(lender1.address);
+                await pool.connect(lender).transfer(lender1.address, balance);
+                const balanceAfter = await pool.balanceOf(lender1.address);
                 assert(balanceBefore.add(balance).toString() == balanceAfter.toString(), 'Pool token transfer not working');
-                const balanceSenderAfter = await poolToken.balanceOf(lender.address);
+                const balanceSenderAfter = await pool.balanceOf(lender.address);
                 assert(
                     balanceSenderAfter.toString() == '0',
                     `Pool token not getting transferred correctly. Expected: 0, actual: ${balanceSenderAfter.toString()}`
@@ -370,12 +355,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     {}
                 );
 
-                const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-                let newPoolToken: string = getContractAddress({
-                    from: poolFactory.address,
-                    nonce,
-                });
-
                 let {
                     _poolSize,
                     _collateralVolatilityThreshold,
@@ -411,9 +390,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
-                    .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-                poolToken = await deployHelper.pool.getPoolToken(newPoolToken);
+                    .withArgs(generatedPoolAddress, borrower.address);
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
@@ -427,12 +404,12 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Lender pool tokens should be transferrable', async () => {
-                const balance = await poolToken.balanceOf(lender.address);
-                const balanceBefore = await poolToken.balanceOf(lender1.address);
-                await poolToken.connect(lender).transfer(lender1.address, balance);
-                const balanceAfter = await poolToken.balanceOf(lender1.address);
+                const balance = await pool.balanceOf(lender.address);
+                const balanceBefore = await pool.balanceOf(lender1.address);
+                await pool.connect(lender).transfer(lender1.address, balance);
+                const balanceAfter = await pool.balanceOf(lender1.address);
                 assert(balanceBefore.add(balance).toString() == balanceAfter.toString(), 'Pool token transfer not working');
-                const balanceSenderAfter = await poolToken.balanceOf(lender.address);
+                const balanceSenderAfter = await pool.balanceOf(lender.address);
                 assert(
                     balanceSenderAfter.toString() == '0',
                     `Pool token not getting transferred correctly. Expected: 0, actual: ${balanceSenderAfter.toString()}`
@@ -447,7 +424,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
                 const borrowAssetBalancePoolSavings = await savingsAccount.balanceInShares(pool.address, borrowToken.address, zeroAddress);
-                const tokensLent = await poolToken.totalSupply();
+                const tokensLent = await pool.totalSupply();
                 await pool.connect(borrower).withdrawBorrowedAmount();
                 const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
@@ -456,7 +433,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     borrowToken.address,
                     zeroAddress
                 );
-                const tokensLentAfter = await poolToken.totalSupply();
+                const tokensLentAfter = await pool.totalSupply();
                 const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
                 assert(tokensLent.toString() == tokensLentAfter.toString(), 'Tokens lent changing while withdrawing borrowed amount');
@@ -544,8 +521,8 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
             it('Pool tokens are not transferrable after pool cancel', async () => {
                 await pool.connect(borrower).cancelPool();
-                const balance = await poolToken.balanceOf(lender.address);
-                await expect(poolToken.connect(lender).transfer(lender1.address, balance)).to.be.revertedWith(
+                const balance = await pool.balanceOf(lender.address);
+                await expect(pool.connect(lender).transfer(lender1.address, balance)).to.be.revertedWith(
                     'ERC20Pausable: token transfer while paused'
                 );
             });
@@ -788,13 +765,13 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
                 const borrowTokenLender = await borrowToken.balanceOf(lender.address);
-                const totalPoolTokens = await poolToken.totalSupply();
-                const poolTokenLender = await poolToken.balanceOf(lender.address);
+                const totalPoolTokens = await pool.totalSupply();
+                const poolTokenLender = await pool.balanceOf(lender.address);
                 await pool.connect(lender).withdrawLiquidity();
                 const borrowTokenPoolAfter = await borrowToken.balanceOf(pool.address);
                 const borrowTokenLenderAfter = await borrowToken.balanceOf(lender.address);
-                const totalPoolTokensAfter = await poolToken.totalSupply();
-                const poolTokenLenderAfter = await poolToken.balanceOf(lender.address);
+                const totalPoolTokensAfter = await pool.totalSupply();
+                const poolTokenLenderAfter = await pool.balanceOf(lender.address);
 
                 assert(
                     borrowTokenPool.sub(borrowTokenPoolAfter).toString() == amount.toString(),
@@ -844,18 +821,18 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 const { penaltyLiquidityAmount: penalityLiquidityAmount } = await pool.poolVariables();
                 const lenderCancelBonus = penalityLiquidityAmount
-                    .mul(await poolToken.balanceOf(lender.address))
-                    .div(await poolToken.totalSupply());
+                    .mul(await pool.balanceOf(lender.address))
+                    .div(await pool.totalSupply());
 
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
                 const borrowTokenLender = await borrowToken.balanceOf(lender.address);
-                const totalPoolTokens = await poolToken.totalSupply();
-                const poolTokenLender = await poolToken.balanceOf(lender.address);
+                const totalPoolTokens = await pool.totalSupply();
+                const poolTokenLender = await pool.balanceOf(lender.address);
                 await pool.connect(lender).withdrawLiquidity();
                 const borrowTokenPoolAfter = await borrowToken.balanceOf(pool.address);
                 const borrowTokenLenderAfter = await borrowToken.balanceOf(lender.address);
-                const totalPoolTokensAfter = await poolToken.totalSupply();
-                const poolTokenLenderAfter = await poolToken.balanceOf(lender.address);
+                const totalPoolTokensAfter = await pool.totalSupply();
+                const poolTokenLenderAfter = await pool.balanceOf(lender.address);
 
                 assert(
                     borrowTokenPool.sub(borrowTokenPoolAfter).toString() == amount.add(lenderCancelBonus).toString(),
@@ -1056,13 +1033,13 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
                 const borrowTokenLender = await borrowToken.balanceOf(lender.address);
-                const totalPoolTokens = await poolToken.totalSupply();
-                const poolTokenLender = await poolToken.balanceOf(lender.address);
+                const totalPoolTokens = await pool.totalSupply();
+                const poolTokenLender = await pool.balanceOf(lender.address);
                 await pool.connect(lender).withdrawLiquidity();
                 const borrowTokenPoolAfter = await borrowToken.balanceOf(pool.address);
                 const borrowTokenLenderAfter = await borrowToken.balanceOf(lender.address);
-                const totalPoolTokensAfter = await poolToken.totalSupply();
-                const poolTokenLenderAfter = await poolToken.balanceOf(lender.address);
+                const totalPoolTokensAfter = await pool.totalSupply();
+                const poolTokenLenderAfter = await pool.balanceOf(lender.address);
 
                 assert(
                     borrowTokenPool.sub(borrowTokenPoolAfter).toString() == amount.toString(),
@@ -1117,18 +1094,18 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 const { penaltyLiquidityAmount } = await pool.poolVariables();
                 const lenderCancelBonus = penaltyLiquidityAmount
-                    .mul(await poolToken.balanceOf(lender.address))
-                    .div(await poolToken.totalSupply());
+                    .mul(await pool.balanceOf(lender.address))
+                    .div(await pool.totalSupply());
 
                 const borrowTokenPool = await borrowToken.balanceOf(pool.address);
                 const borrowTokenLender = await borrowToken.balanceOf(lender.address);
-                const totalPoolTokens = await poolToken.totalSupply();
-                const poolTokenLender = await poolToken.balanceOf(lender.address);
+                const totalPoolTokens = await pool.totalSupply();
+                const poolTokenLender = await pool.balanceOf(lender.address);
                 await pool.connect(lender).withdrawLiquidity();
                 const borrowTokenPoolAfter = await borrowToken.balanceOf(pool.address);
                 const borrowTokenLenderAfter = await borrowToken.balanceOf(lender.address);
-                const totalPoolTokensAfter = await poolToken.totalSupply();
-                const poolTokenLenderAfter = await poolToken.balanceOf(lender.address);
+                const totalPoolTokensAfter = await pool.totalSupply();
+                const poolTokenLenderAfter = await pool.balanceOf(lender.address);
 
                 assert(
                     borrowTokenPool.sub(borrowTokenPoolAfter).toString() == amount.add(lenderCancelBonus).toString(),
@@ -1180,12 +1157,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     {}
                 );
 
-                const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-                let newPoolToken: string = getContractAddress({
-                    from: poolFactory.address,
-                    nonce,
-                });
-
                 let {
                     _poolSize,
                     _collateralVolatilityThreshold,
@@ -1221,9 +1192,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
-                    .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-                poolToken = await deployHelper.pool.getPoolToken(newPoolToken);
+                    .withArgs(generatedPoolAddress, borrower.address);
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
@@ -1237,12 +1206,12 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Lender pool tokens should be transferrable', async () => {
-                const balance = await poolToken.balanceOf(lender.address);
-                const balanceBefore = await poolToken.balanceOf(lender1.address);
-                await poolToken.connect(lender).transfer(lender1.address, balance);
-                const balanceAfter = await poolToken.balanceOf(lender1.address);
+                const balance = await pool.balanceOf(lender.address);
+                const balanceBefore = await pool.balanceOf(lender1.address);
+                await pool.connect(lender).transfer(lender1.address, balance);
+                const balanceAfter = await pool.balanceOf(lender1.address);
                 assert(balanceBefore.add(balance).toString() == balanceAfter.toString(), 'Pool token transfer not working');
-                const balanceSenderAfter = await poolToken.balanceOf(lender.address);
+                const balanceSenderAfter = await pool.balanceOf(lender.address);
                 assert(
                     balanceSenderAfter.toString() == '0',
                     `Pool token not getting transferred correctly. Expected: 0, actual: ${balanceSenderAfter.toString()}`
@@ -1257,7 +1226,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
                 const borrowAssetBalancePoolSavings = await savingsAccount.balanceInShares(pool.address, borrowToken.address, zeroAddress);
-                const tokensLent = await poolToken.totalSupply();
+                const tokensLent = await pool.totalSupply();
                 await pool.connect(borrower).withdrawBorrowedAmount();
                 const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
@@ -1266,7 +1235,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     borrowToken.address,
                     zeroAddress
                 );
-                const tokensLentAfter = await poolToken.totalSupply();
+                const tokensLentAfter = await pool.totalSupply();
                 const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
                 assert(tokensLent.toString() == tokensLentAfter.toString(), 'Tokens lent changing while withdrawing borrowed amount');
@@ -1313,12 +1282,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     {}
                 );
 
-                const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-                let newPoolToken: string = getContractAddress({
-                    from: poolFactory.address,
-                    nonce,
-                });
-
                 let {
                     _poolSize,
                     _collateralVolatilityThreshold,
@@ -1354,9 +1317,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
-                    .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-                poolToken = await deployHelper.pool.getPoolToken(newPoolToken);
+                    .withArgs(generatedPoolAddress, borrower.address);
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
@@ -1374,12 +1335,12 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
             it('Lender pool tokens should be transferrable', async () => {
                 await subject();
-                const balance = await poolToken.balanceOf(lender.address);
-                const balanceBefore = await poolToken.balanceOf(lender1.address);
-                await poolToken.connect(lender).transfer(lender1.address, balance);
-                const balanceAfter = await poolToken.balanceOf(lender1.address);
+                const balance = await pool.balanceOf(lender.address);
+                const balanceBefore = await pool.balanceOf(lender1.address);
+                await pool.connect(lender).transfer(lender1.address, balance);
+                const balanceAfter = await pool.balanceOf(lender1.address);
                 assert(balanceBefore.add(balance).toString() == balanceAfter.toString(), 'Pool token transfer not working');
-                const balanceSenderAfter = await poolToken.balanceOf(lender.address);
+                const balanceSenderAfter = await pool.balanceOf(lender.address);
                 assert(
                     balanceSenderAfter.toString() == '0',
                     `Pool token not getting transferred correctly. Expected: 0, actual: ${balanceSenderAfter.toString()}`
@@ -1395,7 +1356,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
                 const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
                 const borrowAssetBalancePoolSavings = await savingsAccount.balanceInShares(pool.address, borrowToken.address, zeroAddress);
-                const tokensLent = await poolToken.totalSupply();
+                const tokensLent = await pool.totalSupply();
                 let amount = createPoolParams._poolSize.sub(tokensLent);
 
                 await borrowToken.connect(admin).transfer(lender.address, amount);
@@ -1411,7 +1372,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                     borrowToken.address,
                     zeroAddress
                 );
-                const tokensLentAfter = await poolToken.totalSupply();
+                const tokensLentAfter = await pool.totalSupply();
                 const protocolFee = createPoolParams._poolSize.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
                 assert(

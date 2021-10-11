@@ -35,7 +35,6 @@ import { Extension } from '../../typechain/Extension';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
@@ -56,7 +55,6 @@ describe('Pool Active stage', async () => {
 
     let extenstion: Extension;
     let poolImpl: Pool;
-    let poolTokenImpl: PoolToken;
     let poolFactory: PoolFactory;
     let repaymentImpl: Repayments;
 
@@ -160,7 +158,6 @@ describe('Pool Active stage', async () => {
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
             _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -172,7 +169,6 @@ describe('Pool Active stage', async () => {
                 _loanWithdrawalDuration,
                 _marginCallDuration,
                 _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
@@ -184,7 +180,6 @@ describe('Pool Active stage', async () => {
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
 
         poolImpl = await deployHelper.pool.deployPool();
-        poolTokenImpl = await deployHelper.pool.deployPoolToken();
         repaymentImpl = await deployHelper.pool.deployRepayments();
 
         await repaymentImpl
@@ -196,7 +191,6 @@ describe('Pool Active stage', async () => {
             .setImplementations(
                 poolImpl.address,
                 repaymentImpl.address,
-                poolTokenImpl.address,
                 verification.address,
                 strategyRegistry.address,
                 priceOracle.address,
@@ -207,7 +201,6 @@ describe('Pool Active stage', async () => {
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
         let pool: Pool;
-        let poolToken: PoolToken;
         let collateralToken: ERC20;
         let borrowToken: ERC20;
         let amount: BigNumber;
@@ -235,12 +228,6 @@ describe('Pool Active stage', async () => {
                     false,
                     {}
                 );
-
-                const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-                let newPoolToken: string = getContractAddress({
-                    from: poolFactory.address,
-                    nonce,
-                });
 
                 let {
                     _poolSize,
@@ -274,8 +261,6 @@ describe('Pool Active stage', async () => {
                         zeroAddress
                     );
 
-                poolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
                 amount = createPoolParams._poolSize.mul(testPoolFactoryParams._minborrowFraction).div(scaler).add(100).mul(2).div(3);
@@ -298,14 +283,14 @@ describe('Pool Active stage', async () => {
             });
 
             it('Lender tokens should be transferable', async () => {
-                const lenderBal = await poolToken.balanceOf(lender.address);
-                const randomBal = await poolToken.balanceOf(random.address);
+                const lenderBal = await pool.balanceOf(lender.address);
+                const randomBal = await pool.balanceOf(random.address);
 
                 const transferAmount = lenderBal.div(2);
-                await poolToken.connect(lender).transfer(random.address, transferAmount);
+                await pool.connect(lender).transfer(random.address, transferAmount);
 
-                const lenderBalAfter = await poolToken.balanceOf(lender.address);
-                const randomBalAfter = await poolToken.balanceOf(random.address);
+                const lenderBalAfter = await pool.balanceOf(lender.address);
+                const randomBalAfter = await pool.balanceOf(random.address);
 
                 assert(
                     lenderBal.sub(lenderBalAfter).toString() == transferAmount.toString(),
@@ -739,13 +724,13 @@ describe('Pool Active stage', async () => {
                 it("Margin called lender, can't send pool tokens", async () => {
                     await pool.connect(lender).requestMarginCall();
 
-                    await expect(poolToken.connect(lender).transfer(random.address, 5)).to.be.revertedWith('18');
+                    await expect(pool.connect(lender).transfer(random.address, 5)).to.be.revertedWith('18');
                 });
 
                 it("Margin called lender, can't receive pool tokens", async () => {
                     await pool.connect(lender).requestMarginCall();
 
-                    await expect(poolToken.connect(lender1).transfer(lender.address, 5)).to.be.revertedWith('19');
+                    await expect(pool.connect(lender1).transfer(lender.address, 5)).to.be.revertedWith('19');
                 });
 
                 it('Multiple lender can initiate margin call', async () => {
@@ -768,8 +753,8 @@ describe('Pool Active stage', async () => {
                         .div(BigNumber.from(10).pow(price[1]))
                         .sub(createPoolParams._collateralAmount);
                     const amount: BigNumber = totalDeficit
-                        .mul(await poolToken.balanceOf(lender.address))
-                        .div(await poolToken.totalSupply())
+                        .mul(await pool.balanceOf(lender.address))
+                        .div(await pool.totalSupply())
                         .add(1);
                     await collateralToken.connect(admin).transfer(borrower.address, amount);
 
@@ -803,7 +788,7 @@ describe('Pool Active stage', async () => {
                         .div(scaler)
                         .div(BigNumber.from(10).pow(price[1]))
                         .sub(createPoolParams._collateralAmount);
-                    let amount: BigNumber = totalDeficit.mul(await poolToken.balanceOf(lender.address)).div(await poolToken.totalSupply());
+                    let amount: BigNumber = totalDeficit.mul(await pool.balanceOf(lender.address)).div(await pool.totalSupply());
                     amount = amount.sub(amount.div(1000));
 
                     await collateralToken.connect(admin).transfer(borrower.address, amount);
@@ -813,7 +798,7 @@ describe('Pool Active stage', async () => {
 
                     await timeTravel(network, parseInt(testPoolFactoryParams._marginCallDuration.toString()));
 
-                    const liquidationTokens = await poolToken.balanceOf(lender.address);
+                    const liquidationTokens = await pool.balanceOf(lender.address);
                     await borrowToken.connect(admin).transfer(random.address, liquidationTokens);
                     await borrowToken.connect(random).approve(pool.address, liquidationTokens);
 

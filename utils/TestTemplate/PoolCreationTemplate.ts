@@ -32,7 +32,6 @@ import { assert, expect } from 'chai';
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { BigNumber, BigNumberish } from 'ethers';
 import { IYield } from '../../typechain/IYield';
 import { Context } from 'mocha';
@@ -61,7 +60,6 @@ export async function poolCreationTest(
         let iYield: IYield;
         let generatedPoolAddress: Address;
         let pool: Pool;
-        let poolToken: PoolToken;
         before(async () => {
             env = await createEnvironment(
                 hre,
@@ -89,7 +87,6 @@ export async function poolCreationTest(
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
@@ -159,13 +156,6 @@ export async function poolCreationTest(
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
-
-            let poolTokenAddress = await pool.poolToken();
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
         });
 
         it('Pool created successfully for this pair', async function () {

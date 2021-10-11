@@ -28,7 +28,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         _updateSavingsAccount(_savingsAccount);
     }
 
-    function liquidityToken(address asset) external view override returns (address tokenAddress) {
+    function liquidityToken(address asset) external pure override returns (address tokenAddress) {
         tokenAddress = asset;
     }
 

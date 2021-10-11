@@ -31,16 +31,15 @@ import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementati
 import { createExtenstionWithInit } from './extension';
 import { createRepaymentsWithInit } from './repayments';
 import { createPool } from './poolLogic';
-import { createPoolToken } from './poolToken';
 import { createCreditLines, initCreditLine } from './creditLines';
 import DeployHelper from '../../utils/deploys';
-import { PoolToken } from '@typechain/PoolToken';
 
 import { getPoolAddress } from '../../utils/helpers';
 import { ERC20 } from '@typechain/ERC20';
 import { IYield } from '@typechain/IYield';
 import { BytesLike, BigNumberish, BigNumber } from 'ethers';
 import { Pool } from '@typechain/Pool';
+import { ERC20Detailed } from '@typechain/ERC20Detailed';
 
 export async function createEnvironment(
     hre: HardhatRuntimeEnvironment,
@@ -77,7 +76,7 @@ export async function createEnvironment(
     for (let index = 0; index < _tempMockTokensContractAddresses.length; index++) {
         const tokenAddress = _tempMockTokensContractAddresses[index];
         let deployHelper: DeployHelper = new DeployHelper(admin);
-        let contract: PoolToken = await deployHelper.pool.getPoolToken(tokenAddress);
+        let contract: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(tokenAddress);
         try {
             let name = await contract.symbol();
             env.mockTokenContracts.push({ name, contract });
@@ -137,7 +136,6 @@ export async function createEnvironment(
     };
 
     env.poolLogic = await createPool(proxyAdmin);
-    env.poolTokenLogic = await createPoolToken(proxyAdmin);
 
     await addSupportedTokens(
         env.poolFactory,
@@ -150,7 +148,6 @@ export async function createEnvironment(
         admin,
         env.poolLogic,
         env.repayments,
-        env.poolTokenLogic,
         env.verification,
         env.strategyRegistry,
         env.priceOracle,

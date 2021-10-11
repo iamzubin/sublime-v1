@@ -3,11 +3,11 @@ pragma solidity 0.7.0;
 
 import '../Proxy.sol';
 import '../interfaces/IPoolFactory.sol';
+import '../interfaces/IPool.sol';
 import '../interfaces/IVerification.sol';
 import '../interfaces/IStrategyRegistry.sol';
 import '../interfaces/IRepayment.sol';
 import '../interfaces/IPriceOracle.sol';
-import './PoolToken.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
 /**
@@ -44,19 +44,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     bytes4 public poolInitFuncSelector; //  bytes4(keccak256("initialize(uint256,address,address,address,uint256,uint256,uint256,uint256,bool)"))
 
     /**
-     * @notice function definition of the pool token contract
-     */
-    bytes4 public poolTokenInitFuncSelector;
-
-    /**
      * @notice address of the latest implementation of the pool logic
      */
     address public poolImpl;
-
-    /**
-     * @notice address of the latest implementation of the pool token logic
-     */
-    address public poolTokenImpl;
 
     /**
      * @notice address of the contract storing the user registry
@@ -169,21 +159,14 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @notice emitted when a Pool is created
      * @param pool the address of the Pool
      * @param borrower the address of the borrower who created the pool
-     * @param poolToken the address of the corresponding pool token for the Pool
      */
-    event PoolCreated(address pool, address borrower, address poolToken);
+    event PoolCreated(address pool, address borrower);
 
     /**
      * @notice emitted when the init function definition Pool.sol logic is updated
      * @param updatedSelector the new init function definition for the Pool logic contract
      */
     event PoolInitSelectorUpdated(bytes4 updatedSelector);
-
-    /**
-     * @notice emitted when the init function definition PoolToken.sol logic is updated
-     * @param updatedSelector the new init function definition for the Pool token logic contract
-     */
-    event PoolTokenInitFuncSelector(bytes4 updatedSelector);
 
     /**
      * @notice emitted when the Pool.sol logic is updated
@@ -208,12 +191,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param updatedRepaymentImpl the address of the new implementation of the Repayments logic
      */
     event RepaymentImplUpdated(address updatedRepaymentImpl);
-
-    /**
-     * @notice emitted when the PoolToken.sol logic is updated
-     * @param updatedPoolTokenImpl address of the new implementation of the PoolToken logic
-     */
-    event PoolTokenImplUpdated(address updatedPoolTokenImpl);
 
     /**
      * @notice emitted when the PriceOracle.sol is updated
@@ -335,7 +312,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _loanWithdrawalDuration,
         uint256 _marginCallDuration,
         bytes4 _poolInitFuncSelector,
-        bytes4 _poolTokenInitFuncSelector,
         uint256 _liquidatorRewardFraction,
         uint256 _poolCancelPenaltyFraction,
         uint256 _minBorrowFraction,
@@ -350,7 +326,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updateLoanWithdrawalDuration(_loanWithdrawalDuration);
         _updateMarginCallDuration(_marginCallDuration);
         _updatepoolInitFuncSelector(_poolInitFuncSelector);
-        _updatePoolTokenInitFuncSelector(_poolTokenInitFuncSelector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
         _updatePoolCancelPenaltyFraction(_poolCancelPenaltyFraction);
         _updateMinBorrowFraction(_minBorrowFraction);
@@ -361,7 +336,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function setImplementations(
         address _poolImpl,
         address _repaymentImpl,
-        address _poolTokenImpl,
         address _userRegistry,
         address _strategyRegistry,
         address _priceOracle,
@@ -370,7 +344,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     ) external onlyOwner {
         _updatePoolLogic(_poolImpl);
         _updateRepaymentImpl(_repaymentImpl);
-        _updatePoolTokenImpl(_poolTokenImpl);
         _updateSavingsAccount(_savingsAccount);
         _updatedExtension(_extension);
         _updateUserRegistry(_userRegistry);
@@ -491,11 +464,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
         address pool = _deploy(amount, salt, bytecode);
 
-        bytes memory tokenData = abi.encodeWithSelector(poolTokenInitFuncSelector, 'Pool Tokens', 'OBPT', pool);
-        address poolToken = address(new SublimeProxy(poolTokenImpl, address(0), tokenData));
-        IPool(pool).setConstants(poolToken, _lenderVerifier);
+        IPool(pool).setConstants(_lenderVerifier);
         poolRegistry[pool] = true;
-        emit PoolCreated(pool, msg.sender, poolToken);
+        emit PoolCreated(pool, msg.sender);
     }
 
     // @dev These functions are used to avoid stack too deep
@@ -622,19 +593,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     /**
-     * @notice used to update the pointer to Initializer function of the proxy pool token contract
-     * @param _functionId updated function definition of the proxy pool token contract
-     */
-    function updatePoolTokenInitFuncSelector(bytes4 _functionId) external onlyOwner {
-        _updatePoolTokenInitFuncSelector(_functionId);
-    }
-
-    function _updatePoolTokenInitFuncSelector(bytes4 _functionId) internal {
-        poolTokenInitFuncSelector = _functionId;
-        emit PoolTokenInitFuncSelector(_functionId);
-    }
-
-    /**
      * @notice used to update the Pool.sol logic
      * @param _poolLogic the address of the new Pool logic contract
      */
@@ -684,19 +642,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function _updateRepaymentImpl(address _repaymentImpl) internal {
         repaymentImpl = _repaymentImpl;
         emit RepaymentImplUpdated(_repaymentImpl);
-    }
-
-    /**
-     * @notice used to update the implementation of the pool token logic
-     * @param _poolTokenImpl address of the updated PoolToken.sol contract
-     */
-    function updatePoolTokenImpl(address _poolTokenImpl) external onlyOwner {
-        _updatePoolTokenImpl(_poolTokenImpl);
-    }
-
-    function _updatePoolTokenImpl(address _poolTokenImpl) internal {
-        poolTokenImpl = _poolTokenImpl;
-        emit PoolTokenImplUpdated(_poolTokenImpl);
     }
 
     /**

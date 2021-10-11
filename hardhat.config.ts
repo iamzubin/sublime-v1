@@ -12,6 +12,7 @@ import 'hardhat-deploy';
 import 'hardhat-tracer';
 import 'hardhat-log-remover';
 import 'hardhat-gas-reporter';
+import "hardhat-contract-sizer";
 
 import { task } from 'hardhat/config';
 import { HardhatUserConfig } from 'hardhat/types';
@@ -206,6 +207,10 @@ const config: HardhatUserConfig = {
         gasPrice: 1,
         currency: 'USD',
     },
+    contractSizer: {
+        runOnCompile: false,
+        strict: true,
+    }
 };
 
 export default config;
