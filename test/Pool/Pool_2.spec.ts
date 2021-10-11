@@ -259,7 +259,7 @@ describe('Pool', async () => {
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
 
                 expect(await pool.name()).eq('Pool Tokens');
-                expect(await pool.symbol()).eq('OBPT');
+                expect(await pool.symbol()).eq('PT');
                 expect(await pool.decimals()).eq(18);
 
                 await pool.connect(borrower).depositCollateral(_collateralAmount, false);

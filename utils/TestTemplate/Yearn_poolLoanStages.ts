@@ -496,7 +496,7 @@ export async function yearnPoolCollectionStage(
             });
 
             expect(await pool.name()).eq('Pool Tokens');
-            expect(await pool.symbol()).eq('OBPT');
+            expect(await pool.symbol()).eq('PT');
             expect(await pool.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');

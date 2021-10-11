@@ -253,7 +253,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         poolConstants.loanStartTime = block.timestamp.add(_collectionPeriod);
         poolConstants.loanWithdrawalDeadline = block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration);
-        __ERC20_init('Pool Tokens', 'OBPT');
+        __ERC20_init('Pool Tokens', 'PT');
     }
 
     /*
