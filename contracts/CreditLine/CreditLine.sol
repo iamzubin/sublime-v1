@@ -578,7 +578,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         bool _totalRemainingIsRepaid = false;
 
-        if (_amount > _totalDebt) {
+        if (_amount >= _totalDebt) {
             _totalRemainingIsRepaid = true;
             _amount = _totalDebt;
         }

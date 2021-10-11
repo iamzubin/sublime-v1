@@ -802,14 +802,10 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     ) external payable nonReentrant {
         LoanStatus _currentPoolStatus = poolVariables.loanStatus;
         address _poolFactory = PoolFactory;
-        if (
-            _currentPoolStatus != LoanStatus.DEFAULTED &&
-            IRepayment(IPoolFactory(_poolFactory).repaymentImpl()).didBorrowerDefault(address(this))
-        ) {
-            _currentPoolStatus = LoanStatus.DEFAULTED;
-            poolVariables.loanStatus = _currentPoolStatus;
-        }
-        require(_currentPoolStatus == LoanStatus.DEFAULTED, 'Pool::liquidatePool - No reason to liquidate the pool');
+        require(_currentPoolStatus == LoanStatus.ACTIVE, 'Pool::liquidatePool - Cant liquidate inactive pool');
+        require(IRepayment(IPoolFactory(_poolFactory).repaymentImpl()).didBorrowerDefault(address(this)), 'Pool::liquidatePool - Borrower didnt default');
+        poolVariables.loanStatus = LoanStatus.DEFAULTED;
+        
         address _collateralAsset = poolConstants.collateralAsset;
         address _borrowAsset = poolConstants.borrowAsset;
         uint256 _collateralLiquidityShare = poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares);
