@@ -519,7 +519,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await expect(pool.connect(borrower).cancelPool()).to.revertedWith('CP1');
             });
 
-            it.only('Pool tokens are not transferrable after pool cancel', async () => {
+            it('Pool tokens are not transferrable after pool cancel', async () => {
                 await pool.connect(borrower).cancelPool();
                 const balance = await pool.balanceOf(lender.address);
                 await expect(pool.connect(lender).transfer(lender1.address, balance)).to.be.revertedWith(
