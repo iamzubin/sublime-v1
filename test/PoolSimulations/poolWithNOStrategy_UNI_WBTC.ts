@@ -48,6 +48,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { ERC20Detailed } from '@typechain/ERC20Detailed';
 
 describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
@@ -374,7 +375,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             // lender supplies 1 DAI to the pool and lender.address is lender
             await createPool();
             let deployHelper = new DeployHelper(borrower);
-            let token: ERC20 = await deployHelper.mock.getMockERC20(UNITokenContract.address);
+            let token: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(UNITokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -383,7 +384,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
 
         it('Check Ratio after borrowing borrow total 10 UNI with 1 WBTC Collateral', async () => {
             let deployHelper = new DeployHelper(borrower);
-            let token: ERC20 = await deployHelper.mock.getMockERC20(UNITokenContract.address);
+            let token: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(UNITokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -399,10 +400,10 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await pool.connect(borrower).withdrawBorrowedAmount();
 
             let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(Contracts.WBTC, Contracts.UNI);
-            let token1: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
+            let token1: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(Contracts.WBTC);
             let token1Exp = BigNumber.from(10).pow(await token1.decimals());
 
-            let token2: ERC20 = await deployHelper.mock.getMockERC20(Contracts.UNI);
+            let token2: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(Contracts.UNI);
             let token2Exp = BigNumber.from(10).pow(await token2.decimals());
 
             let ratio = await pool.callStatic['getCurrentCollateralRatio()']();
