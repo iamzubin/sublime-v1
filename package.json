@@ -19,7 +19,8 @@
     "listAccount": "npx hardhat accounts --network",
     "verify": "npx hardhat run scripts/verify.ts --network",
     "deployEnv:kovan": "npx hardhat test test/templateProxyDelegate.ts --network kovan",
-    "removeSolidityLogs": "npx hardhat remove-logs"
+    "removeSolidityLogs": "npx hardhat remove-logs",
+    "checksize": "npx hardhat size-contracts"
   },
   "repository": {
     "type": "git",

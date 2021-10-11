@@ -208,7 +208,7 @@ const config: HardhatUserConfig = {
         currency: 'USD',
     },
     contractSizer: {
-        runOnCompile: true,
+        runOnCompile: false,
         strict: true,
     }
 };
