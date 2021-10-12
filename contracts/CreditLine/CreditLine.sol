@@ -690,11 +690,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         }
     }
 
-    function withdrawCollateral(uint256 _id, uint256 _amount) external nonReentrant onlyCreditLineBorrower(_id) {
+    function withdrawCollateral(uint256 _id, uint256 _amount, bool _toSavingsAccount) external nonReentrant onlyCreditLineBorrower(_id) {
         uint256 _withdrawableCollateral = withdrawableCollateral(_id);
         require(_amount <= _withdrawableCollateral, 'Collateral ratio cant go below ideal');
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
-        _transferCollateral(_id, _collateralAsset, _amount, true);
+        _transferCollateral(_id, _collateralAsset, _amount, _toSavingsAccount);
     }
 
     function withdrawableCollateral(uint256 _id) public returns (uint256) {
@@ -722,7 +722,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _id,
         address _asset,
         uint256 _amountInTokens,
-        bool _isWithdrawal
+        bool _toSavingsAccount
     ) internal {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _activeAmount;
@@ -744,10 +744,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].sub(
                 liquidityShares
             );
-            if(_isWithdrawal) {
-                ISavingsAccount(savingsAccount).withdraw(_tokensToTransfer, _asset, _strategyList[index], msg.sender, false);
-            } else {
+            if(_toSavingsAccount) {
                 ISavingsAccount(savingsAccount).transfer(_tokensToTransfer, _asset, _strategyList[index], msg.sender);
+            } else {
+                ISavingsAccount(savingsAccount).withdraw(_tokensToTransfer, _asset, _strategyList[index], msg.sender, false);
             }
 
             if (_activeAmount == _amountInTokens) {
@@ -757,7 +757,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         revert('insufficient collateral');
     }
 
-    function liquidate(uint256 _id) external payable nonReentrant {
+    function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
         require(creditLineVariables[_id].status == creditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
 
         uint256 currentCollateralRatio = calculateCurrentCollateralRatio(_id);
@@ -773,15 +773,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         creditLineVariables[_id].status = creditLineStatus.LIQUIDATED;
 
-        bool _isWithdrawal = false;
-
         if (creditLineConstants[_id].autoLiquidation && _lender != msg.sender) {
             uint256 _borrowToken = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
             IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowToken);
-            _isWithdrawal = true;
         }
 
-        _transferCollateral(_id, _collateralAsset, _totalCollateralTokens, _isWithdrawal);
+        _transferCollateral(_id, _collateralAsset, _totalCollateralTokens, _toSavingsAccount);
 
         emit CreditLineLiquidated(_id, msg.sender);
     }
