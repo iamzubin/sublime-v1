@@ -286,7 +286,7 @@ describe('Credit Lines', async () => {
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
             await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, false);
         });
 
         it('Calculate Interest', async () => {
