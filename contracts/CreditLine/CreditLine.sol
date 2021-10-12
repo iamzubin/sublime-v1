@@ -574,6 +574,39 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit BorrowedFromCreditLine(_tokenDiffBalance, _id);
     }
 
+    function _repayFromSavingsAccount(
+        uint256 _amount,
+        address _asset,
+        address _lender
+    ) internal {
+        address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
+        ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
+        uint256 _activeAmount;
+
+        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+            uint256 _liquidityShares = _savingsAccount.balanceInShares(msg.sender, _asset, _strategyList[_index]);
+            if (_liquidityShares == 0) {
+                continue;
+            }
+            uint256 _tokenInStrategy = _liquidityShares;
+            if (_strategyList[_index] != address(0)) {
+                _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
+            }
+
+            uint256 _tokensToTransfer = _tokenInStrategy;
+            if (_activeAmount.add(_tokenInStrategy) >= _amount) {
+                _tokensToTransfer = (_amount.sub(_activeAmount));
+            }
+            _activeAmount = _activeAmount.add(_tokensToTransfer);
+            _savingsAccount.transferFrom(_tokensToTransfer, _asset, _strategyList[_index], msg.sender, _lender);
+
+            if (_amount == _activeAmount) {
+                return;
+            }
+        }
+        revert('CreditLine::_repayFromSavingsAccount - Insufficient balance');
+    }
+
     /**
      * @dev used to repay assest to credit line
      * @param _amount amount which borrower wants to repay to credit line
@@ -584,10 +617,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _amount,
         bool _fromSavingsAccount
     ) internal {
-        address _borrowAsset = creditLineConstants[_id].borrowAsset;
-        address _lender = creditLineConstants[_id].lender;
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         address _defaultStrategy = defaultStrategy;
+        address _borrowAsset = creditLineConstants[_id].borrowAsset;
+        address _lender = creditLineConstants[_id].lender;
         if (!_fromSavingsAccount) {
             if (_borrowAsset == address(0)) {
                 require(msg.value >= _amount, 'creditLine::repay - value should be eq or more than repay amount');
@@ -598,7 +631,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
             }
         } else {
-            _transferFromSavingsAccount(_borrowAsset, _amount, msg.sender, creditLineConstants[_id].lender);
+            _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
         }
         _savingsAccount.increaseAllowanceToCreditLine(_amount, _borrowAsset, _lender);
     }
