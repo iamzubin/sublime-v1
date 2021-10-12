@@ -331,7 +331,7 @@ describe('Credit Lines', async () => {
 
         it('Cannot liquidate if overcollateralized', async () => {
             await DaiTokenContract.connect(admin).approve(creditLine.address, largeAmount.mul(100));
-            await expect(creditLine.connect(admin).liquidate(borrowerCreditLine)).to.be.revertedWith(
+            await expect(creditLine.connect(admin).liquidate(borrowerCreditLine, false)).to.be.revertedWith(
                 'CreditLine: Collateral ratio is higher than liquidation threshold'
             );
         });
@@ -375,7 +375,7 @@ describe('Credit Lines', async () => {
                 //     _borrowableAmount: _borrowableAmount.toString(),
                 // });
 
-                await expect(creditLine.connect(admin).liquidate(borrowerCreditLine)).to.emit(creditLine, 'CreditLineLiquidated');
+                await expect(creditLine.connect(admin).liquidate(borrowerCreditLine, false)).to.emit(creditLine, 'CreditLineLiquidated');
             });
         });
     });
