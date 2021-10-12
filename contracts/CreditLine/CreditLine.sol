@@ -291,40 +291,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = _newInterestAccrued;
     }
 
-    function _transferFromSavingsAccount(
-        address _asset,
-        uint256 _amount,
-        address _sender,
-        address _recipient
-    ) internal {
-        address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
-        ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
-        uint256 _activeAmount;
-
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
-            uint256 _liquidityShares = _savingsAccount.balanceInShares(_sender, _asset, _strategyList[_index]);
-            if (_liquidityShares == 0) {
-                continue;
-            }
-            uint256 _tokenInStrategy = _liquidityShares;
-            if (_strategyList[_index] != address(0)) {
-                _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
-            }
-
-            uint256 _tokensToTransfer = _tokenInStrategy;
-            if (_activeAmount.add(_tokenInStrategy) >= _amount) {
-                _tokensToTransfer = (_amount.sub(_activeAmount));
-            }
-            _activeAmount = _activeAmount.add(_tokensToTransfer);
-            _savingsAccount.transferFrom(_tokensToTransfer, _asset, _strategyList[_index], _sender, _recipient);
-
-            if (_amount == _activeAmount) {
-                return;
-            }
-        }
-        revert('CreditLine::_transferFromSavingsAccount - Insufficient balance');
-    }
-
     function _depositCollateralToSavingsAccount(
         uint256 _id,
         uint256 _amount,
@@ -359,7 +325,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 return;
             }
         }
-        revert('CreditLine::_transferFromSavingsAccount - Insufficient balance');
+        revert('CreditLine::_depositCollateralToSavingsAccount - Insufficient balance');
     }
 
     /**
@@ -728,7 +694,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _withdrawableCollateral = withdrawableCollateral(_id);
         require(_amount <= _withdrawableCollateral, 'Collateral ratio cant go below ideal');
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
-        _withdrawCollateral(_id, _collateralAsset, _amount);
+        _transferCollateral(_id, _collateralAsset, _amount, true);
     }
 
     function withdrawableCollateral(uint256 _id) public returns (uint256) {
@@ -752,10 +718,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         return _totalCollateralTokens.sub(_collateralNeeded);
     }
 
-    function _withdrawCollateral(
+    function _transferCollateral(
         uint256 _id,
         address _asset,
-        uint256 _amountInTokens
+        uint256 _amountInTokens,
+        bool _isWithdrawal
     ) internal {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _activeAmount;
@@ -777,7 +744,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].sub(
                 liquidityShares
             );
-            ISavingsAccount(savingsAccount).withdraw(_tokensToTransfer, _asset, _strategyList[index], msg.sender, false);
+            if(_isWithdrawal) {
+                ISavingsAccount(savingsAccount).withdraw(_tokensToTransfer, _asset, _strategyList[index], msg.sender, false);
+            } else {
+                ISavingsAccount(savingsAccount).transfer(_tokensToTransfer, _asset, _strategyList[index], msg.sender);
+            }
 
             if (_activeAmount == _amountInTokens) {
                 return;
@@ -802,13 +773,15 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         creditLineVariables[_id].status = creditLineStatus.LIQUIDATED;
 
+        bool _isWithdrawal = false;
+
         if (creditLineConstants[_id].autoLiquidation && _lender != msg.sender) {
             uint256 _borrowToken = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
             IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowToken);
-            _withdrawCollateral(_id, _collateralAsset, _totalCollateralTokens);
-        } else {
-            _transferFromSavingsAccount(_collateralAsset, _totalCollateralTokens, address(this), msg.sender);
+            _isWithdrawal = true;
         }
+
+        _transferCollateral(_id, _collateralAsset, _totalCollateralTokens, _isWithdrawal);
 
         emit CreditLineLiquidated(_id, msg.sender);
     }
