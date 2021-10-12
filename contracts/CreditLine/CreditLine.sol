@@ -325,6 +325,43 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         revert('CreditLine::_transferFromSavingsAccount - Insufficient balance');
     }
 
+    function _depositCollateralToSavingsAccount(
+        uint256 _id,
+        uint256 _amount,
+        address _sender
+    ) internal {
+        address _collateralAsset = creditLineConstants[_id].collateralAsset;
+        address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
+        ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
+        uint256 _activeAmount;
+
+        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+            address _strategy = _strategyList[_index];
+            uint256 _liquidityShares = _savingsAccount.balanceInShares(_sender, _collateralAsset, _strategy);
+            if (_liquidityShares == 0) {
+                continue;
+            }
+            uint256 _tokenInStrategy = _liquidityShares;
+            if (_strategyList[_index] != address(0)) {
+                _tokenInStrategy = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
+            }
+
+            uint256 _tokensToTransfer = _tokenInStrategy;
+            if (_activeAmount.add(_tokenInStrategy) >= _amount) {
+                _tokensToTransfer = (_amount.sub(_activeAmount));
+            }
+            _activeAmount = _activeAmount.add(_tokensToTransfer);
+            _savingsAccount.transferFrom(_tokensToTransfer, _collateralAsset, _strategy, _sender, address(this));
+
+            collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy));
+
+            if (_amount == _activeAmount) {
+                return;
+            }
+        }
+        revert('CreditLine::_transferFromSavingsAccount - Insufficient balance');
+    }
+
     /**
      * @dev used to request a credit line by a borrower
      * @param _requestTo Address to which creditLine is requested, if borrower creates request then lender address and if lennder creates then borrower address
@@ -421,22 +458,23 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function depositCollateral(
         uint256 _id,
         uint256 _amount,
+        address _strategy,
         bool _fromSavingsAccount
     ) external payable nonReentrant ifCreditLineExists(_id) {
         require(creditLineVariables[_id].status == creditLineStatus.ACTIVE, 'CreditLine not active');
-        _depositCollateral(_id, _amount, _fromSavingsAccount);
+        _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
     }
 
     function _depositCollateral(
         uint256 _id,
         uint256 _amount,
+        address _strategy,
         bool _fromSavingsAccount
     ) internal {
-        address _collateralAsset = creditLineConstants[_id].collateralAsset;
         if (_fromSavingsAccount) {
-            _transferFromSavingsAccount(_collateralAsset, _amount, msg.sender, address(this));
+            _depositCollateralToSavingsAccount(_id, _amount, msg.sender);
         } else {
-            address _strategy = defaultStrategy;
+            address _collateralAsset = creditLineConstants[_id].collateralAsset;
             ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
             if (_collateralAsset == address(0)) {
                 require(msg.value == _amount, "CreditLine::_depositCollateral - value to transfer doesn't match argument");
