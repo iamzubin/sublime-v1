@@ -160,7 +160,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param pool the address of the Pool
      * @param borrower the address of the borrower who created the pool
      */
-    event PoolCreated(address pool, address borrower);
+    event PoolCreated(address indexed pool, address indexed borrower);
 
     /**
      * @notice emitted when the init function definition Pool.sol logic is updated
@@ -172,43 +172,43 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @notice emitted when the Pool.sol logic is updated
      * @param updatedPoolLogic the address of the new Pool logic contract
      */
-    event PoolLogicUpdated(address updatedPoolLogic);
+    event PoolLogicUpdated(address indexed updatedPoolLogic);
 
     /**
      * @notice emitted when the user registry is updated
      * @param updatedBorrowerRegistry address of the contract storing the user registry
      */
-    event UserRegistryUpdated(address updatedBorrowerRegistry);
+    event UserRegistryUpdated(address indexed updatedBorrowerRegistry);
 
     /**
      * @notice emitted when the strategy registry is updated
      * @param updatedStrategyRegistry address of the contract storing the updated strategy registry
      */
-    event StrategyRegistryUpdated(address updatedStrategyRegistry);
+    event StrategyRegistryUpdated(address indexed updatedStrategyRegistry);
 
     /**
      * @notice emitted when the Repayments.sol logic is updated
      * @param updatedRepaymentImpl the address of the new implementation of the Repayments logic
      */
-    event RepaymentImplUpdated(address updatedRepaymentImpl);
+    event RepaymentImplUpdated(address indexed updatedRepaymentImpl);
 
     /**
      * @notice emitted when the PriceOracle.sol is updated
      * @param updatedPriceOracle address of the new implementation of the PriceOracle
      */
-    event PriceOracleUpdated(address updatedPriceOracle);
+    event PriceOracleUpdated(address indexed updatedPriceOracle);
 
     /*
      * @notice emitted when the Extension.sol is updated
      * @param updatedExtension address of the new implementation of the Extension
      */
-    event ExtensionImplUpdated(address updatedExtension);
+    event ExtensionImplUpdated(address indexed updatedExtension);
 
     /*
      * @notice emitted when the SavingsAccount.sol is updated
      * @param savingsAccount address of the new implementation of the SavingsAccount
      */
-    event SavingsAccountUpdated(address savingsAccount);
+    event SavingsAccountUpdated(address indexed savingsAccount);
 
     /*
      * @notice emitted when the collection period parameter for Pools is updated
@@ -264,21 +264,21 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param max maximum threshold value for limitType
      * @param min minimum threshold value for limitType
      */
-    event LimitsUpdated(string limitType, uint256 max, uint256 min);
+    event LimitsUpdated(string indexed limitType, uint256 max, uint256 min);
 
     /**
      * @notice emitted when the list of supported borrow assets is updated
      * @param borrowToken address of the borrow asset
      * @param isSupported true if borrowToken is a valid borrow asset, false if borrowToken is an invalid borrow asset
      */
-    event BorrowTokenUpdated(address borrowToken, bool isSupported);
+    event BorrowTokenUpdated(address indexed borrowToken, bool isSupported);
 
     /**
      * @notice emitted when the list of supported collateral assets is updated
      * @param collateralToken address of the collateral asset
      * @param isSupported true if collateralToken is a valid collateral asset, false if collateralToken is an invalid collateral asset
      */
-    event CollateralTokenUpdated(address collateralToken, bool isSupported);
+    event CollateralTokenUpdated(address indexed collateralToken, bool isSupported);
 
     /**
      * @notice functions affected by this modifier can only be invoked by the Pool
