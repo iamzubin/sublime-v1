@@ -2,8 +2,8 @@
 pragma solidity 0.7.0;
 
 interface IStrategyRegistry {
-    event StrategyAdded(address strategy);
-    event StrategyRemoved(address strategy);
+    event StrategyAdded(address indexed strategy);
+    event StrategyRemoved(address indexed strategy);
 
     function registry(address _strategy) external view returns (bool);
 
