@@ -49,6 +49,7 @@ import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { ERC20Detailed } from '@typechain/ERC20Detailed';
+import { NoYield } from '@typechain/NoYield';
 
 describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
@@ -73,6 +74,9 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
 
     let compoundYield: CompoundYield;
     let compoundYieldLogic: CompoundYield;
+
+    let noYield: NoYield;
+    let noYieldLogic: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -207,7 +211,12 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.UNI, Contracts.cUNI);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
+        noYieldLogic = await deployHelper.core.deployNoYield();
+        let noYieldProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
+        noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verificationLogic = await deployHelper.helper.deployVerification();
         let verificationProxy = await deployHelper.helper.deploySublimeProxy(verificationLogic.address, proxyAdmin.address);
@@ -271,7 +280,8 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector.address
+                protocolFeeCollector.address,
+                noYield.address
             );
 
         poolLogic = await deployHelper.pool.deployPool();
@@ -306,7 +316,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
     async function createPool() {
         let deployHelper = new DeployHelper(borrower);
         let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-        let iyield: IYield = await deployHelper.mock.getYield(zeroAddress);
+        let iyield: IYield = await deployHelper.mock.getYield(noYield.address);
 
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
         // let salt = sha256(Buffer.from(`borrower}`));

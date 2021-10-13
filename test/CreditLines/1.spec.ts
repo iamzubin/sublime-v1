@@ -43,6 +43,7 @@ import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
 describe('Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -57,6 +58,7 @@ describe('Credit Lines', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -132,6 +134,10 @@ describe('Credit Lines', async () => {
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
 
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
@@ -192,7 +198,8 @@ describe('Credit Lines', async () => {
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
                     _protocolFeeFraction,
-                    protocolFeeCollector.address
+                    protocolFeeCollector.address,
+                    noYield.address
                 );
 
             const poolImpl = await deployHelper.pool.deployPool();
@@ -349,11 +356,11 @@ describe('Credit Lines', async () => {
             let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
-            await LinkTokenContract.connect(borrower).approve(savingsAccount.address, valueToTest);
+            await LinkTokenContract.connect(borrower).approve(noYield.address, valueToTest);
 
             await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-            await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+            await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, noYield.address, borrower.address);
             await savingsAccount
                 .connect(borrower)
                 .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
@@ -415,7 +422,8 @@ describe('Credit Lines', async () => {
                         _poolCancelPenalityFraction,
                         _minborrowFraction,
                         _protocolFeeFraction,
-                        protocolFeeCollector.address
+                        protocolFeeCollector.address,
+                        noYield.address
                     );
 
                 const poolImpl = await deployHelper.pool.deployPool();
@@ -573,11 +581,11 @@ describe('Credit Lines', async () => {
                 let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
-                await LinkTokenContract.connect(borrower).approve(savingsAccount.address, valueToTest);
+                await LinkTokenContract.connect(borrower).approve(noYield.address, valueToTest);
 
                 await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-                await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+                await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, noYield.address, borrower.address);
                 await savingsAccount
                     .connect(borrower)
                     .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);

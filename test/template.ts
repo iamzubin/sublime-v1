@@ -41,6 +41,7 @@ import { Repayments } from '../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
 describe.skip('Template For Test cases', async () => {
     let savingsAccount: SavingsAccount;
@@ -55,6 +56,7 @@ describe.skip('Template For Test cases', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -128,6 +130,10 @@ describe.skip('Template For Test cases', async () => {
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
 
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
@@ -175,7 +181,8 @@ describe.skip('Template For Test cases', async () => {
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
                     _protocolFeeFraction,
-                    protocolFeeCollector.address
+                    protocolFeeCollector.address,
+                    noYield.address
                 );
             poolImpl = await deployHelper.pool.deployPool();
             repaymentImpl = await deployHelper.pool.deployRepayments();

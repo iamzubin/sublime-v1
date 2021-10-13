@@ -11,9 +11,9 @@ const poolInitFuncSelector = poolInterface.getSighash('initialize');
 
 function getConfig(network: string): DeploymentParams {
     let networkConfig;
-    if (network.includes("kovan")) {
+    if (network.includes('kovan')) {
         networkConfig = kovanConfig;
-    } else if(network.includes("rinkeby")) {
+    } else if (network.includes('rinkeby')) {
         networkConfig = rinkebyConfig;
     }
     return createConfig(networkConfig);

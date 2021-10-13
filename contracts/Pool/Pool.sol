@@ -501,7 +501,15 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         }
 
         address _borrowToken = poolConstants.borrowAsset;
-        _deposit(_fromSavingsAccount, false, _borrowToken, _amount, address(0), msg.sender, address(this));
+        _deposit(
+            _fromSavingsAccount,
+            false,
+            _borrowToken,
+            _amount,
+            IPoolFactory(PoolFactory).noStrategyAddress(),
+            msg.sender,
+            address(this)
+        );
         _mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);
     }

@@ -24,7 +24,7 @@ import { createSavingsAccount, initSavingsAccount } from './savingsAccount';
 import { createStrategyRegistry, initStrategyRegistry } from './strategyRegistry';
 import { impersonateAccount, getImpersonatedAccounts } from './impersonationsAndTransfers';
 import { randomAddress, zeroAddress } from '../../utils/constants';
-import { createAaveYieldWithInit, createCompoundYieldWithInit, createYearnYieldWithInit } from './yields';
+import { createAaveYieldWithInit, createCompoundYieldWithInit, createNoYieldWithInit, createYearnYieldWithInit } from './yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from './verification';
 import { createPriceOracle, setPriceOracleFeeds } from './priceOracle';
 import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from './poolFactory';
@@ -101,7 +101,7 @@ export async function createEnvironment(
     await impersonateAccount(hre, whales, admin);
     env.impersonatedAccounts = await getImpersonatedAccounts(hre, whales);
 
-    yields.noStrategy = zeroAddress;
+    yields.noYield = await createNoYieldWithInit(proxyAdmin, admin, env.savingsAccount);
     yields.aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, env.savingsAccount);
     yields.yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedYearnTokens);
     yields.compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedCompoundTokens);
@@ -109,7 +109,7 @@ export async function createEnvironment(
     await env.strategyRegistry.connect(admin).addStrategy(yields.aaveYield.address);
     await env.strategyRegistry.connect(admin).addStrategy(yields.yearnYield.address);
     await env.strategyRegistry.connect(admin).addStrategy(yields.compoundYield.address);
-    await env.strategyRegistry.connect(admin).addStrategy(yields.noStrategy);
+    await env.strategyRegistry.connect(admin).addStrategy(yields.noYield.address);
 
     env.verification = await createVerificationWithInit(proxyAdmin, admin);
     env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification);
@@ -127,6 +127,7 @@ export async function createEnvironment(
         ...poolFactoryInitParams,
         admin: admin.address,
         protocolFeeCollector: protocolFeeCollector.address,
+        noStrategy: yields.noYield.address,
     });
 
     env.inputParams.poolFactoryInitParams = {

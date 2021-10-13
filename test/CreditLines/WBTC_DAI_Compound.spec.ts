@@ -43,6 +43,7 @@ import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
 describe('WBTC-DAI Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -203,7 +204,8 @@ describe('WBTC-DAI Credit Lines', async () => {
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector.address
+                protocolFeeCollector.address,
+                yearnYield.address
             );
 
         const poolImpl = await deployHelper.pool.deployPool();

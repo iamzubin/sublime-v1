@@ -65,6 +65,7 @@ describe('Pool With Compound Strategy 2', async () => {
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
                 _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                noStrategy: '',
             } as PoolFactoryInitParams,
             CreditLineDefaultStrategy.Compound,
             {

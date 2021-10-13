@@ -49,6 +49,7 @@ import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { ERC20Detailed } from '@typechain/ERC20Detailed';
+import { NoYield } from '@typechain/NoYield';
 
 describe('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;
@@ -73,6 +74,9 @@ describe('Pool With Compound Strategy', async () => {
 
     let compoundYield: CompoundYield;
     let compoundYieldLogic: CompoundYield;
+
+    let noYield: NoYield;
+    let noYieldLogic: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -201,7 +205,12 @@ describe('Pool With Compound Strategy', async () => {
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
+        noYieldLogic = await deployHelper.core.deployNoYield();
+        let noYieldProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
+        noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verificationLogic = await deployHelper.helper.deployVerification();
         let verificationProxy = await deployHelper.helper.deploySublimeProxy(verificationLogic.address, proxyAdmin.address);
@@ -263,7 +272,8 @@ describe('Pool With Compound Strategy', async () => {
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector.address
+                protocolFeeCollector.address,
+                noYield.address
             );
 
         poolLogic = await deployHelper.pool.deployPool();

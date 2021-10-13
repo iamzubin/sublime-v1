@@ -31,4 +31,6 @@ interface IPoolFactory {
     function poolCancelPenaltyFraction() external view returns (uint256);
 
     function getProtocolFeeData() external view returns (uint256, address);
+
+    function noStrategyAddress() external view returns (address);
 }

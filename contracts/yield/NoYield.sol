@@ -54,7 +54,11 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         uint256 amount
     ) public payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
-        IERC20(asset).safeTransferFrom(user, address(this), amount);
+        if (asset != address(0)) {
+            IERC20(asset).safeTransferFrom(user, address(this), amount);
+        } else {
+            require(msg.value == amount, 'Invest: ETH amount');
+        }
         sharesReceived = amount;
         emit LockedTokens(user, asset, sharesReceived);
     }
@@ -70,7 +74,12 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     function _unlockTokens(address asset, uint256 amount) internal returns (uint256 received) {
         require(amount != 0, 'Invest: amount');
         received = amount;
-        IERC20(asset).safeTransfer(savingsAccount, received);
+        if (asset == address(0)) {
+            (bool success, ) = savingsAccount.call{value: received}('');
+            require(success, 'Transfer failed');
+        } else {
+            IERC20(asset).safeTransfer(savingsAccount, received);
+        }
         emit UnlockedTokens(asset, received);
     }
 

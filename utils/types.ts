@@ -45,7 +45,7 @@ export interface Yields {
     aaveYield: IYield;
     yearnYield: IYield;
     compoundYield: IYield;
-    noStrategy: Address;
+    noYield: IYield;
 }
 
 export interface MockTokenContract {
@@ -102,6 +102,7 @@ export interface PoolFactoryInitParams {
     _minBorrowFraction: BigNumberish;
     _protocolFeeFraction: BigNumberish;
     protocolFeeCollector: Address;
+    noStrategy: Address;
 }
 
 export interface PriceOracleSource {

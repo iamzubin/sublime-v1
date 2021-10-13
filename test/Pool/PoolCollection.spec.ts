@@ -40,6 +40,7 @@ import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
 describe('Pool Collection stage', async () => {
     let savingsAccount: SavingsAccount;
@@ -61,6 +62,7 @@ describe('Pool Collection stage', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -134,6 +136,10 @@ describe('Pool Collection stage', async () => {
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
 
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
@@ -172,7 +178,8 @@ describe('Pool Collection stage', async () => {
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector.address
+                protocolFeeCollector.address,
+                noYield.address
             );
         await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.LINK, true);
 
@@ -292,8 +299,8 @@ describe('Pool Collection stage', async () => {
         it('Lend Tokens from savings account by depositing with same account in savingsAccount', async () => {
             const amount = createPoolParams._poolSize.div(10);
             await borrowToken.connect(admin).transfer(lender.address, amount);
-            await borrowToken.connect(lender).approve(savingsAccount.address, amount);
-            await savingsAccount.connect(lender).deposit(amount, borrowToken.address, zeroAddress, lender.address);
+            await borrowToken.connect(lender).approve(noYield.address, amount);
+            await savingsAccount.connect(lender).deposit(amount, borrowToken.address, noYield.address, lender.address);
 
             const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
             const poolTokenTotalSupplyBefore = await pool.totalSupply();
@@ -324,8 +331,8 @@ describe('Pool Collection stage', async () => {
         it('Lend Tokens from savings account by depositing and lending with different account in savingsAccount', async () => {
             const amount = createPoolParams._poolSize.div(10);
             await borrowToken.connect(admin).transfer(lender1.address, amount);
-            await borrowToken.connect(lender1).approve(savingsAccount.address, amount);
-            await savingsAccount.connect(lender1).deposit(amount, borrowToken.address, zeroAddress, lender1.address);
+            await borrowToken.connect(lender1).approve(noYield.address, amount);
+            await savingsAccount.connect(lender1).deposit(amount, borrowToken.address, noYield.address, lender1.address);
 
             const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
             const poolTokenTotalSupplyBefore = await pool.totalSupply();
