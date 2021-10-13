@@ -103,7 +103,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param amount amount denominated in collateral asset
      * @param sharesReceived shares received after transferring collaterla to pool savings strategy
      */
-    event CollateralAdded(address borrower, uint256 amount, uint256 sharesReceived);
+    event CollateralAdded(address indexed borrower, uint256 amount, uint256 sharesReceived);
 
     // borrower and sharesReceived might not be necessary
 
@@ -114,21 +114,21 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param amount amount denominated in collateral asset
      * @param sharesReceived shares received after transferring collaterla to pool savings strategy
      */
-    event MarginCallCollateralAdded(address borrower, address lender, uint256 amount, uint256 sharesReceived);
+    event MarginCallCollateralAdded(address indexed borrower, address indexed lender, uint256 amount, uint256 sharesReceived);
 
     /**
      * @notice emitted when borrower withdraws excess collateral
      * @param borrower address of borrower
      * @param amount amount of collateral withdrawn
      */
-    event CollateralWithdrawn(address borrower, uint256 amount);
+    event CollateralWithdrawn(address indexed borrower, uint256 amount);
 
     /**
      * @notice emitted when lender supplies liquidity to a pool
      * @param amountSupplied amount that was supplied
      * @param lenderAddress address of the lender. allows for delegation of lending
      */
-    event LiquiditySupplied(uint256 amountSupplied, address lenderAddress);
+    event LiquiditySupplied(uint256 amountSupplied, address indexed lenderAddress);
 
     /**
      * @notice emitted when borrower withdraws loan
@@ -141,13 +141,13 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param amount amount that lender withdraws from borrow pool
      * @param lenderAddress address to which amount is withdrawn
      */
-    event LiquidityWithdrawn(uint256 amount, address lenderAddress);
+    event LiquidityWithdrawn(uint256 amount, address indexed lenderAddress);
 
     /**
      * @notice emitted when lender exercises a margin/collateral call
      * @param lenderAddress address of the lender who exercises margin calls
      */
-    event MarginCalled(address lenderAddress);
+    event MarginCalled(address indexed lenderAddress);
 
     /**
      * @notice emitted when collateral backing lender is liquidated because of a margin call
@@ -155,13 +155,13 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param lender lender who initially exercised the margin call
      * @param _tokenReceived amount received by liquidator denominated in collateral asset
      */
-    event LenderLiquidated(address liquidator, address lender, uint256 _tokenReceived);
+    event LenderLiquidated(address indexed liquidator, address indexed lender, uint256 _tokenReceived);
 
     /**
      * @notice emitted when a pool is liquidated for missing repayment
      * @param liquidator address of the liquidator
      */
-    event PoolLiquidated(address liquidator);
+    event PoolLiquidated(address indexed liquidator);
 
     /**
      * @notice checks if the _user is pool's valid borrower
