@@ -2,5 +2,6 @@
 pragma solidity 0.7.0;
 
 interface IVerifier {
-    function verify(address _user) external view returns (bool);
+    event UserRegistered(address user, bool isMasterLinked, string metadata);
+    event UserUnregistered(address user);
 }

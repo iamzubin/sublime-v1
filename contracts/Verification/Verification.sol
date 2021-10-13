@@ -3,10 +3,11 @@ pragma solidity 0.7.0;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/cryptography/ECDSA.sol';
+import '../interfaces/IVerification.sol';
 
 /// @title Contract that handles linking identity of user to address
 ///
-contract Verification is Initializable, OwnableUpgradeable {
+contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @notice Tells whether a given verifier is valid
     /// @dev Mapping that stores valid verifiers as added by admin. verifier -> true/false
     /// @return boolean that represents if the specified verifier is valid
@@ -27,36 +28,6 @@ contract Verification is Initializable, OwnableUpgradeable {
     e.g. If 0xabc is to be linked to 0xfed, then 0xfed has to sign ${APPROVAL_MESSAGE}0xabc with 0xfed's private key. This signed message has to be then submitted by 0xabc to linkAddress method
     */
     string constant APPROVAL_MESSAGE = 'APPROVING ADDRESS TO BE LINKED TO ME ON SUBLIME';
-
-    /// @notice Event emitted when a verifier is added as valid by admin
-    /// @param verifier The address of the verifier contract to be added
-    event VerifierAdded(address indexed verifier);
-
-    /// @notice Event emitted when a verifier is to be marked as invalid by admin
-    /// @param verifier The address of the verified contract to be marked as invalid
-    event VerifierRemoved(address indexed verifier);
-
-    /// @notice Event emitted when a master address is verified by a valid verifier
-    /// @param masterAddress The masterAddress which is verifier by the verifier
-    /// @param verifier The verifier which verified the masterAddress
-    /// @param isMasterLinked Boolean that specifies if the master address is added as linked address as well. Only linked addresses are considered valid
-    event UserRegistered(address indexed masterAddress, address indexed verifier, bool indexed isMasterLinked);
-
-    /// @notice Event emitted when a master address is marked as invalid/unregisterd by a valid verifier
-    /// @param masterAddress The masterAddress which is unregistered
-    /// @param verifier The verifier which verified the masterAddress
-    /// @param unregisteredBy The msg.sender by which the user was unregistered
-    event UserUnregistered(address indexed masterAddress, address indexed verifier, address indexed unregisteredBy);
-
-    /// @notice Event emitted when an address is linked to masterAddress
-    /// @param linkedAddress The address which is linked to masterAddress
-    /// @param masterAddress The masterAddress to which address is linked
-    event addressLinked(address indexed linkedAddress, address indexed masterAddress);
-
-    /// @notice Event emitted when an address is unlinked from a masterAddress
-    /// @param linkedAddress The address which is linked to masterAddress
-    /// @param masterAddress The masterAddress to which address was linked
-    event addressUnlinked(address indexed linkedAddress, address indexed masterAddress);
 
     /// @dev Prevents anyone other than a valid verifier from calling a function
     modifier onlyVerifier() {
@@ -95,7 +66,7 @@ contract Verification is Initializable, OwnableUpgradeable {
     /// @dev Multiple accounts can be linked to master address to act on behalf. Master address can be registered by multiple verifiers
     /// @param _masterAddress address which is registered as verified
     /// @param _isMasterLinked boolean which specifies if the masterAddress has to be added as a linked address
-    function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external onlyVerifier {
+    function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external override onlyVerifier {
         require(!masterAddresses[_masterAddress][msg.sender], 'V:RMA-Already registered');
         masterAddresses[_masterAddress][msg.sender] = true;
         if (_isMasterLinked) {
@@ -109,7 +80,7 @@ contract Verification is Initializable, OwnableUpgradeable {
     /// @param _masterAddress address which is being unregistered
     /// @param _verifier verifier address from which master address is unregistered
     // TODO: Remove verifier as arg
-    function unregisterMasterAddress(address _masterAddress, address _verifier) external {
+    function unregisterMasterAddress(address _masterAddress, address _verifier) external override {
         if (msg.sender != super.owner()) {
             require(masterAddresses[_masterAddress][msg.sender] || msg.sender == _verifier, 'V:UMA-Invalid verifier');
         }
@@ -144,7 +115,7 @@ contract Verification is Initializable, OwnableUpgradeable {
     /// @dev view function
     /// @param _user address which has to be checked if mapped against a verified master address
     /// @param _verifier verifier with which master address has to be verified
-    function isUser(address _user, address _verifier) public view returns (bool) {
+    function isUser(address _user, address _verifier) public override view returns (bool) {
         address _masterAddress = linkedAddresses[_user];
         if (_masterAddress == address(0) || !masterAddresses[_masterAddress][_verifier]) {
             return false;
