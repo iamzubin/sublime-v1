@@ -15,7 +15,7 @@ import hre from 'hardhat';
 const { ethers, network } = hre;
 import { expect, assert } from 'chai';
 
-import { extensionParams, repaymentParams, testPoolFactoryParams, zeroAddress, creditLineFactoryParams } from '../constants-Additions';
+import { extensionParams, repaymentParams, testPoolFactoryParams, createPoolParams, zeroAddress, creditLineFactoryParams } from '../constants-Additions';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -379,7 +379,7 @@ export async function yearnPoolCollectionStage(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -388,9 +388,13 @@ export async function yearnPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -405,12 +409,13 @@ export async function yearnPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
+                // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -432,12 +437,13 @@ export async function yearnPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
+                // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -633,12 +639,12 @@ export async function yearnPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -769,7 +775,7 @@ export async function yearnPoolCollectionStage(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -778,9 +784,13 @@ export async function yearnPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -795,13 +805,13 @@ export async function yearnPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
-                _noOfRepaymentIntervals: 2, //100,
+                _loanWithdrawalDuration: 200,
+                _noOfRepaymentIntervals: 2, //100
                 _repaymentInterval: 1000,
             });
 
@@ -822,13 +832,13 @@ export async function yearnPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
-                _noOfRepaymentIntervals: 2, //100,
+                _loanWithdrawalDuration: 200,
+                _noOfRepaymentIntervals: 2, //100
                 _repaymentInterval: 1000,
             });
 
@@ -900,7 +910,7 @@ export async function yearnPoolCollectionStage(
             await borrowToken.connect(admin).transfer(random.address, amount);
             await borrowToken.connect(random).approve(env.repayments.address, amount);
 
-            await expect(env.repayments.connect(random).repayPrincipal(pool.address, amount, { value: amount })).to.be.revertedWith(
+            await expect(env.repayments.connect(random).repayPrincipal(pool.address, { value: amount })).to.be.revertedWith(
                 'Repayments:repayPrincipal Unpaid interest'
             );
 
@@ -953,7 +963,7 @@ export async function yearnPoolCollectionStage(
             await borrowToken.connect(random).approve(env.repayments.address, amount);
 
             // Should it be random or borrower?
-            await env.repayments.connect(random).repayPrincipal(pool.address, amount, { value: amount });
+            await env.repayments.connect(random).repayPrincipal(pool.address, { value: amount });
 
             // Loan status should be 2
             let LoanStatus = (await pool.poolVars()).loanStatus;
@@ -1000,7 +1010,7 @@ export async function yearnPoolCollectionStage(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -1009,9 +1019,13 @@ export async function yearnPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -1026,12 +1040,12 @@ export async function yearnPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -1053,12 +1067,12 @@ export async function yearnPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -1183,7 +1197,7 @@ export async function yearnPoolCollectionStage(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -1192,9 +1206,13 @@ export async function yearnPoolCollectionStage(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -1209,12 +1227,12 @@ export async function yearnPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });

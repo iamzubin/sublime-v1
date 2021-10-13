@@ -35,10 +35,12 @@ import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { PoolToken } from '@typechain/PoolToken';
 import { CompoundYield } from '@typechain/CompoundYield';
+import { CreditLine } from '../../typechain/CreditLine';
+import { Contracts } from '../../existingContracts/compound.json';
 import { expectApproxEqual } from '../helpers';
 import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
 
-export async function compound_RequestExtension(
+export async function CreditLines(
     Amount: Number,
     WhaleAccount1: Address,
     WhaleAccount2: Address,
@@ -49,7 +51,7 @@ export async function compound_RequestExtension(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
-    describe('Pool Simulation: Borrower Requests Extension', async () => {
+    describe('CreditLines: Initial tests', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -59,9 +61,10 @@ export async function compound_RequestExtension(
         let BorrowAsset: ERC20;
         let CollateralAsset: ERC20;
         let iyield: IYield;
+        let creditLine: CreditLine;
         let Compound: CompoundYield;
 
-        beforeEach(async () => {
+        before(async () => {
             env = await createEnvironment(
                 hre,
                 [WhaleAccount1, WhaleAccount2],
@@ -102,7 +105,7 @@ export async function compound_RequestExtension(
                 } as CreditLineInitParams
             );
 
-            let salt = sha256(Buffer.from('borrower' + Math.random() * 10000000));
+            let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
             let { admin, borrower, lender } = env.entities;
             deployHelper = new DeployHelper(admin);
             BorrowAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[0].contract.address);
@@ -126,6 +129,9 @@ export async function compound_RequestExtension(
             });
 
             // console.log({ calculatedPoolAddress: poolAddress });
+
+            console.log('Borrow Token: ', env.mockTokenContracts[0].name);
+            console.log('Collateral Token: ', env.mockTokenContracts[1].name);
             // console.log(await env.mockTokenContracts[0].contract.decimals());
             // console.log(await env.mockTokenContracts[1].contract.decimals());
 
@@ -164,127 +170,145 @@ export async function compound_RequestExtension(
             expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
-
-            let borrowToken = env.mockTokenContracts[0].contract;
-            let collateralToken = env.mockTokenContracts[1].contract;
-            let minBorrowAmount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
-            let amount = minBorrowAmount.mul(2).div(3);
-            let amount1 = minBorrowAmount.add(10).div(3);
-
-            let lender1 = env.entities.extraLenders[3];
-
-            // Approving Borrow tokens to the lender
-            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
-            await borrowToken.connect(admin).transfer(lender.address, amount);
-            await borrowToken.connect(lender).approve(poolAddress, amount);
-
-            // Lender lends into the pool
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
-            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
-
-            // Approving Borrow tokens to the lender1
-            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount1);
-            await borrowToken.connect(admin).transfer(lender1.address, amount1);
-            await borrowToken.connect(lender1).approve(poolAddress, amount1);
-
-            // Lender1 lends into the pool
-            const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, false));
-            await lendExpect1.to.emit(pool, 'LiquiditySupplied').withArgs(amount1, lender1.address);
-            await lendExpect1.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender1.address, amount1);
-
-            //block travel to escape withdraw interval
-            const { loanStartTime } = await pool.poolConstants();
-            await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
-
-            // Borrower withdraws borrow tokens
-            await pool.connect(borrower).withdrawBorrowedAmount();
         });
 
-        it('Only borrower should be able to request extension', async function () {
+        it('CreditLine Request: Borrower and Lender cannot be same', async function () {
             let { admin, borrower, lender } = env.entities;
-            let random = env.entities.extraLenders[10];
+            let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
+            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
+            let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
+            let _autoLiquidation: boolean = true;
+            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
+            let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
-            console.log('Borrow Token: ', env.mockTokenContracts[0].name);
-            console.log('Collateral Token: ', env.mockTokenContracts[1].name);
+            creditLine = env.creditLine;
 
-            // Requesting margin call
-            await expect(env.extenstion.connect(random).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
-            await expect(env.extenstion.connect(lender).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
-            await env.extenstion.connect(borrower).requestExtension(pool.address);
+            await expect(
+                creditLine
+                .connect(lender)
+                .request( 
+                    lender.address,
+                    borrowLimit,
+                    _liquidationThreshold,
+                    _borrowRate,
+                    _autoLiquidation,
+                    _collateralRatio,
+                    _borrowAsset,
+                    _collateralAsset,
+                    true
+                )
+            ).to.be.revertedWith('Lender and Borrower cannot be same addresses');
         });
 
-        it('Extension passes only when majority lenders vote', async function () {
+        it('CreditLine Request: Should revert if price oracle does not exist', async function () {
             let { admin, borrower, lender } = env.entities;
-            let lender1 = env.entities.extraLenders[3];
+            let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
+            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
+            let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
+            let _autoLiquidation: boolean = true;
+            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
+            let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
-            await env.extenstion.connect(borrower).requestExtension(pool.address);
-            await env.extenstion.connect(lender1).voteOnExtension(pool.address);
-            await env.extenstion.connect(lender).voteOnExtension(pool.address);
-            const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
-            assert(isLoanExtensionActive, 'Extension not active');
+            creditLine = env.creditLine;
+
+            await expect(
+                creditLine
+                .connect(lender)
+                .request( 
+                    borrower.address,
+                    borrowLimit,
+                    _liquidationThreshold,
+                    _borrowRate,
+                    _autoLiquidation,
+                    _collateralRatio,
+                    Contracts.BAT, // Using a different borrow token
+                    _collateralAsset,
+                    true
+                )
+            ).to.be.revertedWith('CL: No price feed');
         });
 
-        it("Can't vote after extension is passed", async () => {
+        it('CreditLine Request: Should revert if collateral ratio is less than liquidation threshold', async function () {
             let { admin, borrower, lender } = env.entities;
-            let lender1 = env.entities.extraLenders[3];
+            let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
+            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
+            let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
+            let _autoLiquidation: boolean = true;
+            let _collateralRatio: BigNumberish = BigNumber.from(50);
+            let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
+            let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
-            await env.extenstion.connect(borrower).requestExtension(pool.address);
-            await env.extenstion.connect(lender).voteOnExtension(pool.address);
-            const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
-            assert(isLoanExtensionActive, 'Extension not active');
-            await expect(env.extenstion.connect(lender1).voteOnExtension(pool.address)).to.be.revertedWith(
-                'Pool::voteOnExtension - Voting is over'
-            );
+            creditLine = env.creditLine;
+
+            await expect(
+                creditLine
+                .connect(lender)
+                .request( 
+                    borrower.address,
+                    borrowLimit,
+                    _liquidationThreshold,
+                    _borrowRate,
+                    _autoLiquidation,
+                    _collateralRatio,
+                    _borrowAsset,
+                    _collateralAsset,
+                    true
+                )
+            ).to.be.revertedWith('CL: collateral ratio should be higher');
         });
 
-        it('Cannot liquidate pool after extension is passed', async () => {
+        it('Creditline Request: Check for correct request', async function () {
             let { admin, borrower, lender } = env.entities;
-            let random = env.entities.extraLenders[10];
+            let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
+            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
+            let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
+            let _autoLiquidation: boolean = true;
+            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
+            let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
-            await env.extenstion.connect(borrower).requestExtension(pool.address);
-            await env.extenstion.connect(lender).voteOnExtension(pool.address);
-            const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
-            assert(isLoanExtensionActive, 'Extension not active');
-            await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                'Pool::liquidatePool - No reason to liquidate the pool'
-            );
-        });
+            creditLine = env.creditLine;
 
-        it('Should be able to repay after extension is passed', async () => {
-            let { admin, borrower, lender } = env.entities;
-            let random = env.entities.extraLenders[10];
-            let borrowToken = env.mockTokenContracts[0].contract;
-            const scaler = BigNumber.from(10).pow(30);
+            let values = await creditLine
+                .connect(lender)
+                .callStatic.request(
+                    borrower.address,
+                    borrowLimit,
+                    _liquidationThreshold,
+                    _borrowRate,
+                    _autoLiquidation,
+                    _collateralRatio,
+                    _borrowAsset,
+                    _collateralAsset,
+                    true
+                );
+            
+                await expect(
+                    creditLine
+                        .connect(lender)
+                        .request(
+                            borrower.address,
+                            borrowLimit,
+                            _liquidationThreshold,
+                            _borrowRate,
+                            _autoLiquidation,
+                            _collateralRatio,
+                            _borrowAsset,
+                            _collateralAsset,
+                            true
+                        )
+                )
+                    .to.emit(creditLine, 'CreditLineRequested')
+                    .withArgs(values, lender.address, borrower.address);
 
-            await env.extenstion.connect(borrower).requestExtension(pool.address);
-            await env.extenstion.connect(lender).voteOnExtension(pool.address);
-            const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
-            assert(isLoanExtensionActive, 'Extension not active');
-
-            let interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(
-                scaler
-            );
-            const endOfExtension: BigNumber = (await env.repayments.connect(admin).getNextInstalmentDeadline(pool.address)).div(scaler);
-
-            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestForCurrentPeriod);
-            await borrowToken.connect(admin).transfer(random.address, interestForCurrentPeriod);
-            await borrowToken.connect(random).approve(env.repayments.address, interestForCurrentPeriod);
-            await env.repayments.connect(random).repay(pool.address, interestForCurrentPeriod);
-
-            const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
-            await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
-
-            interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
+            let StatusActual = (await creditLine.connect(admin).creditLineVariables(values)).status;
             assert(
-                interestForCurrentPeriod.toString() != '0',
-                `Interest not charged correctly. Actual: ${interestForCurrentPeriod.toString()} Expected: 0`
+                StatusActual.toString() == BigNumber.from('1').toString(),
+                `Creditline should be in requested Stage. Expected: ${BigNumber.from('0').toString()} 
+                Actual: ${StatusActual}`
             );
-
-            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestForCurrentPeriod);
-            await borrowToken.connect(admin).transfer(random.address, interestForCurrentPeriod);
-            await borrowToken.connect(random).approve(env.repayments.address, interestForCurrentPeriod);
-            await env.repayments.connect(random).repay(pool.address, interestForCurrentPeriod);
         });
     });
 }

@@ -20,6 +20,7 @@ import {
     repaymentParams,
     testPoolFactoryParams,
     createPoolParams,
+    creditLineFactoryParams,
     WhaleAccount,
     zeroAddress,
     ChainLinkAggregators,
@@ -83,7 +84,7 @@ export async function compound_MarginCalls(
                 {
                     admin: '',
                     _collectionPeriod: testPoolFactoryParams._collectionPeriod,
-                    _matchCollateralRatioInterval: testPoolFactoryParams._matchCollateralRatioInterval,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
                     _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
@@ -92,9 +93,13 @@ export async function compound_MarginCalls(
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -109,13 +114,13 @@ export async function compound_MarginCalls(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -140,13 +145,13 @@ export async function compound_MarginCalls(
             // console.log("Tokens present!");
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _minborrowAmount: BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)),
+                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
                 _collectionPeriod: 10000,
-                _matchCollateralRatioInterval: 200,
+                _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
@@ -157,7 +162,7 @@ export async function compound_MarginCalls(
 
             poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
 
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
+            expect(await poolToken.name()).eq('Pool Tokens');
             expect(await poolToken.symbol()).eq('OBPT');
             expect(await poolToken.decimals()).eq(18);
 
@@ -235,7 +240,7 @@ export async function compound_MarginCalls(
             let randomCollateralBefore = await collateralToken.balanceOf(random.address);
             let collateralBalancePoolBefore = await env.savingsAccount
                 .connect(admin)
-                .userLockedBalance(pool.address, collateralToken.address, strategy);
+                .balanceInShares(pool.address, collateralToken.address, strategy);
             // console.log({collateralBalancePoolBefore: collateralBalancePoolBefore.toString()});
 
             const liquidationTokens = await poolToken.balanceOf(lender.address);
@@ -245,7 +250,7 @@ export async function compound_MarginCalls(
             await borrowToken.connect(random).approve(pool.address, liquidationTokens.mul(2));
 
             // Liquidate lender after margin call duration is over
-            let liquidateExpect = expect(pool.connect(random).liquidateLender(lender.address, false, false, false));
+            let liquidateExpect = expect(pool.connect(random).liquidateForLender(lender.address, false, false, false));
             await liquidateExpect.to.emit(pool, 'LenderLiquidated');
 
             // Balance check after liquidation
@@ -254,7 +259,7 @@ export async function compound_MarginCalls(
             let lenderPoolTokenAfter = await poolToken.balanceOf(lender.address);
             let collateralBalancePoolAfter = await env.savingsAccount
                 .connect(admin)
-                .userLockedBalance(pool.address, collateralToken.address, strategy);
+                .balanceInShares(pool.address, collateralToken.address, strategy);
 
             // The pool Token balance of the lender should be zero after liquidation
             assert(
@@ -306,12 +311,12 @@ export async function compound_MarginCalls(
             // await borrowToken.connect(random).approve(pool.address, liquidationTokens.mul(2));
 
             // Liquidate lender after margin call duration is over
-            let liquidateExpect = expect(pool.connect(random).liquidateLender(lender1.address, false, false, false));
+            let liquidateExpect = expect(pool.connect(random).liquidateForLender(lender1.address, false, false, false));
             await liquidateExpect.to.emit(pool, 'LenderLiquidated');
 
             let collateralBalancePoolAfter = await env.savingsAccount
                 .connect(admin)
-                .userLockedBalance(pool.address, collateralToken.address, strategy);
+                .balanceInShares(pool.address, collateralToken.address, strategy);
             // console.log({collateralBalancePoolAfter: collateralBalancePoolAfter.toString()});
 
             expectApproxEqual(collateralBalancePoolAfter, 0, 100);
