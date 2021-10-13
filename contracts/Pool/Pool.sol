@@ -15,6 +15,7 @@ import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IExtension.sol';
 import '../interfaces/IVerification.sol';
+
 /**
  * @title Pool contract with Methods related to Pool
  * @notice Implements the functions related to Pool
@@ -520,7 +521,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             require(!paused(), 'ERC20Pausable: token transfer while paused');
         }
 
-        if(_from == address(0) || _to == address(0)) {
+        if (_from == address(0) || _to == address(0)) {
             return;
         }
         require(getMarginCallEndTime(_from) == 0, '18');
