@@ -93,21 +93,21 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         _;
     }
 
-    event CreditLineRequested(uint256 id, address lender, address borrower);
+    event CreditLineRequested(uint256 indexed id, address indexed lender, address indexed borrower);
 
-    event CreditLineLiquidated(uint256 id, address liquidator);
+    event CreditLineLiquidated(uint256 indexed id, address indexed liquidator);
 
-    event BorrowedFromCreditLine(uint256 borrowAmount, uint256 id);
-    event CreditLineAccepted(uint256 id);
-    event CreditLineReset(uint256 id);
-    event PartialCreditLineRepaid(uint256 id, uint256 repayAmount);
-    event CompleteCreditLineRepaid(uint256 id, uint256 repayAmount);
-    event CreditLineClosed(uint256 id);
+    event BorrowedFromCreditLine(uint256 borrowAmount, uint256 indexed id);
+    event CreditLineAccepted(uint256 indexed id);
+    event CreditLineReset(uint256 indexed id);
+    event PartialCreditLineRepaid(uint256 indexed id, uint256 repayAmount);
+    event CompleteCreditLineRepaid(uint256 indexed id, uint256 repayAmount);
+    event CreditLineClosed(uint256 indexed id);
 
-    event DefaultStrategyUpdated(address defaultStrategy);
-    event PriceOracleUpdated(address priceOracle);
-    event SavingsAccountUpdated(address savingsAccount);
-    event StrategyRegistryUpdated(address strategyRegistry);
+    event DefaultStrategyUpdated(address indexed defaultStrategy);
+    event PriceOracleUpdated(address indexed priceOracle);
+    event SavingsAccountUpdated(address indexed savingsAccount);
+    event StrategyRegistryUpdated(address indexed strategyRegistry);
 
     /*
      * @notice emitted when fee that protocol changes for pools is updated
@@ -119,7 +119,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @notice emitted when address which receives fee that protocol changes for pools is updated
      * @param updatedProtocolFeeCollector updated value of protocolFeeCollector
      */
-    event ProtocolFeeCollectorUpdated(address updatedProtocolFeeCollector);
+    event ProtocolFeeCollectorUpdated(address indexed updatedProtocolFeeCollector);
 
     event LiquidationRewardFractionUpdated(uint256 liquidatorRewardFraction);
 
