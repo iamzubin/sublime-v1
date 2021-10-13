@@ -30,33 +30,33 @@ contract Verification is Initializable, OwnableUpgradeable {
 
     /// @notice Event emitted when a verifier is added as valid by admin
     /// @param verifier The address of the verifier contract to be added
-    event VerifierAdded(address verifier);
+    event VerifierAdded(address indexed verifier);
 
     /// @notice Event emitted when a verifier is to be marked as invalid by admin
     /// @param verifier The address of the verified contract to be marked as invalid
-    event VerifierRemoved(address verifier);
+    event VerifierRemoved(address indexed verifier);
 
     /// @notice Event emitted when a master address is verified by a valid verifier
     /// @param masterAddress The masterAddress which is verifier by the verifier
     /// @param verifier The verifier which verified the masterAddress
     /// @param isMasterLinked Boolean that specifies if the master address is added as linked address as well. Only linked addresses are considered valid
-    event UserRegistered(address masterAddress, address verifier, bool isMasterLinked);
+    event UserRegistered(address indexed masterAddress, address indexed verifier, bool indexed isMasterLinked);
 
     /// @notice Event emitted when a master address is marked as invalid/unregisterd by a valid verifier
     /// @param masterAddress The masterAddress which is unregistered
     /// @param verifier The verifier which verified the masterAddress
     /// @param unregisteredBy The msg.sender by which the user was unregistered
-    event UserUnregistered(address masterAddress, address verifier, address unregisteredBy);
+    event UserUnregistered(address indexed masterAddress, address indexed verifier, address indexed unregisteredBy);
 
     /// @notice Event emitted when an address is linked to masterAddress
     /// @param linkedAddress The address which is linked to masterAddress
     /// @param masterAddress The masterAddress to which address is linked
-    event addressLinked(address linkedAddress, address masterAddress);
+    event addressLinked(address indexed linkedAddress, address indexed masterAddress);
 
     /// @notice Event emitted when an address is unlinked from a masterAddress
     /// @param linkedAddress The address which is linked to masterAddress
     /// @param masterAddress The masterAddress to which address was linked
-    event addressUnlinked(address linkedAddress, address masterAddress);
+    event addressUnlinked(address indexed linkedAddress, address indexed masterAddress);
 
     /// @dev Prevents anyone other than a valid verifier from calling a function
     modifier onlyVerifier() {
