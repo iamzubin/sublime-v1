@@ -44,7 +44,7 @@ contract Extension is Initializable, IExtension {
      * @param votingPassRatio the new value of the voting pass threshold for  Pools
      */
     event VotingPassRatioUpdated(uint256 votingPassRatio);
-    event PoolFactoryUpdated(address poolFactory);
+    event PoolFactoryUpdated(address indexed poolFactory);
 
     /**
      * @notice emitted when an extension is requested by a borrower for Pools
@@ -64,7 +64,7 @@ contract Extension is Initializable, IExtension {
      * @param totalExtensionSupport the value of the total extension support for the Pools
      * @param lastVoteTime the last time the lender has voted on an extension request
      */
-    event LenderVoted(address lender, uint256 totalExtensionSupport, uint256 lastVoteTime);
+    event LenderVoted(address indexed lender, uint256 totalExtensionSupport, uint256 lastVoteTime);
 
     /**
      * @notice checks if the address is pool's valid borrower
