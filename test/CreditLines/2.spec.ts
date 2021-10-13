@@ -286,7 +286,7 @@ describe('Credit Lines', async () => {
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
             await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, false);
         });
 
         it('Calculate Interest', async () => {
@@ -331,7 +331,7 @@ describe('Credit Lines', async () => {
 
         it('Cannot liquidate if overcollateralized', async () => {
             await DaiTokenContract.connect(admin).approve(creditLine.address, largeAmount.mul(100));
-            await expect(creditLine.connect(admin).liquidate(borrowerCreditLine)).to.be.revertedWith(
+            await expect(creditLine.connect(admin).liquidate(borrowerCreditLine, false)).to.be.revertedWith(
                 'CreditLine: Collateral ratio is higher than liquidation threshold'
             );
         });
@@ -375,7 +375,7 @@ describe('Credit Lines', async () => {
                 //     _borrowableAmount: _borrowableAmount.toString(),
                 // });
 
-                await expect(creditLine.connect(admin).liquidate(borrowerCreditLine)).to.emit(creditLine, 'CreditLineLiquidated');
+                await expect(creditLine.connect(admin).liquidate(borrowerCreditLine, false)).to.emit(creditLine, 'CreditLineLiquidated');
             });
         });
     });

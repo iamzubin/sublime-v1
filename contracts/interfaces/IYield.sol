@@ -8,18 +8,18 @@ interface IYield {
      * @param investedTo the address of contract to invest in
      * @param lpTokensReceived the amount of shares received
      **/
-    event LockedTokens(address user, address investedTo, uint256 lpTokensReceived);
+    event LockedTokens(address indexed user, address indexed investedTo, uint256 lpTokensReceived);
 
     /**
      * @dev emitted when tokens are unlocked/redeemed
      * @param investedTo the address of contract invested in
      * @param collateralReceived the amount of underlying asset received
      **/
-    event UnlockedTokens(address investedTo, uint256 collateralReceived);
+    event UnlockedTokens(address indexed investedTo, uint256 collateralReceived);
 
-    event UnlockedShares(address asset, uint256 sharesReleased);
+    event UnlockedShares(address indexed asset, uint256 sharesReleased);
 
-    event SavingsAccountUpdated(address savingsAccount);
+    event SavingsAccountUpdated(address indexed savingsAccount);
 
     /**
      * @dev Used to get liquidity token address from asset address
