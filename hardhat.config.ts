@@ -16,7 +16,6 @@ import 'hardhat-gas-reporter';
 import { task } from 'hardhat/config';
 import { HardhatUserConfig } from 'hardhat/types';
 
-
 import { privateKeys, kovanPrivateKeys, rinkebyPrivateKeys } from './utils/wallet';
 
 import {

@@ -79,8 +79,8 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     await (await strategyRegistry.connect(admin).addStrategy(zeroAddress)).wait();
 
-    let aaveYield: IYield ;
-    if(aaveYieldParams?.wethGateway) {
+    let aaveYield: IYield;
+    if (aaveYieldParams?.wethGateway) {
         console.log('Deploy and initialize aaveYield');
 
         aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, savingsAccount, aaveYieldParams);
@@ -90,8 +90,8 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     }
 
     let yearnYield: IYield;
-    if(yearnYieldPairs && yearnYieldPairs.length != 0) {
-        console.log("Deploy and initialize yearnYield");
+    if (yearnYieldPairs && yearnYieldPairs.length != 0) {
+        console.log('Deploy and initialize yearnYield');
 
         yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, savingsAccount, yearnYieldPairs);
         await strategyRegistry.connect(admin).addStrategy(yearnYield.address);
@@ -100,7 +100,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     }
 
     let compoundYield: IYield;
-    if(compoundPairs && compoundPairs?.length != 0) {
+    if (compoundPairs && compoundPairs?.length != 0) {
         console.log('Deploy and initialize compoundYield');
 
         compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, savingsAccount, compoundPairs);

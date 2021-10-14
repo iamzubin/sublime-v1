@@ -10,6 +10,7 @@ interface IRepayment {
         uint256 loanStartTime,
         address lentAsset
     ) external;
+
     function getTotalRepaidAmount(address poolID) external view returns (uint256);
 
     function getInterestCalculationVars(address poolID) external view returns (uint256, uint256);
