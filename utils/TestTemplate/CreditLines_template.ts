@@ -306,7 +306,78 @@ export async function CreditLines(
             let StatusActual = (await creditLine.connect(admin).creditLineVariables(values)).status;
             assert(
                 StatusActual.toString() == BigNumber.from('1').toString(),
-                `Creditline should be in requested Stage. Expected: ${BigNumber.from('0').toString()} 
+                `Creditline should be in requested Stage. Expected: ${BigNumber.from('1').toString()} 
+                Actual: ${StatusActual}`
+            );
+        });
+
+        it('Creditline Request: Accepting credit lines', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
+            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
+            let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
+            let _autoLiquidation: boolean = true;
+            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
+            let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
+
+            creditLine = env.creditLine;
+
+            let values = await creditLine
+                .connect(lender)
+                .callStatic.request(
+                    borrower.address,
+                    borrowLimit,
+                    _liquidationThreshold,
+                    _borrowRate,
+                    _autoLiquidation,
+                    _collateralRatio,
+                    _borrowAsset,
+                    _collateralAsset,
+                    true
+                );
+
+                await expect(
+                    creditLine
+                        .connect(lender)
+                        .request(
+                            borrower.address,
+                            borrowLimit,
+                            _liquidationThreshold,
+                            _borrowRate,
+                            _autoLiquidation,
+                            _collateralRatio,
+                            _borrowAsset,
+                            _collateralAsset,
+                            true
+                        )
+                )
+                    .to.emit(creditLine, 'CreditLineRequested')
+                    .withArgs(values, lender.address, borrower.address);
+            
+                await expect(
+                    creditLine
+                        .connect(lender)
+                        .accept(
+                            values
+                        )
+                )
+                    .to.be.revertedWith("Only Borrower or Lender who hasn't requested can accept");
+                
+                await expect(
+                    creditLine
+                        .connect(borrower)
+                        .accept(
+                            values
+                        )
+                )
+                    .to.emit(creditLine, 'CreditLineAccepted')
+                    .withArgs(values);
+
+            let StatusActual = (await creditLine.connect(admin).creditLineVariables(values)).status;
+            assert(
+                StatusActual.toString() == BigNumber.from('2').toString(),
+                `Creditline should be in requested Stage. Expected: ${BigNumber.from('2').toString()} 
                 Actual: ${StatusActual}`
             );
         });
