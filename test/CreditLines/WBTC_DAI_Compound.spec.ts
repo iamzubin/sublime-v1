@@ -203,7 +203,7 @@ describe('WBTC-DAI Credit Lines', async () => {
                 _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address,
-                yearnYield.address
+                '0x00000000000000000000000000000000000000000000'
             );
 
         const poolImpl = await deployHelper.pool.deployPool();
