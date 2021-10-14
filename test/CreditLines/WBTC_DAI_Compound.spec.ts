@@ -60,6 +60,7 @@ describe('WBTC-DAI Credit Lines', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -156,6 +157,11 @@ describe('WBTC-DAI Credit Lines', async () => {
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
 
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
@@ -203,7 +209,7 @@ describe('WBTC-DAI Credit Lines', async () => {
                 _minborrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector.address,
-                '0x00000000000000000000000000000000000000000000'
+                noYield.address
             );
 
         const poolImpl = await deployHelper.pool.deployPool();
