@@ -253,7 +253,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         return _currentDebt;
     }
 
-    function calculateBorrowableAmount(uint256 _id) public returns (uint256) {
+    function calculateBorrowableAmount(uint256 _id) public view returns (uint256) {
         creditLineStatus _status = creditLineVariables[_id].status;
         require(
             _status == creditLineStatus.ACTIVE || _status == creditLineStatus.REQUESTED,
@@ -638,7 +638,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         return currentCollateralRatio;
     }
 
-    function calculateTotalCollateralTokens(uint256 _id) public returns (uint256 _amount) {
+    function calculateTotalCollateralTokens(uint256 _id) public view returns (uint256 _amount) {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _liquidityShares;

@@ -57,7 +57,7 @@ interface IYield {
      * @param asset the address of token locked
      * @return amount amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) external returns (uint256 amount);
+    function getTokensForShares(uint256 shares, address asset) external view returns (uint256 amount);
 
-    function getSharesForTokens(uint256 amount, address asset) external returns (uint256 shares);
+    function getSharesForTokens(uint256 amount, address asset) external view returns (uint256 shares);
 }

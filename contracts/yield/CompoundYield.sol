@@ -134,14 +134,18 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @param asset the address of token locked
      * @return amount amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) public override returns (uint256 amount) {
+    function getTokensForShares(uint256 shares, address asset) public view override returns (uint256 amount) {
         //balanceOfUnderlying returns underlying balance for total shares
         if (shares == 0) return 0;
         address cToken = liquidityToken[asset];
-        amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
+        // amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
+        uint256 exchangeRate = ICToken(cToken).exchangeRateStored();
+        uint256 productValue = exchangeRate.mul(IERC20(cToken).balanceOf(address(this)));
+        uint256 truncatedAmount = productValue / 1e18;
+        amount = truncatedAmount.mul(shares).div(IERC20(cToken).balanceOf(address(this)));
     }
 
-    function getSharesForTokens(uint256 amount, address asset) external override returns (uint256 shares) {
+    function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
         shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
     }
 
