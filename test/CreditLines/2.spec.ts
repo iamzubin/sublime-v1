@@ -120,8 +120,6 @@ describe('Credit Lines', async () => {
                 aaveYieldParams._lendingPoolAddressesProvider
             );
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
-
         await strategyRegistry.connect(admin).addStrategy(aaveYield.address);
 
         yearnYield = await deployHelper.core.deployYearnYield();

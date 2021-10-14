@@ -148,8 +148,6 @@ describe('WBTC-DAI Credit Lines', async () => {
                 aaveYieldParams._lendingPoolAddressesProvider
             );
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
-
         await strategyRegistry.connect(admin).addStrategy(aaveYield.address);
 
         compoundYield = await deployHelper.core.deployCompoundYield();
