@@ -28,7 +28,7 @@ const poolSize = BigNumber.from('100000000000000000000'); // 100e18 dai
 export const createPoolParams = {
     _poolSize: poolSize,
     _borrowAmountRequested: depositValueToTest,
-    _collateralVolatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+    _marginCallThreshold: BigNumber.from(40).mul(BigNumber.from(10).pow(28)),
     _idealCollateralRatio: collateralRatio,
     _collateralRatio: collateralRatio,
     _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),

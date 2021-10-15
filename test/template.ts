@@ -232,7 +232,7 @@ describe.skip('Template For Test cases', async () => {
 
                 let {
                     _poolSize,
-                    _collateralVolatilityThreshold,
+                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -253,7 +253,7 @@ describe.skip('Template For Test cases', async () => {
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
+                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,

@@ -24,7 +24,7 @@ export async function precalculatePoolAddress(poolData: PoolData, contracts: Con
         transferFromSavingsAccount,
         {
             _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _collateralVolatilityThreshold: BigNumber.from(poolCreateParams._volatilityThreshold),
+            _marginCallThreshold: BigNumber.from(poolCreateParams._marginCallThreshold),
             _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
             _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
             _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
@@ -50,7 +50,7 @@ export async function deployPool(poolFactory: PoolFactory, poolData: PoolData, c
                 borrowToken,
                 collateralToken,
                 poolCreateParams._collateralRatio,
-                poolCreateParams._volatilityThreshold,
+                poolCreateParams._marginCallThreshold,
                 poolCreateParams._repaymentInterval,
                 poolCreateParams._noOfRepaymentIntervals,
                 strategy,

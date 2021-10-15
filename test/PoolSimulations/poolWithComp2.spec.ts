@@ -85,7 +85,7 @@ describe('Pool With Compound Strategy 2', async () => {
 
         let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+            _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -104,7 +104,7 @@ describe('Pool With Compound Strategy 2', async () => {
 
         let pool = await createNewPool(env, DAI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+            _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
