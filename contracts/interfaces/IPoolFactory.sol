@@ -126,6 +126,12 @@ interface IPoolFactory {
      * @param isSupported true if collateralToken is a valid collateral asset, false if collateralToken is an invalid collateral asset
      */
     event CollateralTokenUpdated(address indexed collateralToken, bool isSupported);
+
+    /**
+     * @notice emitted when no strategy address in the pool is updated
+     * @param noStrategy address of noYield contract
+     */
+    event NoStrategyUpdated(address noStrategy);
     
     function savingsAccount() external view returns (address);
 
@@ -156,4 +162,6 @@ interface IPoolFactory {
     function poolCancelPenaltyFraction() external view returns (uint256);
 
     function getProtocolFeeData() external view returns (uint256, address);
+
+    function noStrategyAddress() external view returns (address);
 }

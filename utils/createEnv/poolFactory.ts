@@ -35,6 +35,7 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
         _minBorrowFraction,
         _protocolFeeFraction,
         protocolFeeCollector,
+        noStrategy,
     } = initParams;
     await (
         await poolFactory
@@ -49,7 +50,8 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
                 _poolCancelPenalityFraction,
                 _minBorrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector
+                protocolFeeCollector,
+                noStrategy
             )
     ).wait();
 }

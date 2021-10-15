@@ -23,6 +23,7 @@ import { CompoundYield } from '../../typechain/CompoundYield';
 import { ERC20 } from '../../typechain/ERC20';
 
 import { Contracts } from '../../existingContracts/compound.json';
+import { NoYield } from '@typechain/NoYield';
 
 describe('Test Savings Account (with ERC20 Token)', async () => {
     let savingsAccount: SavingsAccount;
@@ -38,6 +39,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
 
     let Binance7: any;
     let WhaleAccount: any;
+    let noYield: NoYield;
 
     before(async () => {
         [proxyAdmin, admin, mockCreditLinesAddress] = await ethers.getSigners();
@@ -48,6 +50,10 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
         //initialize
         savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
         strategyRegistry.initialize(admin.address, 1000);
+
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         await network.provider.request({
             method: 'hardhat_impersonateAccount',
@@ -96,16 +102,19 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 Contracts.BAT,
-                zeroAddress
+                noYield.address
             );
-            await expect(savingsAccount.connect(userAccount).deposit(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address))
+            await BatTokenContract.connect(userAccount).approve(noYield.address, depositValueToTest);
+            await expect(
+                savingsAccount.connect(userAccount).deposit(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address)
+            )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress);
+                .withArgs(randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 Contracts.BAT,
-                zeroAddress
+                noYield.address
             );
 
             expect(balanceLockedAfterTransaction.sub(balanceLockedBeforeTransaction)).eq(depositValueToTest);
@@ -115,23 +124,26 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 userAccount.address,
                 Contracts.BAT,
-                zeroAddress
+                noYield.address
             );
-            await expect(savingsAccount.connect(userAccount).deposit(depositValueToTest, Contracts.BAT, zeroAddress, userAccount.address))
+            await BatTokenContract.connect(userAccount).approve(noYield.address, depositValueToTest);
+            await expect(
+                savingsAccount.connect(userAccount).deposit(depositValueToTest, Contracts.BAT, noYield.address, userAccount.address)
+            )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(userAccount.address, depositValueToTest, Contracts.BAT, zeroAddress);
+                .withArgs(userAccount.address, depositValueToTest, Contracts.BAT, noYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 userAccount.address,
                 Contracts.BAT,
-                zeroAddress
+                noYield.address
             );
 
             expect(balanceLockedAfterTransaction.sub(balanceLockedBeforeTransaction)).eq(depositValueToTest);
         });
 
         async function subject(to: Address, depositValue: BigNumberish, ethValue?: BigNumberish): Promise<any> {
-            return savingsAccount.connect(userAccount).deposit(depositValue, Contracts.BAT, zeroAddress, to);
+            return savingsAccount.connect(userAccount).deposit(depositValue, Contracts.BAT, noYield.address, to);
         }
 
         describe('Failed cases', async () => {
@@ -147,25 +159,31 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                 );
             });
             it.skip('should fail/revert when shares are withdrawn with no strategy (withdrawShares = true)', async () => {
-                await savingsAccount.connect(userAccount).deposit(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address);
+                await savingsAccount
+                    .connect(userAccount)
+                    .deposit(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address);
 
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address, true)
+                        .withdraw(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address, true)
                 ).to.be.revertedWith('Cannot withdraw shared when No strategy is used');
             });
         });
 
         it('Withdraw Token (withdrawShares = false)', async () => {
-            await savingsAccount.connect(userAccount).deposit(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address);
+            await BatTokenContract.connect(userAccount).approve(noYield.address, depositValueToTest);
+            await savingsAccount.connect(userAccount).deposit(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address);
 
             const balanceLockedBeforeTransaction: BigNumber = await BatTokenContract.balanceOf(randomAccount.address);
 
             await expect(
-                savingsAccount.connect(randomAccount).withdraw(depositValueToTest, Contracts.BAT, zeroAddress, randomAccount.address, false)
-            ).to.emit(savingsAccount, 'Withdrawn');
-            //     .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, zeroAddress);
+                savingsAccount
+                    .connect(randomAccount)
+                    .withdraw(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address, false)
+            )
+                .to.emit(savingsAccount, 'Withdrawn')
+                .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address);
 
             // const balanceLockedAfterTransaction: BigNumber = await BatTokenContract.balanceOf(randomAccount.address);
 

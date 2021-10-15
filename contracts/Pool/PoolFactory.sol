@@ -112,6 +112,12 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @notice the fraction used for calculating the penalty when the pool is cancelled
      */
     uint256 public override poolCancelPenaltyFraction;
+
+    /**
+     * @notice Contract Address of no yield
+     */
+    address public override noStrategyAddress;
+
     uint256 protocolFeeFraction;
     address protocolFeeCollector;
 
@@ -191,7 +197,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _poolCancelPenaltyFraction,
         uint256 _minBorrowFraction,
         uint256 _protocolFeeFraction,
-        address _protocolFeeCollector
+        address _protocolFeeCollector,
+        address _noStrategy
     ) external initializer {
         {
             OwnableUpgradeable.__Ownable_init();
@@ -206,6 +213,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updateMinBorrowFraction(_minBorrowFraction);
         _updateProtocolFeeFraction(_protocolFeeFraction);
         _updateProtocolFeeCollector(_protocolFeeCollector);
+        _updateNoStrategy(_noStrategy);
     }
 
     function setImplementations(
@@ -517,6 +525,19 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function _updateRepaymentImpl(address _repaymentImpl) internal {
         repaymentImpl = _repaymentImpl;
         emit RepaymentImplUpdated(_repaymentImpl);
+    }
+
+    /**
+     * @notice used to update contract address of nostrategy contract
+     * @param _noStrategy address of the updated noYield.sol contract
+     */
+    function updateNoStrategy(address _noStrategy) external onlyOwner {
+        _updateNoStrategy(_noStrategy);
+    }
+
+    function _updateNoStrategy(address _noStrategy) internal {
+        noStrategyAddress = _noStrategy;
+        emit NoStrategyUpdated(_noStrategy);
     }
 
     /**

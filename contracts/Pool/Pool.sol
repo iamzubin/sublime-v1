@@ -15,6 +15,7 @@ import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IExtension.sol';
 import '../interfaces/IVerification.sol';
+
 /**
  * @title Pool contract with Methods related to Pool
  * @notice Implements the functions related to Pool
@@ -417,7 +418,15 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         }
 
         address _borrowToken = poolConstants.borrowAsset;
-        _deposit(_fromSavingsAccount, false, _borrowToken, _amount, address(0), msg.sender, address(this));
+        _deposit(
+            _fromSavingsAccount,
+            false,
+            _borrowToken,
+            _amount,
+            IPoolFactory(PoolFactory).noStrategyAddress(),
+            msg.sender,
+            address(this)
+        );
         _mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);
     }
@@ -437,7 +446,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             require(!paused(), 'ERC20Pausable: token transfer while paused');
         }
 
-        if(_from == address(0) || _to == address(0)) {
+        if (_from == address(0) || _to == address(0)) {
             return;
         }
         require(getMarginCallEndTime(_from) == 0, '18');

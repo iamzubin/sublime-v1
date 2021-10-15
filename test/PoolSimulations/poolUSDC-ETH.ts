@@ -66,6 +66,7 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
                 _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                noStrategy: '',
             } as PoolFactoryInitParams,
             CreditLineDefaultStrategy.Compound,
             {

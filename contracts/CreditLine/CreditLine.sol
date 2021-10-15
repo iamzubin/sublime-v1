@@ -247,9 +247,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     function calculateCurrentDebt(uint256 _id) public view returns (uint256) {
         uint256 _interestAccrued = calculateInterestAccrued(_id);
-        uint256 _currentDebt = (creditLineVariables[_id].principal).add(creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(_interestAccrued).sub(
-            creditLineVariables[_id].totalInterestRepaid
-        );
+        uint256 _currentDebt = (creditLineVariables[_id].principal)
+            .add(creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate)
+            .add(_interestAccrued)
+            .sub(creditLineVariables[_id].totalInterestRepaid);
         return _currentDebt;
     }
 
@@ -410,7 +411,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id Credit line hash which represents the credit Line Unique Hash
      */
     function accept(uint256 _id) external {
-        require(creditLineVariables[_id].status == creditLineStatus.REQUESTED, 'CreditLine::acceptCreditLineLender - CreditLine is already accepted');
+        require(
+            creditLineVariables[_id].status == creditLineStatus.REQUESTED,
+            'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
+        );
         bool _requestByLender = creditLineConstants[_id].requestByLender;
         require(
             (msg.sender == creditLineConstants[_id].borrower && _requestByLender) ||
@@ -610,7 +614,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineVariables[_id].status == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(_id);
-        uint256 _totalInterestAccrued = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(_interestSincePrincipalUpdate);
+        uint256 _totalInterestAccrued = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(
+            _interestSincePrincipalUpdate
+        );
         uint256 _totalDebt = _totalInterestAccrued.add(creditLineVariables[_id].principal);
 
         bool _totalRemainingIsRepaid = false;

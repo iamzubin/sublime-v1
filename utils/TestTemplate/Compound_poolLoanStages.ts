@@ -89,6 +89,7 @@ export async function compoundPoolCollectionStage(
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -274,10 +275,10 @@ export async function compoundPoolCollectionStage(
             //Lenders can lend borrow Tokens into the pool
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
-            await env.mockTokenContracts[0].contract.connect(lender).approve(env.savingsAccount.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(env.yields.noYield.address, amount);
             await env.savingsAccount
                 .connect(lender)
-                .deposit(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender.address);
+                .deposit(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender.address);
             await env.savingsAccount.connect(lender).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
@@ -312,10 +313,10 @@ export async function compoundPoolCollectionStage(
             //Lenders can lend borrow Tokens into the pool
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender1.address, amount);
-            await env.mockTokenContracts[0].contract.connect(lender1).approve(env.savingsAccount.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender1).approve(env.yields.noYield.address, amount);
             await env.savingsAccount
                 .connect(lender1)
-                .deposit(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender1.address);
+                .deposit(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender1.address);
             await env.savingsAccount.connect(lender1).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
@@ -384,6 +385,7 @@ export async function compoundPoolCollectionStage(
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -562,6 +564,7 @@ export async function compoundPoolCollectionStage(
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -733,6 +736,7 @@ export async function compoundPoolCollectionStage(
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {

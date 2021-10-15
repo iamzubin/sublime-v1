@@ -43,8 +43,9 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '../typechain/SublimeProxy';
 import { Token } from '../typechain/Token';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
-describe('Template 2', async () => {
+describe.skip('Template 2', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
 
@@ -65,6 +66,9 @@ describe('Template 2', async () => {
 
     let compoundYield: CompoundYield;
     let compoundYieldLogic: CompoundYield;
+
+    let noYield: NoYield;
+    let noYieldLogic: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -179,7 +183,12 @@ describe('Template 2', async () => {
             await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
         }
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
+        noYieldLogic = await deployHelper.core.deployNoYield();
+        let noYieldProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
+        noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         console.log('Deploying verification');
         verificationLogic = await deployHelper.helper.deployVerification();
@@ -238,7 +247,8 @@ describe('Template 2', async () => {
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector.address
+                protocolFeeCollector.address,
+                noYield.address
             );
         console.log('Deploying pool logic');
         poolLogic = await deployHelper.pool.deployPool();
@@ -321,7 +331,7 @@ describe('Template 2', async () => {
             expect(await pool.name()).eq('Pool Tokens');
             expect(await pool.symbol()).eq('PT');
             expect(await pool.decimals()).eq(18);
-            
+
             await pool.connect(borrower).depositCollateral(_collateralAmount, false);
         } else {
             let tokenDeployer = new DeployHelper(admin);

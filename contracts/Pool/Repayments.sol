@@ -391,7 +391,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
         require(repayVariables[_poolID].isLoanExtensionActive == false, 'Repayments:repayPrincipal Repayment overdue unpaid');
 
-        require(repayConstants[_poolID].loanDuration == repayVariables[_poolID].loanDurationCovered, 'Repayments:repayPrincipal Unpaid interest');
+        require(
+            repayConstants[_poolID].loanDuration == repayVariables[_poolID].loanDurationCovered,
+            'Repayments:repayPrincipal Unpaid interest'
+        );
 
         uint256 _amount = _pool.getTokensLent();
 
