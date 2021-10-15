@@ -13,7 +13,7 @@ import {
 import { expect } from 'chai';
 import { timeTravel } from '../../../utils/time';
 
-describe('yearn Yield interest calculations', () => {
+describe.skip('yearn Yield interest calculations', () => {
     const USDC_YEARN_VAULT = "0x597aD1e0c13Bfe8025993D9e79C69E1c0233522e";
     const USDC_TOKEN = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 
