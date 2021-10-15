@@ -3,14 +3,14 @@ pragma solidity 0.7.0;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '../interfaces/IVerification.sol';
+import '../interfaces/IVerifier.sol';
 
-contract adminVerifier is Initializable, OwnableUpgradeable {
+contract adminVerifier is Initializable, IVerifier, OwnableUpgradeable {
     IVerification public verification;
 
-    mapping(address => string) userData;
+    mapping(address => string) public userData;
 
-    event UserRegistered(address user, bool isMasterLinked, string metadata);
-    event UserUnregistered(address user);
+    event VerificationUpdated(address indexed verification);
 
     /// @notice Initializes the variables of the contract
     /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
@@ -18,7 +18,7 @@ contract adminVerifier is Initializable, OwnableUpgradeable {
     function initialize(address _admin, address _verification) public initializer {
         super.__Ownable_init();
         super.transferOwnership(_admin);
-        verification = IVerification(_verification);
+        _updateVerification(_verification);
     }
 
     function registerUser(
@@ -37,5 +37,14 @@ contract adminVerifier is Initializable, OwnableUpgradeable {
         delete userData[_user];
         verification.unregisterMasterAddress(_user, address(this));
         emit UserUnregistered(_user);
+    }
+
+    function updateVerification(address _verification) public onlyOwner {
+        _updateVerification(_verification);
+    }
+
+    function _updateVerification(address _verification) internal onlyOwner {
+        verification = IVerification(_verification);
+        emit VerificationUpdated(_verification);
     }
 }

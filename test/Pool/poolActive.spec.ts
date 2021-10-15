@@ -417,7 +417,7 @@ describe('Pool Active stage', async () => {
                     await blockTravel(network, parseInt(endOfPeriod.add(10).toString()));
 
                     await expect(pool.liquidatePool(false, false, false)).to.be.revertedWith(
-                        'Pool::liquidatePool - No reason to liquidate the pool'
+                        'Pool::liquidatePool - Borrower didnt default'
                     );
                 });
             });
@@ -453,7 +453,7 @@ describe('Pool Active stage', async () => {
                         await extenstion.connect(lender).voteOnExtension(pool.address);
 
                         await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'Pool::liquidatePool - No reason to liquidate the pool'
+                            'Pool::liquidatePool - Borrower didnt default'
                         );
                     });
 
@@ -510,7 +510,7 @@ describe('Pool Active stage', async () => {
                             .div(scaler);
                         await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
                         await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'Pool::liquidatePool - No reason to liquidate the pool'
+                            'Pool::liquidatePool - Borrower didnt default'
                         );
                     });
 
@@ -551,7 +551,7 @@ describe('Pool Active stage', async () => {
                         await blockTravel(network, parseInt(extensionVoteEndTime.add(1).toString()));
 
                         await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'Pool::liquidatePool - No reason to liquidate the pool'
+                            'Pool::liquidatePool - Borrower didnt default'
                         );
                     });
 

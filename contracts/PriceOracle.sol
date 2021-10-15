@@ -21,10 +21,6 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
 
     mapping(bytes32 => address) uniswapPools;
 
-    event ChainlinkFeedUpdated(address token, address priceOracle);
-    event UniswapFeedUpdated(address token1, address token2, bytes32 feedId, address pool);
-    event UniswapPriceAveragingPeriodUpdated(uint32 uniswapPriceAveragingPeriod);
-
     function initialize(address _admin) public initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_admin);

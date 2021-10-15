@@ -347,7 +347,7 @@ describe('Credit Lines', async () => {
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
             await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, false);
         });
 
         it('Deposit Collateral into existing credit line (from savings account)', async () => {
@@ -366,7 +366,7 @@ describe('Credit Lines', async () => {
                 .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
             await savingsAccount.connect(borrower).approve(valueToTest.mul(2), Contracts.LINK, creditLine.address);
 
-            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, true);
         });
 
         it('Close Credit Line', async () => {
@@ -572,7 +572,7 @@ describe('Credit Lines', async () => {
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
                 await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
+                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, false);
             });
 
             it('Deposit Collateral into existing credit line (from savings account)', async () => {
@@ -591,7 +591,7 @@ describe('Credit Lines', async () => {
                     .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
                 await savingsAccount.connect(borrower).approve(valueToTest.mul(2), Contracts.LINK, creditLine.address);
 
-                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
+                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, true);
             });
 
             it('Close Credit Line', async () => {
@@ -604,11 +604,11 @@ describe('Credit Lines', async () => {
                 it('Cannot deposit into invalid credit line hash', async () => {
                     let randomInvalidHash = '0x0000000011111111000000001111111100000000111111110000000011111111';
                     await expect(
-                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), false)
+                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, false)
                     ).to.be.revertedWith('Credit line does not exist');
 
                     await expect(
-                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), true)
+                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, true)
                     ).to.be.revertedWith('Credit line does not exist');
                 });
 
