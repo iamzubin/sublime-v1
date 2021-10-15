@@ -34,9 +34,9 @@ import { Pool } from "../../typechain/Pool";
 import { PoolToken } from '../../typechain/PoolToken';
 import { CompoundYield } from '../../typechain/CompoundYield';
 import { expectApproxEqual } from '../helpers';
-import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
+import { incrementChain, timeTravel, blockTravel, blocksTravel } from '../../utils/time';
 
-export async function activePoolChecks(
+export async function preActivePoolChecks(
     Amount: Number,
     WhaleAccount1: Address,
     WhaleAccount2: Address,
@@ -189,6 +189,8 @@ export async function activePoolChecks(
             const poolTokenBalanceOfRandomInitial = await poolToken.balanceOf(random.address);
             console.log(poolTokenBalanceOfRandomInitial);
 
+            // Checking the 
+
             // Transferring lender's Pool Tokens to the random address to check whether the pool tokens are transferable or not
             poolToken.connect(lender).transfer(random.address, (amount.div(2)));
 
@@ -198,5 +200,63 @@ export async function activePoolChecks(
             console.log("Lender: ", poolTokenBalanceOfLenderFinal, "Random: ", poolTokenBalanceOfRandomFinal);
             assert(poolTokenBalanceOfRandomFinal.sub(poolTokenBalanceOfRandomInitial).gt(0) , "The pool token balance of random address did not increase after transfer from lender");
         });
+
+        it("Lender can't withdraw tokens lent in this period: ", async function() {
+            let { admin, borrower, lender } = env.entities;
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+    
+            // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+    
+            // Lender actually lends his Borrow Tokens
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            // Check whether the pool has went into the active stage of the loan or not
+            let {loanStatus} = await pool.poolVariables();
+            assert.equal(loanStatus.toString(), BigNumber.from('0').toString(), 
+            `Pool should have been in active stage, found in: ${loanStatus}`);
+
+            //Withdrawing tokens by the lender should fail
+            await expect(pool.connect(lender).withdrawLiquidity()).to.be.revertedWith('');
+        });
+
+        it("Borrower can withdraw the borrow amount only if amount lent is more than minBorrowFraction of requested amount: ", async function() {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let poolStrategy = env.yields.compoundYield;
+            let amount = BigNumber.from(1).mul(BigNumber.from(10).pow(BTDecimals)); // 1 Borrow Token
+    
+            // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+    
+            // Lender actually lends his Borrow Tokens
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            //block travel to reach the activation stage
+            const { loanStartTime } = await pool.poolConstants();
+            await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
+
+            // Check whether the pool has went into the active stage of the loan or not
+            let {loanStatus} = await pool.poolVariables();
+            assert.equal(loanStatus.toString(), BigNumber.from('0').toString(), 
+            `Pool should have been in active stage, found in: ${loanStatus}`);
+
+            //Borrower request to withdraw smalller amount should be rejected
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('');
+        });
     });
+
+
 }

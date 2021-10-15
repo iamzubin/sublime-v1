@@ -1,9 +1,9 @@
-import { activePoolChecks } from '../../utils/TestTemplate/newCompound_ActiveStage';
+import { preActivePoolChecks } from '../../utils/TestTemplate/newCompound_ActiveStage';
 import { psLoanStagesTestCases as testCases } from '../../utils/TestCases/pool_simulations_loan_stages_test_cases';
 
 describe.only('Pool simulation using Compound strategy', function () {
     testCases.forEach((testCase) => {
-        activePoolChecks(
+        preActivePoolChecks(
             testCase.Amount,
             testCase.Whale1,
             testCase.Whale2,
