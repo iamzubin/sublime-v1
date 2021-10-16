@@ -22,7 +22,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     uint256 constant MAX_INT = 2**256 - 1;
 
-    address internal _owner;
     IPoolFactory poolFactory;
     address savingsAccount;
 
@@ -35,7 +34,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         TERMINATED // Pool terminated by admin
     }
 
-    uint256 votingPassRatio;
     uint256 gracePenaltyRate;
     uint256 gracePeriodFraction; // fraction of the repayment interval
     uint256 constant yearInSeconds = 365 days;
