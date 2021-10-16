@@ -190,7 +190,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return timestamp before which next instalment ends
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-        if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments) {
+        if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(10**30)) {
             return 0;
         }
         uint256 _loanExtensionPeriod = repayVariables[_poolID].loanExtensionPeriod;
