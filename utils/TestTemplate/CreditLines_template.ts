@@ -492,7 +492,7 @@ export async function CreditLines(
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
 
-            borrowLimit = BigNumber.from('10').mul('1000000000000000000'); // 10e18
+            borrowLimit = BigNumber.from('10').mul(BigNumber.from('10').pow(BTDecimals));
             collateralAmout = BigNumber.from('10').mul(BigNumber.from('10').pow(CTDecimals));
             amountForDeposit = BigNumber.from('100');
             _liquidationThreshold = BigNumber.from(100);
@@ -541,32 +541,25 @@ export async function CreditLines(
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
 
-            await env.mockTokenContracts[1].contract
-                .connect(env.impersonatedAccounts[0])
-                .transfer(admin.address, collateralAmout);
-            await env.mockTokenContracts[1].contract
-                .connect(admin)
-                .transfer(random.address, collateralAmout);
-            await env.mockTokenContracts[1].contract
-                .connect(random)
-                .approve(creditLine.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(random).approve(creditLine.address, collateralAmout);
 
-            await expect(creditLine.connect(random).depositCollateral(values, collateralAmout, false)).to.be.revertedWith('CreditLine not active');
+            await expect(creditLine.connect(random).depositCollateral(values, collateralAmout, false)).to.be.revertedWith(
+                'CreditLine not active'
+            );
         });
 
         it('Creditline Active: cannot borrow from creditline if not active', async function () {
             let { admin, borrower, lender } = env.entities;
             let amount: BigNumber = BigNumber.from('100');
 
-            await env.mockTokenContracts[1].contract
-                .connect(env.impersonatedAccounts[0])
-                .transfer(admin.address, amount);
-            await env.mockTokenContracts[1].contract
-                .connect(admin)
-                .approve(borrower.address, amount);
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, amount);
+            await env.mockTokenContracts[1].contract.connect(admin).approve(borrower.address, amount);
 
-            await expect(creditLine.connect(borrower).borrow(values,amount))
-                .to.be.revertedWith('CreditLine: The credit line is not yet active.');
+            await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
+                'CreditLine: The credit line is not yet active.'
+            );
         });
 
         xit('Creditline Active: Deposit Collateral directly from wallet', async function () {
@@ -579,16 +572,10 @@ export async function CreditLines(
             // console.log({ amountForDeposit: amountForDeposit.toString() });
             // console.log({ liquidityShares: liquidityShares.toString() });
 
-            await env.mockTokenContracts[1].contract
-                .connect(env.impersonatedAccounts[0])
-                .transfer(admin.address, amountForDeposit);
-            await env.mockTokenContracts[1].contract
-                .connect(admin)
-                .transfer(random.address, amountForDeposit);
-            await env.mockTokenContracts[1].contract
-                .connect(random)
-                .approve(creditLine.address, amountForDeposit);
-            
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, amountForDeposit);
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, amountForDeposit);
+            await env.mockTokenContracts[1].contract.connect(random).approve(creditLine.address, amountForDeposit);
+
             const collateralBalanceInShares = await env.savingsAccount
                 .connect(admin)
                 .balanceInShares(creditLine.address, _collateralAsset, env.yields.compoundYield.address);
@@ -601,15 +588,15 @@ export async function CreditLines(
                 .connect(admin)
                 .balanceInShares(creditLine.address, _collateralAsset, env.yields.compoundYield.address);
 
-            const randomBalanceInSharesAfter = await env.mockTokenContracts[1].contract.balanceOf(random.address);;
+            const randomBalanceInSharesAfter = await env.mockTokenContracts[1].contract.balanceOf(random.address);
 
             const collateralBalanceInSharesDiff = collateralBalanceInSharesAfter.sub(collateralBalanceInShares);
             const randomBalanceInSharesDiff = randomBalanceInShares.sub(randomBalanceInSharesAfter);
             // console.log({ collateralBalanceInSharesDiff: collateralBalanceInSharesDiff.toString() });
             // console.log({ randomBalanceInSharesDiff: randomBalanceInSharesDiff.toString() });
 
-            expectApproxEqual(liquidityShares,collateralBalanceInSharesDiff,50);
-            expectApproxEqual(randomBalanceInSharesDiff,amountForDeposit,50);
+            expectApproxEqual(liquidityShares, collateralBalanceInSharesDiff, 50);
+            expectApproxEqual(randomBalanceInSharesDiff, amountForDeposit, 50);
         });
 
         it('Creditline Active: Deposit Collateral from savings account', async function () {
@@ -621,7 +608,7 @@ export async function CreditLines(
             let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(amountForDeposit, _collateralAsset);
             // console.log({ amountForDeposit: amountForDeposit.toString() });
             // console.log({ liquidityShares: liquidityShares.toString() });
-            
+
             await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
             await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
             await env.mockTokenContracts[1].contract.connect(random).approve(env.yields.compoundYield.address, liquidityShares.mul(100));
@@ -633,7 +620,7 @@ export async function CreditLines(
             const collateralBalanceInShares = await env.savingsAccount
                 .connect(admin)
                 .balanceInShares(creditLine.address, _collateralAsset, env.yields.compoundYield.address);
-            
+
             const randomBalanceInShares = await env.savingsAccount
                 .connect(admin)
                 .balanceInShares(random.address, _collateralAsset, env.yields.compoundYield.address);
@@ -657,8 +644,8 @@ export async function CreditLines(
             // console.log({ amountForDeposit: amountForDeposit.toString() });
             // console.log({ sharesReceived: sharesReceived.toString() });
 
-            expectApproxEqual(sharesReceived,collateralBalanceInSharesDiff,50);
-            expectApproxEqual(randomBalanceInSharesDiff,collateralBalanceInSharesDiff,50);
+            expectApproxEqual(sharesReceived, collateralBalanceInSharesDiff, 50);
+            expectApproxEqual(randomBalanceInSharesDiff, collateralBalanceInSharesDiff, 50);
         });
 
         it('Only borrower can borrow from creditline', async function () {
@@ -667,73 +654,53 @@ export async function CreditLines(
             let random1 = env.entities.extraLenders[20];
             let amount: BigNumber = BigNumber.from('100');
 
-            await env.mockTokenContracts[1].contract
-                .connect(env.impersonatedAccounts[0])
-                .transfer(admin.address, amount);
-            await env.mockTokenContracts[1].contract
-                .connect(admin)
-                .approve(random1.address, amount);
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, amount);
+            await env.mockTokenContracts[1].contract.connect(admin).approve(random1.address, amount);
 
-            await expect(creditLine.connect(random1).borrow(values,amount))
-                .to.be.revertedWith('Only credit line Borrower can access');
+            await expect(creditLine.connect(random1).borrow(values, amount)).to.be.revertedWith('Only credit line Borrower can access');
         });
 
         it('Creditline Active: cannot borrow from creditline if borrow amount exceeds limit', async function () {
             let { admin, borrower, lender } = env.entities;
-            let amount: BigNumber = BigNumber.from('10').mul('10000000000000000000'); // 10e18
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let amount: BigNumber = BigNumber.from('100').mul(BigNumber.from('10').pow(BTDecimals));
 
-            await env.mockTokenContracts[0].contract
-                .connect(env.impersonatedAccounts[0])
-                .transfer(admin.address, amount);
-            await env.mockTokenContracts[0].contract
-                .connect(admin)
-                .approve(borrower.address, amount);
-
-            await expect(creditLine.connect(borrower).borrow(values,amount))
-                .to.be.revertedWith('CreditLine: Amount exceeds borrow limit.');
+            await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
+                'CreditLine: Amount exceeds borrow limit.'
+            );
         });
 
         it('Creditline Active: collateral ratio should not go down after withdraw', async function () {
             let { admin, borrower, lender } = env.entities;
             let amount: BigNumber = BigNumber.from('100');
 
-            await env.mockTokenContracts[0].contract
-                .connect(env.impersonatedAccounts[0])
-                .transfer(admin.address, amount);
-            await env.mockTokenContracts[0].contract
-                .connect(admin)
-                .approve(borrower.address, amount);
-
-            await expect(creditLine.connect(borrower).borrow(values,amount))
-                .to.be.revertedWith('CreditLine::borrow - The current collateral ratio doesn\'t allow to withdraw the amount');
+            await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
+                "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
+            );
         });
 
         xit('Creditline Active: Borrower borrows amount', async function () {
             let { admin, borrower, lender } = env.entities;
             let amount: BigNumber = BigNumber.from('100');
-            let CTDecimals = env.mockTokenContracts[1].contract.decimals();
-            let deposit = BigNumber.from('1').mul('1000000000000000000');
+            let deposit: BigNumber = BigNumber.from('10000');
 
-            await env.mockTokenContracts[1].contract
-                .connect(env.impersonatedAccounts[0])
-                .transfer(admin.address, deposit);
-            await env.mockTokenContracts[1].contract
-                .connect(admin)
-                .transfer(borrower.address, deposit);
-            await env.mockTokenContracts[1].contract
-                .connect(borrower)
-                .approve(creditLine.address, deposit);
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, deposit);
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, deposit);
+            await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, deposit);
 
             await creditLine.connect(borrower).depositCollateral(values, deposit, false);
 
-            await env.mockTokenContracts[0].contract
-                .connect(env.impersonatedAccounts[0])
-                .transfer(admin.address, amount);
-            await env.mockTokenContracts[0].contract
-                .connect(admin)
-                .approve(borrower.address, amount);
+            let strategy = env.yields.compoundYield.address;
 
-            await creditLine.connect(borrower).borrow(values,amount);
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(strategy, amount);
+            await env.savingsAccount.connect(lender).approve(amount, _borrowAsset, borrower.address);
+            await env.savingsAccount.connect(lender).deposit(amount, _borrowAsset, strategy, lender.address);
+
+            let Lender_balance = await env.savingsAccount.connect(admin).callStatic.balanceInShares(lender.address, _borrowAsset, strategy);
+            console.log(Lender_balance.toString());
+            await creditLine.connect(borrower).borrow(values, amount);
         });
     });
 }
