@@ -144,7 +144,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /*
      * @notice Used to set the min/max collateral ratio for Pools
      */
-    Limits collateralRatioLimit;
+    Limits idealCollateralRatioLimit;
 
     /*
      * @notice Used to set the min/max borrow rates (interest rate provided by borrower) for Pools
@@ -241,7 +241,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _poolSize loan amount requested
      * @param _borrowToken borrow asset requested
      * @param _collateralToken collateral asset requested
-     * @param _collateralRatio ideal pool collateral ratio set by the borrower
+     * @param _idealCollateralRatio ideal pool collateral ratio set by the borrower
      * @param _borrowRate interest rate provided by the borrower
      * @param _repaymentInterval interval between the last dates of two repayment cycles
      * @param _noOfRepaymentIntervals number of repayments to be made during the duration of the loan
@@ -255,7 +255,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
-        uint256 _collateralRatio,
+        uint256 _idealCollateralRatio,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -277,7 +277,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         require(IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy), 'PoolFactory::createPool - Invalid strategy');
         require(isWithinLimits(_poolSize, poolSizeLimit.min, poolSizeLimit.max), 'PoolFactory::createPool - PoolSize not within limits');
         require(
-            isWithinLimits(_collateralRatio, collateralRatioLimit.min, collateralRatioLimit.max),
+            isWithinLimits(_idealCollateralRatio, idealCollateralRatioLimit.min, idealCollateralRatioLimit.max),
             'PoolFactory::createPool - Collateral Ratio not within limits'
         );
         require(
@@ -297,7 +297,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _borrowRate,
             _borrowToken,
             _collateralToken,
-            _collateralRatio,
+            _idealCollateralRatio,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -314,7 +314,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
-        uint256 _collateralRatio,
+        uint256 _idealCollateralRatio,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -328,7 +328,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _borrowRate,
             _borrowToken,
             _collateralToken,
-            _collateralRatio,
+            _idealCollateralRatio,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -352,7 +352,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
-        uint256 _collateralRatio,
+        uint256 _idealCollateralRatio,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -366,7 +366,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             msg.sender,
             _borrowToken,
             _collateralToken,
-            _collateralRatio,
+            _idealCollateralRatio,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -662,8 +662,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _min updated value of the minimum threshold value of the collateral ratio
      * @param _max updated value of the maximum threshold value of the collateral ratio
      */
-    function updateCollateralRatioLimit(uint256 _min, uint256 _max) external onlyOwner {
-        collateralRatioLimit = Limits(_min, _max);
+    function updateidealCollateralRatioLimit(uint256 _min, uint256 _max) external onlyOwner {
+        idealCollateralRatioLimit = Limits(_min, _max);
         emit LimitsUpdated('CollateralRatio', _min, _max);
     }
 
