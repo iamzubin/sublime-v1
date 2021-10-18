@@ -22,7 +22,6 @@ import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementati
 import { createExtenstionWithInit } from '../../utils/createEnv/extension';
 import { createRepaymentsWithInit } from '../../utils/createEnv/repayments';
 import { createPool } from '../../utils/createEnv/poolLogic';
-import { createPoolToken } from '../../utils/createEnv/poolToken';
 
 import { SavingsAccount } from '../../typechain/SavingsAccount';
 import { StrategyRegistry } from '../../typechain/StrategyRegistry';
@@ -34,7 +33,6 @@ import { Verification } from '../../typechain/Verification';
 import { PoolFactory } from '../../typechain/PoolFactory';
 import { PriceOracle } from '../../typechain/PriceOracle';
 import { Extension } from '../../typechain/Extension';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { CreditLine } from '../../typechain/CreditLine';
@@ -140,10 +138,6 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     const poolLogic: Pool = await createPool(proxyAdmin);
 
-    console.log('Deploying pool token logic');
-
-    const poolTokenLogic: PoolToken = await createPoolToken(proxyAdmin);
-
     console.log('Deploying repayment logic');
 
     const repaymentLogic: Repayments = await createRepaymentsWithInit(proxyAdmin, admin, poolFactory, savingsAccount, repaymentsInitParams);
@@ -155,7 +149,6 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         admin,
         poolLogic,
         repaymentLogic,
-        poolTokenLogic,
         verification,
         strategyRegistry,
         priceOracle,
@@ -192,7 +185,6 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         priceOracle: priceOracle.address,
         extension: extension.address,
         poolLogic: poolLogic.address,
-        poolTokenLogic: poolTokenLogic.address,
         repaymentLogic: repaymentLogic.address,
         poolFactory: poolFactory.address,
     };

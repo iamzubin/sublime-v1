@@ -31,8 +31,8 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber, BigNumberish } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 import { Pool } from '@typechain/Pool';
-import { PoolToken } from '@typechain/PoolToken';
 import { expectApproxEqual } from '../helpers';
 import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
 
@@ -51,7 +51,6 @@ export async function yearn_MarginCalls(
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -84,13 +83,13 @@ export async function yearn_MarginCalls(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Yearn,
                 {
@@ -111,7 +110,6 @@ export async function yearn_MarginCalls(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -142,7 +140,6 @@ export async function yearn_MarginCalls(
             // console.log("Tokens present!");
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -156,12 +153,6 @@ export async function yearn_MarginCalls(
             // console.log({ actualPoolAddress: pool.address });
 
             let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
 
@@ -183,7 +174,7 @@ export async function yearn_MarginCalls(
             // Lender lends into the pool
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
             // Approving Borrow tokens to the lender1
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount1);
@@ -194,7 +185,7 @@ export async function yearn_MarginCalls(
             // Lender1 lends into the pool
             const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, false));
             await lendExpect1.to.emit(pool, 'LiquiditySupplied').withArgs(amount1, lender1.address);
-            await lendExpect1.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender1.address, amount1);
+            await lendExpect1.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender1.address, amount1);
 
             //block travel to escape withdraw interval
             const { loanStartTime } = await pool.poolConstants();
@@ -245,7 +236,7 @@ export async function yearn_MarginCalls(
                 .userLockedBalance(pool.address, collateralToken.address, strategy);
             // console.log({collateralBalancePoolBefore: collateralBalancePoolBefore.toString()});
 
-            const liquidationTokens = await poolToken.balanceOf(lender.address);
+            const liquidationTokens = await pool.balanceOf(lender.address);
             // console.log({LiquidationToken: liquidationTokens.toString()});
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, liquidationTokens.mul(2));
             await borrowToken.connect(admin).transfer(random.address, liquidationTokens.mul(2));
@@ -258,7 +249,7 @@ export async function yearn_MarginCalls(
             // Balance check after liquidation
             let lenderBorrowTokenAfter = await borrowToken.balanceOf(lender.address);
             let randomCollateralAfter = await collateralToken.balanceOf(random.address);
-            let lenderPoolTokenAfter = await poolToken.balanceOf(lender.address);
+            let lenderPoolTokenAfter = await pool.balanceOf(lender.address);
             let collateralBalancePoolAfter = await env.savingsAccount
                 .connect(admin)
                 .userLockedBalance(pool.address, collateralToken.address, strategy);
@@ -309,7 +300,7 @@ export async function yearn_MarginCalls(
                 .userLockedBalance(pool.address, collateralToken.address, strategy);
             // console.log({collateralBalancePoolBefore: collateralBalancePoolBefore.toString()});
 
-            const liquidationTokens = await poolToken.balanceOf(lender1.address);
+            const liquidationTokens = await pool.balanceOf(lender1.address);
             // console.log({LiquidationToken: liquidationTokens.toString()});
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, liquidationTokens.mul(2));
             await borrowToken.connect(admin).transfer(random.address, liquidationTokens.mul(2));

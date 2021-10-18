@@ -26,7 +26,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      */
     mapping(address => address) public override liquidityToken;
 
-    event ProtocolAddressesUpdated(address asset, address protocolToken);
+    event ProtocolAddressesUpdated(address indexed asset, address indexed protocolToken);
 
     modifier onlySavingsAccount() {
         require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');

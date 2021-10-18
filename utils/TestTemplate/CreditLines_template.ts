@@ -33,8 +33,8 @@ import { BigNumber, BigNumberish } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
-import { PoolToken } from '@typechain/PoolToken';
 import { CompoundYield } from '@typechain/CompoundYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 import { CreditLine } from '../../typechain/CreditLine';
 import { Contracts } from '../../existingContracts/compound.json';
 import { expectApproxEqual } from '../helpers';
@@ -55,7 +55,6 @@ export async function CreditLines(
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -90,13 +89,13 @@ export async function CreditLines(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -117,7 +116,6 @@ export async function CreditLines(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -148,7 +146,6 @@ export async function CreditLines(
             // console.log("Tokens present!");
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -160,15 +157,6 @@ export async function CreditLines(
             });
 
             // console.log({ actualPoolAddress: pool.address });
-
-            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
-
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
 
@@ -190,7 +178,6 @@ export async function CreditLines(
                     .request(
                         lender.address,
                         borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -217,7 +204,6 @@ export async function CreditLines(
                 creditLine.connect(lender).request(
                     borrower.address,
                     borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -228,10 +214,9 @@ export async function CreditLines(
             ).to.be.revertedWith('CL: No price feed');
         });
 
-        it('CreditLine Request: Should revert if collateral ratio is less than liquidation threshold', async function () {
+        xit('CreditLine Request: Should revert if collateral ratio is less than liquidation threshold', async function () {
             let { admin, borrower, lender } = env.entities;
             let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(50);
@@ -246,7 +231,6 @@ export async function CreditLines(
                     .request(
                         borrower.address,
                         borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -274,7 +258,6 @@ export async function CreditLines(
                 .callStatic.request(
                     borrower.address,
                     borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -289,7 +272,6 @@ export async function CreditLines(
                     .request(
                         borrower.address,
                         borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -326,7 +308,6 @@ export async function CreditLines(
                 .callStatic.request(
                     borrower.address,
                     borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -341,7 +322,6 @@ export async function CreditLines(
                     .request(
                         borrower.address,
                         borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -368,11 +348,10 @@ export async function CreditLines(
         });
     });
 
-    describe.only('Creditline Active tests', async function () {
+    describe('Creditline Active tests', async function () {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -418,13 +397,13 @@ export async function CreditLines(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -445,7 +424,6 @@ export async function CreditLines(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -469,7 +447,6 @@ export async function CreditLines(
             // console.log("Tokens present!");
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -481,14 +458,6 @@ export async function CreditLines(
             });
 
             // console.log({ actualPoolAddress: pool.address });
-
-            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
 
@@ -509,7 +478,6 @@ export async function CreditLines(
                 .callStatic.request(
                     borrower.address,
                     borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -524,7 +492,6 @@ export async function CreditLines(
                     .request(
                         borrower.address,
                         borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -545,7 +512,7 @@ export async function CreditLines(
             await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
             await env.mockTokenContracts[1].contract.connect(random).approve(creditLine.address, collateralAmout);
 
-            await expect(creditLine.connect(random).depositCollateral(values, collateralAmout, false)).to.be.revertedWith(
+            await expect(creditLine.connect(random).depositCollateral(values, collateralAmout, env.yields.compoundYield.address,  false)).to.be.revertedWith(
                 'CreditLine not active'
             );
         });
@@ -582,7 +549,7 @@ export async function CreditLines(
 
             const randomBalanceInShares = await env.mockTokenContracts[1].contract.balanceOf(random.address);
 
-            await creditLine.connect(random).depositCollateral(values, amountForDeposit, false);
+            await creditLine.connect(random).depositCollateral(values, amountForDeposit, env.yields.compoundYield.address, false);
 
             const collateralBalanceInSharesAfter = await env.savingsAccount
                 .connect(admin)
@@ -625,7 +592,7 @@ export async function CreditLines(
                 .connect(admin)
                 .balanceInShares(random.address, _collateralAsset, env.yields.compoundYield.address);
 
-            await creditLine.connect(random).depositCollateral(values, amountForDeposit, true);
+            await creditLine.connect(random).depositCollateral(values, amountForDeposit, env.yields.compoundYield.address, true);
 
             const collateralBalanceInSharesAfter = await env.savingsAccount
                 .connect(admin)
@@ -670,7 +637,7 @@ export async function CreditLines(
             );
         });
 
-        it('Creditline Active: collateral ratio should not go down after withdraw', async function () {
+        xit('Creditline Active: collateral ratio should not go down after withdraw', async function () {
             let { admin, borrower, lender } = env.entities;
             let amount: BigNumber = BigNumber.from('100');
 
@@ -688,7 +655,7 @@ export async function CreditLines(
             await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, deposit);
             await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, deposit);
 
-            await creditLine.connect(borrower).depositCollateral(values, deposit, false);
+            await creditLine.connect(borrower).depositCollateral(values, deposit, env.yields.compoundYield.address, false);
 
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);

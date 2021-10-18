@@ -1,6 +1,7 @@
 import { AaveYield } from '@typechain/AaveYield';
 import { CompoundYield } from '@typechain/CompoundYield';
 import { YearnYield } from '@typechain/YearnYield';
+import { NoYield } from '@typechain/NoYield';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 import DeployHelper from '../deploys';
@@ -88,4 +89,18 @@ export async function createYearnYieldWithInit(
         await (await yearnYield.connect(admin).updateProtocolAddresses(pair.asset, pair.liquidityToken)).wait();
     }
     return IYield__factory.connect(yearnYield.address, admin);
+}
+
+export async function createNoYieldWithInit(
+    proxyAdmin: SignerWithAddress,
+    admin: SignerWithAddress,
+    savingsAccount: SavingsAccount
+): Promise<IYield> {
+    let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
+    let noYieldLogic: NoYield = await deployHelper.core.deployNoYield();
+    let noYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
+    let noYield: NoYield = await deployHelper.core.getNoYield(noYieldProxy.address);
+    await (await noYield.connect(admin).initialize(admin.address, savingsAccount.address)).wait();
+
+    return IYield__factory.connect(noYield.address, admin);
 }

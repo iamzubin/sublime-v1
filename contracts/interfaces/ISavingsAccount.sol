@@ -3,16 +3,16 @@ pragma solidity 0.7.0;
 
 interface ISavingsAccount {
     //events
-    event Deposited(address user, uint256 amount, address token, address strategy);
-    event StrategySwitched(address user, address token, address currentStrategy, address newStrategy);
-    event Withdrawn(address from, address to, uint256 amountReceived, address token, address strategy);
-    event WithdrawnAll(address user, uint256 tokenReceived, address token);
-    event Approved(address token, address from, address to, uint256 amount);
-    event Transfer(address token, address strategy, address from, address to, uint256 amount);
-    event CreditLineUpdated(address _updatedCreditLine);
-    event StrategyRegistryUpdated(address _updatedStrategyRegistry);
+    event Deposited(address indexed user, uint256 amount, address indexed token, address indexed strategy);
+    event StrategySwitched(address indexed user, address indexed token, address currentStrategy, address indexed newStrategy);
+    event Withdrawn(address indexed from, address indexed to, uint256 amountReceived, address indexed token, address strategy);
+    event WithdrawnAll(address indexed user, uint256 tokenReceived, address indexed token);
+    event Approved(address indexed token, address indexed from, address indexed to, uint256 amount);
+    event Transfer(address indexed token, address strategy, address indexed from, address indexed to, uint256 amount);
+    event CreditLineUpdated(address indexed _updatedCreditLine);
+    event StrategyRegistryUpdated(address indexed _updatedStrategyRegistry);
 
-    event CreditLineAllowanceRefreshed(address token, address from, uint256 amount);
+    event CreditLineAllowanceRefreshed(address indexed token, address indexed from, uint256 amount);
 
     function deposit(
         uint256 amount,

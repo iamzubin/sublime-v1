@@ -8,8 +8,8 @@ import { PriceOracle } from '@typechain/PriceOracle';
 import { SavingsAccount } from '@typechain/SavingsAccount';
 import { StrategyRegistry } from '@typechain/StrategyRegistry';
 import { Address } from 'hardhat-deploy/dist/types';
-import { CreditLineInitParams } from '@utils/types';
-import { creditLineFactoryParams } from '@utils/constants';
+import { CreditLineInitParams } from '../../utils/types';
+import { creditLineFactoryParams } from '../../utils/constants';
 
 export async function createCreditLines(proxyAdmin: SignerWithAddress): Promise<CreditLine> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);

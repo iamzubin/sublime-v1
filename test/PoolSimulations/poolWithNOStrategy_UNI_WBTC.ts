@@ -41,7 +41,6 @@ import { Extension } from '@typechain/Extension';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '@typechain/PoolToken';
 import { Repayments } from '@typechain/Repayments';
 
 import { getContractAddress } from '@ethersproject/address';
@@ -49,6 +48,9 @@ import { getContractAddress } from '@ethersproject/address';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { ERC20Detailed } from '@typechain/ERC20Detailed';
+import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
@@ -74,6 +76,9 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
     let compoundYield: CompoundYield;
     let compoundYieldLogic: CompoundYield;
 
+    let noYield: NoYield;
+    let noYieldLogic: NoYield;
+
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
     let DaiTokenContract: ERC20;
@@ -96,7 +101,6 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
     let extenstion: Extension;
 
     let poolLogic: Pool;
-    let poolTokenLogic: PoolToken;
 
     let repaymentLogic: Repayments;
     let repayments: Repayments;
@@ -105,8 +109,6 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
     let poolFactory: PoolFactory;
 
     let pool: Pool;
-
-    let poolToken: PoolToken;
 
     before(async () => {
         [proxyAdmin, admin, mockCreditLines, borrower, lender, protocolFeeCollector] = await ethers.getSigners();
@@ -210,7 +212,12 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.UNI, Contracts.cUNI);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
+        noYieldLogic = await deployHelper.core.deployNoYield();
+        let noYieldProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
+        noYield = await deployHelper.core.getNoYield(noYieldProxy.address);
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verificationLogic = await deployHelper.helper.deployVerification();
         let verificationProxy = await deployHelper.helper.deploySublimeProxy(verificationLogic.address, proxyAdmin.address);
@@ -257,8 +264,6 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -270,17 +275,16 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector.address
+                protocolFeeCollector.address,
+                noYield.address
             );
 
         poolLogic = await deployHelper.pool.deployPool();
-        poolTokenLogic = await deployHelper.pool.deployPoolToken();
 
         // await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
         // await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
@@ -301,7 +305,6 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             .setImplementations(
                 poolLogic.address,
                 repayments.address,
-                poolTokenLogic.address,
                 verification.address,
                 strategyRegistry.address,
                 priceOracle.address,
@@ -313,7 +316,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
     async function createPool() {
         let deployHelper = new DeployHelper(borrower);
         let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-        let iyield: IYield = await deployHelper.mock.getYield(zeroAddress);
+        let iyield: IYield = await deployHelper.mock.getYield(noYield.address);
 
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
         // let salt = sha256(Buffer.from(`borrower}`));
@@ -330,15 +333,8 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             { _collateralAmount: createPoolParams._collateralAmountForWBTC }
         );
 
-        const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-        let newPoolToken: string = getContractAddress({
-            from: poolFactory.address,
-            nonce,
-        });
-
         let {
             _poolSize,
-            _collateralVolatilityThreshold,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
@@ -358,7 +354,6 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                     Contracts.UNI,
                     Contracts.WBTC,
                     _collateralRatio,
-                    _collateralVolatilityThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     iyield.address,
@@ -370,14 +365,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                 )
         )
             .to.emit(poolFactory, 'PoolCreated')
-            .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-        let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
-        expect(await newlyCreatedToken.name()).eq('Pool Tokens');
-        expect(await newlyCreatedToken.symbol()).eq('OBPT');
-        expect(await newlyCreatedToken.decimals()).eq(18);
-        poolToken = newlyCreatedToken;
+            .withArgs(generatedPoolAddress, borrower.address);
 
         pool = await deployHelper.pool.getPool(generatedPoolAddress);
         // await pool.connect(borrower).depositCollateral(_collateralAmount, false);
@@ -395,7 +383,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             // lender supplies 1 DAI to the pool and lender.address is lender
             await createPool();
             let deployHelper = new DeployHelper(borrower);
-            let token: PoolToken = await deployHelper.pool.getPoolToken(UNITokenContract.address);
+            let token: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(UNITokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -404,7 +392,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
 
         it('Check Ratio after borrowing borrow total 10 UNI with 1 WBTC Collateral', async () => {
             let deployHelper = new DeployHelper(borrower);
-            let token: PoolToken = await deployHelper.pool.getPoolToken(UNITokenContract.address);
+            let token: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(UNITokenContract.address);
             let decimals = await token.decimals();
             let expDecimals = BigNumber.from(10).pow(decimals);
             let oneToken = BigNumber.from(1).mul(expDecimals);
@@ -420,10 +408,10 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await pool.connect(borrower).withdrawBorrowedAmount();
 
             let pricePerToken = await priceOracle.connect(borrower).callStatic.getLatestPrice(Contracts.WBTC, Contracts.UNI);
-            let token1: PoolToken = await deployHelper.pool.getPoolToken(Contracts.WBTC);
+            let token1: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(Contracts.WBTC);
             let token1Exp = BigNumber.from(10).pow(await token1.decimals());
 
-            let token2: PoolToken = await deployHelper.pool.getPoolToken(Contracts.UNI);
+            let token2: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(Contracts.UNI);
             let token2Exp = BigNumber.from(10).pow(await token2.decimals());
 
             let ratio = await pool.callStatic['getCurrentCollateralRatio()']();

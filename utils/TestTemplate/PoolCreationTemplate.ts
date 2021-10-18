@@ -32,7 +32,6 @@ import { assert, expect } from 'chai';
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { BigNumber, BigNumberish } from 'ethers';
 import { IYield } from '../../typechain/IYield';
 import { Context } from 'mocha';
@@ -41,6 +40,7 @@ import { Pool } from '../../typechain/Pool';
 import { create } from 'underscore';
 import { OperationalAmounts } from '@utils/constants';
 import { getProxyAdminFactory } from '@openzeppelin/hardhat-upgrades/dist/utils';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 export async function poolCreationTest(
     Amount: Number,
@@ -61,7 +61,6 @@ export async function poolCreationTest(
         let iYield: IYield;
         let generatedPoolAddress: Address;
         let pool: Pool;
-        let poolToken: PoolToken;
         before(async () => {
             env = await createEnvironment(
                 hre,
@@ -88,13 +87,13 @@ export async function poolCreationTest(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -116,11 +115,9 @@ export async function poolCreationTest(
             let CollateralDecimals: BigNumber = await env.mockTokenContracts[1].contract.decimals();
 
             console.log('Params for calculateNewPoolAddress generated.');
-            console.log('Volatility Threshold updated.');
 
             generatedPoolAddress = await calculateNewPoolAddress(env, borrowToken, collateralToken, iYield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -150,7 +147,6 @@ export async function poolCreationTest(
 
             pool = await createNewPool(env, borrowToken, collateralToken, iYield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -159,13 +155,6 @@ export async function poolCreationTest(
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
-
-            let poolTokenAddress = await pool.poolToken();
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
         });
 
         it('Pool created successfully for this pair', async function () {

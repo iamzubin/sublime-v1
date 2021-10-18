@@ -12,6 +12,7 @@ import 'hardhat-deploy';
 import 'hardhat-tracer';
 import 'hardhat-log-remover';
 import 'hardhat-gas-reporter';
+import 'hardhat-contract-sizer';
 
 import { task } from 'hardhat/config';
 import { HardhatUserConfig } from 'hardhat/types';
@@ -202,8 +203,13 @@ const config: HardhatUserConfig = {
     },
     gasReporter: {
         enabled: process.env.REPORT_GAS?.toLowerCase() === 'true' ? true : false,
-        gasPrice: 1,
+        gasPrice: 100,
         currency: 'USD',
+        coinmarketcap: 'c40041ca-81fa-4564-8f95-175e388534c1',
+    },
+    contractSizer: {
+        runOnCompile: false,
+        strict: true,
     },
 };
 

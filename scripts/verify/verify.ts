@@ -102,13 +102,6 @@ async function verifyLogic(contracts: any) {
         contract: 'contracts/Pool/Pool.sol:Pool',
     });
 
-    console.log(`Verifying pool token logic ${contracts.poolToken.proxy}`);
-    await hre.run('verify:verify', {
-        address: contracts.poolToken.proxy,
-        constructorArguments: [],
-        contract: 'contracts/Pool/PoolToken.sol:PoolToken',
-    });
-
     return 'Logic Verified';
 }
 

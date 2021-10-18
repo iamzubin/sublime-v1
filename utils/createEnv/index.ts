@@ -24,23 +24,22 @@ import { createSavingsAccount, initSavingsAccount } from './savingsAccount';
 import { createStrategyRegistry, initStrategyRegistry } from './strategyRegistry';
 import { impersonateAccount, getImpersonatedAccounts } from './impersonationsAndTransfers';
 import { randomAddress, zeroAddress } from '../../utils/constants';
-import { createAaveYieldWithInit, createCompoundYieldWithInit, createYearnYieldWithInit } from './yields';
+import { createAaveYieldWithInit, createCompoundYieldWithInit, createNoYieldWithInit, createYearnYieldWithInit } from './yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from './verification';
 import { createPriceOracle, setPriceOracleFeeds } from './priceOracle';
 import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from './poolFactory';
 import { createExtenstionWithInit } from './extension';
 import { createRepaymentsWithInit } from './repayments';
 import { createPool } from './poolLogic';
-import { createPoolToken } from './poolToken';
 import { createCreditLines, initCreditLine } from './creditLines';
 import DeployHelper from '../../utils/deploys';
-import { PoolToken } from '@typechain/PoolToken';
 
 import { getPoolAddress } from '../../utils/helpers';
 import { ERC20 } from '@typechain/ERC20';
 import { IYield } from '@typechain/IYield';
 import { BytesLike, BigNumberish, BigNumber } from 'ethers';
 import { Pool } from '@typechain/Pool';
+import { ERC20Detailed } from '@typechain/ERC20Detailed';
 
 export async function createEnvironment(
     hre: HardhatRuntimeEnvironment,
@@ -77,7 +76,7 @@ export async function createEnvironment(
     for (let index = 0; index < _tempMockTokensContractAddresses.length; index++) {
         const tokenAddress = _tempMockTokensContractAddresses[index];
         let deployHelper: DeployHelper = new DeployHelper(admin);
-        let contract: PoolToken = await deployHelper.pool.getPoolToken(tokenAddress);
+        let contract: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(tokenAddress);
         try {
             let name = await contract.symbol();
             env.mockTokenContracts.push({ name, contract });
@@ -102,7 +101,7 @@ export async function createEnvironment(
     await impersonateAccount(hre, whales, admin);
     env.impersonatedAccounts = await getImpersonatedAccounts(hre, whales);
 
-    yields.noStrategy = zeroAddress;
+    yields.noYield = await createNoYieldWithInit(proxyAdmin, admin, env.savingsAccount);
     yields.aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, env.savingsAccount);
     yields.yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedYearnTokens);
     yields.compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedCompoundTokens);
@@ -110,7 +109,7 @@ export async function createEnvironment(
     await env.strategyRegistry.connect(admin).addStrategy(yields.aaveYield.address);
     await env.strategyRegistry.connect(admin).addStrategy(yields.yearnYield.address);
     await env.strategyRegistry.connect(admin).addStrategy(yields.compoundYield.address);
-    await env.strategyRegistry.connect(admin).addStrategy(yields.noStrategy);
+    await env.strategyRegistry.connect(admin).addStrategy(yields.noYield.address);
 
     env.verification = await createVerificationWithInit(proxyAdmin, admin);
     env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification);
@@ -128,6 +127,7 @@ export async function createEnvironment(
         ...poolFactoryInitParams,
         admin: admin.address,
         protocolFeeCollector: protocolFeeCollector.address,
+        noStrategy: yields.noYield.address,
     });
 
     env.inputParams.poolFactoryInitParams = {
@@ -137,7 +137,6 @@ export async function createEnvironment(
     };
 
     env.poolLogic = await createPool(proxyAdmin);
-    env.poolTokenLogic = await createPoolToken(proxyAdmin);
 
     await addSupportedTokens(
         env.poolFactory,
@@ -150,7 +149,6 @@ export async function createEnvironment(
         admin,
         env.poolLogic,
         env.repayments,
-        env.poolTokenLogic,
         env.verification,
         env.strategyRegistry,
         env.priceOracle,
@@ -222,7 +220,6 @@ export async function calculateNewPoolAddress(
         _transferFromSavingsAccount,
         {
             _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _collateralVolatilityThreshold: BigNumber.from(poolCreateParams._volatilityThreshold),
             _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
             _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
             _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
@@ -258,7 +255,6 @@ export async function createNewPool(
         _transferFromSavingsAccount,
         {
             _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _collateralVolatilityThreshold: BigNumber.from(poolCreateParams._volatilityThreshold),
             _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
             _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
             _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
@@ -277,7 +273,6 @@ export async function createNewPool(
             borrowToken.address,
             collateralToken.address,
             poolCreateParams._collateralRatio,
-            poolCreateParams._volatilityThreshold,
             poolCreateParams._repaymentInterval,
             poolCreateParams._noOfRepaymentIntervals,
             strategy.address,

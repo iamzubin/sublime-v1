@@ -39,11 +39,12 @@ import { CreditLine } from '../../typechain/CreditLine';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('WBTC-DAI Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -60,6 +61,7 @@ describe('WBTC-DAI Credit Lines', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -148,8 +150,6 @@ describe('WBTC-DAI Credit Lines', async () => {
                 aaveYieldParams._lendingPoolAddressesProvider
             );
 
-        await strategyRegistry.connect(admin).addStrategy(zeroAddress);
-
         await strategyRegistry.connect(admin).addStrategy(aaveYield.address);
 
         compoundYield = await deployHelper.core.deployCompoundYield();
@@ -157,6 +157,11 @@ describe('WBTC-DAI Credit Lines', async () => {
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.WBTC, Contracts.cWBTC2);
+
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
+
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
@@ -185,8 +190,6 @@ describe('WBTC-DAI Credit Lines', async () => {
             _minborrowFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -200,24 +203,22 @@ describe('WBTC-DAI Credit Lines', async () => {
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector.address
+                protocolFeeCollector.address,
+                noYield.address
             );
 
         const poolImpl = await deployHelper.pool.deployPool();
-        const poolTokenImpl = await deployHelper.pool.deployPoolToken();
         const repaymentImpl = await deployHelper.pool.deployRepayments();
         await poolFactory
             .connect(admin)
             .setImplementations(
                 poolImpl.address,
                 repaymentImpl.address,
-                poolTokenImpl.address,
                 verification.address,
                 strategyRegistry.address,
                 priceOracle.address,
@@ -243,7 +244,6 @@ describe('WBTC-DAI Credit Lines', async () => {
         let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
         beforeEach(async () => {
             let _borrower: string = borrower.address;
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(200);
@@ -255,7 +255,6 @@ describe('WBTC-DAI Credit Lines', async () => {
                 .callStatic.request(
                     _borrower,
                     borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -270,7 +269,6 @@ describe('WBTC-DAI Credit Lines', async () => {
                     .request(
                         _borrower,
                         borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -305,7 +303,7 @@ describe('WBTC-DAI Credit Lines', async () => {
             await WBTCTokenContract.connect(admin).transfer(borrower.address, borrowerCollateral);
             await WBTCTokenContract.connect(borrower).approve(creditLine.address, borrowerCollateral);
 
-            await creditLine.connect(borrower).depositCollateral(lenderCreditLine, borrowerCollateral, false);
+            await creditLine.connect(borrower).depositCollateral(lenderCreditLine, borrowerCollateral, compoundYield.address, false);
 
             await savingsAccount.connect(lender).deposit(lenderAmount, DaiTokenContract.address, compoundYield.address, lender.address);
             await savingsAccount.connect(lender).approve(unlimited, DaiTokenContract.address, creditLine.address);

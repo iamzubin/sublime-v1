@@ -1,12 +1,10 @@
 import { Signer } from 'ethers';
 
-import { PoolToken } from '../../typechain/PoolToken';
 import { PoolFactory } from '../../typechain/PoolFactory';
 import { Pool } from '../../typechain/Pool';
 import { Extension } from '../../typechain/Extension';
 import { Repayments } from '../../typechain/Repayments';
 
-import { PoolToken__factory } from '../../typechain/factories/PoolToken__factory';
 import { PoolFactory__factory } from '../../typechain/factories/PoolFactory__factory';
 import { Pool__factory } from '../../typechain/factories/Pool__factory';
 import { Extension__factory } from '../../typechain/factories/Extension__factory';
@@ -43,14 +41,6 @@ export default class DeployPoolContracts {
 
     public async getPool(poolAddress: Address): Promise<Pool> {
         return await new Pool__factory(this._deployerSigner).attach(poolAddress);
-    }
-
-    public async deployPoolToken(): Promise<PoolToken> {
-        return await (await new PoolToken__factory(this._deployerSigner).deploy()).deployed();
-    }
-
-    public async getPoolToken(poolTokenAddress: Address): Promise<PoolToken> {
-        return await new PoolToken__factory(this._deployerSigner).attach(poolTokenAddress);
     }
 
     public async deployPoolFactory(): Promise<PoolFactory> {

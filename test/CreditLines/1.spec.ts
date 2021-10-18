@@ -19,11 +19,10 @@ import {
     extensionParams,
 } from '../../utils/constants';
 import DeployHelper from '../../utils/deploys';
+import { getPoolInitSigHash } from "../../utils/createEnv/poolLogic";
 
 import { SavingsAccount } from '../../typechain/SavingsAccount';
 import { StrategyRegistry } from '../../typechain/StrategyRegistry';
-
-import { getPoolAddress, getRandomFromArray, incrementChain } from '../../utils/helpers';
 
 import { Address } from 'hardhat-deploy/dist/types';
 import { AaveYield } from '../../typechain/AaveYield';
@@ -39,11 +38,11 @@ import { CreditLine } from '../../typechain/CreditLine';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
 
 describe('Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -58,6 +57,7 @@ describe('Credit Lines', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -133,6 +133,10 @@ describe('Credit Lines', async () => {
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
 
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
@@ -173,8 +177,6 @@ describe('Credit Lines', async () => {
                 _gracePeriodPenaltyFraction,
                 _liquidatorRewardFraction,
                 _loanWithdrawalDuration,
-                _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
@@ -189,24 +191,22 @@ describe('Credit Lines', async () => {
                     _collectionPeriod,
                     _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _poolInitFuncSelector,
-                    _poolTokenInitFuncSelector,
+                    getPoolInitSigHash(),
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
                     _protocolFeeFraction,
-                    protocolFeeCollector.address
+                    protocolFeeCollector.address,
+                    noYield.address
                 );
 
             const poolImpl = await deployHelper.pool.deployPool();
-            const poolTokenImpl = await deployHelper.pool.deployPoolToken();
             const repaymentImpl = await deployHelper.pool.deployRepayments();
             await poolFactory
                 .connect(admin)
                 .setImplementations(
                     poolImpl.address,
                     repaymentImpl.address,
-                    poolTokenImpl.address,
                     verification.address,
                     strategyRegistry.address,
                     priceOracle.address,
@@ -237,7 +237,6 @@ describe('Credit Lines', async () => {
         it('Request Credit Line to lender', async () => {
             let _lender: string = lender.address;
             let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(100);
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -249,7 +248,6 @@ describe('Credit Lines', async () => {
                 .callStatic.request(
                     _lender,
                     _borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -264,7 +262,6 @@ describe('Credit Lines', async () => {
                     .request(
                         _lender,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -284,7 +281,6 @@ describe('Credit Lines', async () => {
         it('Request Credit Line to borrower', async () => {
             let _borrower: string = borrower.address;
             let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(100);
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -299,7 +295,6 @@ describe('Credit Lines', async () => {
                 .callStatic.request(
                     _borrower,
                     _borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -314,7 +309,6 @@ describe('Credit Lines', async () => {
                     .request(
                         _borrower,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -345,7 +339,7 @@ describe('Credit Lines', async () => {
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
             await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, false);
         });
 
         it('Deposit Collateral into existing credit line (from savings account)', async () => {
@@ -354,17 +348,17 @@ describe('Credit Lines', async () => {
             let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
             await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
-            await LinkTokenContract.connect(borrower).approve(savingsAccount.address, valueToTest);
+            await LinkTokenContract.connect(borrower).approve(noYield.address, valueToTest);
 
             await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-            await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+            await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, noYield.address, borrower.address);
             await savingsAccount
                 .connect(borrower)
                 .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
             await savingsAccount.connect(borrower).approve(valueToTest.mul(2), Contracts.LINK, creditLine.address);
 
-            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
+            await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, true);
         });
 
         it('Close Credit Line', async () => {
@@ -400,8 +394,6 @@ describe('Credit Lines', async () => {
                     _gracePeriodPenaltyFraction,
                     _liquidatorRewardFraction,
                     _loanWithdrawalDuration,
-                    _poolInitFuncSelector,
-                    _poolTokenInitFuncSelector,
                     _poolCancelPenalityFraction,
                     _protocolFeeFraction,
                 } = testPoolFactoryParams;
@@ -416,24 +408,22 @@ describe('Credit Lines', async () => {
                         _collectionPeriod,
                         _loanWithdrawalDuration,
                         _marginCallDuration,
-                        _poolInitFuncSelector,
-                        _poolTokenInitFuncSelector,
+                        getPoolInitSigHash(),
                         _liquidatorRewardFraction,
                         _poolCancelPenalityFraction,
                         _minborrowFraction,
                         _protocolFeeFraction,
-                        protocolFeeCollector.address
+                        protocolFeeCollector.address,
+                        noYield.address
                     );
 
                 const poolImpl = await deployHelper.pool.deployPool();
-                const poolTokenImpl = await deployHelper.pool.deployPoolToken();
                 const repaymentImpl = await deployHelper.pool.deployRepayments();
                 await poolFactory
                     .connect(admin)
                     .setImplementations(
                         poolImpl.address,
                         repaymentImpl.address,
-                        poolTokenImpl.address,
                         verification.address,
                         strategyRegistry.address,
                         priceOracle.address,
@@ -465,7 +455,6 @@ describe('Credit Lines', async () => {
             it('Request Credit Line to lender', async () => {
                 let _lender: string = lender.address;
                 let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-                let _liquidationThreshold: BigNumberish = BigNumber.from(100);
                 let _borrowRate: BigNumberish = BigNumber.from(100);
                 let _autoLiquidation: boolean = true;
                 let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -477,7 +466,6 @@ describe('Credit Lines', async () => {
                     .callStatic.request(
                         _lender,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -492,7 +480,6 @@ describe('Credit Lines', async () => {
                         .request(
                             _lender,
                             _borrowLimit,
-                            _liquidationThreshold,
                             _borrowRate,
                             _autoLiquidation,
                             _collateralRatio,
@@ -512,7 +499,6 @@ describe('Credit Lines', async () => {
             it('Request Credit Line to borrower', async () => {
                 let _borrower: string = borrower.address;
                 let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-                let _liquidationThreshold: BigNumberish = BigNumber.from(100);
                 let _borrowRate: BigNumberish = BigNumber.from(100);
                 let _autoLiquidation: boolean = true;
                 let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -527,7 +513,6 @@ describe('Credit Lines', async () => {
                     .callStatic.request(
                         _borrower,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -542,7 +527,6 @@ describe('Credit Lines', async () => {
                         .request(
                             _borrower,
                             _borrowLimit,
-                            _liquidationThreshold,
                             _borrowRate,
                             _autoLiquidation,
                             _collateralRatio,
@@ -573,7 +557,7 @@ describe('Credit Lines', async () => {
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest);
                 await LinkTokenContract.connect(borrower).approve(creditLine.address, valueToTest); // yearn yield is the default strategy in this case
 
-                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, false);
+                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, false);
             });
 
             it('Deposit Collateral into existing credit line (from savings account)', async () => {
@@ -582,17 +566,17 @@ describe('Credit Lines', async () => {
                 let valueToTest = BigNumber.from('25').mul('1000000000000000000');
 
                 await LinkTokenContract.connect(admin).transfer(borrower.address, valueToTest.mul(3));
-                await LinkTokenContract.connect(borrower).approve(savingsAccount.address, valueToTest);
+                await LinkTokenContract.connect(borrower).approve(noYield.address, valueToTest);
 
                 await LinkTokenContract.connect(borrower).approve(yearnYield.address, valueToTest.mul(2));
 
-                await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, zeroAddress, borrower.address);
+                await savingsAccount.connect(borrower).deposit(valueToTest, LinkTokenContract.address, noYield.address, borrower.address);
                 await savingsAccount
                     .connect(borrower)
                     .deposit(valueToTest.mul(2), LinkTokenContract.address, yearnYield.address, borrower.address);
                 await savingsAccount.connect(borrower).approve(valueToTest.mul(2), Contracts.LINK, creditLine.address);
 
-                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, true);
+                await creditLine.connect(borrower).depositCollateral(borrowerCreditLine, valueToTest, yearnYield.address, true);
             });
 
             it('Close Credit Line', async () => {
@@ -605,11 +589,11 @@ describe('Credit Lines', async () => {
                 it('Cannot deposit into invalid credit line hash', async () => {
                     let randomInvalidHash = '0x0000000011111111000000001111111100000000111111110000000011111111';
                     await expect(
-                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), false)
+                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, false)
                     ).to.be.revertedWith('Credit line does not exist');
 
                     await expect(
-                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), true)
+                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, true)
                     ).to.be.revertedWith('Credit line does not exist');
                 });
 

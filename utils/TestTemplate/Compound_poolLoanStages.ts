@@ -31,10 +31,10 @@ import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
-import { PoolToken } from '@typechain/PoolToken';
 import { CompoundYield } from '@typechain/CompoundYield';
 import { expectApproxEqual } from '../helpers';
 import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 export async function compoundPoolCollectionStage(
     Amount: Number,
@@ -51,7 +51,6 @@ export async function compoundPoolCollectionStage(
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -85,13 +84,13 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -112,7 +111,6 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -141,7 +139,6 @@ export async function compoundPoolCollectionStage(
             // console.log("Tokens present!");
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -151,16 +148,6 @@ export async function compoundPoolCollectionStage(
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
-
-            // console.log({ actualPoolAddress: pool.address });
-
-            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
@@ -247,8 +234,8 @@ export async function compoundPoolCollectionStage(
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
 
             const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
-            const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+            const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyBefore = await pool.totalSupply();
 
             //Lenders can lend borrow Tokens into the pool
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
@@ -257,10 +244,10 @@ export async function compoundPoolCollectionStage(
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+            const poolTokenBalanceAfter = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfter = await pool.totalSupply();
             assert(
                 poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
                 `Pool tokens not minted correctly. amount: ${amount} Expected: ${poolTokenBalanceBefore.add(
@@ -280,24 +267,24 @@ export async function compoundPoolCollectionStage(
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
 
             const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
-            const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+            const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyBefore = await pool.totalSupply();
 
             //Lenders can lend borrow Tokens into the pool
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
-            await env.mockTokenContracts[0].contract.connect(lender).approve(env.savingsAccount.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(env.yields.noYield.address, amount);
             await env.savingsAccount
                 .connect(lender)
-                .deposit(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender.address);
+                .deposit(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender.address);
             await env.savingsAccount.connect(lender).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+            const poolTokenBalanceAfter = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfter = await pool.totalSupply();
             assert(
                 poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
                 `Pool tokens not minted correctly. amount: ${amount} Expected: ${poolTokenBalanceBefore.add(
@@ -318,24 +305,24 @@ export async function compoundPoolCollectionStage(
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
 
             const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
-            const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+            const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyBefore = await pool.totalSupply();
 
             //Lenders can lend borrow Tokens into the pool
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender1.address, amount);
-            await env.mockTokenContracts[0].contract.connect(lender1).approve(env.savingsAccount.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender1).approve(env.yields.noYield.address, amount);
             await env.savingsAccount
                 .connect(lender1)
-                .deposit(amount, env.mockTokenContracts[0].contract.address, zeroAddress, lender1.address);
+                .deposit(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender1.address);
             await env.savingsAccount.connect(lender1).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+            const poolTokenBalanceAfter = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfter = await pool.totalSupply();
             assert(
                 poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
                 `Pool tokens not minted correctly. amount: ${amount} Expected: ${poolTokenBalanceBefore.add(
@@ -355,7 +342,6 @@ export async function compoundPoolCollectionStage(
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -391,13 +377,13 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -418,7 +404,6 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -445,7 +430,6 @@ export async function compoundPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -454,16 +438,6 @@ export async function compoundPoolCollectionStage(
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
-
-            // console.log({ actualPoolAddress: pool.address });
-
-            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
@@ -479,7 +453,7 @@ export async function compoundPoolCollectionStage(
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
             //block travel to escape withdraw interval
             const { loanStartTime } = await pool.poolConstants();
@@ -507,7 +481,7 @@ export async function compoundPoolCollectionStage(
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
             //block travel to escape withdraw interval
             const { loanStartTime } = await pool.poolConstants();
@@ -516,18 +490,12 @@ export async function compoundPoolCollectionStage(
             const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
             const borrowAssetBalancePool = await borrowToken.balanceOf(pool.address);
 
-            const borrowAssetBalancePoolSavings = await env.savingsAccount
-                .connect(admin)
-                .balanceInShares(pool.address, borrowToken.address, zeroAddress);
-            const tokensLent = await poolToken.totalSupply();
+            const tokensLent = await pool.totalSupply();
             await pool.connect(borrower).withdrawBorrowedAmount();
             const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
             const borrowAssetBalancePoolAfter = await borrowToken.balanceOf(pool.address);
 
-            const borrowAssetBalancePoolSavingsAfter = await env.savingsAccount
-                .connect(admin)
-                .balanceInShares(pool.address, borrowToken.address, zeroAddress);
-            const tokensLentAfter = await poolToken.totalSupply();
+            const tokensLentAfter = await pool.totalSupply();
             const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
 
             assert(tokensLent.toString() == tokensLentAfter.toString(), 'Tokens lent changing while withdrawing borrowed amount');
@@ -543,16 +511,12 @@ export async function compoundPoolCollectionStage(
                     .sub(tokensLentAfter)
                     .toString()}`
             );
-            assert(
-                borrowAssetBalancePoolSavings.toString() == borrowAssetBalancePoolSavingsAfter.toString(),
-                `Savings account changing instead of token balance`
-            );
 
             let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
                 LoanStatus.toString() == BigNumber.from('1').toString(),
                 `Pool is not in Active Stage. Expected: ${BigNumber.from('1').toString()} 
-                Actual: ${LoanStatus}`
+            Actual: ${LoanStatus}`
             );
         });
     });
@@ -561,7 +525,6 @@ export async function compoundPoolCollectionStage(
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -597,13 +560,13 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -623,11 +586,10 @@ export async function compoundPoolCollectionStage(
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
-                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
-                _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-                _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
-                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
+                _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
+                _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)), // 1 wbtc
+                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
                 _collectionPeriod: 10000,
                 _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
@@ -645,11 +607,10 @@ export async function compoundPoolCollectionStage(
                 .approve(poolAddress, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
-                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
-                _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-                _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
-                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
+                _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
+                _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)), // 1 wbtc
+                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
                 _collectionPeriod: 10000,
                 _loanWithdrawalDuration: 200,
                 _noOfRepaymentIntervals: 100,
@@ -659,12 +620,6 @@ export async function compoundPoolCollectionStage(
             // console.log({ actualPoolAddress: pool.address });
 
             let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
 
@@ -679,7 +634,7 @@ export async function compoundPoolCollectionStage(
             // Lender lends into the pool
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
             //block travel to escape withdraw interval
             const { loanStartTime } = await pool.poolConstants();
@@ -740,7 +695,7 @@ export async function compoundPoolCollectionStage(
 
             const LiquidatorCollateralBalanceBefore = await collateralToken.balanceOf(random.address);
             const LenderBalanceBefore = await borrowToken.balanceOf(lender.address);
-            const poolTotalSupply = await poolToken.totalSupply();
+            const poolTotalSupply = await pool.totalSupply();
             // console.log({ LenderBalanceBefore: LenderBalanceBefore.toString() });
             await pool.connect(random).liquidatePool(false, false, false);
 
@@ -1043,7 +998,6 @@ export async function compoundPoolCollectionStage(
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -1079,13 +1033,13 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -1105,14 +1059,13 @@ export async function compoundPoolCollectionStage(
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
-                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
-                _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-                _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
-                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
+                _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
+                _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)), // 1 wbtc
+                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
                 _collectionPeriod: 10000,
                 _loanWithdrawalDuration: 200,
-                _noOfRepaymentIntervals: 2, // 100
+                _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
 
@@ -1132,26 +1085,19 @@ export async function compoundPoolCollectionStage(
                 .approve(poolAddress, BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)));
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
-                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
-                _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
-                _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
-                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
+                _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
+                _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
+                _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)), // 1 wbtc
+                _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
                 _collectionPeriod: 10000,
                 _loanWithdrawalDuration: 200,
-                _noOfRepaymentIntervals: 2, // 100
+                _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
 
             // console.log({ actualPoolAddress: pool.address });
 
             let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Open Borrow Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
@@ -1173,7 +1119,7 @@ export async function compoundPoolCollectionStage(
             // Lender lends into the pool
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
             //block travel to escape withdraw interval
             const { loanStartTime } = await pool.poolConstants();
@@ -1281,7 +1227,6 @@ export async function compoundPoolCollectionStage(
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -1315,13 +1260,13 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -1342,7 +1287,6 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -1369,7 +1313,6 @@ export async function compoundPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -1378,16 +1321,6 @@ export async function compoundPoolCollectionStage(
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
-
-            // console.log({ actualPoolAddress: pool.address });
-
-            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
@@ -1398,8 +1331,8 @@ export async function compoundPoolCollectionStage(
             let Borrow = await env.mockTokenContracts[0].contract;
 
             const amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
-            const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+            const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyBefore = await pool.totalSupply();
 
             //Lenders lend borrow Tokens into the pool
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
@@ -1411,10 +1344,10 @@ export async function compoundPoolCollectionStage(
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+            const poolTokenBalanceAfter = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfter = await pool.totalSupply();
             // const borrowTokenBalanceAfter = await Borrow.balanceOf(lender.address);
             assert(
                 poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
@@ -1436,8 +1369,8 @@ export async function compoundPoolCollectionStage(
             await pool.connect(lender).withdrawLiquidity();
 
             // Checking balance after pool cancel and liquidation
-            const poolTokenBalanceAfterCancel = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyAfterCancel = await poolToken.totalSupply();
+            const poolTokenBalanceAfterCancel = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfterCancel = await pool.totalSupply();
             const borrowTokenBalanceAfterCancel = await Borrow.balanceOf(lender.address);
 
             assert(
@@ -1469,7 +1402,6 @@ export async function compoundPoolCollectionStage(
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
-        let poolToken: PoolToken;
 
         let deployHelper: DeployHelper;
         let BorrowAsset: ERC20;
@@ -1503,13 +1435,13 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                    _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                     protocolFeeCollector: '',
                     _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
                 {
@@ -1530,7 +1462,6 @@ export async function compoundPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -1557,7 +1488,6 @@ export async function compoundPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -1566,16 +1496,6 @@ export async function compoundPoolCollectionStage(
                 _noOfRepaymentIntervals: 100,
                 _repaymentInterval: 1000,
             });
-
-            // console.log({ actualPoolAddress: pool.address });
-
-            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
-            poolToken = await deployHelper.pool.getPoolToken(poolTokenAddress);
-
-            expect(await poolToken.name()).eq('Pool Tokens');
-            expect(await poolToken.symbol()).eq('OBPT');
-            expect(await poolToken.decimals()).eq(18);
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
@@ -1593,7 +1513,7 @@ export async function compoundPoolCollectionStage(
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
             await expect(pool.connect(admin).terminatePool()).to.emit(pool, 'PoolTerminated');
 
