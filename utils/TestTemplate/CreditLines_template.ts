@@ -368,7 +368,7 @@ export async function CreditLines(
         });
     });
 
-    describe('Creditline Active tests', async function () {
+    describe.only('Creditline Active tests', async function () {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -690,16 +690,17 @@ export async function CreditLines(
 
             await creditLine.connect(borrower).depositCollateral(values, deposit, false);
 
-            let strategy = env.yields.compoundYield.address;
-
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
-            await env.mockTokenContracts[0].contract.connect(lender).approve(strategy, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(env.yields.compoundYield.address, amount);
+            console.log('Savings Account');
             await env.savingsAccount.connect(lender).approve(amount, _borrowAsset, borrower.address);
-            await env.savingsAccount.connect(lender).deposit(amount, _borrowAsset, strategy, lender.address);
+            await env.savingsAccount.connect(lender).deposit(amount, _borrowAsset, env.yields.compoundYield.address, lender.address);
+            console.log('Savings Account - transfer and deposit done');
 
-            let Lender_balance = await env.savingsAccount.connect(admin).callStatic.balanceInShares(lender.address, _borrowAsset, strategy);
-            console.log(Lender_balance.toString());
+            // let Lender_balance = await env.savingsAccount.connect(admin).callStatic.balanceInShares(lender.address, _borrowAsset, env.yields.compoundYield.address);
+            // console.log(Lender_balance.toString());
+            console.log('Test Lender - ', lender.address);
             await creditLine.connect(borrower).borrow(values, amount);
         });
     });

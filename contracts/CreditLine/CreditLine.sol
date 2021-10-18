@@ -523,7 +523,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             uint256 _balanceAfter = address(this).balance;
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         }
-
         uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
         _tokenDiffBalance = _tokenDiffBalance.sub(_protocolFee);
 

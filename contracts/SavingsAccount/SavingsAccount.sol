@@ -82,7 +82,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 _sharesReceived = _deposit(_amount, _token, _strategy);
 
         balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_sharesReceived);
-
         emit Deposited(_to, _amount, _token, _strategy);
 
         return _sharesReceived;
