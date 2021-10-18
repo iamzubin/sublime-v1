@@ -189,8 +189,6 @@ export async function preActivePoolChecks(
             const poolTokenBalanceOfRandomInitial = await poolToken.balanceOf(random.address);
             console.log(poolTokenBalanceOfRandomInitial);
 
-            // Checking the 
-
             // Transferring lender's Pool Tokens to the random address to check whether the pool tokens are transferable or not
             poolToken.connect(lender).transfer(random.address, (amount.div(2)));
 
@@ -225,6 +223,53 @@ export async function preActivePoolChecks(
             await expect(pool.connect(lender).withdrawLiquidity()).to.be.revertedWith('');
         });
 
+        it("Before borrower withdraws in this period, extension request is not possible: ", async function() {
+            let {admin, borrower, lender} = env.entities;
+            let randomEntity = env.entities.extraLenders[33];
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+
+            // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+
+            // Lender actually lends his Borrow Tokens
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            // Only borrower should be able to request extension
+            await expect(env.extenstion.connect(randomEntity).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
+            await expect(env.extenstion.connect(lender).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
+
+            // The borrower too shouldn't be able to request extension in this period
+            await expect(env.extenstion.connect(borrower).requestExtension(pool.address)).to.be.revertedWith('');
+        });
+
+        it("Before borrower withdraws in this period, liquidation is not possible: ", async function() {
+            let {admin, borrower, lender} = env.entities;
+            let randomEntity = env.entities.extraLenders[33];
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let poolStrategy = env.yields.compoundYield;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+
+            // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+
+            // Lender actually lends his Borrow Tokens
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            // Pool cannot be liquidated right now
+            await expect(pool.connect(randomEntity).liquidatePool(false, false, false)).to.be.revertedWith('');
+        });
+
         it("Borrower can withdraw the borrow amount only if amount lent is more than minBorrowFraction of requested amount: ", async function() {
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10]; // Random address
@@ -257,6 +302,4 @@ export async function preActivePoolChecks(
             await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('');
         });
     });
-
-
 }
