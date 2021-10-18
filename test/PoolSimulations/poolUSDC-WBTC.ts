@@ -31,9 +31,14 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
 
+import poolContractMeta from '../../artifacts/contracts/Pool/Pool.sol/Pool.json';
+
 describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', async () => {
     let env: Environment;
     before(async () => {
+        const _interface = new hre.ethers.utils.Interface(poolContractMeta.abi);
+        const poolInitializeSigHash = _interface.getSighash('initialize');
+
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
@@ -59,7 +64,7 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', 
                 _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                 _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                 _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
+                _poolInitFuncSelector: poolInitializeSigHash,
                 _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
@@ -85,7 +90,6 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', 
 
         let poolAddress = await calculateNewPoolAddress(env, USDT, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
-            _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)), // 1 wbtc
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
@@ -104,7 +108,6 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', 
 
         let pool = await createNewPool(env, USDT, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
-            _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)), // 1 wbtc
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28

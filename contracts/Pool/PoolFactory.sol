@@ -239,7 +239,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice invoked when a new borrow pool is created. deploys a new pool for every borrow request
      * @param _poolSize loan amount requested
-     * @param _marginCallThreshold Minimum collateral ratio below which margin calls can be invoked
      * @param _borrowToken borrow asset requested
      * @param _collateralToken collateral asset requested
      * @param _collateralRatio ideal pool collateral ratio set by the borrower
@@ -257,7 +256,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _borrowToken,
         address _collateralToken,
         uint256 _collateralRatio,
-        uint256 _marginCallThreshold,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -270,7 +268,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         if (_collateralToken == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
-        require(_marginCallThreshold <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
         require(isBorrowToken[_borrowToken], 'PoolFactory::createPool - Invalid borrow token type');
         require(isCollateralToken[_collateralToken], 'PoolFactory::createPool - Invalid collateral token type');
         require(
@@ -301,7 +298,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _borrowToken,
             _collateralToken,
             _collateralRatio,
-            _marginCallThreshold,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -319,7 +315,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _borrowToken,
         address _collateralToken,
         uint256 _collateralRatio,
-        uint256 _marginCallThreshold,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -334,7 +329,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _borrowToken,
             _collateralToken,
             _collateralRatio,
-            _marginCallThreshold,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -359,7 +353,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _borrowToken,
         address _collateralToken,
         uint256 _collateralRatio,
-        uint256 _marginCallThreshold,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -374,7 +367,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _borrowToken,
             _collateralToken,
             _collateralRatio,
-            _marginCallThreshold,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,

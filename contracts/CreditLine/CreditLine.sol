@@ -48,7 +48,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address borrower;
         uint256 borrowLimit;
         uint256 idealCollateralRatio;
-        uint256 liquidationThreshold;
         uint256 borrowRate;
         address borrowAsset;
         address collateralAsset;
@@ -333,14 +332,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev used to request a credit line by a borrower
      * @param _requestTo Address to which creditLine is requested, if borrower creates request then lender address and if lennder creates then borrower address
      * @param _borrowLimit maximum borrow amount in a credit line
-     * @param _liquidationThreshold threshold for liquidation
      * @param _borrowRate Interest Rate at which credit Line is requested
      */
 
     function request(
         address _requestTo,
         uint256 _borrowLimit,
-        uint256 _liquidationThreshold,
         uint256 _borrowRate,
         bool _autoLiquidation,
         uint256 _collateralRatio,
@@ -351,7 +348,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         //require(userData[borrower].blockCreditLineRequests == true,
         //        "CreditLine: External requests blocked");
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
-        require(_liquidationThreshold < _collateralRatio, 'CL: collateral ratio should be higher');
 
         address _lender = _requestTo;
         address _borrower = msg.sender;
@@ -364,7 +360,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _lender,
             _borrower,
             _borrowLimit,
-            _liquidationThreshold,
             _borrowRate,
             _autoLiquidation,
             _collateralRatio,
@@ -381,7 +376,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _lender,
         address _borrower,
         uint256 _borrowLimit,
-        uint256 _liquidationThreshold,
         uint256 _borrowRate,
         bool _autoLiquidation,
         uint256 _collateralRatio,
@@ -398,7 +392,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineConstants[_id].borrowLimit = _borrowLimit;
         creditLineConstants[_id].autoLiquidation = _autoLiquidation;
         creditLineConstants[_id].idealCollateralRatio = _collateralRatio;
-        creditLineConstants[_id].liquidationThreshold = _liquidationThreshold;
         creditLineConstants[_id].borrowRate = _borrowRate;
         creditLineConstants[_id].borrowAsset = _borrowAsset;
         creditLineConstants[_id].collateralAsset = _collateralAsset;
@@ -770,8 +763,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 currentCollateralRatio = calculateCurrentCollateralRatio(_id);
         require(
-            currentCollateralRatio < creditLineConstants[_id].liquidationThreshold,
-            'CreditLine: Collateral ratio is higher than liquidation threshold'
+            currentCollateralRatio < creditLineConstants[_id].idealCollateralRatio,
+            'CreditLine: Collateral ratio is higher than ideal value'
         );
 
         address _collateralAsset = creditLineConstants[_id].collateralAsset;

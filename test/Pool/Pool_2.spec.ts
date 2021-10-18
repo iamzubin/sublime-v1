@@ -228,7 +228,6 @@ describe('Pool', async () => {
 
                 let {
                     _poolSize,
-                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -249,7 +248,6 @@ describe('Pool', async () => {
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,

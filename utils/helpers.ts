@@ -42,7 +42,6 @@ export async function getPoolAddress(
     transferFromSavingsAccount: Boolean,
     {
         _poolSize = createPoolParams._poolSize,
-        _marginCallThreshold = createPoolParams._marginCallThreshold,
         _collateralRatio = createPoolParams._collateralRatio,
         _borrowRate = createPoolParams._borrowRate,
         _repaymentInterval = createPoolParams._repaymentInterval,
@@ -59,7 +58,6 @@ export async function getPoolAddress(
         borrowToken,
         collateralToken,
         _collateralRatio,
-        _marginCallThreshold,
         _repaymentInterval,
         _noOfRepaymentIntervals,
         strategy,

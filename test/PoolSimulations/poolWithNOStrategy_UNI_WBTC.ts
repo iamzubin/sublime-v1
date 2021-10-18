@@ -335,7 +335,6 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
 
         let {
             _poolSize,
-            _marginCallThreshold,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
@@ -355,7 +354,6 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                     Contracts.UNI,
                     Contracts.WBTC,
                     _collateralRatio,
-                    _marginCallThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     iyield.address,

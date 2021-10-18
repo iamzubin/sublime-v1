@@ -233,7 +233,6 @@ describe('Credit Lines', async () => {
 
         it('Request Credit Line to borrower', async () => {
             let _borrower: string = borrower.address;
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(200);
@@ -245,7 +244,6 @@ describe('Credit Lines', async () => {
                 .callStatic.request(
                     _borrower,
                     borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -260,7 +258,6 @@ describe('Credit Lines', async () => {
                     .request(
                         _borrower,
                         borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -337,7 +334,7 @@ describe('Credit Lines', async () => {
         it('Cannot liquidate if overcollateralized', async () => {
             await DaiTokenContract.connect(admin).approve(creditLine.address, largeAmount.mul(100));
             await expect(creditLine.connect(admin).liquidate(borrowerCreditLine, false)).to.be.revertedWith(
-                'CreditLine: Collateral ratio is higher than liquidation threshold'
+                'CreditLine: Collateral ratio is higher than ideal value'
             );
         });
 

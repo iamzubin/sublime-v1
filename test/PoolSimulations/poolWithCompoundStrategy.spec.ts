@@ -323,7 +323,6 @@ describe('Pool With Compound Strategy', async () => {
 
         let {
             _poolSize,
-            _marginCallThreshold,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
@@ -343,7 +342,6 @@ describe('Pool With Compound Strategy', async () => {
                     Contracts.DAI,
                     Contracts.WBTC,
                     _collateralRatio,
-                    _marginCallThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     iyield.address,

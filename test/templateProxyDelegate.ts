@@ -291,7 +291,6 @@ describe.skip('Template 2', async () => {
 
             let {
                 _poolSize,
-                _marginCallThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -312,7 +311,6 @@ describe.skip('Template 2', async () => {
                         Contracts.DAI,
                         Contracts.LINK,
                         _collateralRatio,
-                        _marginCallThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         zeroAddress,
@@ -373,7 +371,6 @@ describe.skip('Template 2', async () => {
 
             let {
                 _poolSize,
-                _marginCallThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -393,7 +390,6 @@ describe.skip('Template 2', async () => {
             console.log('Need to create Pool with params');
             console.log({
                 _poolSize: _poolSize.toString(),
-                _marginCallThreshold: _marginCallThreshold.toString(),
                 topken1Address: testToken1.address, // test token 1
                 topken2Address: testToken2.address, // test token 2
                 _collateralRatio: _collateralRatio.toString(),
@@ -413,7 +409,6 @@ describe.skip('Template 2', async () => {
             //         testToken1.address, // test token 1
             //         testToken2.address, // test token 2
             //         _collateralRatio,
-            //         _marginCallThreshold,
             //         _repaymentInterval,
             //         _noOfRepaymentIntervals,
             //         zeroAddress,

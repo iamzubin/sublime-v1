@@ -244,7 +244,6 @@ describe('WBTC-DAI Credit Lines', async () => {
         let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
         beforeEach(async () => {
             let _borrower: string = borrower.address;
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(200);
@@ -256,7 +255,6 @@ describe('WBTC-DAI Credit Lines', async () => {
                 .callStatic.request(
                     _borrower,
                     borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -271,7 +269,6 @@ describe('WBTC-DAI Credit Lines', async () => {
                     .request(
                         _borrower,
                         borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,

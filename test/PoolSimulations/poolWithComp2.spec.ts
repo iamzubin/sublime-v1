@@ -31,9 +31,14 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
 
+import poolContractMeta from '../../artifacts/contracts/Pool/Pool.sol/Pool.json';
+
 describe('Pool With Compound Strategy 2', async () => {
     let env: Environment;
     before(async () => {
+        const _interface = new hre.ethers.utils.Interface(poolContractMeta.abi);
+        const poolInitializeSigHash = _interface.getSighash('initialize');
+
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
@@ -59,7 +64,7 @@ describe('Pool With Compound Strategy 2', async () => {
                 _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                 _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                 _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
+                _poolInitFuncSelector: poolInitializeSigHash,
                 _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
@@ -85,7 +90,6 @@ describe('Pool With Compound Strategy 2', async () => {
 
         let poolAddress = await calculateNewPoolAddress(env, DAI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -104,7 +108,6 @@ describe('Pool With Compound Strategy 2', async () => {
 
         let pool = await createNewPool(env, DAI, WBTC, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)),
-            _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(8)),
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),

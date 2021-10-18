@@ -239,7 +239,6 @@ describe('Credit Lines', async () => {
         it('Request Credit Line to lender', async () => {
             let _lender: string = lender.address;
             let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(100);
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -251,7 +250,6 @@ describe('Credit Lines', async () => {
                 .callStatic.request(
                     _lender,
                     _borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -266,7 +264,6 @@ describe('Credit Lines', async () => {
                     .request(
                         _lender,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -286,7 +283,6 @@ describe('Credit Lines', async () => {
         it('Request Credit Line to borrower', async () => {
             let _borrower: string = borrower.address;
             let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(100);
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -301,7 +297,6 @@ describe('Credit Lines', async () => {
                 .callStatic.request(
                     _borrower,
                     _borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -316,7 +311,6 @@ describe('Credit Lines', async () => {
                     .request(
                         _borrower,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -464,7 +458,6 @@ describe('Credit Lines', async () => {
             it('Request Credit Line to lender', async () => {
                 let _lender: string = lender.address;
                 let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-                let _liquidationThreshold: BigNumberish = BigNumber.from(100);
                 let _borrowRate: BigNumberish = BigNumber.from(100);
                 let _autoLiquidation: boolean = true;
                 let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -476,7 +469,6 @@ describe('Credit Lines', async () => {
                     .callStatic.request(
                         _lender,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -491,7 +483,6 @@ describe('Credit Lines', async () => {
                         .request(
                             _lender,
                             _borrowLimit,
-                            _liquidationThreshold,
                             _borrowRate,
                             _autoLiquidation,
                             _collateralRatio,
@@ -511,7 +502,6 @@ describe('Credit Lines', async () => {
             it('Request Credit Line to borrower', async () => {
                 let _borrower: string = borrower.address;
                 let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-                let _liquidationThreshold: BigNumberish = BigNumber.from(100);
                 let _borrowRate: BigNumberish = BigNumber.from(100);
                 let _autoLiquidation: boolean = true;
                 let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -526,7 +516,6 @@ describe('Credit Lines', async () => {
                     .callStatic.request(
                         _borrower,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -541,7 +530,6 @@ describe('Credit Lines', async () => {
                         .request(
                             _borrower,
                             _borrowLimit,
-                            _liquidationThreshold,
                             _borrowRate,
                             _autoLiquidation,
                             _collateralRatio,
