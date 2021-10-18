@@ -50,6 +50,7 @@ import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { ERC20Detailed } from '@typechain/ERC20Detailed';
 import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;
@@ -255,7 +256,6 @@ describe('Pool With Compound Strategy', async () => {
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -267,7 +267,7 @@ describe('Pool With Compound Strategy', async () => {
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
@@ -323,7 +323,6 @@ describe('Pool With Compound Strategy', async () => {
 
         let {
             _poolSize,
-            _marginCallThreshold,
             _collateralRatio,
             _borrowRate,
             _repaymentInterval,
@@ -343,7 +342,6 @@ describe('Pool With Compound Strategy', async () => {
                     Contracts.DAI,
                     Contracts.WBTC,
                     _collateralRatio,
-                    _marginCallThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     iyield.address,

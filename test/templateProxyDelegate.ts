@@ -45,6 +45,8 @@ import { Token } from '../typechain/Token';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
 
+import { getPoolInitSigHash } from "../utils/createEnv/poolLogic";
+
 describe.skip('Template 2', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
@@ -231,7 +233,6 @@ describe.skip('Template 2', async () => {
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -242,7 +243,7 @@ describe.skip('Template 2', async () => {
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
@@ -291,7 +292,6 @@ describe.skip('Template 2', async () => {
 
             let {
                 _poolSize,
-                _marginCallThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -312,7 +312,6 @@ describe.skip('Template 2', async () => {
                         Contracts.DAI,
                         Contracts.LINK,
                         _collateralRatio,
-                        _marginCallThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         zeroAddress,
@@ -373,7 +372,6 @@ describe.skip('Template 2', async () => {
 
             let {
                 _poolSize,
-                _marginCallThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -393,7 +391,6 @@ describe.skip('Template 2', async () => {
             console.log('Need to create Pool with params');
             console.log({
                 _poolSize: _poolSize.toString(),
-                _marginCallThreshold: _marginCallThreshold.toString(),
                 topken1Address: testToken1.address, // test token 1
                 topken2Address: testToken2.address, // test token 2
                 _collateralRatio: _collateralRatio.toString(),
@@ -413,7 +410,6 @@ describe.skip('Template 2', async () => {
             //         testToken1.address, // test token 1
             //         testToken2.address, // test token 2
             //         _collateralRatio,
-            //         _marginCallThreshold,
             //         _repaymentInterval,
             //         _noOfRepaymentIntervals,
             //         zeroAddress,

@@ -220,7 +220,6 @@ export async function calculateNewPoolAddress(
         _transferFromSavingsAccount,
         {
             _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _marginCallThreshold: BigNumber.from(poolCreateParams._marginCallThreshold),
             _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
             _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
             _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
@@ -256,7 +255,6 @@ export async function createNewPool(
         _transferFromSavingsAccount,
         {
             _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _marginCallThreshold: BigNumber.from(poolCreateParams._marginCallThreshold),
             _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
             _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
             _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
@@ -275,7 +273,6 @@ export async function createNewPool(
             borrowToken.address,
             collateralToken.address,
             poolCreateParams._collateralRatio,
-            poolCreateParams._marginCallThreshold,
             poolCreateParams._repaymentInterval,
             poolCreateParams._noOfRepaymentIntervals,
             strategy.address,

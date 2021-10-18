@@ -20,7 +20,6 @@ async function run() {
     //     transferFromSavingsAccount: false,
     //     poolCreateParams: {
     //         _poolSize: 10000000000,
-    //         _marginCallThreshold: ethers.utils.parseUnits(0.1+"", 30),
     //         _borrowRate: ethers.utils.parseUnits(6+"", 30),
     //         _collateralAmount: 10000000000,
     //         _collateralRatio: ethers.utils.parseUnits(0.5+"", 30),

@@ -127,7 +127,6 @@ export interface YearnPair {
 
 export interface PoolCreateParams {
     _poolSize: BigNumberish;
-    _marginCallThreshold: BigNumberish;
     _borrowRate: BigNumberish;
     _collateralAmount: BigNumberish;
     _collateralRatio: BigNumberish;

@@ -97,8 +97,6 @@ interface IPool {
 
     function withdrawBorrowedAmount() external;
 
-    function setConstants(address _lenderVerifier) external;
-
     function borrower() external returns (address);
 
     function getMarginCallEndTime(address _lender) external returns (uint256);

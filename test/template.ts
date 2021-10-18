@@ -43,6 +43,8 @@ import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
 
+import { getPoolInitSigHash } from "../utils/createEnv/poolLogic";
+
 describe.skip('Template For Test cases', async () => {
     let savingsAccount: SavingsAccount;
     let strategyRegistry: StrategyRegistry;
@@ -165,7 +167,6 @@ describe.skip('Template For Test cases', async () => {
                 _gracePeriodPenaltyFraction,
                 _liquidatorRewardFraction,
                 _loanWithdrawalDuration,
-                _poolInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
@@ -176,7 +177,7 @@ describe.skip('Template For Test cases', async () => {
                     _collectionPeriod,
                     _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _poolInitFuncSelector,
+                    getPoolInitSigHash(),
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
@@ -232,7 +233,6 @@ describe.skip('Template For Test cases', async () => {
 
                 let {
                     _poolSize,
-                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -253,7 +253,6 @@ describe.skip('Template For Test cases', async () => {
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,

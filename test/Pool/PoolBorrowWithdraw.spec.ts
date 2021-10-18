@@ -42,6 +42,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { IYield } from '../../typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool Borrow Withdrawal stage', async () => {
     let savingsAccount: SavingsAccount;
@@ -165,7 +166,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -176,7 +176,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
@@ -239,7 +239,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 let {
                     _poolSize,
-                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -258,7 +257,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                         Contracts.LINK,
                         Contracts.DAI,
                         _collateralRatio,
-                        _marginCallThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         poolStrategy.address,
@@ -365,7 +363,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 let {
                     _poolSize,
-                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -386,7 +383,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                             Contracts.LINK,
                             Contracts.DAI,
                             _collateralRatio,
-                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             poolStrategy.address,
@@ -1163,7 +1159,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 let {
                     _poolSize,
-                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -1184,7 +1179,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                             Contracts.LINK,
                             Contracts.DAI,
                             _collateralRatio,
-                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             poolStrategy.address,
@@ -1288,7 +1282,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
                 let {
                     _poolSize,
-                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -1309,7 +1302,6 @@ describe('Pool Borrow Withdrawal stage', async () => {
                             Contracts.LINK,
                             Contracts.DAI,
                             _collateralRatio,
-                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             poolStrategy.address,

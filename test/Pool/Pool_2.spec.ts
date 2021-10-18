@@ -39,6 +39,7 @@ import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool', async () => {
     let savingsAccount: SavingsAccount;
@@ -162,7 +163,6 @@ describe('Pool', async () => {
                 _gracePeriodPenaltyFraction,
                 _liquidatorRewardFraction,
                 _loanWithdrawalDuration,
-                _poolInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
@@ -173,7 +173,7 @@ describe('Pool', async () => {
                     _collectionPeriod,
                     _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _poolInitFuncSelector,
+                    getPoolInitSigHash(),
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
@@ -228,7 +228,6 @@ describe('Pool', async () => {
 
                 let {
                     _poolSize,
-                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -249,7 +248,6 @@ describe('Pool', async () => {
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,

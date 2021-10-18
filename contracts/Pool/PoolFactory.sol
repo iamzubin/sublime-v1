@@ -144,7 +144,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /*
      * @notice Used to set the min/max collateral ratio for Pools
      */
-    Limits collateralRatioLimit;
+    Limits idealCollateralRatioLimit;
 
     /*
      * @notice Used to set the min/max borrow rates (interest rate provided by borrower) for Pools
@@ -239,10 +239,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice invoked when a new borrow pool is created. deploys a new pool for every borrow request
      * @param _poolSize loan amount requested
-     * @param _marginCallThreshold Minimum collateral ratio below which margin calls can be invoked
      * @param _borrowToken borrow asset requested
      * @param _collateralToken collateral asset requested
-     * @param _collateralRatio ideal pool collateral ratio set by the borrower
+     * @param _idealCollateralRatio ideal pool collateral ratio set by the borrower
      * @param _borrowRate interest rate provided by the borrower
      * @param _repaymentInterval interval between the last dates of two repayment cycles
      * @param _noOfRepaymentIntervals number of repayments to be made during the duration of the loan
@@ -256,8 +255,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
-        uint256 _collateralRatio,
-        uint256 _marginCallThreshold,
+        uint256 _idealCollateralRatio,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -270,7 +268,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         if (_collateralToken == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
-        require(_marginCallThreshold <= _collateralRatio, 'PoolFactory:createPool - Invalid collateral ratio');
         require(isBorrowToken[_borrowToken], 'PoolFactory::createPool - Invalid borrow token type');
         require(isCollateralToken[_collateralToken], 'PoolFactory::createPool - Invalid collateral token type');
         require(
@@ -280,7 +277,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         require(IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy), 'PoolFactory::createPool - Invalid strategy');
         require(isWithinLimits(_poolSize, poolSizeLimit.min, poolSizeLimit.max), 'PoolFactory::createPool - PoolSize not within limits');
         require(
-            isWithinLimits(_collateralRatio, collateralRatioLimit.min, collateralRatioLimit.max),
+            isWithinLimits(_idealCollateralRatio, idealCollateralRatioLimit.min, idealCollateralRatioLimit.max),
             'PoolFactory::createPool - Collateral Ratio not within limits'
         );
         require(
@@ -300,8 +297,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _borrowRate,
             _borrowToken,
             _collateralToken,
-            _collateralRatio,
-            _marginCallThreshold,
+            _idealCollateralRatio,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
@@ -318,8 +314,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
-        uint256 _collateralRatio,
-        uint256 _marginCallThreshold,
+        uint256 _idealCollateralRatio,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -333,13 +328,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _borrowRate,
             _borrowToken,
             _collateralToken,
-            _collateralRatio,
-            _marginCallThreshold,
+            _idealCollateralRatio,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
             _collateralAmount,
-            _transferFromSavingsAccount
+            _transferFromSavingsAccount,
+            _lenderVerifier
         );
         bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
         bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
@@ -347,7 +342,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
         address pool = _deploy(amount, salt, bytecode);
 
-        IPool(pool).setConstants(_lenderVerifier);
         poolRegistry[pool] = true;
         emit PoolCreated(pool, msg.sender);
     }
@@ -358,13 +352,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _borrowRate,
         address _borrowToken,
         address _collateralToken,
-        uint256 _collateralRatio,
-        uint256 _marginCallThreshold,
+        uint256 _idealCollateralRatio,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
-        bool _transferFromSavingsAccount
+        bool _transferFromSavingsAccount,
+        address _lenderVerifier
     ) internal view returns (bytes memory data) {
         data = abi.encodeWithSelector(
             poolInitFuncSelector,
@@ -373,13 +367,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             msg.sender,
             _borrowToken,
             _collateralToken,
-            _collateralRatio,
-            _marginCallThreshold,
+            _idealCollateralRatio,
             _repaymentInterval,
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
             _collateralAmount,
             _transferFromSavingsAccount,
+            _lenderVerifier,
             loanWithdrawalDuration,
             collectionPeriod
         );
@@ -670,8 +664,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _min updated value of the minimum threshold value of the collateral ratio
      * @param _max updated value of the maximum threshold value of the collateral ratio
      */
-    function updateCollateralRatioLimit(uint256 _min, uint256 _max) external onlyOwner {
-        collateralRatioLimit = Limits(_min, _max);
+    function updateidealCollateralRatioLimit(uint256 _min, uint256 _max) external onlyOwner {
+        idealCollateralRatioLimit = Limits(_min, _max);
         emit LimitsUpdated('CollateralRatio', _min, _max);
     }
 

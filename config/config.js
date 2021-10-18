@@ -33,7 +33,6 @@ module.exports = {
             "collectionPeriod": "",
             "loanWithdrawalDuration": "",
             "marginCallDuration": "",
-            "marginCallThreshold": "",
             "gracePeriodPenaltyFraction": "",
             "liquidatorRewardFraction": "",
             "poolCancelPenalityFraction": 0
@@ -119,7 +118,6 @@ module.exports = {
             "collectionPeriod": 900,
             "loanWithdrawalDuration": 120,
             "marginCallDuration": 120,
-            "marginCallThreshold": 10000000,
             "gracePeriodPenaltyFraction": 5000000,
             "liquidatorRewardFraction": 5000000
         },

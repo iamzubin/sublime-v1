@@ -12,7 +12,7 @@ import { StrategyRegistry } from '@typechain/StrategyRegistry';
 import { PriceOracle } from '@typechain/PriceOracle';
 import { SavingsAccount } from '@typechain/SavingsAccount';
 import { Extension } from '@typechain/Extension';
-import { PoolFactoryInitParams } from '@utils/types';
+import { PoolFactoryInitParams } from '../../utils/types';
 import { zeroAddress } from '../../utils/constants';
 
 export async function createPoolFactory(proxyAdmin: SignerWithAddress): Promise<PoolFactory> {

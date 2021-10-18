@@ -19,11 +19,10 @@ import {
     extensionParams,
 } from '../../utils/constants';
 import DeployHelper from '../../utils/deploys';
+import { getPoolInitSigHash } from "../../utils/createEnv/poolLogic";
 
 import { SavingsAccount } from '../../typechain/SavingsAccount';
 import { StrategyRegistry } from '../../typechain/StrategyRegistry';
-
-import { getPoolAddress, getRandomFromArray, incrementChain } from '../../utils/helpers';
 
 import { Address } from 'hardhat-deploy/dist/types';
 import { AaveYield } from '../../typechain/AaveYield';
@@ -178,7 +177,6 @@ describe('Credit Lines', async () => {
                 _gracePeriodPenaltyFraction,
                 _liquidatorRewardFraction,
                 _loanWithdrawalDuration,
-                _poolInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
@@ -193,7 +191,7 @@ describe('Credit Lines', async () => {
                     _collectionPeriod,
                     _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _poolInitFuncSelector,
+                    getPoolInitSigHash(),
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
@@ -239,7 +237,6 @@ describe('Credit Lines', async () => {
         it('Request Credit Line to lender', async () => {
             let _lender: string = lender.address;
             let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(100);
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -251,7 +248,6 @@ describe('Credit Lines', async () => {
                 .callStatic.request(
                     _lender,
                     _borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -266,7 +262,6 @@ describe('Credit Lines', async () => {
                     .request(
                         _lender,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -286,7 +281,6 @@ describe('Credit Lines', async () => {
         it('Request Credit Line to borrower', async () => {
             let _borrower: string = borrower.address;
             let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-            let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(100);
             let _autoLiquidation: boolean = true;
             let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -301,7 +295,6 @@ describe('Credit Lines', async () => {
                 .callStatic.request(
                     _borrower,
                     _borrowLimit,
-                    _liquidationThreshold,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
@@ -316,7 +309,6 @@ describe('Credit Lines', async () => {
                     .request(
                         _borrower,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -402,7 +394,6 @@ describe('Credit Lines', async () => {
                     _gracePeriodPenaltyFraction,
                     _liquidatorRewardFraction,
                     _loanWithdrawalDuration,
-                    _poolInitFuncSelector,
                     _poolCancelPenalityFraction,
                     _protocolFeeFraction,
                 } = testPoolFactoryParams;
@@ -417,7 +408,7 @@ describe('Credit Lines', async () => {
                         _collectionPeriod,
                         _loanWithdrawalDuration,
                         _marginCallDuration,
-                        _poolInitFuncSelector,
+                        getPoolInitSigHash(),
                         _liquidatorRewardFraction,
                         _poolCancelPenalityFraction,
                         _minborrowFraction,
@@ -464,7 +455,6 @@ describe('Credit Lines', async () => {
             it('Request Credit Line to lender', async () => {
                 let _lender: string = lender.address;
                 let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-                let _liquidationThreshold: BigNumberish = BigNumber.from(100);
                 let _borrowRate: BigNumberish = BigNumber.from(100);
                 let _autoLiquidation: boolean = true;
                 let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -476,7 +466,6 @@ describe('Credit Lines', async () => {
                     .callStatic.request(
                         _lender,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -491,7 +480,6 @@ describe('Credit Lines', async () => {
                         .request(
                             _lender,
                             _borrowLimit,
-                            _liquidationThreshold,
                             _borrowRate,
                             _autoLiquidation,
                             _collateralRatio,
@@ -511,7 +499,6 @@ describe('Credit Lines', async () => {
             it('Request Credit Line to borrower', async () => {
                 let _borrower: string = borrower.address;
                 let _borrowLimit: BigNumberish = BigNumber.from('10').mul('1000000000000000000');
-                let _liquidationThreshold: BigNumberish = BigNumber.from(100);
                 let _borrowRate: BigNumberish = BigNumber.from(100);
                 let _autoLiquidation: boolean = true;
                 let _collateralRatio: BigNumberish = BigNumber.from(250);
@@ -526,7 +513,6 @@ describe('Credit Lines', async () => {
                     .callStatic.request(
                         _borrower,
                         _borrowLimit,
-                        _liquidationThreshold,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
@@ -541,7 +527,6 @@ describe('Credit Lines', async () => {
                         .request(
                             _borrower,
                             _borrowLimit,
-                            _liquidationThreshold,
                             _borrowRate,
                             _autoLiquidation,
                             _collateralRatio,

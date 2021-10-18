@@ -41,6 +41,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { IYield } from '../../typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool Active stage', async () => {
     let savingsAccount: SavingsAccount;
@@ -163,7 +164,6 @@ describe('Pool Active stage', async () => {
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -174,7 +174,7 @@ describe('Pool Active stage', async () => {
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
@@ -238,7 +238,6 @@ describe('Pool Active stage', async () => {
 
                 let {
                     _poolSize,
-                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -257,7 +256,6 @@ describe('Pool Active stage', async () => {
                         Contracts.LINK,
                         Contracts.DAI,
                         _collateralRatio,
-                        _marginCallThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         poolStrategy.address,
@@ -791,7 +789,7 @@ describe('Pool Active stage', async () => {
                         .mul(testPoolFactoryParams._minborrowFraction)
                         .div(scaler)
                         .mul(price[0])
-                        .mul(createPoolParams._collateralRatio.sub(createPoolParams._marginCallThreshold))
+                        .mul(createPoolParams._collateralRatio)
                         .div(scaler)
                         .div(BigNumber.from(10).pow(price[1]))
                         .sub(createPoolParams._collateralAmount);
