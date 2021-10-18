@@ -43,7 +43,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
-import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Credit Lines', async () => {
     let savingsAccount: SavingsAccount;

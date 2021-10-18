@@ -31,7 +31,7 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '../../typechain/IYield';
 import { zeroAddress } from '../../utils/constants';
-import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;

@@ -39,7 +39,7 @@ import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { NoYield } from '@typechain/NoYield';
-import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool', async () => {
     let savingsAccount: SavingsAccount;

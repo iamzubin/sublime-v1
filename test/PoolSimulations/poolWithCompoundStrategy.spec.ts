@@ -50,7 +50,7 @@ import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { ERC20Detailed } from '@typechain/ERC20Detailed';
 import { NoYield } from '@typechain/NoYield';
-import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool With Compound Strategy', async () => {
     let savingsAccount: SavingsAccount;

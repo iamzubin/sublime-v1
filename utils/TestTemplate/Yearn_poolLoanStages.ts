@@ -27,7 +27,7 @@ import { Pool } from '@typechain/Pool';
 import { CompoundYield } from '@typechain/CompoundYield';
 import { expectApproxEqual } from '../helpers';
 import { YearnYield } from '@typechain/YearnYield';
-import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 export async function yearnPoolCollectionStage(
     Amount: Number,

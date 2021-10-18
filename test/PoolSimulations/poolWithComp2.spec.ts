@@ -30,7 +30,7 @@ import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '@typechain/IYield';
-import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool With Compound Strategy 2', async () => {
     let env: Environment;

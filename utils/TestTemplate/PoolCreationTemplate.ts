@@ -40,7 +40,7 @@ import { Pool } from '../../typechain/Pool';
 import { create } from 'underscore';
 import { OperationalAmounts } from '@utils/constants';
 import { getProxyAdminFactory } from '@openzeppelin/hardhat-upgrades/dist/utils';
-import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 export async function poolCreationTest(
     Amount: Number,

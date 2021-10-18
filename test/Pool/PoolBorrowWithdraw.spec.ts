@@ -42,7 +42,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { IYield } from '../../typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
-import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool Borrow Withdrawal stage', async () => {
     let savingsAccount: SavingsAccount;
