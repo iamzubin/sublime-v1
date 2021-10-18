@@ -512,9 +512,9 @@ export async function CreditLines(
             await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
             await env.mockTokenContracts[1].contract.connect(random).approve(creditLine.address, collateralAmout);
 
-            await expect(creditLine.connect(random).depositCollateral(values, collateralAmout, env.yields.compoundYield.address,  false)).to.be.revertedWith(
-                'CreditLine not active'
-            );
+            await expect(
+                creditLine.connect(random).depositCollateral(values, collateralAmout, env.yields.compoundYield.address, false)
+            ).to.be.revertedWith('CreditLine not active');
         });
 
         it('Creditline Active: cannot borrow from creditline if not active', async function () {

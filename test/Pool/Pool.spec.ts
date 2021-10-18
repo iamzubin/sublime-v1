@@ -199,14 +199,8 @@ describe('Pool', async () => {
 
         describe('Failed Cases', async () => {
             it('Should revert/fail when unsupported token is used as borrow token while creating a pool', async () => {
-                let {
-                    _poolSize,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
                 await expect(
                     poolFactory
                         .connect(borrower)
@@ -231,14 +225,8 @@ describe('Pool', async () => {
             it('Should revert/fail when unsupported token is used collateral token while creating a pool', async () => {
                 await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
 
-                let {
-                    _poolSize,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
                 await expect(
                     poolFactory
                         .connect(borrower)
@@ -328,14 +316,8 @@ describe('Pool', async () => {
             //   savingsAccount: savingsAccount.address
             // });
 
-            let {
-                _poolSize,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _collateralAmount,
-            } = createPoolParams;
+            let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                createPoolParams;
 
             await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 
@@ -406,14 +388,8 @@ describe('Pool', async () => {
                 //   savingsAccount: savingsAccount.address
                 // });
 
-                let {
-                    _poolSize,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
 
                 await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 
@@ -515,14 +491,8 @@ describe('Pool', async () => {
                 //   savingsAccount: savingsAccount.address
                 // });
 
-                let {
-                    _poolSize,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
 
                 await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 

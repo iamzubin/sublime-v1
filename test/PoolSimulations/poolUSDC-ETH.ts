@@ -36,7 +36,6 @@ import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
     before(async () => {
-
         env = await createEnvironment(
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
