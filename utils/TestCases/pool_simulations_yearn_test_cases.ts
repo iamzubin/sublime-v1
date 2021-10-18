@@ -14,7 +14,7 @@ import {
     INCH_Yearn_Protocol_Address,
     HEGIC_Token_Address,
     HEGIC_Yearn_Protocol_Address,
-} from '../constants-Additions';
+} from '../constants';
 
 export const psYearnTestCases = [
     {

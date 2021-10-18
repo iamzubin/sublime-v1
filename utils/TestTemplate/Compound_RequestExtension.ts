@@ -24,7 +24,7 @@ import {
     WhaleAccount,
     zeroAddress,
     ChainLinkAggregators,
-} from '../constants-Additions';
+} from '../constants';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';

@@ -22,7 +22,7 @@ import {
     creditLineFactoryParams,
     createPoolParams,
     zeroAddress,
-} from '../constants-Additions';
+} from '../constants';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
