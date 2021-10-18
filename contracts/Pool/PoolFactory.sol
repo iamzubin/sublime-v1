@@ -333,7 +333,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _noOfRepaymentIntervals,
             _poolSavingsStrategy,
             _collateralAmount,
-            _transferFromSavingsAccount
+            _transferFromSavingsAccount,
+            _lenderVerifier
         );
         bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
         bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
@@ -341,7 +342,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
         address pool = _deploy(amount, salt, bytecode);
 
-        IPool(pool).setConstants(_lenderVerifier);
         poolRegistry[pool] = true;
         emit PoolCreated(pool, msg.sender);
     }
@@ -357,7 +357,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
-        bool _transferFromSavingsAccount
+        bool _transferFromSavingsAccount,
+        address _lenderVerifier
     ) internal view returns (bytes memory data) {
         data = abi.encodeWithSelector(
             poolInitFuncSelector,
@@ -372,6 +373,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _poolSavingsStrategy,
             _collateralAmount,
             _transferFromSavingsAccount,
+            _lenderVerifier,
             loanWithdrawalDuration,
             collectionPeriod
         );

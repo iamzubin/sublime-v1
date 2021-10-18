@@ -31,14 +31,11 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '../../typechain/IYield';
 import { zeroAddress } from '../../utils/constants';
-
-import poolContractMeta from '../../artifacts/contracts/Pool/Pool.sol/Pool.json';
+import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
 
 describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
     before(async () => {
-        const _interface = new hre.ethers.utils.Interface(poolContractMeta.abi);
-        const poolInitializeSigHash = _interface.getSighash('initialize');
 
         env = await createEnvironment(
             hre,
@@ -65,7 +62,7 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
                 _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                 _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                 _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                _poolInitFuncSelector: poolInitializeSigHash,
+                _poolInitFuncSelector: getPoolInitSigHash(),
                 _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,

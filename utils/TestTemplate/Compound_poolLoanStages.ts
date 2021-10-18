@@ -34,8 +34,7 @@ import { Pool } from '@typechain/Pool';
 import { CompoundYield } from '@typechain/CompoundYield';
 import { expectApproxEqual } from '../helpers';
 import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
-
-import poolContractMeta from '../../artifacts/contracts/Pool/Pool.sol/Pool.json';
+import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
 
 export async function compoundPoolCollectionStage(
     Amount: Number,
@@ -48,9 +47,6 @@ export async function compoundPoolCollectionStage(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
-    const _interface = new hre.ethers.utils.Interface(poolContractMeta.abi);
-    const poolInitializeSigHash = _interface.getSighash('initialize');
-
     describe('Pool Simulation: Collection Stage', async () => {
         let env: Environment;
         let pool: Pool;
@@ -88,7 +84,7 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: poolInitializeSigHash,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
@@ -382,7 +378,7 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: poolInitializeSigHash,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
@@ -559,7 +555,7 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: poolInitializeSigHash,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
@@ -729,7 +725,7 @@ export async function compoundPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: poolInitializeSigHash,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,

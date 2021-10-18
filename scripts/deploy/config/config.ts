@@ -4,10 +4,8 @@ import { DeploymentParams } from '../../../utils/types';
 import kovanConfig from './kovan.json';
 import rinkebyConfig from './rinkeby.json';
 
-import poolMeta from '../../../artifacts/contracts/Pool/Pool.sol/Pool.json';
+import { getPoolInitSigHash } from "../../../utils/createEnv/poolLogic";
 
-const poolInterface = new ethers.utils.Interface(poolMeta.abi);
-const poolInitFuncSelector = poolInterface.getSighash('initialize');
 
 function getConfig(network: string): DeploymentParams {
     let networkConfig;
@@ -38,12 +36,13 @@ function createConfig(rawConfig: any): DeploymentParams {
         _collectionPeriod: rawConfig.poolFactory.collectionPeriod,
         _loanWithdrawalDuration: rawConfig.poolFactory.loanWithdrawalDuration,
         _marginCallDuration: rawConfig.poolFactory.marginCallDuration,
-        _poolInitFuncSelector: poolInitFuncSelector,
+        _poolInitFuncSelector: getPoolInitSigHash(),
         _liquidatorRewardFraction: ethers.utils.parseUnits(rawConfig.poolFactory.liquidatorRewardFraction + '', 30),
         _poolCancelPenalityFraction: ethers.utils.parseUnits(rawConfig.poolFactory.poolCancelPenalityFraction + '', 30),
         _minBorrowFraction: ethers.utils.parseUnits(rawConfig.poolFactory.minBorrowFraction + '', 30),
         _protocolFeeFraction: ethers.utils.parseUnits(rawConfig.poolFactory.protocolFeeFraction + '', 30),
         protocolFeeCollector: rawConfig.poolFactory.protocolFeeCollector,
+        noStrategy: ethers.constants.AddressZero
     };
     return config;
 }

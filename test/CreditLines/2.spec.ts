@@ -43,6 +43,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
 
 describe('Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -180,7 +181,6 @@ describe('Credit Lines', async () => {
                 _minborrowFraction,
                 _liquidatorRewardFraction,
                 _loanWithdrawalDuration,
-                _poolInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
@@ -195,7 +195,7 @@ describe('Credit Lines', async () => {
                     _collectionPeriod,
                     _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _poolInitFuncSelector,
+                    getPoolInitSigHash(),
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
                     _minborrowFraction,

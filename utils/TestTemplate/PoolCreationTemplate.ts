@@ -40,8 +40,7 @@ import { Pool } from '../../typechain/Pool';
 import { create } from 'underscore';
 import { OperationalAmounts } from '@utils/constants';
 import { getProxyAdminFactory } from '@openzeppelin/hardhat-upgrades/dist/utils';
-
-import poolContractMeta from '../../artifacts/contracts/Pool/Pool.sol/Pool.json';
+import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
 
 export async function poolCreationTest(
     Amount: Number,
@@ -54,9 +53,6 @@ export async function poolCreationTest(
     chainlinkBorrowParam: Address,
     chainlinkCollateralParam: Address
 ): Promise<any> {
-    const _interface = new hre.ethers.utils.Interface(poolContractMeta.abi);
-    const poolInitializeSigHash = _interface.getSighash('initialize');
-
     describe('Pool', async () => {
         let env: Environment;
         let deployHelper: DeployHelper;
@@ -91,7 +87,7 @@ export async function poolCreationTest(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: poolInitializeSigHash,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,

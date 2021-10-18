@@ -44,6 +44,7 @@ import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
 
 describe('WBTC-DAI Credit Lines', async () => {
     let savingsAccount: SavingsAccount;
@@ -189,7 +190,6 @@ describe('WBTC-DAI Credit Lines', async () => {
             _minborrowFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -203,7 +203,7 @@ describe('WBTC-DAI Credit Lines', async () => {
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,

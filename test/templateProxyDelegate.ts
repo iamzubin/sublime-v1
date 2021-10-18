@@ -45,6 +45,8 @@ import { Token } from '../typechain/Token';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
 
+import { getPoolInitSigHash } from "../utils/createEnv/poolLogic";
+
 describe.skip('Template 2', async () => {
     let savingsAccount: SavingsAccount;
     let savingsAccountLogic: SavingsAccount;
@@ -231,7 +233,6 @@ describe.skip('Template 2', async () => {
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -242,7 +243,7 @@ describe.skip('Template 2', async () => {
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,

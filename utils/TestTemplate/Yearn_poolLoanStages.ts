@@ -27,8 +27,7 @@ import { Pool } from '@typechain/Pool';
 import { CompoundYield } from '@typechain/CompoundYield';
 import { expectApproxEqual } from '../helpers';
 import { YearnYield } from '@typechain/YearnYield';
-
-import poolContractMeta from '../../artifacts/contracts/Pool/Pool.sol/Pool.json';
+import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
 
 export async function yearnPoolCollectionStage(
     Amount: Number,
@@ -41,8 +40,6 @@ export async function yearnPoolCollectionStage(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
-    const _interface = new hre.ethers.utils.Interface(poolContractMeta.abi);
-    const poolInitializeSigHash = _interface.getSighash('initialize');
 
     describe('Pool Simulation: Collection Stage', async () => {
         let env: Environment;
@@ -81,7 +78,7 @@ export async function yearnPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: poolInitializeSigHash,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
@@ -435,7 +432,7 @@ export async function yearnPoolCollectionStage(
                     _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                     _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                     _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                    _poolInitFuncSelector: poolInitializeSigHash,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
                     _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                     _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                     _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,

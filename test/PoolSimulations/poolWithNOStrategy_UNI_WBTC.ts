@@ -50,6 +50,7 @@ import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { ERC20Detailed } from '@typechain/ERC20Detailed';
 import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '@utils/createEnv/poolLogic';
 
 describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral', async () => {
     let savingsAccount: SavingsAccount;
@@ -263,7 +264,6 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -275,7 +275,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,

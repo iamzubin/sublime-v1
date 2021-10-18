@@ -150,6 +150,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
+        address _lenderVerifier,
         uint256 _loanWithdrawalDuration,
         uint256 _collectionPeriod
     ) external payable initializer {
@@ -164,19 +165,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         poolConstants.borrowRate = _borrowRate;
         poolConstants.noOfRepaymentIntervals = _noOfRepaymentIntervals;
         poolConstants.repaymentInterval = _repaymentInterval;
+        poolConstants.lenderVerifier = _lenderVerifier;
 
         poolConstants.loanStartTime = block.timestamp.add(_collectionPeriod);
         poolConstants.loanWithdrawalDeadline = block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration);
         __ERC20_init('Pool Tokens', 'PT');
-    }
-
-    /*
-     * @notice Each pool has a unique pool token deployed by PoolFactory, lender verifier to filter lender is also set by PoolFactory
-     * @param _lenderVerifier address of the verifier with which lender should be verified
-     */
-    function setConstants(address _lenderVerifier) external override {
-        require(msg.sender == PoolFactory, '6');
-        poolConstants.lenderVerifier = _lenderVerifier;
     }
 
     /**
