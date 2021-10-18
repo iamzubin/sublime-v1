@@ -43,7 +43,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
 
-import { getPoolInitSigHash } from "../utils/createEnv/poolLogic";
+import { getPoolInitSigHash } from '../utils/createEnv/poolLogic';
 
 describe.skip('Template For Test cases', async () => {
     let savingsAccount: SavingsAccount;
@@ -231,14 +231,8 @@ describe.skip('Template For Test cases', async () => {
                 //   savingsAccount: savingsAccount.address
                 // });
 
-                let {
-                    _poolSize,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
 
                 await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 

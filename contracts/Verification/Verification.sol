@@ -115,7 +115,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev view function
     /// @param _user address which has to be checked if mapped against a verified master address
     /// @param _verifier verifier with which master address has to be verified
-    function isUser(address _user, address _verifier) public override view returns (bool) {
+    function isUser(address _user, address _verifier) public view override returns (bool) {
         address _masterAddress = linkedAddresses[_user];
         if (_masterAddress == address(0) || !masterAddresses[_masterAddress][_verifier]) {
             return false;

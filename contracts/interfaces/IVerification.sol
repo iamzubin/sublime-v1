@@ -31,7 +31,7 @@ interface IVerification {
     /// @param linkedAddress The address which is linked to masterAddress
     /// @param masterAddress The masterAddress to which address was linked
     event addressUnlinked(address indexed linkedAddress, address indexed masterAddress);
-    
+
     function isUser(address _user, address _verifier) external view returns (bool);
 
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external;

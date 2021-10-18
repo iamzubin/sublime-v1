@@ -319,7 +319,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _activeAmount = _activeAmount.add(_tokensToTransfer);
             _savingsAccount.transferFrom(_tokensToTransfer, _collateralAsset, _strategy, _sender, address(this));
 
-            collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy));
+            collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(
+                _liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy)
+            );
 
             if (_amount == _activeAmount) {
                 return;
@@ -691,7 +693,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         }
     }
 
-    function withdrawCollateral(uint256 _id, uint256 _amount, bool _toSavingsAccount) external nonReentrant onlyCreditLineBorrower(_id) {
+    function withdrawCollateral(
+        uint256 _id,
+        uint256 _amount,
+        bool _toSavingsAccount
+    ) external nonReentrant onlyCreditLineBorrower(_id) {
         uint256 _withdrawableCollateral = withdrawableCollateral(_id);
         require(_amount <= _withdrawableCollateral, 'Collateral ratio cant go below ideal');
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
@@ -745,7 +751,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].sub(
                 liquidityShares
             );
-            if(_toSavingsAccount) {
+            if (_toSavingsAccount) {
                 ISavingsAccount(savingsAccount).transfer(_tokensToTransfer, _asset, _strategyList[index], msg.sender);
             } else {
                 ISavingsAccount(savingsAccount).withdraw(_tokensToTransfer, _asset, _strategyList[index], msg.sender, false);

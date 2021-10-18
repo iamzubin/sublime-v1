@@ -232,14 +232,8 @@ describe('Pool Collection stage', async () => {
                 {}
             );
 
-            let {
-                _poolSize,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _collateralAmount,
-            } = createPoolParams;
+            let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                createPoolParams;
             await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount); // Transfer quantity to borrower
 
             await collateralToken.connect(borrower).approve(generatedPoolAddress, _collateralAmount);

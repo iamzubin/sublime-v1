@@ -45,7 +45,7 @@ import { Token } from '../typechain/Token';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
 
-import { getPoolInitSigHash } from "../utils/createEnv/poolLogic";
+import { getPoolInitSigHash } from '../utils/createEnv/poolLogic';
 
 describe.skip('Template 2', async () => {
     let savingsAccount: SavingsAccount;
@@ -290,14 +290,8 @@ describe.skip('Template 2', async () => {
                 {}
             );
 
-            let {
-                _poolSize,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _collateralAmount,
-            } = createPoolParams;
+            let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                createPoolParams;
 
             await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 
@@ -370,14 +364,8 @@ describe.skip('Template 2', async () => {
                 {}
             );
 
-            let {
-                _poolSize,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _collateralAmount,
-            } = createPoolParams;
+            let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                createPoolParams;
 
             console.log('Transfering from admin to borrower');
             await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
