@@ -102,7 +102,7 @@ export async function yearnPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+                _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -133,7 +133,7 @@ export async function yearnPoolCollectionStage(
             // console.log("Tokens present!");
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+                _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 // _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(CTDecimals)),
@@ -458,7 +458,7 @@ export async function yearnPoolCollectionStage(
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+                _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -485,7 +485,7 @@ export async function yearnPoolCollectionStage(
 
             pool = await createNewPool(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+                _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)),
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CTDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),

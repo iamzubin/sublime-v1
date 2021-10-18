@@ -22,7 +22,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     uint256 constant MAX_INT = 2**256 - 1;
 
-    address internal _owner;
     IPoolFactory poolFactory;
     address savingsAccount;
 
@@ -35,7 +34,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         TERMINATED // Pool terminated by admin
     }
 
-    uint256 votingPassRatio;
     uint256 gracePenaltyRate;
     uint256 gracePeriodFraction; // fraction of the repayment interval
     uint256 constant yearInSeconds = 365 days;
@@ -192,7 +190,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return timestamp before which next instalment ends
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-        if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments) {
+        if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(10**30)) {
             return 0;
         }
         uint256 _loanExtensionPeriod = repayVariables[_poolID].loanExtensionPeriod;
@@ -280,7 +278,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool
     /// @return interest amount that is overdue
     function getInterestOverdue(address _poolID) public view returns (uint256) {
-        require(repayVariables[_poolID].isLoanExtensionActive == true, 'No overdue');
+        require(repayVariables[_poolID].isLoanExtensionActive, 'No overdue');
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         uint256 _interestPerSecond = getInterestPerSecond(_poolID);
         uint256 _interestOverdue = (
@@ -320,7 +318,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _interestPerSecond = getInterestPerSecond(_poolID);
         // First pay off the overdue
 
-        if (repayVariables[_poolID].isLoanExtensionActive == true) {
+        if (repayVariables[_poolID].isLoanExtensionActive) {
             uint256 _interestOverdue = getInterestOverdue(_poolID);
 
             if (_amount >= _interestOverdue) {
@@ -389,7 +387,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _amountRepaid = _repay(_poolID, MAX_INT, _asset, true);
         IPool _pool = IPool(_poolID);
 
-        require(repayVariables[_poolID].isLoanExtensionActive == false, 'Repayments:repayPrincipal Repayment overdue unpaid');
+        require(!repayVariables[_poolID].isLoanExtensionActive, 'Repayments:repayPrincipal Repayment overdue unpaid');
 
         require(
             repayConstants[_poolID].loanDuration == repayVariables[_poolID].loanDurationCovered,

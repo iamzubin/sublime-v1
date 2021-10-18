@@ -76,7 +76,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         if (uint256(num) < uint256(den)) {
             return keccak256(abi.encodePacked(num, den));
         } else {
-            return keccak256(abi.encodePacked(num, den));
+            return keccak256(abi.encodePacked(den, num));
         }
     }
 

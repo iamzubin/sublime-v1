@@ -50,7 +50,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 loanWithdrawalDeadline;
         address borrowAsset;
         uint256 idealCollateralRatio;
-        uint256 volatilityThreshold;
+        uint256 marginCallThreshold;
         uint256 borrowRate;
         uint256 noOfRepaymentIntervals;
         uint256 repaymentInterval;
@@ -126,7 +126,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice initializing the pool and adding initial collateral
      * @param _borrowAmountRequested the amount of borrow asset requested by the borrower
-     * @param _volatilityThreshold Maximum volatility that collateral ratio can go down before liquidation
+     * @param _marginCallThreshold Maximum volatility that collateral ratio can go down before liquidation
      * @param _borrower address of the borrower
      * @param _borrowAsset address of the borrow asset
      * @param _collateralAsset address of the collateral asset
@@ -147,7 +147,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _borrowAsset,
         address _collateralAsset,
         uint256 _idealCollateralRatio,
-        uint256 _volatilityThreshold,
+        uint256 _marginCallThreshold,
         uint256 _repaymentInterval,
         uint256 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
@@ -159,7 +159,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         PoolFactory = msg.sender;
         poolConstants.borrowAsset = _borrowAsset;
         poolConstants.idealCollateralRatio = _idealCollateralRatio;
-        poolConstants.volatilityThreshold = _volatilityThreshold;
+        poolConstants.marginCallThreshold = _marginCallThreshold;
         poolConstants.collateralAsset = _collateralAsset;
         poolConstants.poolSavingsStrategy = _poolSavingsStrategy;
         poolConstants.borrowAmountRequested = _borrowAmountRequested;
@@ -336,7 +336,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         poolVariables.loanStatus = LoanStatus.ACTIVE;
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
-        require(_currentCollateralRatio >= poolConstants.idealCollateralRatio.sub(poolConstants.volatilityThreshold), '14');
+        require(_currentCollateralRatio >= poolConstants.idealCollateralRatio, '14');
 
         uint256 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
         uint256 _repaymentInterval = poolConstants.repaymentInterval;
@@ -649,7 +649,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         IPoolFactory _poolFactory = IPoolFactory(PoolFactory);
         require(getMarginCallEndTime(msg.sender) == 0, 'RMC1');
         uint256 _idealCollateralRatio = poolConstants.idealCollateralRatio;
-        require(_idealCollateralRatio > getCurrentCollateralRatio(msg.sender).add(poolConstants.volatilityThreshold), '26');
+        require(poolConstants.marginCallThreshold > getCurrentCollateralRatio(msg.sender), '26');
 
         lenders[msg.sender].marginCallEndTime = block.timestamp.add(_poolFactory.marginCallDuration());
 
@@ -794,7 +794,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         require(getMarginCallEndTime(_lender) != 0, 'No margin call has been called.');
         require(_marginCallEndTime < block.timestamp, '28');
 
-        require(poolConstants.idealCollateralRatio.sub(poolConstants.volatilityThreshold) > getCurrentCollateralRatio(_lender), '29');
+        require(poolConstants.marginCallThreshold > getCurrentCollateralRatio(_lender), '29');
         require(balanceOf(_lender) != 0, '30');
     }
 

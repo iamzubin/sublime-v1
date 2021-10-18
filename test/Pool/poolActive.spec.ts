@@ -238,7 +238,7 @@ describe('Pool Active stage', async () => {
 
                 let {
                     _poolSize,
-                    _collateralVolatilityThreshold,
+                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -257,7 +257,7 @@ describe('Pool Active stage', async () => {
                         Contracts.LINK,
                         Contracts.DAI,
                         _collateralRatio,
-                        _collateralVolatilityThreshold,
+                        _marginCallThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         poolStrategy.address,
@@ -791,7 +791,7 @@ describe('Pool Active stage', async () => {
                         .mul(testPoolFactoryParams._minborrowFraction)
                         .div(scaler)
                         .mul(price[0])
-                        .mul(createPoolParams._collateralRatio.sub(createPoolParams._collateralVolatilityThreshold))
+                        .mul(createPoolParams._collateralRatio.sub(createPoolParams._marginCallThreshold))
                         .div(scaler)
                         .div(BigNumber.from(10).pow(price[1]))
                         .sub(createPoolParams._collateralAmount);

@@ -118,7 +118,7 @@ export async function poolCreationTest(
 
             generatedPoolAddress = await calculateNewPoolAddress(env, borrowToken, collateralToken, iYield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+                _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),
@@ -148,7 +148,7 @@ export async function poolCreationTest(
 
             pool = await createNewPool(env, borrowToken, collateralToken, iYield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BorrowDecimals)), // max possible borrow tokens in DAI pool ~1000 DAI
-                _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
+                _marginCallThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
                 _borrowRate: BigNumber.from(1).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside,,
                 _collateralAmount: BigNumber.from(Amount).mul(BigNumber.from(10).pow(CollateralDecimals)),
                 _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)),

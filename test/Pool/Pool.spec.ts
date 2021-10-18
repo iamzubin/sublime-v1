@@ -201,7 +201,7 @@ describe('Pool', async () => {
             it('Should revert/fail when unsupported token is used as borrow token while creating a pool', async () => {
                 let {
                     _poolSize,
-                    _collateralVolatilityThreshold,
+                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -217,7 +217,7 @@ describe('Pool', async () => {
                             Contracts.cWBTC,
                             Contracts.LINK,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
+                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,
@@ -235,7 +235,7 @@ describe('Pool', async () => {
 
                 let {
                     _poolSize,
-                    _collateralVolatilityThreshold,
+                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -251,7 +251,7 @@ describe('Pool', async () => {
                             Contracts.DAI,
                             Contracts.Maximillion,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
+                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,
@@ -334,7 +334,7 @@ describe('Pool', async () => {
 
             let {
                 _poolSize,
-                _collateralVolatilityThreshold,
+                _marginCallThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -355,7 +355,7 @@ describe('Pool', async () => {
                         Contracts.DAI,
                         Contracts.LINK,
                         _collateralRatio,
-                        _collateralVolatilityThreshold,
+                        _marginCallThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         aaveYield.address,
@@ -414,7 +414,7 @@ describe('Pool', async () => {
 
                 let {
                     _poolSize,
-                    _collateralVolatilityThreshold,
+                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -435,7 +435,7 @@ describe('Pool', async () => {
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
+                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,
@@ -525,7 +525,7 @@ describe('Pool', async () => {
 
                 let {
                     _poolSize,
-                    _collateralVolatilityThreshold,
+                    _marginCallThreshold,
                     _collateralRatio,
                     _borrowRate,
                     _repaymentInterval,
@@ -546,7 +546,7 @@ describe('Pool', async () => {
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
+                            _marginCallThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,

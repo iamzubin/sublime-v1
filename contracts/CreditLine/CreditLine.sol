@@ -617,23 +617,25 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _totalInterestAccrued = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(
             _interestSincePrincipalUpdate
         );
-        uint256 _totalDebt = _totalInterestAccrued.add(creditLineVariables[_id].principal);
+        uint256 _interestToPay = _totalInterestAccrued.sub(creditLineVariables[_id].totalInterestRepaid);
+        uint256 _totalCurrentDebt = _interestToPay.add(creditLineVariables[_id].principal);
 
         bool _totalRemainingIsRepaid = false;
 
-        if (_amount >= _totalDebt) {
+        if (_amount >= _totalCurrentDebt) {
             _totalRemainingIsRepaid = true;
-            _amount = _totalDebt;
+            _amount = _totalCurrentDebt;
         }
 
-        uint256 _totalRepaidNow = creditLineVariables[_id].totalInterestRepaid.add(_amount);
-
-        if (_totalRepaidNow > _totalInterestAccrued) {
-            creditLineVariables[_id].principal = (creditLineVariables[_id].principal).add(_totalInterestAccrued).sub(_totalRepaidNow);
+        if (_amount > _interestToPay) {
+            creditLineVariables[_id].principal = _totalCurrentDebt.sub(_amount);
             creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = _totalInterestAccrued;
             creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
+            creditLineVariables[_id].totalInterestRepaid = _totalInterestAccrued;
+        } else {
+            creditLineVariables[_id].totalInterestRepaid = _amount;
         }
-        creditLineVariables[_id].totalInterestRepaid = _totalRepaidNow;
+
         _repay(_id, _amount, _fromSavingsAccount);
 
         if (creditLineVariables[_id].principal == 0) {

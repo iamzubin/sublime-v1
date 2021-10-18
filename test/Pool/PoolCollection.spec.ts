@@ -234,7 +234,7 @@ describe('Pool Collection stage', async () => {
 
             let {
                 _poolSize,
-                _collateralVolatilityThreshold,
+                _marginCallThreshold,
                 _collateralRatio,
                 _borrowRate,
                 _repaymentInterval,
@@ -253,7 +253,7 @@ describe('Pool Collection stage', async () => {
                     Contracts.LINK,
                     Contracts.DAI,
                     _collateralRatio,
-                    _collateralVolatilityThreshold,
+                    _marginCallThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     poolStrategy.address,
