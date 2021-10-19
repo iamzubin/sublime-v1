@@ -248,7 +248,7 @@ export async function preActivePoolChecks(
         });
 
         /*
-        // To-DO: Fix this test. liquidatePool is throwing a safeMath error
+        // To-DO: Fix this test. liquidatePool is throwing a safeMath error: Division by zero
         it("Before borrower withdraws in this period, liquidation is not possible: ", async function() {
             let {admin, lender, borrower} = env.entities;
             let randomLender = env.entities.extraLenders[33];
@@ -359,6 +359,32 @@ export async function preActivePoolChecks(
 
             //Borrower request to withdraw smalller amount should be rejected
             await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('');
+        });
+
+        it("Amount borrowed event is emitted when lent amount is withdrawn: ", async function() {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+
+            // Approving Borrow tokens to the lender
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await borrowToken.connect(admin).transfer(lender.address, amount);
+            await borrowToken.connect(lender).approve(poolAddress, amount);
+
+            // Lender lends into the pool
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            //block travel to escape withdraw interval
+            const { loanStartTime } = await pool.poolConstants();
+            await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
+
+            // Borrower withdraws borrow tokens
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.emit(pool, "AmountBorrowed").withArgs(amount);
         });
     });
 }
