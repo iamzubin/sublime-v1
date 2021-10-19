@@ -516,13 +516,19 @@ export async function CreditLines(
             console.log({ Expectedprincipal: Expectedprincipal.toString() });
         });
 
-        it('CreditLine Active: Repayments', async function () {
+        it('CreditLine Active: Repayments cannot be done for inactive credit lines', async function () {
             let { admin, borrower, lender } = env.entities;
             let _amount = BigNumber.from('100'); //Random amount
 
             await expect(creditLine.connect(borrower).repay(valuesNew, _amount, false)).to.be.revertedWith(
                 'CreditLine: The credit line is not yet active.'
             );
+        });
+
+        it('CreditLine Active: Repayments done directly', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let interestDue = await creditLine.connect(admin).calculateInterestAccrued(values);
+            console.log({ interestDue: interestDue.toString() })
         });
     });
 }
