@@ -6,16 +6,13 @@ import { YearnYield } from '../../../typechain/YearnYield';
 import DeployHelper from '../../../utils/deploys';
 import { ethers, network } from 'hardhat';
 
-import {
-    Binance7,
-    WhaleAccount
-} from '../../../utils/constants';
+import { Binance7, WhaleAccount } from '../../../utils/constants';
 import { expect } from 'chai';
 import { timeTravel } from '../../../utils/time';
 
 describe.skip('yearn Yield interest calculations', () => {
-    const USDC_YEARN_VAULT = "0x597aD1e0c13Bfe8025993D9e79C69E1c0233522e";
-    const USDC_TOKEN = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+    const USDC_YEARN_VAULT = '0x597aD1e0c13Bfe8025993D9e79C69E1c0233522e';
+    const USDC_TOKEN = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48';
 
     let savingsAccount: SavingsAccount;
     let strategyRegistry: StrategyRegistry;
@@ -28,18 +25,18 @@ describe.skip('yearn Yield interest calculations', () => {
 
     let binance7: SignerWithAddress;
     let whaleAccount: SignerWithAddress;
-    
+
     before(async () => {
         await network.provider.request({
             method: 'hardhat_impersonateAccount',
             params: [Binance7],
         });
-    
+
         await network.provider.request({
             method: 'hardhat_impersonateAccount',
             params: [WhaleAccount],
         });
-    
+
         binance7 = await ethers.getSigner(Binance7);
         whaleAccount = await ethers.getSigner(WhaleAccount);
 
@@ -57,14 +54,14 @@ describe.skip('yearn Yield interest calculations', () => {
         await yearnYield.connect(admin).updateProtocolAddresses(USDC_TOKEN, USDC_YEARN_VAULT);
     });
 
-    it("Lock same tokens at different times", async () => {
+    it('Lock same tokens at different times', async () => {
         let amount = 1000000000;
         await yearnYield.connect(admin).updateSavingsAccount(binance7.address);
         await USDCToken.connect(binance7).approve(yearnYield.address, amount);
         const depositReceipt1 = await (await yearnYield.connect(binance7).lockTokens(binance7.address, USDCToken.address, amount)).wait();
 
-        if(!depositReceipt1.events) {
-            expect(false, "Events not found while despositing 1");
+        if (!depositReceipt1.events) {
+            expect(false, 'Events not found while despositing 1');
             return;
         }
 
@@ -74,10 +71,12 @@ describe.skip('yearn Yield interest calculations', () => {
 
         await yearnYield.connect(admin).updateSavingsAccount(whaleAccount.address);
         await USDCToken.connect(whaleAccount).approve(yearnYield.address, amount);
-        const depositReceipt2 = await (await yearnYield.connect(whaleAccount).lockTokens(whaleAccount.address, USDCToken.address, amount)).wait();
+        const depositReceipt2 = await (
+            await yearnYield.connect(whaleAccount).lockTokens(whaleAccount.address, USDCToken.address, amount)
+        ).wait();
 
-        if(!depositReceipt2.events) {
-            expect(false, "Events not found while despositing 2");
+        if (!depositReceipt2.events) {
+            expect(false, 'Events not found while despositing 2');
             return;
         }
 
@@ -92,8 +91,8 @@ describe.skip('yearn Yield interest calculations', () => {
         await yearnYield.connect(admin).updateSavingsAccount(binance7.address);
         const withdrawReceipt1 = await (await yearnYield.connect(binance7).unlockTokens(USDCToken.address, shares1)).wait();
 
-        if(!withdrawReceipt1.events) {
-            expect(false, "Events not found while withdrawing 1");
+        if (!withdrawReceipt1.events) {
+            expect(false, 'Events not found while withdrawing 1');
             return;
         }
 
@@ -103,8 +102,8 @@ describe.skip('yearn Yield interest calculations', () => {
         await yearnYield.connect(admin).updateSavingsAccount(whaleAccount.address);
         const withdrawReceipt2 = await (await yearnYield.connect(whaleAccount).unlockTokens(USDCToken.address, shares2)).wait();
 
-        if(!withdrawReceipt2.events) {
-            expect(false, "Events not found while withdrawing 2");
+        if (!withdrawReceipt2.events) {
+            expect(false, 'Events not found while withdrawing 2');
             return;
         }
 

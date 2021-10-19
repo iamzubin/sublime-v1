@@ -306,7 +306,12 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    function _repay(address _poolID, uint256 _amount, address _asset, bool _isLastRepayment) internal returns(uint256 _amountRequired) {
+    function _repay(
+        address _poolID,
+        uint256 _amount,
+        address _asset,
+        bool _isLastRepayment
+    ) internal returns (uint256 _amountRequired) {
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
         {
@@ -351,7 +356,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
                 emit GracePenaltyRepaid(_poolID, _penalty);
             }
 
-            require((_amount < _interestLeft) != _isLastRepayment, "Repayments::repayAmount complete interest must be repaid along with principal");
+            require(
+                (_amount < _interestLeft) != _isLastRepayment,
+                'Repayments::repayAmount complete interest must be repaid along with principal'
+            );
 
             if (_amount < _interestLeft) {
                 uint256 _loanDurationCovered = _amount.mul(10**30).div(_interestPerSecond); // dividing exponents

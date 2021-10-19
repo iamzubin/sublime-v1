@@ -19,7 +19,7 @@ import {
     extensionParams,
 } from '../../utils/constants';
 import DeployHelper from '../../utils/deploys';
-import { getPoolInitSigHash } from "../../utils/createEnv/poolLogic";
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 import { SavingsAccount } from '../../typechain/SavingsAccount';
 import { StrategyRegistry } from '../../typechain/StrategyRegistry';
@@ -259,16 +259,7 @@ describe('Credit Lines', async () => {
             await expect(
                 creditLine
                     .connect(borrower)
-                    .request(
-                        _lender,
-                        _borrowLimit,
-                        _borrowRate,
-                        _autoLiquidation,
-                        _collateralRatio,
-                        _borrowAsset,
-                        _collateralAsset,
-                        false
-                    )
+                    .request(_lender, _borrowLimit, _borrowRate, _autoLiquidation, _collateralRatio, _borrowAsset, _collateralAsset, false)
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
@@ -306,16 +297,7 @@ describe('Credit Lines', async () => {
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(
-                        _borrower,
-                        _borrowLimit,
-                        _borrowRate,
-                        _autoLiquidation,
-                        _collateralRatio,
-                        _borrowAsset,
-                        _collateralAsset,
-                        true
-                    )
+                    .request(_borrower, _borrowLimit, _borrowRate, _autoLiquidation, _collateralRatio, _borrowAsset, _collateralAsset, true)
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
@@ -589,11 +571,15 @@ describe('Credit Lines', async () => {
                 it('Cannot deposit into invalid credit line hash', async () => {
                     let randomInvalidHash = '0x0000000011111111000000001111111100000000111111110000000011111111';
                     await expect(
-                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, false)
+                        creditLine
+                            .connect(borrower)
+                            .depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, false)
                     ).to.be.revertedWith('Credit line does not exist');
 
                     await expect(
-                        creditLine.connect(borrower).depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, true)
+                        creditLine
+                            .connect(borrower)
+                            .depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, true)
                     ).to.be.revertedWith('Credit line does not exist');
                 });
 

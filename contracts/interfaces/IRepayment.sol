@@ -41,7 +41,7 @@ interface IRepayment {
 
     /// @notice Event to denote changes in the configurations of the Grace Period Fraction
     event GracePeriodFractionUpdated(uint256 indexed gracePeriodFraction);
-    
+
     function initializeRepayment(
         uint256 numberOfTotalRepayments,
         uint256 repaymentInterval,

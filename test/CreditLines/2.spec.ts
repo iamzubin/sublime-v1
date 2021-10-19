@@ -255,16 +255,7 @@ describe('Credit Lines', async () => {
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(
-                        _borrower,
-                        borrowLimit,
-                        _borrowRate,
-                        _autoLiquidation,
-                        _collateralRatio,
-                        _borrowAsset,
-                        _collateralAsset,
-                        true
-                    )
+                    .request(_borrower, borrowLimit, _borrowRate, _autoLiquidation, _collateralRatio, _borrowAsset, _collateralAsset, true)
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);

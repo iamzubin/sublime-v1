@@ -40,7 +40,6 @@ export async function yearnPoolCollectionStage(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
-
     describe('Pool Simulation: Collection Stage', async () => {
         let env: Environment;
         let pool: Pool;
