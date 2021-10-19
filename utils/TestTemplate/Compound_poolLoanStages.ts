@@ -618,9 +618,6 @@ export async function compoundPoolCollectionStage(
             });
 
             // console.log({ actualPoolAddress: pool.address });
-
-            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
 
             let borrowToken = env.mockTokenContracts[0].contract;
@@ -1096,9 +1093,6 @@ export async function compoundPoolCollectionStage(
             });
 
             // console.log({ actualPoolAddress: pool.address });
-
-            let poolTokenAddress = await pool.poolToken(); //Getting the address of the pool token
-
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
 

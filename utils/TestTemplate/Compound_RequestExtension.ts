@@ -236,7 +236,7 @@ export async function compound_RequestExtension(
             const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
             assert(isLoanExtensionActive, 'Extension not active');
             await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                'Pool::liquidatePool - No reason to liquidate the pool'
+                'Pool::liquidatePool - Borrower didnt default'
             );
         });
 
