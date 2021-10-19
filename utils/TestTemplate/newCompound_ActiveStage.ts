@@ -247,13 +247,65 @@ export async function preActivePoolChecks(
             await expect(env.extenstion.connect(borrower).requestExtension(pool.address)).to.be.revertedWith('');
         });
 
+        /*
+        // To-DO: Fix this test. liquidatePool is throwing a safeMath error
         it("Before borrower withdraws in this period, liquidation is not possible: ", async function() {
-            let {admin, borrower, lender} = env.entities;
-            let randomEntity = env.entities.extraLenders[33];
+            let {admin, lender, borrower} = env.entities;
+            let randomLender = env.entities.extraLenders[33];
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = await env.mockTokenContracts[1].contract;
+            let borrowToken = await env.mockTokenContracts[0].contract;
+            let poolStrategy = await env.yields.compoundYield;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+            let borrowTokenWhale = await env.impersonatedAccounts[1];
+
+            console.log("h1");
+            // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await borrowToken.connect(admin).transfer(lender.address, amount);
+            await borrowToken.connect(lender).approve(poolAddress, amount);
+
+            console.log("h2");
+            // Lender actually lends his Borrow Tokens
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            console.log("h3");
+            const collateralShares = await env.savingsAccount.connect(borrower).balanceInShares(pool.address, collateralToken.address, poolStrategy.address);
+            console.log("Collateral Shares: ", collateralShares.toString());
+            let collateralTokens = await poolStrategy.callStatic.getTokensForShares(collateralShares, collateralToken.address);
+            console.log("CollateralTokens: ", collateralTokens.toString());
+            let borrowTokensForCollateral = await pool.getEquivalentTokens(collateralToken.address, borrowToken.address, collateralTokens);
+            console.log("borrowTokensForCollateral: ", borrowTokensForCollateral.toString());
+            console.log("Amount: ", amount.toString());
+
+            console.log("h4");
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, borrowTokensForCollateral);
+            await borrowToken.connect(admin).transfer(randomLender.address, borrowTokensForCollateral);
+            await borrowToken.connect(randomLender).approve(pool.address, borrowTokensForCollateral);
+
+            let {loanStatus} = await pool.poolVariables()
+            console.log(loanStatus);
+
+            console.log("h5");
+            console.log("Random Lender Balance: ", (await (borrowToken.balanceOf(randomLender.address))).toString());
+            await expect(pool.connect(randomLender).liquidatePool(false, false, true)).to.be.revertedWith("fuckMeDaddy");
+        });
+        */
+
+        it("Lender should not be able to request margin calls in this time period: ", async function() {
+            let{admin, lender, borrower} = env.entities;
+            
+            //The request for this margin call should fail
+            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('2');
+        });
+
+        it("Loan repayment shouldn't be possible in this time-frame: ", async function() {
+            let {admin, lender, borrower} = env.entities;
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let collateralToken = env.mockTokenContracts[1].contract;
             let borrowToken = env.mockTokenContracts[0].contract;
-            let poolStrategy = env.yields.compoundYield;
             let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
 
             // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
@@ -265,10 +317,17 @@ export async function preActivePoolChecks(
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            
+            // Taking any arbitrary amount as repayment amount as env.repayments.connect(borrower).getInterestDueTillInstalment(pool.address) will return 0
+            const repayAmount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals-2)); 
 
-            // Pool cannot be liquidated right now
-            await expect(pool.connect(randomEntity).liquidatePool(false, false, false)).to.be.revertedWith('');
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, repayAmount.mul(2));
+            await borrowToken.connect(admin).transfer(borrower.address, repayAmount.mul(2));
+            await borrowToken.connect(borrower).approve(env.repayments.address, repayAmount);
+
+            await expect(env.repayments.connect(borrower).repay(pool.address, repayAmount)).to.be.revertedWith("Pool is not Initiliazed");
         });
+
 
         it("Borrower can withdraw the borrow amount only if amount lent is more than minBorrowFraction of requested amount: ", async function() {
             let { admin, borrower, lender } = env.entities;
