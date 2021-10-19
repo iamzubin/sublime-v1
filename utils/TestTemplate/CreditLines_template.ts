@@ -39,6 +39,8 @@ import { CreditLine } from '../../typechain/CreditLine';
 import { Contracts } from '../../existingContracts/compound.json';
 import { expectApproxEqual } from '../helpers';
 import { incrementChain, timeTravel, blockTravel } from '../time';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { ERC20Detailed } from '@typechain/ERC20Detailed';
 
 export async function CreditLines(
     Amount: Number,
@@ -51,7 +53,7 @@ export async function CreditLines(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
-    describe('CreditLines: Requesting credit lines', async () => {
+    describe(`CreditLines ${BorrowToken}/${CollateralToken}: Requesting credit lines`, async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -348,7 +350,7 @@ export async function CreditLines(
         });
     });
 
-    describe('Creditline Active tests', async function () {
+    describe(`Creditline ${BorrowToken}/${CollateralToken}: Active tests`, async function () {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -670,5 +672,410 @@ export async function CreditLines(
             console.log('Test Lender - ', lender.address);
             await creditLine.connect(borrower).borrow(values, amount);
         });
+    });
+
+    describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Calculate Borrowable Amount`, async () => {
+        let env: Environment;
+        let creditLine: CreditLine;
+        let admin: SignerWithAddress;
+        let lender: SignerWithAddress;
+        let borrower: SignerWithAddress;
+
+        let deployHelper: DeployHelper;
+
+        before(async () => {
+            env = await createEnvironment(
+                hre,
+                [WhaleAccount1, WhaleAccount2],
+                [
+                    { asset: BorrowToken, liquidityToken: liquidityBorrowToken },
+                    { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
+                ] as CompoundPair[],
+                [] as YearnPair[],
+                [
+                    { tokenAddress: BorrowToken, feedAggregator: chainlinkBorrow },
+                    { tokenAddress: CollateralToken, feedAggregator: ChainlinkCollateral },
+                ] as PriceOracleSource[],
+                {
+                    votingPassRatio: extensionParams.votingPassRatio,
+                } as ExtensionInitParams,
+                {
+                    gracePenalityRate: repaymentParams.gracePenalityRate,
+                    gracePeriodFraction: repaymentParams.gracePeriodFraction,
+                } as RepaymentsInitParams,
+                {
+                    admin: '',
+                    _collectionPeriod: testPoolFactoryParams._collectionPeriod,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
+                    _marginCallDuration: testPoolFactoryParams._marginCallDuration,
+                    _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
+                    _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
+                    _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
+                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
+                } as PoolFactoryInitParams,
+                CreditLineDefaultStrategy.Compound,
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
+            );
+
+            creditLine = env.creditLine;
+            admin = env.entities.admin;
+            lender = env.entities.lender;
+            borrower = env.entities.borrower;
+            deployHelper = new DeployHelper(admin);
+        });
+
+        it('If no collateral is deposited, then borrowable amount should be 0, autoliquidation = false', async () => {
+            let BorrowAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[0].contract.address);
+            let CollateralAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[1].contract.address);
+            let borrowDecimals = await BorrowAsset.decimals();
+            let collateralDecimals = await CollateralAsset.decimals();
+
+            let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
+            let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
+
+            creditLine = creditLine.connect(borrower);
+
+            let creditLineNumber = await creditLine
+                .connect(borrower)
+                .callStatic.request(
+                    lender.address,
+                    borrowLimit,
+                    borrowRate,
+                    true,
+                    colRatio,
+                    BorrowAsset.address,
+                    CollateralAsset.address,
+                    false
+                );
+
+            await creditLine
+                .connect(borrower)
+                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+
+            let ba = await creditLine.callStatic.calculateBorrowableAmount(creditLineNumber);
+            expectApproxEqual(ba, 0, 0);
+        });
+        it('Should revert if credit line is not (active) (requested)', async () => {
+            let BorrowAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[0].contract.address);
+            let CollateralAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[1].contract.address);
+            let borrowDecimals = await BorrowAsset.decimals();
+            let collateralDecimals = await CollateralAsset.decimals();
+
+            let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
+            let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
+
+            creditLine = creditLine.connect(borrower);
+
+            let creditLineNumber = await creditLine
+                .connect(borrower)
+                .callStatic.request(
+                    lender.address,
+                    borrowLimit,
+                    borrowRate,
+                    true,
+                    colRatio,
+                    BorrowAsset.address,
+                    CollateralAsset.address,
+                    false
+                );
+
+            await creditLine
+                .connect(borrower)
+                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+
+            await creditLine.connect(lender).accept(creditLineNumber);
+            await creditLine.connect(lender).close(creditLineNumber);
+            await expect(creditLine.calculateBorrowableAmount(creditLineNumber)).to.be.revertedWith(
+                'CreditLine: Cannot only if credit line ACTIVE or REQUESTED'
+            );
+        });
+
+        it('In no case borrowable amount(including interest) should be more than the borrow limit, imm.. after adding the collateral', async () => {
+            let BorrowAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[0].contract.address);
+            let CollateralAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[1].contract.address);
+            let borrowDecimals = await BorrowAsset.decimals();
+            let collateralDecimals = await CollateralAsset.decimals();
+
+            let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
+            let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
+
+            let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+
+            await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(borrower.address, borrowLimit);
+            // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
+            // console.log({ whale2Balane: await CollateralAsset.balanceOf(WhaleAccount1) });
+            await CollateralAsset.connect(env.impersonatedAccounts[0]).transfer(borrower.address, collateralAmountToDeposit);
+
+            creditLine = creditLine.connect(borrower);
+
+            let creditLineNumber = await creditLine
+                .connect(borrower)
+                .callStatic.request(
+                    lender.address,
+                    borrowLimit,
+                    borrowRate,
+                    true,
+                    colRatio,
+                    BorrowAsset.address,
+                    CollateralAsset.address,
+                    false
+                );
+
+            await creditLine
+                .connect(borrower)
+                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+
+            await creditLine.connect(lender).accept(creditLineNumber);
+
+            await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
+            await creditLine
+                .connect(borrower)
+                .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false);
+
+            let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
+
+            expect(borrowableAmount).lte(borrowLimit);
+        });
+
+        it('In no case borrowable amount(including interest) should be more than the borrow limit, after borrowing some tokens and doing block/time travel, partial amount', async () => {
+            let BorrowAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[0].contract.address);
+            let CollateralAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[1].contract.address);
+            let borrowDecimals = await BorrowAsset.decimals();
+            let collateralDecimals = await CollateralAsset.decimals();
+
+            let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
+            let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+
+            let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+
+            await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
+            // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
+            // console.log({ whale2Balane: await CollateralAsset.balanceOf(WhaleAccount1) });
+            await CollateralAsset.connect(env.impersonatedAccounts[0]).transfer(borrower.address, collateralAmountToDeposit);
+
+            creditLine = creditLine.connect(borrower);
+
+            let creditLineNumber = await creditLine
+                .connect(borrower)
+                .callStatic.request(
+                    lender.address,
+                    borrowLimit,
+                    borrowRate,
+                    true,
+                    colRatio,
+                    BorrowAsset.address,
+                    CollateralAsset.address,
+                    false
+                );
+
+            await creditLine
+                .connect(borrower)
+                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+
+            await creditLine.connect(lender).accept(creditLineNumber);
+
+            await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
+            await creditLine
+                .connect(borrower)
+                .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false);
+
+            await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
+            await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
+
+            await env.savingsAccount.connect(lender).approve(borrowLimit, BorrowAsset.address, creditLine.address);
+            await creditLine.connect(borrower).borrow(creditLineNumber, borrowLimit.div(10000)); // borrow a very small amount
+
+            await timeTravel(network, 86400 * 10); // 10 days
+
+            let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
+
+            expect(borrowableAmount).lte(borrowLimit);
+        });
+
+        it('In no case borrowable amount(including interest) should be more than the borrow limit, after borrowing some tokens and doing block/time travel, full borrow limit', async () => {
+            let BorrowAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[0].contract.address);
+            let CollateralAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[1].contract.address);
+            let borrowDecimals = await BorrowAsset.decimals();
+            let collateralDecimals = await CollateralAsset.decimals();
+
+            let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
+            let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+
+            let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+
+            await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
+            // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
+            // console.log({ whale2Balane: await CollateralAsset.balanceOf(WhaleAccount1) });
+            await CollateralAsset.connect(env.impersonatedAccounts[0]).transfer(borrower.address, collateralAmountToDeposit);
+
+            creditLine = creditLine.connect(borrower);
+
+            let creditLineNumber = await creditLine
+                .connect(borrower)
+                .callStatic.request(
+                    lender.address,
+                    borrowLimit,
+                    borrowRate,
+                    true,
+                    colRatio,
+                    BorrowAsset.address,
+                    CollateralAsset.address,
+                    false
+                );
+
+            await creditLine
+                .connect(borrower)
+                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+
+            await creditLine.connect(lender).accept(creditLineNumber);
+
+            await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
+            await creditLine
+                .connect(borrower)
+                .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false);
+
+            await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
+            await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
+
+            await env.savingsAccount.connect(lender).approve(borrowLimit, BorrowAsset.address, creditLine.address);
+            let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
+            await creditLine.connect(borrower).borrow(creditLineNumber, borrowableAmount.mul(95).div(100)); // 95% of borrow limit
+
+            await timeTravel(network, 86400 * 10); // 10 days
+
+            borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
+
+            expect(borrowableAmount).lte(borrowLimit);
+        });
+    });
+
+    describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
+        let env: Environment;
+        let creditLine: CreditLine;
+        let admin: SignerWithAddress;
+        let lender: SignerWithAddress;
+        let borrower: SignerWithAddress;
+
+        let deployHelper: DeployHelper;
+
+        let creditLineNumber: BigNumber;
+
+        before(async () => {
+            env = await createEnvironment(
+                hre,
+                [WhaleAccount1, WhaleAccount2],
+                [
+                    { asset: BorrowToken, liquidityToken: liquidityBorrowToken },
+                    { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
+                ] as CompoundPair[],
+                [] as YearnPair[],
+                [
+                    { tokenAddress: BorrowToken, feedAggregator: chainlinkBorrow },
+                    { tokenAddress: CollateralToken, feedAggregator: ChainlinkCollateral },
+                ] as PriceOracleSource[],
+                {
+                    votingPassRatio: extensionParams.votingPassRatio,
+                } as ExtensionInitParams,
+                {
+                    gracePenalityRate: repaymentParams.gracePenalityRate,
+                    gracePeriodFraction: repaymentParams.gracePeriodFraction,
+                } as RepaymentsInitParams,
+                {
+                    admin: '',
+                    _collectionPeriod: testPoolFactoryParams._collectionPeriod,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
+                    _marginCallDuration: testPoolFactoryParams._marginCallDuration,
+                    _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
+                    _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
+                    _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
+                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
+                } as PoolFactoryInitParams,
+                CreditLineDefaultStrategy.Compound,
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
+            );
+
+            creditLine = env.creditLine;
+            admin = env.entities.admin;
+            lender = env.entities.lender;
+            borrower = env.entities.borrower;
+            deployHelper = new DeployHelper(admin);
+        });
+
+        beforeEach(async () => {
+            let BorrowAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[0].contract.address);
+            let CollateralAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[1].contract.address);
+            let borrowDecimals = await BorrowAsset.decimals();
+            let collateralDecimals = await CollateralAsset.decimals();
+
+            let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
+            let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+
+            let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+
+            await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
+            // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
+            // console.log({ whale2Balane: await CollateralAsset.balanceOf(WhaleAccount1) });
+            await CollateralAsset.connect(env.impersonatedAccounts[0]).transfer(borrower.address, collateralAmountToDeposit);
+
+            creditLine = creditLine.connect(borrower);
+
+            creditLineNumber = await creditLine
+                .connect(borrower)
+                .callStatic.request(
+                    lender.address,
+                    borrowLimit,
+                    borrowRate,
+                    true,
+                    colRatio,
+                    BorrowAsset.address,
+                    CollateralAsset.address,
+                    false
+                );
+
+            await creditLine
+                .connect(borrower)
+                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+
+            await creditLine.connect(lender).accept(creditLineNumber);
+
+            await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
+            await creditLine
+                .connect(borrower)
+                .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false);
+
+            await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
+            await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
+
+            await env.savingsAccount.connect(lender).approve(borrowLimit, BorrowAsset.address, creditLine.address);
+            let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
+            await creditLine.connect(borrower).borrow(creditLineNumber, borrowableAmount.mul(95).div(100)); // 95% of borrow limit
+
+            await timeTravel(network, 86400 * 10); // 10 days
+
+            borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
+
+            expect(borrowableAmount).lte(borrowLimit);
+        });
+        it('Test Liquidation', async () => {});
     });
 }

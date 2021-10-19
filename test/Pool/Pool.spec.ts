@@ -496,7 +496,7 @@ describe('Pool', async () => {
 
                 await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 
-                await collateralToken.approve(generatedPoolAddress, _collateralAmount.mul(2));
+                await collateralToken.connect(borrower).approve(generatedPoolAddress, _collateralAmount.mul(2));
 
                 await expect(
                     poolFactory
