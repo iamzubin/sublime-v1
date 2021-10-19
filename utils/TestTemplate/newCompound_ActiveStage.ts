@@ -361,13 +361,14 @@ export async function preActivePoolChecks(
             await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('');
         });
 
-        it("Amount borrowed event is emitted when lent amount is withdrawn: ", async function() {
-            let { admin, borrower, lender } = env.entities;
+        it("Protocol Fee is subtracted when borrower withdraws borrow amount, along with withdraw event emission & adjusted tokens reaching the borrower: ", async function() {
+            let { admin, borrower, lender, protocolFeeCollector } = env.entities;
             let random = env.entities.extraLenders[10]; // Random address
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let collateralToken = env.mockTokenContracts[1].contract;
             let borrowToken = env.mockTokenContracts[0].contract;
             let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+            let poolStrategy = env.yields.compoundYield;
 
             // Approving Borrow tokens to the lender
             await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
@@ -383,8 +384,33 @@ export async function preActivePoolChecks(
             const { loanStartTime } = await pool.poolConstants();
             await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
 
+            const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
+            console.log(borrowAssetBalanceBorrower.toString());
+
+            const tokensLent = await poolToken.totalSupply();
+            console.log(tokensLent.toString());
+            
             // Borrower withdraws borrow tokens
             await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.emit(pool, "AmountBorrowed").withArgs(amount);
+
+            const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
+            console.log(borrowAssetBalanceBorrowerAfter.toString());
+
+            const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
+            console.log(protocolFee.toString());
+
+            const checkProtcolFee = await borrowToken.balanceOf(protocolFeeCollector.address);
+            console.log(checkProtcolFee.toString());
+            // IMO, we are not really comparing the exact tokens. That is, the protocolFee is in terms of poolTokens and we are checking Sublime's borrowToken balance.
+            // But since the poolTokens are generated in 1:1 ratio of borrowTokens, therefore the numbers are same
+            expect(checkProtcolFee).to.eq(protocolFee); 
+            
+            assert(
+                borrowAssetBalanceBorrower.add(tokensLent).sub(protocolFee).toString() == borrowAssetBalanceBorrowerAfter.toString(),
+                `Borrower not receiving correct lent amount. Expected: ${borrowAssetBalanceBorrower
+                    .add(tokensLent)
+                    .toString()} Actual: ${borrowAssetBalanceBorrowerAfter.toString()}`
+            );
         });
     });
 }
