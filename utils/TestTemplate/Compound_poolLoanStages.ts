@@ -11,8 +11,7 @@ import {
     RepaymentsInitParams,
     YearnPair,
 } from '../types';
-import hre from 'hardhat';
-const { ethers, network } = hre;
+
 import { expect, assert } from 'chai';
 
 import {
@@ -47,6 +46,9 @@ export async function compoundPoolCollectionStage(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
+    const hre = require('hardhat');
+    const { ethers, network } = hre;
+
     describe('Pool Simulation: Collection Stage', async () => {
         let env: Environment;
         let pool: Pool;
