@@ -528,7 +528,7 @@ export async function CreditLines(
         it('CreditLine Active: Repayments done directly', async function () {
             let { admin, borrower, lender } = env.entities;
             let interestDue = await creditLine.connect(admin).calculateInterestAccrued(values);
-            console.log({ interestDue: interestDue.toString() })
+            console.log({ interestDue: interestDue.toString() });
         });
     });
 }

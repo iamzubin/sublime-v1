@@ -198,7 +198,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         if (_strategy != address(0)) {
             _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
         }
-
         balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
             _amount,
             'SavingsAccount::withdrawFrom insufficient balance'
