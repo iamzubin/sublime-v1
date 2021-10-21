@@ -411,6 +411,9 @@ export async function preActivePoolChecks(
                     .add(tokensLent)
                     .toString()} Actual: ${borrowAssetBalanceBorrowerAfter.toString()}`
             );
+            
+            // This step is to remove the protocol fee, for other tests
+            await borrowToken.connect(protocolFeeCollector).transfer(admin.address, checkProtcolFee);
         });
     });
 }
