@@ -5,7 +5,7 @@ import {
     CreditLineInitParams,
     Environment,
     ExtensionInitParams,
-    // PoolCreateParams,
+    PoolCreateParams,
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
@@ -35,6 +35,7 @@ import { PoolToken } from '../../typechain/PoolToken';
 import { CompoundYield } from '../../typechain/CompoundYield';
 import { expectApproxEqual } from '../helpers';
 import { incrementChain, timeTravel, blockTravel, blocksTravel } from '../../utils/time';
+import { boolean } from 'hardhat/internal/core/params/argumentTypes';
 
 export async function preActivePoolChecks(
     Amount: Number,
@@ -358,7 +359,49 @@ export async function preActivePoolChecks(
             `Pool should have been in active stage, found in: ${loanStatus}`);
 
             //Borrower request to withdraw smalller amount should be rejected
-            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('');
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('13');
+        });
+
+        // DOUBT: Penalty calculated is not same as penalty deducted from Borrower's collateral
+        it("Borrower can cancel the pool in the collection stage with a penalty: ", async function() {
+            let {admin, borrower, lender} = env.entities;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+            let poolStrategy = env.yields.compoundYield;
+
+            //Lender approves his Borrow Tokens to be used by the pool
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await borrowToken.connect(admin).transfer(lender.address, amount);
+            await borrowToken.connect(lender).approve(pool.address, amount);
+
+            // Lender actually lends his Borrow Tokens
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            // The balance of the pool is equivalent to the balance of the collateralShares of the pool
+            const collateralBalancePoolBeforeCancel = await env.savingsAccount.connect(admin).balanceInShares(pool.address, collateralToken.address, poolStrategy.address);
+            console.log("Collateral Token Balance of Pool: ", collateralBalancePoolBeforeCancel.toString());
+
+            let baseLiquidityShares = (await pool.poolVariables()).baseLiquidityShares;
+            let poolCancelPenaltyFraction = testPoolFactoryParams._poolCancelPenalityFraction;
+            let borrowRate = (await pool.poolConstants()).borrowRate;
+            let scalingNumber = BigNumber.from(10).pow(30);
+            let penaltyTime = (await pool.poolConstants()).repaymentInterval;
+            let yearInSeconds = 365*24*60*60;
+
+            let penaltyForCancelling = poolCancelPenaltyFraction.mul(borrowRate).mul(baseLiquidityShares).div(scalingNumber).mul(penaltyTime).div(yearInSeconds).div(scalingNumber);
+            console.log("Penalty for Cancelling: ", penaltyForCancelling.toString());
+            // Borrower cancels the pool in the collection stage itself
+            await pool.connect(borrower).cancelPool();
+
+            // Balance of the borrower now (collateral submitted - penalty imposed)
+            const borrowerCollateralSharesAfterCancel = await env.savingsAccount.connect(borrower).balanceInShares(borrower.address, collateralToken.address, poolStrategy.address);
+            console.log(borrowerCollateralSharesAfterCancel.toString());
+
+            assert(collateralBalancePoolBeforeCancel.toString() !== borrowerCollateralSharesAfterCancel.toString(), "Penalty not deducted");
         });
 
         it("Protocol Fee is subtracted when borrower withdraws borrow amount, along with withdraw event emission & adjusted tokens reaching the borrower: ", async function() {
