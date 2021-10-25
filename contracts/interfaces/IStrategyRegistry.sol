@@ -32,4 +32,6 @@ interface IStrategyRegistry {
         address _oldStrategy,
         address _newStrategy
     ) external;
+
+    function isStrategy(address _strategy) external view returns (bool);
 }

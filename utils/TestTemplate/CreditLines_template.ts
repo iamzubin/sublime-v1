@@ -186,7 +186,8 @@ export async function CreditLines(
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        [env.yields.noYield.address, env.yields.yearnYield.address]
                     )
             ).to.be.revertedWith('Lender and Borrower cannot be same addresses');
         });
@@ -211,7 +212,8 @@ export async function CreditLines(
                     _autoLiquidation,
                     _collateralRatio,
                     Contracts.BAT, // Using a different borrow token
-                    _collateralAsset
+                    _collateralAsset,
+                    [env.yields.noYield.address, env.yields.yearnYield.address]
                 )
             ).to.be.revertedWith('CL: No price feed');
         });
@@ -237,7 +239,8 @@ export async function CreditLines(
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        [env.yields.noYield.address, env.yields.yearnYield.address]
                     )
             ).to.be.revertedWith('CL: collateral ratio should be higher');
         });
@@ -263,7 +266,8 @@ export async function CreditLines(
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    [env.yields.noYield.address, env.yields.yearnYield.address]
                 );
 
             await expect(
@@ -276,7 +280,8 @@ export async function CreditLines(
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        [env.yields.noYield.address, env.yields.yearnYield.address]
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
@@ -311,7 +316,8 @@ export async function CreditLines(
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    [env.yields.noYield.address, env.yields.yearnYield.address]
                 );
 
             await expect(
@@ -324,15 +330,16 @@ export async function CreditLines(
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        [env.yields.noYield.address, env.yields.yearnYield.address]
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
 
-            await expect(creditLine.connect(lender).acceptAsLender(values)).to.be.revertedWith(
-                "Only Lender who hasn't requested can accept"
-            );
+            await expect(
+                creditLine.connect(lender).acceptAsLender(values, [env.yields.noYield.address, env.yields.yearnYield.address])
+            ).to.be.revertedWith("Only Lender who hasn't requested can accept");
 
             await expect(creditLine.connect(borrower).acceptAsBorrower(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
@@ -479,7 +486,8 @@ export async function CreditLines(
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    [env.yields.noYield.address, env.yields.yearnYield.address]
                 );
 
             await expect(
@@ -492,7 +500,8 @@ export async function CreditLines(
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        [env.yields.noYield.address, env.yields.yearnYield.address]
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
@@ -783,7 +792,7 @@ export async function CreditLines(
                 .connect(borrower)
                 .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber, [env.yields.noYield.address, env.yields.yearnYield.address]);
             await creditLine.connect(lender).close(creditLineNumber);
             await expect(creditLine.calculateBorrowableAmount(creditLineNumber)).to.be.revertedWith(
                 'CreditLine: Cannot only if credit line ACTIVE or REQUESTED'
@@ -825,7 +834,7 @@ export async function CreditLines(
                 .connect(borrower)
                 .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber, [env.yields.noYield.address, env.yields.yearnYield.address]);
 
             await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
             await creditLine
@@ -872,7 +881,7 @@ export async function CreditLines(
                 .connect(borrower)
                 .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber, [env.yields.noYield.address, env.yields.yearnYield.address]);
 
             await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
             await creditLine
@@ -927,7 +936,7 @@ export async function CreditLines(
                 .connect(borrower)
                 .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber, [env.yields.noYield.address, env.yields.yearnYield.address]);
 
             await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
             await creditLine
@@ -1043,7 +1052,7 @@ export async function CreditLines(
                 .connect(borrower)
                 .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber, [env.yields.noYield.address, env.yields.yearnYield.address]);
 
             await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
             await creditLine

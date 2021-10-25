@@ -78,4 +78,8 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         registry[_oldStrategy] = false;
         registry[_newStrategy] = true;
     }
+
+    function isStrategy(address _strategy) external view override returns (bool) {
+        return registry[_strategy];
+    }
 }

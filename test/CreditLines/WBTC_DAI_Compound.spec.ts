@@ -259,7 +259,8 @@ describe('WBTC-DAI Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    [noYield.address]
                 );
 
             await expect(
@@ -272,7 +273,8 @@ describe('WBTC-DAI Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        [noYield.address]
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')

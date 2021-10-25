@@ -53,7 +53,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address collateralAsset;
         bool autoLiquidation;
         bool requestByLender;
+        address[] strategyPreference;
     }
+
     mapping(uint256 => mapping(address => uint256)) collateralShareInStrategy;
     mapping(uint256 => CreditLineVariables) public creditLineVariables;
     mapping(uint256 => CreditLineConstants) public creditLineConstants;
@@ -378,8 +380,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _autoLiquidation,
         uint256 _collateralRatio,
         address _borrowAsset,
-        address _collateralAsset
+        address _collateralAsset,
+        address[] memory strategyPreference
     ) public returns (uint256) {
+        require(strategyPreference.length != 0, 'Creditlines: Lender should atleast provide one strategy in the preference');
+        for (uint256 index = 0; index < strategyPreference.length; index++) {
+            require(IStrategyRegistry(strategyRegistry).isStrategy(strategyPreference[index]), 'Should be a valid strategy');
+        }
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
         address _lender = msg.sender;
         address _borrower = _requestTo;
@@ -396,6 +403,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             true
         );
 
+        creditLineConstants[_id].strategyPreference = strategyPreference;
         emit CreditLineRequested(_id, _lender, _borrower);
         return _id;
     }
@@ -446,7 +454,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev used to Accept a credit line by a specified lender
      * @param _id Credit line hash which represents the credit Line Unique Hash
      */
-    function acceptAsLender(uint256 _id) external {
+    function acceptAsLender(uint256 _id, address[] memory strategyPreference) external {
+        require(strategyPreference.length != 0, 'Creditlines: Lender should atleast provide one strategy in the preference');
+        for (uint256 index = 0; index < strategyPreference.length; index++) {
+            require(IStrategyRegistry(strategyRegistry).isStrategy(strategyPreference[index]), 'Should be a valid strategy');
+        }
         require(
             creditLineVariables[_id].status == creditLineStatus.REQUESTED,
             'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
@@ -454,6 +466,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _requestByLender = creditLineConstants[_id].requestByLender;
         require(msg.sender == creditLineConstants[_id].lender && !_requestByLender, "Only Lender who hasn't requested can accept");
         creditLineVariables[_id].status = creditLineStatus.ACTIVE;
+        creditLineConstants[_id].strategyPreference = strategyPreference;
         emit CreditLineAccepted(_id);
     }
 
@@ -496,9 +509,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function _withdrawBorrowAmount(
         address _asset,
         uint256 _amountInTokens,
-        address _lender
+        address _lender,
+        uint256 _creditLine
     ) internal {
-        address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
+        // address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
+        address[] memory _strategyList = creditLineConstants[_creditLine].strategyPreference;
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {
@@ -552,12 +567,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _tokenDiffBalance;
         if (_borrowAsset != address(0)) {
             uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
-            _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
+            _withdrawBorrowAmount(_borrowAsset, _amount, _lender, _id);
             uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         } else {
             uint256 _balanceBefore = address(this).balance;
-            _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
+            _withdrawBorrowAmount(_borrowAsset, _amount, _lender, _id);
             uint256 _balanceAfter = address(this).balance;
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         }

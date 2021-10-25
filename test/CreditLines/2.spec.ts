@@ -248,7 +248,8 @@ describe('Credit Lines', async () => {
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset
+                    _collateralAsset,
+                    [noYield.address, yearnYield.address]
                 );
 
             await expect(
@@ -261,7 +262,8 @@ describe('Credit Lines', async () => {
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset
+                        _collateralAsset,
+                        [noYield.address, yearnYield.address]
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
