@@ -179,15 +179,14 @@ export async function CreditLines(
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(
+                    .requestAsLender(
                         lender.address,
                         borrowLimit,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset,
-                        true
+                        _collateralAsset
                     )
             ).to.be.revertedWith('Lender and Borrower cannot be same addresses');
         });
@@ -205,15 +204,14 @@ export async function CreditLines(
             creditLine = env.creditLine;
 
             await expect(
-                creditLine.connect(lender).request(
+                creditLine.connect(lender).requestAsLender(
                     borrower.address,
                     borrowLimit,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
                     Contracts.BAT, // Using a different borrow token
-                    _collateralAsset,
-                    true
+                    _collateralAsset
                 )
             ).to.be.revertedWith('CL: No price feed');
         });
@@ -232,15 +230,14 @@ export async function CreditLines(
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(
+                    .requestAsLender(
                         borrower.address,
                         borrowLimit,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset,
-                        true
+                        _collateralAsset
                     )
             ).to.be.revertedWith('CL: collateral ratio should be higher');
         });
@@ -259,29 +256,27 @@ export async function CreditLines(
 
             let values = await creditLine
                 .connect(lender)
-                .callStatic.request(
+                .callStatic.requestAsLender(
                     borrower.address,
                     borrowLimit,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset,
-                    true
+                    _collateralAsset
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(
+                    .requestAsLender(
                         borrower.address,
                         borrowLimit,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset,
-                        true
+                        _collateralAsset
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
@@ -309,39 +304,37 @@ export async function CreditLines(
 
             let values = await creditLine
                 .connect(lender)
-                .callStatic.request(
+                .callStatic.requestAsLender(
                     borrower.address,
                     borrowLimit,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset,
-                    true
+                    _collateralAsset
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(
+                    .requestAsLender(
                         borrower.address,
                         borrowLimit,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset,
-                        true
+                        _collateralAsset
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
 
-            await expect(creditLine.connect(lender).accept(values)).to.be.revertedWith(
-                "Only Borrower or Lender who hasn't requested can accept"
+            await expect(creditLine.connect(lender).acceptAsLender(values)).to.be.revertedWith(
+                "Only Lender who hasn't requested can accept"
             );
 
-            await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
+            await expect(creditLine.connect(borrower).acceptAsBorrower(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
             let StatusActual = (await creditLine.connect(admin).creditLineVariables(values)).status;
             assert(
@@ -479,29 +472,27 @@ export async function CreditLines(
 
             values = await creditLine
                 .connect(lender)
-                .callStatic.request(
+                .callStatic.requestAsLender(
                     borrower.address,
                     borrowLimit,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset,
-                    true
+                    _collateralAsset
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(
+                    .requestAsLender(
                         borrower.address,
                         borrowLimit,
                         _borrowRate,
                         _autoLiquidation,
                         _collateralRatio,
                         _borrowAsset,
-                        _collateralAsset,
-                        true
+                        _collateralAsset
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
@@ -537,7 +528,7 @@ export async function CreditLines(
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
 
-            await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
+            await expect(creditLine.connect(borrower).acceptAsBorrower(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
             let liquidityShares = await env.yields.compoundYield.callStatic.getSharesForTokens(amountForDeposit, _collateralAsset);
             // console.log({ amountForDeposit: amountForDeposit.toString() });
@@ -574,7 +565,7 @@ export async function CreditLines(
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
 
-            await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
+            await expect(creditLine.connect(borrower).acceptAsBorrower(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
             let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(amountForDeposit, _collateralAsset);
             // console.log({ amountForDeposit: amountForDeposit.toString() });
@@ -747,20 +738,19 @@ export async function CreditLines(
 
             let creditLineNumber = await creditLine
                 .connect(borrower)
-                .callStatic.request(
+                .callStatic.requestAsBorrower(
                     lender.address,
                     borrowLimit,
                     borrowRate,
                     true,
                     colRatio,
                     BorrowAsset.address,
-                    CollateralAsset.address,
-                    false
+                    CollateralAsset.address
                 );
 
             await creditLine
                 .connect(borrower)
-                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+                .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
             let ba = await creditLine.callStatic.calculateBorrowableAmount(creditLineNumber);
             expectApproxEqual(ba, 0, 0);
@@ -779,22 +769,21 @@ export async function CreditLines(
 
             let creditLineNumber = await creditLine
                 .connect(borrower)
-                .callStatic.request(
+                .callStatic.requestAsBorrower(
                     lender.address,
                     borrowLimit,
                     borrowRate,
                     true,
                     colRatio,
                     BorrowAsset.address,
-                    CollateralAsset.address,
-                    false
+                    CollateralAsset.address
                 );
 
             await creditLine
                 .connect(borrower)
-                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+                .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).accept(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
             await creditLine.connect(lender).close(creditLineNumber);
             await expect(creditLine.calculateBorrowableAmount(creditLineNumber)).to.be.revertedWith(
                 'CreditLine: Cannot only if credit line ACTIVE or REQUESTED'
@@ -822,22 +811,21 @@ export async function CreditLines(
 
             let creditLineNumber = await creditLine
                 .connect(borrower)
-                .callStatic.request(
+                .callStatic.requestAsBorrower(
                     lender.address,
                     borrowLimit,
                     borrowRate,
                     true,
                     colRatio,
                     BorrowAsset.address,
-                    CollateralAsset.address,
-                    false
+                    CollateralAsset.address
                 );
 
             await creditLine
                 .connect(borrower)
-                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+                .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).accept(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
 
             await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
             await creditLine
@@ -870,22 +858,21 @@ export async function CreditLines(
 
             let creditLineNumber = await creditLine
                 .connect(borrower)
-                .callStatic.request(
+                .callStatic.requestAsBorrower(
                     lender.address,
                     borrowLimit,
                     borrowRate,
                     true,
                     colRatio,
                     BorrowAsset.address,
-                    CollateralAsset.address,
-                    false
+                    CollateralAsset.address
                 );
 
             await creditLine
                 .connect(borrower)
-                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+                .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).accept(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
 
             await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
             await creditLine
@@ -926,22 +913,21 @@ export async function CreditLines(
 
             let creditLineNumber = await creditLine
                 .connect(borrower)
-                .callStatic.request(
+                .callStatic.requestAsBorrower(
                     lender.address,
                     borrowLimit,
                     borrowRate,
                     true,
                     colRatio,
                     BorrowAsset.address,
-                    CollateralAsset.address,
-                    false
+                    CollateralAsset.address
                 );
 
             await creditLine
                 .connect(borrower)
-                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+                .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).accept(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
 
             await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
             await creditLine
@@ -1043,22 +1029,21 @@ export async function CreditLines(
 
             creditLineNumber = await creditLine
                 .connect(borrower)
-                .callStatic.request(
+                .callStatic.requestAsBorrower(
                     lender.address,
                     borrowLimit,
                     borrowRate,
                     true,
                     colRatio,
                     BorrowAsset.address,
-                    CollateralAsset.address,
-                    false
+                    CollateralAsset.address
                 );
 
             await creditLine
                 .connect(borrower)
-                .request(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address, false);
+                .requestAsBorrower(lender.address, borrowLimit, borrowRate, true, colRatio, BorrowAsset.address, CollateralAsset.address);
 
-            await creditLine.connect(lender).accept(creditLineNumber);
+            await creditLine.connect(lender).acceptAsLender(creditLineNumber);
 
             await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
             await creditLine

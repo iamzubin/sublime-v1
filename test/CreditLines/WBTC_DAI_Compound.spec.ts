@@ -252,21 +252,28 @@ describe('WBTC-DAI Credit Lines', async () => {
 
             let values = await creditLine
                 .connect(lender)
-                .callStatic.request(
+                .callStatic.requestAsLender(
                     _borrower,
                     borrowLimit,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset,
-                    true
+                    _collateralAsset
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(_borrower, borrowLimit, _borrowRate, _autoLiquidation, _collateralRatio, _borrowAsset, _collateralAsset, true)
+                    .requestAsLender(
+                        _borrower,
+                        borrowLimit,
+                        _borrowRate,
+                        _autoLiquidation,
+                        _collateralRatio,
+                        _borrowAsset,
+                        _collateralAsset
+                    )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
@@ -286,7 +293,7 @@ describe('WBTC-DAI Credit Lines', async () => {
 
             let unlimited = BigNumber.from(10).pow(60);
 
-            await creditLine.connect(borrower).accept(lenderCreditLine);
+            await creditLine.connect(borrower).acceptAsBorrower(lenderCreditLine);
 
             await DaiTokenContract.connect(admin).transfer(lender.address, lenderAmount);
             await DaiTokenContract.connect(lender).approve(compoundYield.address, lenderAmount);

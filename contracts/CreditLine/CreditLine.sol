@@ -336,27 +336,53 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _borrowLimit maximum borrow amount in a credit line
      * @param _borrowRate Interest Rate at which credit Line is requested
      */
-
-    function request(
+    function requestAsBorrower(
         address _requestTo,
         uint256 _borrowLimit,
         uint256 _borrowRate,
         bool _autoLiquidation,
         uint256 _collateralRatio,
         address _borrowAsset,
-        address _collateralAsset,
-        bool _requestAsLender
+        address _collateralAsset
     ) public returns (uint256) {
-        //require(userData[borrower].blockCreditLineRequests == true,
-        //        "CreditLine: External requests blocked");
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
 
         address _lender = _requestTo;
         address _borrower = msg.sender;
-        if (_requestAsLender) {
-            _lender = msg.sender;
-            _borrower = _requestTo;
-        }
+        uint256 _id = _createRequest(
+            _lender,
+            _borrower,
+            _borrowLimit,
+            _borrowRate,
+            _autoLiquidation,
+            _collateralRatio,
+            _borrowAsset,
+            _collateralAsset,
+            false
+        );
+
+        emit CreditLineRequested(_id, _lender, _borrower);
+        return _id;
+    }
+
+    /**
+     * @dev used to request a credit line by a borrower
+     * @param _requestTo Address to which creditLine is requested, if borrower creates request then lender address and if lennder creates then borrower address
+     * @param _borrowLimit maximum borrow amount in a credit line
+     * @param _borrowRate Interest Rate at which credit Line is requested
+     */
+    function requestAsLender(
+        address _requestTo,
+        uint256 _borrowLimit,
+        uint256 _borrowRate,
+        bool _autoLiquidation,
+        uint256 _collateralRatio,
+        address _borrowAsset,
+        address _collateralAsset
+    ) public returns (uint256) {
+        require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
+        address _lender = msg.sender;
+        address _borrower = _requestTo;
 
         uint256 _id = _createRequest(
             _lender,
@@ -367,7 +393,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _collateralRatio,
             _borrowAsset,
             _collateralAsset,
-            _requestAsLender
+            true
         );
 
         emit CreditLineRequested(_id, _lender, _borrower);
@@ -402,20 +428,31 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
-     * @dev used to Accept a credit line by a specified lender
+     * @dev used to Accept a credit line by a specified borrower
      * @param _id Credit line hash which represents the credit Line Unique Hash
      */
-    function accept(uint256 _id) external {
+    function acceptAsBorrower(uint256 _id) external {
         require(
             creditLineVariables[_id].status == creditLineStatus.REQUESTED,
             'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
         );
         bool _requestByLender = creditLineConstants[_id].requestByLender;
+        require(msg.sender == creditLineConstants[_id].borrower && _requestByLender, "Only Borrower who hasn't requested can accept");
+        creditLineVariables[_id].status = creditLineStatus.ACTIVE;
+        emit CreditLineAccepted(_id);
+    }
+
+    /**
+     * @dev used to Accept a credit line by a specified lender
+     * @param _id Credit line hash which represents the credit Line Unique Hash
+     */
+    function acceptAsLender(uint256 _id) external {
         require(
-            (msg.sender == creditLineConstants[_id].borrower && _requestByLender) ||
-                (msg.sender == creditLineConstants[_id].lender && !_requestByLender),
-            "Only Borrower or Lender who hasn't requested can accept"
+            creditLineVariables[_id].status == creditLineStatus.REQUESTED,
+            'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
         );
+        bool _requestByLender = creditLineConstants[_id].requestByLender;
+        require(msg.sender == creditLineConstants[_id].lender && !_requestByLender, "Only Lender who hasn't requested can accept");
         creditLineVariables[_id].status = creditLineStatus.ACTIVE;
         emit CreditLineAccepted(_id);
     }

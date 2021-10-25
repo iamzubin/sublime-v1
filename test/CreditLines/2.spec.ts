@@ -241,21 +241,28 @@ describe('Credit Lines', async () => {
 
             let values = await creditLine
                 .connect(lender)
-                .callStatic.request(
+                .callStatic.requestAsLender(
                     _borrower,
                     borrowLimit,
                     _borrowRate,
                     _autoLiquidation,
                     _collateralRatio,
                     _borrowAsset,
-                    _collateralAsset,
-                    true
+                    _collateralAsset
                 );
 
             await expect(
                 creditLine
                     .connect(lender)
-                    .request(_borrower, borrowLimit, _borrowRate, _autoLiquidation, _collateralRatio, _borrowAsset, _collateralAsset, true)
+                    .requestAsLender(
+                        _borrower,
+                        borrowLimit,
+                        _borrowRate,
+                        _autoLiquidation,
+                        _collateralRatio,
+                        _borrowAsset,
+                        _collateralAsset
+                    )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(values, lender.address, borrower.address);
@@ -266,7 +273,7 @@ describe('Credit Lines', async () => {
         });
 
         it('Accept Credit Line (Borrower)', async () => {
-            await expect(creditLine.connect(borrower).accept(borrowerCreditLine))
+            await expect(creditLine.connect(borrower).acceptAsBorrower(borrowerCreditLine))
                 .to.emit(creditLine, 'CreditLineAccepted')
                 .withArgs(borrowerCreditLine);
         });
