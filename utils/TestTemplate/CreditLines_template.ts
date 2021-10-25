@@ -525,10 +525,56 @@ export async function CreditLines(
             );
         });
 
-        it('CreditLine Active: Repayments done directly', async function () {
+        it('CreditLine Active: Repayment interest calculations should be correct', async function () {
             let { admin, borrower, lender } = env.entities;
+            const block = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
+            const interval = BigNumber.from(block.timestamp).add(10); // block time stamp
+            await blockTravel(network, parseInt(interval.toString()));
             let interestDue = await creditLine.connect(admin).calculateInterestAccrued(values);
-            console.log({ interestDue: interestDue.toString() });
+            // console.log({ interestDue: interestDue.toString() });
+
+            const _creditVars = await creditLine.connect(borrower).creditLineVariables(values);
+            const _yearTime = await creditLine.connect(admin).yearInSeconds();
+            const scaler = BigNumber.from('10').pow(30);
+            const _interest = _creditVars.principal.mul(_borrowRate).mul(10).div(scaler).div(_yearTime);
+            // console.log({ _interest: _interest.toString() });
+
+            assert(
+                interestDue.toString() == _interest.toString(),
+                `Calculated interest does not match actual interest. Expected ${_interest.toString()} Actual ${interestDue.toString()}`
+            );
+        });
+
+        xit('CreditLine Active: Repayment of interest directly through wallet', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let unlimited = BigNumber.from(10).pow(60);
+            let interestDue = await creditLine.connect(admin).calculateInterestAccrued(values);
+            // console.log({ interestDue: interestDue.toString() });
+
+            let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(
+                interestDue,
+                env.mockTokenContracts[0].contract.address
+            );
+            console.log({ liquidityShares: liquidityShares.toString() });
+
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, liquidityShares.mul(100));
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(borrower.address, liquidityShares.mul(100));
+            await env.mockTokenContracts[0].contract.connect(borrower).approve(lender.address, liquidityShares.mul(100));
+
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, liquidityShares.mul(100));
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(borrower.address, liquidityShares.mul(100));
+            await env.mockTokenContracts[0].contract.connect(borrower).approve(lender.address, liquidityShares.mul(100));
+
+            await env.savingsAccount
+                .connect(borrower)
+                .deposit(
+                    liquidityShares.mul(100),
+                    env.mockTokenContracts[0].contract.address,
+                    env.yields.compoundYield.address,
+                    borrower.address
+                );
+            await env.savingsAccount.connect(borrower).approve(unlimited, env.mockTokenContracts[0].contract.address, lender.address);
+            creditLine.connect(borrower).repay(values, interestDue, false);
         });
     });
 }

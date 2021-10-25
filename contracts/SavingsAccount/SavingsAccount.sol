@@ -78,12 +78,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to
     ) external payable override nonReentrant returns (uint256) {
         require(_to != address(0), 'SavingsAccount::deposit receiver address should not be zero address');
-
         uint256 _sharesReceived = _deposit(_amount, _token, _strategy);
-
         balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_sharesReceived);
         emit Deposited(_to, _amount, _token, _strategy);
-
         return _sharesReceived;
     }
 
