@@ -185,7 +185,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _updateProtocolFeeCollector(address _protocolFeeCollector) internal {
-        require(_protocolFeeCollector != address(0), "cant be 0 address");
+        require(_protocolFeeCollector != address(0), 'cant be 0 address');
         protocolFeeCollector = _protocolFeeCollector;
         emit ProtocolFeeCollectorUpdated(_protocolFeeCollector);
     }

@@ -717,10 +717,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         LoanStatus _currentPoolStatus = poolVariables.loanStatus;
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         require(_currentPoolStatus == LoanStatus.ACTIVE, 'Pool::liquidatePool - Cant liquidate inactive pool');
-        require(
-            IRepayment(_poolFactory.repaymentImpl()).didBorrowerDefault(address(this)),
-            'Pool::liquidatePool - Borrower didnt default'
-        );
+        require(IRepayment(_poolFactory.repaymentImpl()).didBorrowerDefault(address(this)), 'Pool::liquidatePool - Borrower didnt default');
         poolVariables.loanStatus = LoanStatus.DEFAULTED;
 
         address _collateralAsset = poolConstants.collateralAsset;
@@ -1024,7 +1021,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         return poolConstants.borrower;
     }
 
-    function totalSupply() public view override(ERC20Upgradeable, IPool) returns(uint256) {
+    function totalSupply() public view override(ERC20Upgradeable, IPool) returns (uint256) {
         return ERC20Upgradeable.totalSupply();
     }
 }

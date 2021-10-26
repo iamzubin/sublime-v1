@@ -111,7 +111,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
-        require(_wallet != address(0), "cant burn");
+        require(_wallet != address(0), 'cant burn');
         uint256 amount = IERC20(liquidityToken(_asset)).balanceOf(address(this));
 
         if (_asset == address(0)) {

@@ -56,7 +56,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     }
 
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
-        require(_wallet != address(0), "cant burn");
+        require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
         uint256 amount = IERC20(investedTo).balanceOf(address(this));
 
