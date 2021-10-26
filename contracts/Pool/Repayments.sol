@@ -21,7 +21,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    address internal _owner;
     IPoolFactory poolFactory;
     address savingsAccount;
 
@@ -34,10 +33,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         TERMINATED // Pool terminated by admin
     }
 
-    uint256 votingPassRatio;
     uint256 gracePenaltyRate;
     uint256 gracePeriodFraction; // fraction of the repayment interval
-    uint256 constant yearInSeconds = 365 days;
+    uint256 constant YEAR_IN_SECONDS = 365 days;
 
     struct RepaymentVars {
         uint256 totalRepaidAmount;
@@ -124,14 +122,14 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _gracePenaltyRate,
         uint256 _gracePeriodFraction,
         address _savingsAccount
-    ) public initializer {
+    ) external initializer {
         _updatePoolFactory(_poolFactory);
         _updateGracePenalityRate(_gracePenaltyRate);
         _updateGracePeriodFraction(_gracePeriodFraction);
         _updateSavingsAccount(_savingsAccount);
     }
 
-    function updatePoolFactory(address _poolFactory) public onlyOwner {
+    function updatePoolFactory(address _poolFactory) external onlyOwner {
         _updatePoolFactory(_poolFactory);
     }
 
@@ -141,7 +139,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit PoolFactoryUpdated(_poolFactory);
     }
 
-    function updateGracePeriodFraction(uint256 _gracePeriodFraction) public onlyOwner {
+    function updateGracePeriodFraction(uint256 _gracePeriodFraction) external onlyOwner {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
@@ -150,7 +148,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit GracePeriodFractionUpdated(_gracePeriodFraction);
     }
 
-    function updateGracePenalityRate(uint256 _gracePenaltyRate) public onlyOwner {
+    function updateGracePenalityRate(uint256 _gracePenaltyRate) external onlyOwner {
         _updateGracePenalityRate(_gracePenaltyRate);
     }
 
@@ -159,7 +157,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit GracePenalityRateUpdated(_gracePenaltyRate);
     }
 
-    function updateSavingsAccount(address _savingsAccount) public onlyOwner {
+    function updateSavingsAccount(address _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
 
@@ -204,7 +202,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     function getInterestPerSecond(address _poolID) public view returns (uint256) {
         uint256 _activePrincipal = IPool(_poolID).getTotalSupply();
-        uint256 _interestPerSecond = _activePrincipal.mul(repaymentConstants[_poolID].borrowRate).div(yearInSeconds);
+        uint256 _interestPerSecond = _activePrincipal.mul(repaymentConstants[_poolID].borrowRate).div(YEAR_IN_SECONDS);
         return _interestPerSecond;
     }
 
@@ -238,7 +236,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return timestamp before which next instalment ends
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-        if (_instalmentsCompleted == repaymentConstants[_poolID].numberOfTotalRepayments) {
+        if (_instalmentsCompleted == repaymentConstants[_poolID].numberOfTotalRepayments.mul(10**30)) {
             return 0;
         }
         uint256 _loanExtensionPeriod = repaymentVars[_poolID].loanExtensionPeriod;
@@ -259,7 +257,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice This function determine the current instalment interval
     /// @param _poolID The address of the pool for which we want the current instalment interval
     /// @return scaled instalment interval
-    function getCurrentInstalmentInterval(address _poolID) public view returns (uint256) {
+    function getCurrentInstalmentInterval(address _poolID) external view returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         return _instalmentsCompleted.add(10**30);
     }
@@ -299,7 +297,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool from which borrower borrowed
     /// @return bool indicating whether the borrower has defaulted
-    function didBorrowerDefault(address _poolID) public view override returns (bool) {
+    function didBorrowerDefault(address _poolID) external view override returns (bool) {
         uint256 _repaymentInterval = repaymentConstants[_poolID].repaymentInterval;
         uint256 _currentTime = block.timestamp.mul(10**30);
         uint256 _gracePeriodFraction = repaymentConstants[_poolID].gracePeriodFraction;
@@ -322,7 +320,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
         uint256 interestPerSecond =
             activePrincipal.mul(repaymentConstants[poolID].borrowRate).div(
-                yearInSeconds
+                YEAR_IN_SECONDS
             );
 
         // uint256 periodEndTime = (currentPeriod.add(1)).mul(repaymentInterval);
@@ -353,7 +351,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool
     /// @return interest amount that is overdue
     function getInterestOverdue(address _poolID) public view returns (uint256) {
-        require(repaymentVars[_poolID].isLoanExtensionActive == true, 'No overdue');
+        require(repaymentVars[_poolID].isLoanExtensionActive, 'No overdue');
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         uint256 _interestPerSecond = getInterestPerSecond(_poolID);
         uint256 _interestOverdue =
@@ -373,7 +371,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
     /// @param _amount amount repaid by the borrower
-    function repayAmount(address _poolID, uint256 _amount) public payable nonReentrant isPoolInitialized(_poolID) {
+    function repayAmount(address _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
         uint256 _loanStatus = _pool.getLoanStatus();
@@ -383,7 +381,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _interestPerSecond = getInterestPerSecond(_poolID);
         // First pay off the overdue
 
-        if (repaymentVars[_poolID].isLoanExtensionActive == true) {
+        if (repaymentVars[_poolID].isLoanExtensionActive) {
             uint256 _interestOverdue = getInterestOverdue(_poolID);
 
             if (_amount >= _interestOverdue) {
@@ -450,12 +448,12 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
     /// @param _amount amount required to pay off the principal
-    function repayPrincipal(address payable _poolID, uint256 _amount) public payable nonReentrant isPoolInitialized(_poolID) {
+    function repayPrincipal(address payable _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
         IPool _pool = IPool(_poolID);
         uint256 _loanStatus = _pool.getLoanStatus();
         require(_loanStatus == 1, 'Repayments:repayPrincipal Pool should be active');
 
-        require(repaymentVars[_poolID].isLoanExtensionActive == false, 'Repayments:repayPrincipal Repayment overdue unpaid');
+        require(!repaymentVars[_poolID].isLoanExtensionActive, 'Repayments:repayPrincipal Repayment overdue unpaid');
 
         require(
             repaymentConstants[_poolID].loanDuration == repaymentVars[_poolID].loanDurationCovered,

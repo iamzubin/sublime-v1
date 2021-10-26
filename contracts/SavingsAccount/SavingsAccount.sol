@@ -20,7 +20,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     using SafeMath for uint256;
 
     address public strategyRegistry;
-    address public CreditLine;
+    address public creditLine;
 
     //user -> asset -> strategy (underlying address) -> amount (shares)
     mapping(address => mapping(address => mapping(address => uint256))) public override userLockedBalance;
@@ -29,7 +29,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     mapping(address => mapping(address => mapping(address => uint256))) public allowance;
 
     modifier onlyCreditLine(address _caller) {
-        require(_caller == CreditLine, 'Invalid caller');
+        require(_caller == creditLine, 'Invalid caller');
         _;
     }
 
@@ -44,7 +44,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _owner,
         address _strategyRegistry,
         address _creditLine
-    ) public initializer {
+    ) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
 
@@ -52,17 +52,17 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         _updateStrategyRegistry(_strategyRegistry);
     }
 
-    function updateCreditLine(address _creditLine) public onlyOwner {
+    function updateCreditLine(address _creditLine) external onlyOwner {
         _updateCreditLine(_creditLine);
     }
 
     function _updateCreditLine(address _creditLine) internal {
         require(_creditLine != address(0), 'SavingsAccount::initialize zero address');
-        CreditLine = _creditLine;
+        creditLine = _creditLine;
         emit CreditLineUpdated(_creditLine);
     }
 
-    function updateStrategyRegistry(address _strategyRegistry) public onlyOwner {
+    function updateStrategyRegistry(address _strategyRegistry) external onlyOwner {
         _updateStrategyRegistry(_strategyRegistry);
     }
 
@@ -235,7 +235,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             amountReceived = amount;
             _transfer(asset, withdrawTo, amountReceived);
             token = asset;
-            amountReceived = amount;
         } else {
             if (withdrawShares) {
                 token = IYield(strategy).liquidityToken(asset);
@@ -389,7 +388,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         return amount;
     }
 
-    function getTotalAsset(address _user, address _asset) public override returns (uint256 _totalTokens) {
+    function getTotalAsset(address _user, address _asset) external override returns (uint256 _totalTokens) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {

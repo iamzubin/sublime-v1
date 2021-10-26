@@ -33,7 +33,8 @@ contract PoolToken is Initializable, ERC20PresetMinterPauserUpgradeable {
         string memory name,
         string memory symbol,
         address _pool
-    ) public initializer {
+    ) external initializer {
+        require(_pool != address(0), "Pool cant be 0");
         ERC20PresetMinterPauserUpgradeable.__ERC20PresetMinterPauser_init(name, symbol);
         _setupRole(MINTER_ROLE, _pool);
         _setupRole(PAUSER_ROLE, _pool);
@@ -46,7 +47,7 @@ contract PoolToken is Initializable, ERC20PresetMinterPauserUpgradeable {
      * @param user address of the user requesting to burn tokens
      * @param amount amount of tokens to burn
      */
-    function burn(address user, uint256 amount) public {
+    function burn(address user, uint256 amount) external {
         require(hasRole(BURNER_ROLE, msg.sender));
         _burn(user, amount);
     }

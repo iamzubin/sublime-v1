@@ -15,12 +15,12 @@ contract CreditLineStorage is OwnableUpgradeable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    enum creditLineStatus {NOT_CREATED, REQUESTED, ACTIVE, CLOSED, CANCELLED, LIQUIDATED}
+    enum CreditLineStatus {NOT_CREATED, REQUESTED, ACTIVE, CLOSED, CANCELLED, LIQUIDATED}
 
-    uint256 public CreditLineCounter;
+    uint256 public creditLineCounter;
 
     // assuming number of days in year is 365 more discussion is needed for this
-    uint256 public constant yearInSeconds = 365 days;
+    uint256 public constant YEAR_IN_SECONDS = 365 days;
 
     /*struct repayments {
         uint256 lastRepaymentTime;
@@ -47,7 +47,7 @@ contract CreditLineStorage is OwnableUpgradeable {
         uint256 borrowRate;
         address borrowAsset;
         address collateralAsset;
-        creditLineStatus currentStatus;
+        CreditLineStatus currentStatus;
         bool autoLiquidation;
         bool requestByLender;
     }

@@ -20,7 +20,7 @@ contract Verification is Initializable, OwnableUpgradeable {
         _;
     }
 
-    function initialize(address _admin) public initializer {
+    function initialize(address _admin) external initializer {
         super.__Ownable_init();
         super.transferOwnership(_admin);
     }
@@ -52,7 +52,7 @@ contract Verification is Initializable, OwnableUpgradeable {
         emit UserUnregistered(_user);
     }
 
-    function isUser(address _user) public view returns (bool) {
+    function isUser(address _user) external view returns (bool) {
         return (registeredUsers[_user] != bytes32(0));
     }
 }

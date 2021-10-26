@@ -32,7 +32,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
      * @param creditLineHash credit hash
      **/
     modifier ifCreditLineExists(bytes32 creditLineHash) {
-        require(creditLineInfo[creditLineHash].currentStatus != creditLineStatus.NOT_CREATED, 'Credit line does not exist');
+        require(creditLineInfo[creditLineHash].currentStatus != CreditLineStatus.NOT_CREATED, 'Credit line does not exist');
         _;
     }
 
@@ -91,7 +91,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         address _owner,
         uint256 _protocolFeeFraction,
         address _protocolFeeCollector
-    ) public initializer {
+    ) external initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_owner);
 
@@ -144,11 +144,12 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     }
 
     function _updateProtocolFeeCollector(address _protocolFeeCollector) internal {
+        require(_protocolFeeCollector != address(0), "cant set 0 address");
         protocolFeeCollector = _protocolFeeCollector;
         emit ProtocolFeeCollectorUpdated(_protocolFeeCollector);
     }
 
-    function updateStrategyRegistry(address _strategyRegistry) public onlyOwner {
+    function updateStrategyRegistry(address _strategyRegistry) external onlyOwner {
         _updateStrategyRegistry(_strategyRegistry);
     }
 
@@ -169,7 +170,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _borrowRate,
         uint256 _timeElapsed
     ) public pure returns (uint256) {
-        uint256 _interest = _principal.mul(_borrowRate).mul(_timeElapsed).div(10**30).div(yearInSeconds);
+        uint256 _interest = _principal.mul(_borrowRate).mul(_timeElapsed).div(10**30).div(YEAR_IN_SECONDS);
 
         return _interest;
     }
@@ -206,10 +207,10 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         return _currentDebt;
     }
 
-    function calculateBorrowableAmount(bytes32 _creditLineHash) public returns (uint256) {
+    function calculateBorrowableAmount(bytes32 _creditLineHash) external returns (uint256) {
         require(
-            creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.ACTIVE ||
-                creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.REQUESTED,
+            creditLineInfo[_creditLineHash].currentStatus == CreditLineStatus.ACTIVE ||
+                creditLineInfo[_creditLineHash].currentStatus == CreditLineStatus.REQUESTED,
             'CreditLine: Cannot only if credit line ACTIVE or REQUESTED'
         );
         (uint256 _ratioOfPrices, uint256 _decimals) =
@@ -235,7 +236,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     }
 
     function updateinterestAccruedTillPrincipalUpdate(bytes32 creditLineHash) internal {
-        require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
+        require(creditLineInfo[creditLineHash].currentStatus == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestAccrued = calculateInterestAccrued(creditLineHash);
         uint256 _newInterestAccrued = (creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate).add(_interestAccrued);
@@ -292,8 +293,8 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _collateralRatio,
         address _borrowAsset,
         address _collateralAsset
-    ) public returns (bytes32) {
-        //require(userData[lender].blockCreditLineRequests == true,
+    ) external returns (bytes32) {
+        //require(userData[lender].blockCreditLineRequests,
         //        "CreditLine: External requests blocked");
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
         bytes32 _creditLineHash =
@@ -323,8 +324,8 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _collateralRatio,
         address _borrowAsset,
         address _collateralAsset
-    ) public returns (bytes32) {
-        //require(userData[borrower].blockCreditLineRequests == true,
+    ) external returns (bytes32) {
+        //require(userData[borrower].blockCreditLineRequests,
         //        "CreditLine: External requests blocked");
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
         bytes32 _creditLineHash =
@@ -360,9 +361,9 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         bool _requestByLender
     ) internal returns (bytes32 creditLineHash) {
         require(_lender != _borrower, 'Lender and Borrower cannot be same addresses');
-        CreditLineCounter = CreditLineCounter + 1; // global counter to generate ID
-        bytes32 _creditLineHash = keccak256(abi.encodePacked(CreditLineCounter));
-        creditLineInfo[_creditLineHash].currentStatus = creditLineStatus.REQUESTED;
+        creditLineCounter = creditLineCounter + 1; // global counter to generate ID
+        bytes32 _creditLineHash = keccak256(abi.encodePacked(creditLineCounter));
+        creditLineInfo[_creditLineHash].currentStatus = CreditLineStatus.REQUESTED;
         creditLineInfo[_creditLineHash].borrower = _borrower;
         creditLineInfo[_creditLineHash].lender = _lender;
         creditLineInfo[_creditLineHash].borrowLimit = _borrowLimit;
@@ -395,7 +396,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
 
     function _acceptCreditLine(bytes32 _creditLineHash, bool _requestByLender) internal {
         require(
-            creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.REQUESTED,
+            creditLineInfo[_creditLineHash].currentStatus == CreditLineStatus.REQUESTED,
             'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
         );
         require(
@@ -403,7 +404,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             'CreditLine::acceptCreditLineLender - Invalid request'
         );
 
-        creditLineInfo[_creditLineHash].currentStatus = creditLineStatus.ACTIVE;
+        creditLineInfo[_creditLineHash].currentStatus = CreditLineStatus.ACTIVE;
         emit CreditLineAccepted(_creditLineHash);
     }
 
@@ -413,7 +414,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         bytes32 _creditLineHash,
         bool _fromSavingAccount
     ) external payable nonReentrant ifCreditLineExists(_creditLineHash) {
-        require(creditLineInfo[_creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine not active');
+        require(creditLineInfo[_creditLineHash].currentStatus == CreditLineStatus.ACTIVE, 'CreditLine not active');
         _depositCollateral(_collateralAsset, _collateralAmount, _creditLineHash, _fromSavingAccount);
     }
 
@@ -482,7 +483,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         nonReentrant
         onlyCreditLineBorrower(creditLineHash)
     {
-        require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
+        require(creditLineInfo[creditLineHash].currentStatus == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         uint256 _currentDebt = calculateCurrentDebt(creditLineHash);
         require(_currentDebt.add(borrowAmount) <= creditLineInfo[creditLineHash].borrowLimit, 'CreditLine: Amount exceeds borrow limit.');
 
@@ -586,30 +587,29 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         bytes32 creditLineHash,
         bool _transferFromSavingAccount
     ) external payable nonReentrant {
-        require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
+        require(creditLineInfo[creditLineHash].currentStatus == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(creditLineHash);
         uint256 _totalInterestAccrued =
             (creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate).add(_interestSincePrincipalUpdate);
-        uint256 _totalDebt = _totalInterestAccrued.add(creditLineUsage[creditLineHash].principal);
+        uint256 _interestToPay = _totalInterestAccrued.sub(creditLineUsage[creditLineHash].totalInterestRepaid);
+        uint256 _totalCurrentDebt = _interestToPay.add(creditLineUsage[creditLineHash].principal);
 
         bool _totalRemainingIsRepaid = false;
 
-        if (repayAmount > _totalDebt) {
+        if (repayAmount >= _totalCurrentDebt) {
             _totalRemainingIsRepaid = true;
-            repayAmount = _totalDebt;
+            repayAmount = _totalCurrentDebt;
         }
 
-        uint256 _totalRepaidNow = creditLineUsage[creditLineHash].totalInterestRepaid.add(repayAmount);
-
-        if (_totalRepaidNow > _totalInterestAccrued) {
-            creditLineUsage[creditLineHash].principal = (creditLineUsage[creditLineHash].principal).add(_totalInterestAccrued).sub(
-                _totalRepaidNow
-            );
+        if (repayAmount > _interestToPay) {
+            creditLineUsage[creditLineHash].principal = _totalCurrentDebt.sub(repayAmount);
             creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate = _totalInterestAccrued;
             creditLineUsage[creditLineHash].lastPrincipalUpdateTime = block.timestamp;
+            creditLineUsage[creditLineHash].totalInterestRepaid = _totalInterestAccrued;
+        } else {
+            creditLineUsage[creditLineHash].totalInterestRepaid = repayAmount;
         }
-        creditLineUsage[creditLineHash].totalInterestRepaid = _totalRepaidNow;
         repay(creditLineHash, _transferFromSavingAccount, repayAmount);
 
         if (creditLineUsage[creditLineHash].principal == 0) {
@@ -639,10 +639,10 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
             msg.sender == creditLineInfo[creditLineHash].borrower || msg.sender == creditLineInfo[creditLineHash].lender,
             'CreditLine: Permission denied while closing Line of credit'
         );
-        require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
+        require(creditLineInfo[creditLineHash].currentStatus == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineUsage[creditLineHash].principal == 0, 'CreditLine: Cannot be closed since not repaid.');
         require(creditLineUsage[creditLineHash].interestAccruedTillPrincipalUpdate == 0, 'CreditLine: Cannot be closed since not repaid.');
-        creditLineInfo[creditLineHash].currentStatus = creditLineStatus.CLOSED;
+        creditLineInfo[creditLineHash].currentStatus = CreditLineStatus.CLOSED;
         emit CreditLineClosed(creditLineHash);
     }
 
@@ -736,7 +736,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
     }
 
     function liquidation(bytes32 creditLineHash) external payable nonReentrant {
-        require(creditLineInfo[creditLineHash].currentStatus == creditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
+        require(creditLineInfo[creditLineHash].currentStatus == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
 
         uint256 currentCollateralRatio = calculateCurrentCollateralRatio(creditLineHash);
         require(
@@ -749,7 +749,7 @@ contract CreditLine is CreditLineStorage, ReentrancyGuard {
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(creditLineHash);
         address _borrowAsset = creditLineInfo[creditLineHash].borrowAsset;
 
-        creditLineInfo[creditLineHash].currentStatus = creditLineStatus.LIQUIDATED;
+        creditLineInfo[creditLineHash].currentStatus = CreditLineStatus.LIQUIDATED;
 
         if (creditLineInfo[creditLineHash].autoLiquidation) {
             if (_lender == msg.sender) {

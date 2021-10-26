@@ -91,7 +91,7 @@ contract Extension is Initializable, IExtension {
      */
     function initializePoolExtension(uint256 _repaymentInterval) external override {
         IPoolFactory _poolFactory = poolFactory;
-        require(poolInfo[msg.sender].repaymentInterval == 0, 'Extension::initializePoolExtension - _repaymentInterval cannot be 0');
+        require(poolInfo[msg.sender].repaymentInterval == 0, 'Extension::initializePoolExtension - already initialized');
         require(_poolFactory.openBorrowPoolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
         poolInfo[msg.sender].repaymentInterval = _repaymentInterval;
     }
@@ -175,7 +175,7 @@ contract Extension is Initializable, IExtension {
      * @notice used for updating the voting pass ratio of the Open Borrow Pool
      * @param _votingPassRatio the value of the new voting pass ratio
      */
-    function updateVotingPassRatio(uint256 _votingPassRatio) public onlyOwner {
+    function updateVotingPassRatio(uint256 _votingPassRatio) external onlyOwner {
         _updateVotingPassRatio(_votingPassRatio);
     }
 
@@ -184,7 +184,7 @@ contract Extension is Initializable, IExtension {
         emit VotingPassRatioUpdated(_votingPassRatio);
     }
 
-    function updatePoolFactory(address _poolFactory) public onlyOwner {
+    function updatePoolFactory(address _poolFactory) external onlyOwner {
         _updatePoolFactory(_poolFactory);
     }
 

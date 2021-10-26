@@ -713,7 +713,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit MarginCallDurationUpdated(_marginCallDuration);
     }
 
-    function updateVolatilityThreshold(address _token, uint256 _volatilityThreshold) public onlyOwner {
+    function updateVolatilityThreshold(address _token, uint256 _volatilityThreshold) external onlyOwner {
         _updateVolatilityThreshold(_token, _volatilityThreshold);
     }
 

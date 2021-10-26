@@ -25,7 +25,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
     event UniswapFeedUpdated(address token1, address token2, bytes32 feedId, address pool);
     event UniswapPriceAveragingPeriodUpdated(uint32 uniswapPriceAveragingPeriod);
 
-    function initialize(address _admin) public initializer {
+    function initialize(address _admin) external initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_admin);
     }
@@ -85,14 +85,14 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
     }
 
-    function getLatestPrice(address num, address den) public view override returns (uint256, uint256) {
+    function getLatestPrice(address num, address den) external view override returns (uint256, uint256) {
         uint256 _price;
         uint256 _decimals;
         (_price, _decimals) = getChainlinkLatestPrice(num, den);
         if (_decimals != 0) {
             return (_price, _decimals);
         }
-        (_price, _decimals) = getUniswapLatestPrice(num, den);
+        (_price, _decimals) = getUniswapLatestPrice(den, num);
         if (_decimals != 0) {
             return (_price, _decimals);
         }
