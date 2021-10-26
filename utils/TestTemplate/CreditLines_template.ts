@@ -463,7 +463,7 @@ export async function CreditLines(
             );
         });
 
-        it('Creditline Active: collateral ratio should not go down after withdraw', async function () {
+        it('Creditline Active: collateral ratio should not go down after borrow', async function () {
             let { admin, borrower, lender } = env.entities;
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let amount: BigNumber = BigNumber.from('10').mul(BigNumber.from('10').pow(BTDecimals));
@@ -545,36 +545,107 @@ export async function CreditLines(
             );
         });
 
-        xit('CreditLine Active: Repayment of interest directly through wallet', async function () {
+        xit('CreditLine Active: Repayment of interest using wallet', async function () {
             let { admin, borrower, lender } = env.entities;
             let unlimited = BigNumber.from(10).pow(60);
             let interestDue = await creditLine.connect(admin).calculateInterestAccrued(values);
-            // console.log({ interestDue: interestDue.toString() });
+            console.log({ interestDue: interestDue.toString() });
+            console.log({ unlimited: unlimited.toString() });
+            console.log('Yield', env.yields.compoundYield.address);
+            console.log('Token',_borrowAsset);
+            console.log('msg.sender', creditLine.address)
 
-            let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(
-                interestDue,
-                env.mockTokenContracts[0].contract.address
+            // let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(
+            //     interestDue,
+            //     env.mockTokenContracts[0].contract.address
+            // );
+            // console.log({ liquidityShares: liquidityShares.toString() });
+
+            // transfers
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestDue.add(100));
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(borrower.address, interestDue.add(100));
+            await env.mockTokenContracts[0].contract.connect(borrower).transfer(creditLine.address, interestDue.add(100));
+
+            //Allowances
+            await env.savingsAccount.connect(borrower).approve(unlimited,_borrowAsset,creditLine.address);
+            await env.savingsAccount.connect(borrower).approve(unlimited,_borrowAsset,borrower.address);
+
+            await creditLine.connect(borrower).repay(values, interestDue, false);
+        });
+
+        it('CreditLine Active: random address should not be able to close the loan', async function() {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[31];
+
+            await expect(creditLine.connect(random).close(values)).to.be.revertedWith('CreditLine: Permission denied while closing Line of credit');
+        });
+
+        it('CreditLine Active: Inactive creditlines cannot be closed', async function() {
+            let { admin, borrower, lender } = env.entities;
+            let random1 = env.entities.extraLenders[20];
+
+            await expect(creditLine.connect(random1).close(valuesNew)).to.be.revertedWith('CreditLine: Credit line should be active.');
+        });
+
+        it('CreditLine Active: Unpaid creditlines cannot be closed', async function() {
+            let { admin, borrower, lender } = env.entities;
+
+            await expect(creditLine.connect(lender).close(values)).to.be.revertedWith('CreditLine: Cannot be closed since not repaid.');
+        });
+
+        it('CreditLine Active: Only borrower can withdraw collateral from creditline', async function() {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[40];
+
+            await expect(creditLine.connect(random).withdrawCollateral(values,100,false)).to.be.revertedWith('Only credit line Borrower can access');
+        });
+
+        it('CreditLine Active: inactive creditline withdraw should be reverted', async function() {
+            let { admin, borrower, lender } = env.entities;
+            let random1 = env.entities.extraLenders[20];
+
+            await expect(creditLine.connect(random1).withdrawCollateral(valuesNew,100,false)).to.be.revertedWith('Only credit line Borrower can access');
+        });
+
+        it('CreditLine Active: Collateral can be withdrawn if collateral ratio is maintained', async function() {
+            let { admin, borrower, lender } = env.entities;
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            let withdrawAmount = BigNumber.from('500').mul(BigNumber.from('10').pow(CTDecimals));
+            await creditLine.connect(borrower).withdrawCollateral(values,withdrawAmount,false);
+        });
+
+        it('CreditLine Active: collateral withdraw should be reverted if collateral ratio goes below ideal', async function() {
+            let { admin, borrower, lender } = env.entities;
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            let withdrawAmount = BigNumber.from('1').mul(BigNumber.from('10').pow(CTDecimals));
+
+            await expect(creditLine.connect(borrower).withdrawCollateral(values,withdrawAmount,false)).to.be.revertedWith('Collateral ratio cant go below ideal');
+        });
+
+        it('CreditLine Active: collateral withdraw should be reverted if deposited collateral amount is exceeded', async function() {
+            let { admin, borrower, lender } = env.entities;
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            let withdrawAmount = BigNumber.from('100').mul(BigNumber.from('10').pow(CTDecimals));
+
+            await expect(creditLine.connect(borrower).withdrawCollateral(values,withdrawAmount,false)).to.be.revertedWith('Collateral ratio cant go below ideal');
+        });
+
+        it('CreditLine Close: Close creditline with event emits and status update', async function() {
+            let { admin, borrower, lender } = env.entities;
+            let random1 = env.entities.extraLenders[20];
+            await expect(creditLine.connect(borrower).accept(valuesNew)).to.emit(creditLine, 'CreditLineAccepted').withArgs(valuesNew);
+            const CreditVars = await creditLine.connect(borrower).creditLineVariables(valuesNew);
+            // console.log({ Principal: CreditVars.principal.toString() });
+            // console.log({ Interest: CreditVars.interestAccruedTillLastPrincipalUpdate.toString() });
+
+            await expect(creditLine.connect(random1).close(valuesNew)).to.emit(creditLine, 'CreditLineClosed').withArgs(valuesNew);
+
+            let StatusActual = (await creditLine.connect(admin).creditLineVariables(valuesNew)).status;
+            assert(
+                StatusActual.toString() == BigNumber.from('3').toString(),
+                `Creditline should be in closed Stage. Expected: ${BigNumber.from('3').toString()} 
+                Actual: ${StatusActual}`
             );
-            console.log({ liquidityShares: liquidityShares.toString() });
-
-            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, liquidityShares.mul(100));
-            await env.mockTokenContracts[0].contract.connect(admin).transfer(borrower.address, liquidityShares.mul(100));
-            await env.mockTokenContracts[0].contract.connect(borrower).approve(lender.address, liquidityShares.mul(100));
-
-            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, liquidityShares.mul(100));
-            await env.mockTokenContracts[0].contract.connect(admin).transfer(borrower.address, liquidityShares.mul(100));
-            await env.mockTokenContracts[0].contract.connect(borrower).approve(lender.address, liquidityShares.mul(100));
-
-            await env.savingsAccount
-                .connect(borrower)
-                .deposit(
-                    liquidityShares.mul(100),
-                    env.mockTokenContracts[0].contract.address,
-                    env.yields.compoundYield.address,
-                    borrower.address
-                );
-            await env.savingsAccount.connect(borrower).approve(unlimited, env.mockTokenContracts[0].contract.address, lender.address);
-            creditLine.connect(borrower).repay(values, interestDue, false);
         });
     });
 }
