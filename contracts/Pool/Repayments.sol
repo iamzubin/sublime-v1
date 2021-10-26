@@ -156,7 +156,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
      */
 
     function getInterestPerSecond(address _poolID) public view returns (uint256) {
-        uint256 _activePrincipal = IPool(_poolID).getTokensLent();
+        uint256 _activePrincipal = IPool(_poolID).totalSupply();
         uint256 _interestPerSecond = _activePrincipal.mul(repayConstants[_poolID].borrowRate).div(yearInSeconds);
         return _interestPerSecond;
     }
@@ -402,7 +402,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
             'Repayments:repayPrincipal Unpaid interest'
         );
 
-        uint256 _amount = _pool.getTokensLent();
+        uint256 _amount = _pool.totalSupply();
 
         if (_asset == address(0)) {
             (bool success, ) = _poolID.call{value: _amount}('');
