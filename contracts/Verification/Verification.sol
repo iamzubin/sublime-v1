@@ -38,7 +38,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @notice Initializes the variables of the contract
     /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
     /// @param _admin Admin of the verification contract who can add verifiers and remove masterAddresses deemed invalid
-    function initialize(address _admin) public initializer {
+    function initialize(address _admin) external initializer {
         super.__Ownable_init();
         super.transferOwnership(_admin);
     }
@@ -115,7 +115,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev view function
     /// @param _user address which has to be checked if mapped against a verified master address
     /// @param _verifier verifier with which master address has to be verified
-    function isUser(address _user, address _verifier) public view override returns (bool) {
+    function isUser(address _user, address _verifier) external view override returns (bool) {
         address _masterAddress = linkedAddresses[_user];
         if (_masterAddress == address(0) || !masterAddresses[_masterAddress][_verifier]) {
             return false;
