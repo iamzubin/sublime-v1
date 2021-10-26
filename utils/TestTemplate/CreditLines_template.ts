@@ -567,8 +567,7 @@ export async function CreditLines(
             await env.mockTokenContracts[0].contract.connect(borrower).transfer(creditLine.address, interestDue.add(100));
 
             //Allowances
-            await env.savingsAccount.connect(borrower).approve(unlimited,_borrowAsset,creditLine.address);
-            await env.savingsAccount.connect(borrower).approve(unlimited,_borrowAsset,borrower.address);
+            await env.savingsAccount.connect(borrower).approve(unlimited,_borrowAsset,env.yields.compoundYield.address);
 
             await creditLine.connect(borrower).repay(values, interestDue, false);
         });
