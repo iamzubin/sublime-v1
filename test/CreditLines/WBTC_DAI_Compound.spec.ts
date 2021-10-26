@@ -160,8 +160,13 @@ describe('WBTC-DAI Credit Lines', async () => {
 
         noYield = await deployHelper.core.deployNoYield();
         await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
-
         await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
+        yearnYield = await deployHelper.core.deployYearnYield();
+        await yearnYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(yearnYield.address);
+        await yearnYield.connect(admin).updateProtocolAddresses(DaiTokenContract.address, DAI_Yearn_Protocol_Address);
+        await yearnYield.connect(admin).updateProtocolAddresses(LinkTokenContract.address, LINK_Yearn_Protocol_Address);
 
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
@@ -260,7 +265,7 @@ describe('WBTC-DAI Credit Lines', async () => {
                     _collateralRatio,
                     _borrowAsset,
                     _collateralAsset,
-                    [noYield.address]
+                    [noYield.address, yearnYield.address, compoundYield.address]
                 );
 
             await expect(
@@ -274,7 +279,7 @@ describe('WBTC-DAI Credit Lines', async () => {
                         _collateralRatio,
                         _borrowAsset,
                         _collateralAsset,
-                        [noYield.address]
+                        [noYield.address, yearnYield.address, compoundYield.address]
                     )
             )
                 .to.emit(creditLine, 'CreditLineRequested')
