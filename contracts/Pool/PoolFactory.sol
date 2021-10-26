@@ -600,7 +600,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit MarginCallDurationUpdated(_marginCallDuration);
     }
 
-    function updateMinBorrowFraction(uint256 _minBorrowFraction) public onlyOwner {
+    function updateMinBorrowFraction(uint256 _minBorrowFraction) external onlyOwner {
         _updateMinBorrowFraction(_minBorrowFraction);
     }
 
