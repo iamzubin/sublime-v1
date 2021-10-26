@@ -637,7 +637,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         require(getMarginCallEndTime(msg.sender) == 0, 'RMC1');
-        uint256 _idealCollateralRatio = poolConstants.idealCollateralRatio;
         require(poolConstants.idealCollateralRatio > getCurrentCollateralRatio(msg.sender), '26');
 
         lenders[msg.sender].marginCallEndTime = block.timestamp.add(_poolFactory.marginCallDuration());
@@ -880,7 +879,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice used to get corresponding borrow tokens for given collateral tokens
      * @param _totalCollateralTokens amount of collateral tokens
-     * @param _poolFactory address of the pool
+     * @param _priceOracle address of the pool
      * @param _fraction Incentivizing fraction for the liquidator
      * @return corresponding borrow tokens for collateral tokens
      */
@@ -1023,5 +1022,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function borrower() external view override returns (address) {
         return poolConstants.borrower;
+    }
+
+    function totalSupply() public view override(ERC20Upgradeable, IPool) returns(uint256) {
+        return ERC20Upgradeable.totalSupply();
     }
 }
