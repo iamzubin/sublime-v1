@@ -36,7 +36,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     uint256 gracePenaltyRate;
     uint256 gracePeriodFraction; // fraction of the repayment interval
-    uint256 constant yearInSeconds = 365 days;
+    uint256 constant YEAR_IN_SECONDS = 365 days;
 
     struct RepaymentVariables {
         uint256 repaidAmount;
@@ -90,13 +90,13 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         address _poolFactory,
         uint256 _gracePenaltyRate,
         uint256 _gracePeriodFraction
-    ) public initializer {
+    ) external initializer {
         _updatePoolFactory(_poolFactory);
         _updateGracePenaltyRate(_gracePenaltyRate);
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
-    function updatePoolFactory(address _poolFactory) public onlyOwner {
+    function updatePoolFactory(address _poolFactory) external onlyOwner {
         _updatePoolFactory(_poolFactory);
     }
 
@@ -106,7 +106,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit PoolFactoryUpdated(_poolFactory);
     }
 
-    function updateGracePeriodFraction(uint256 _gracePeriodFraction) public onlyOwner {
+    function updateGracePeriodFraction(uint256 _gracePeriodFraction) external onlyOwner {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
@@ -115,7 +115,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit GracePeriodFractionUpdated(_gracePeriodFraction);
     }
 
-    function updateGracePenaltyRate(uint256 _gracePenaltyRate) public onlyOwner {
+    function updateGracePenaltyRate(uint256 _gracePenaltyRate) external onlyOwner {
         _updateGracePenaltyRate(_gracePenaltyRate);
     }
 
@@ -157,7 +157,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     function getInterestPerSecond(address _poolID) public view returns (uint256) {
         uint256 _activePrincipal = IPool(_poolID).totalSupply();
-        uint256 _interestPerSecond = _activePrincipal.mul(repayConstants[_poolID].borrowRate).div(yearInSeconds);
+        uint256 _interestPerSecond = _activePrincipal.mul(repayConstants[_poolID].borrowRate).div(YEAR_IN_SECONDS);
         return _interestPerSecond;
     }
 
@@ -211,7 +211,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice This function determine the current instalment interval
     /// @param _poolID The address of the pool for which we want the current instalment interval
     /// @return scaled instalment interval
-    function getCurrentInstalmentInterval(address _poolID) public view returns (uint256) {
+    function getCurrentInstalmentInterval(address _poolID) external view returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         return _instalmentsCompleted.add(10**30);
     }
@@ -251,7 +251,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool from which borrower borrowed
     /// @return bool indicating whether the borrower has defaulted
-    function didBorrowerDefault(address _poolID) public view override returns (bool) {
+    function didBorrowerDefault(address _poolID) external view override returns (bool) {
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
         uint256 _currentTime = block.timestamp.mul(10**30);
         uint256 _gracePeriodFraction = repayConstants[_poolID].gracePeriodFraction;
@@ -295,7 +295,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
     /// @param _amount amount repaid by the borrower
-    function repay(address _poolID, uint256 _amount) public payable nonReentrant isPoolInitialized(_poolID) {
+    function repay(address _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
         uint256 _amountRepaid = _repay(_poolID, _amount, _asset, false);
         if (_asset == address(0)) {
@@ -390,7 +390,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice Used to pay off the principal of the loan, once the overdues and interests are repaid
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
-    function repayPrincipal(address payable _poolID) public payable nonReentrant isPoolInitialized(_poolID) {
+    function repayPrincipal(address payable _poolID) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
         uint256 _amountRepaid = _repay(_poolID, MAX_INT, _asset, true);
         IPool _pool = IPool(_poolID);
