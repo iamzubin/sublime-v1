@@ -633,6 +633,13 @@ export async function CreditLines(
             let { admin, borrower, lender } = env.entities;
             let random1 = env.entities.extraLenders[20];
             await expect(creditLine.connect(borrower).accept(valuesNew)).to.emit(creditLine, 'CreditLineAccepted').withArgs(valuesNew);
+
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, collateralAmout);
+
+            await creditLine.connect(borrower).depositCollateral(valuesNew, collateralAmout, env.yields.compoundYield.address, false);
+
             const CreditVars = await creditLine.connect(borrower).creditLineVariables(valuesNew);
             // console.log({ Principal: CreditVars.principal.toString() });
             // console.log({ Interest: CreditVars.interestAccruedTillLastPrincipalUpdate.toString() });
