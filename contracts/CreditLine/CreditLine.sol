@@ -309,10 +309,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             if (_liquidityShares == 0) {
                 continue;
             }
-            uint256 _tokenInStrategy = _liquidityShares;
-            if (_strategyList[_index] != address(0)) {
-                _tokenInStrategy = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
-            }
+            uint256 _tokenInStrategy = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
 
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) >= _amount) {
@@ -495,11 +492,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 require(msg.value == _amount, "CreditLine::_depositCollateral - value to transfer doesn't match argument");
             } else {
                 IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _amount);
-                if (_strategy == address(0)) {
-                    IERC20(_collateralAsset).approve(address(_savingsAccount), _amount);
-                } else {
-                    IERC20(_collateralAsset).approve(_strategy, _amount);
-                }
+                IERC20(_collateralAsset).approve(_strategy, _amount);
             }
             uint256 _sharesReceived = _savingsAccount.deposit{value: msg.value}(_amount, _collateralAsset, _strategy, address(this));
             collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_sharesReceived);
@@ -519,10 +512,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {
             uint256 _liquidityShares = _savingsAccount.balanceInShares(_lender, _asset, _strategyList[_index]);
             if (_liquidityShares != 0) {
-                uint256 tokenInStrategy = _liquidityShares;
-                if (_strategyList[_index] != address(0)) {
-                    tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
-                }
+                uint256 tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
+
                 uint256 _tokensToTransfer = tokenInStrategy;
                 if (_activeAmount.add(tokenInStrategy) >= _amountInTokens) {
                     _tokensToTransfer = (_amountInTokens.sub(_activeAmount));
@@ -606,10 +597,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             if (_liquidityShares == 0) {
                 continue;
             }
-            uint256 _tokenInStrategy = _liquidityShares;
-            if (_strategyList[_index] != address(0)) {
-                _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
-            }
+            uint256 _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
 
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) >= _amount) {
@@ -737,10 +725,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _liquidityShares;
         for (uint256 index = 0; index < _strategyList.length; index++) {
             _liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            uint256 _tokenInStrategy = _liquidityShares;
-            if (_strategyList[index] != address(0)) {
-                _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
-            }
+            uint256 _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
 
             _amount = _amount.add(_tokenInStrategy);
         }
@@ -791,10 +776,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             if (liquidityShares == 0) {
                 continue;
             }
-            uint256 _tokenInStrategy = liquidityShares;
-            if (_strategyList[index] != address(0)) {
-                _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(liquidityShares, _asset);
-            }
+            uint256 _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(liquidityShares, _asset);
+
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) > _amountInTokens) {
                 _tokensToTransfer = _amountInTokens.sub(_activeAmount);
