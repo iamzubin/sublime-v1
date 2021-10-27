@@ -33,14 +33,14 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         _;
     }
 
-    function initialize(address _owner, address payable _savingsAccount) public initializer {
+    function initialize(address _owner, address payable _savingsAccount) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
 
         _updateSavingsAccount(_savingsAccount);
     }
 
-    function updateSavingsAccount(address payable _savingsAccount) public onlyOwner {
+    function updateSavingsAccount(address payable _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
 
@@ -56,6 +56,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     }
 
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+        require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
         uint256 amount = IERC20(investedTo).balanceOf(address(this));
 
@@ -81,7 +82,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         address user,
         address asset,
         uint256 amount
-    ) public payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
         if (asset == address(0)) {
@@ -100,7 +101,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @param amount the amount of asset
      * @return received amount of tokens received
      **/
-    function unlockTokens(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256 received) {
+    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
         require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
 
@@ -116,7 +117,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         emit UnlockedTokens(asset, received);
     }
 
-    function unlockShares(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256) {
+    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
         if (amount == 0) {
             return 0;
         }

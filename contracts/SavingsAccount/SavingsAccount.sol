@@ -43,7 +43,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _owner,
         address _strategyRegistry,
         address _creditLine
-    ) public initializer {
+    ) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
 
@@ -51,7 +51,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         _updateStrategyRegistry(_strategyRegistry);
     }
 
-    function updateCreditLine(address _creditLine) public onlyOwner {
+    function updateCreditLine(address _creditLine) external onlyOwner {
         _updateCreditLine(_creditLine);
     }
 
@@ -61,7 +61,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit CreditLineUpdated(_creditLine);
     }
 
-    function updateStrategyRegistry(address _strategyRegistry) public onlyOwner {
+    function updateStrategyRegistry(address _strategyRegistry) external onlyOwner {
         _updateStrategyRegistry(_strategyRegistry);
     }
 
@@ -355,7 +355,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         return _amount;
     }
 
-    function getTotalTokens(address _user, address _token) public override returns (uint256 _totalTokens) {
+    function getTotalTokens(address _user, address _token) external override returns (uint256 _totalTokens) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
         for (uint256 i = 0; i < _strategyList.length; i++) {
