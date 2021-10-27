@@ -520,7 +520,7 @@ export async function preActivePoolChecks(
             await expect(env.extenstion.connect(borrower).requestExtension(pool.address)).to.be.revertedWith("Transaction reverted without a reason");
         });
 
-        it.only("During collection period, no one can liquidate pool: ", async function() {
+        it.only("During collection period, no one can liquidate lender or request margin call: ", async function() {
             let{admin, lender, borrower} = env.entities;
             let random = env.entities.extraLenders[33];
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
@@ -545,6 +545,18 @@ export async function preActivePoolChecks(
             await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
             // By random
             await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
+
+            // The request to liquidate lender during this period should fail
+            await expect(pool.connect(random).liquidateForLender(lender.address, false, false, false)).to.be.revertedWith("27");
+
+            /*
+            // Request to liquidate pool should fail during this period
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await borrowToken.connect(admin).transfer(random.address, amount);
+            await borrowToken.connect(random).approve(pool.address, amount));
+
+            expect (await pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith('randomString');
+            */
         });
     });
 }
