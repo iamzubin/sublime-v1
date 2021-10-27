@@ -343,7 +343,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _collateralRatio,
         address _borrowAsset,
         address _collateralAsset
-    ) public returns (uint256) {
+    ) external returns (uint256) {
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
 
         address _lender = _requestTo;
@@ -379,7 +379,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _borrowAsset,
         address _collateralAsset,
         address[] memory strategyPreference
-    ) public returns (uint256) {
+    ) external returns (uint256) {
         require(strategyPreference.length != 0, 'Creditlines: Lender should atleast provide one strategy in the preference');
         for (uint256 index = 0; index < strategyPreference.length; index++) {
             require(IStrategyRegistry(strategyRegistry).isStrategy(strategyPreference[index]), 'Should be a valid strategy');
