@@ -291,7 +291,7 @@ export async function preActivePoolChecks(
 
             console.log("h5");
             console.log("Random Lender Balance: ", (await (borrowToken.balanceOf(randomLender.address))).toString());
-            await expect(pool.connect(randomLender).liquidatePool(false, false, true)).to.be.revertedWith("fuckMeDaddy");
+            await expect(pool.connect(randomLender).liquidatePool(false, false, true)).to.be.revertedWith("randomString");
         });
         */
 
@@ -518,6 +518,33 @@ export async function preActivePoolChecks(
 
             //It is still the collection period, borrower should not be able to request extension:
             await expect(env.extenstion.connect(borrower).requestExtension(pool.address)).to.be.revertedWith("Transaction reverted without a reason");
+        });
+
+        it.only("During collection period, no one can liquidate pool: ", async function() {
+            let{admin, lender, borrower} = env.entities;
+            let random = env.entities.extraLenders[33];
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+            let poolStrategy = env.yields.compoundYield;
+
+            // Approving Borrow tokens to the lender
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await borrowToken.connect(admin).transfer(lender.address, amount);
+            await borrowToken.connect(lender).approve(poolAddress, amount);
+
+            // Lender lends into the pool
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+                        
+            //The request for this margin call should fail
+            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
+            // By the borrower
+            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
+            // By random
+            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
         });
     });
 }
