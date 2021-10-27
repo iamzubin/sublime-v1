@@ -489,7 +489,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineVariables[_id].status == creditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         uint256 _currentDebt = calculateCurrentDebt(_id);
         require(_currentDebt.add(_amount) <= creditLineConstants[_id].borrowLimit, 'CreditLine: Amount exceeds borrow limit.');
-
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
             creditLineConstants[_id].borrowAsset
@@ -523,7 +522,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             uint256 _balanceAfter = address(this).balance;
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         }
-
         uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
         _tokenDiffBalance = _tokenDiffBalance.sub(_protocolFee);
 
