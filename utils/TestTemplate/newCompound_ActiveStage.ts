@@ -458,5 +458,66 @@ export async function preActivePoolChecks(
             // This step is to remove the protocol fee, for other tests
             await borrowToken.connect(protocolFeeCollector).transfer(admin.address, checkProtcolFee);
         });
+
+        // it("Borrower can't withdraw lent amount if collateral falls below ideal collateral ratio: ", async function() {
+        //     let { admin, borrower, lender, protocolFeeCollector } = env.entities;
+        //     let random = env.entities.extraLenders[10]; // Random address
+        //     let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+        //     let collateralToken = env.mockTokenContracts[1].contract;
+        //     let borrowToken = env.mockTokenContracts[0].contract;
+        //     let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+        //     let poolStrategy = env.yields.compoundYield;
+
+        //     // Approving Borrow tokens to the lender
+        //     await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+        //     await borrowToken.connect(admin).transfer(lender.address, amount);
+        //     await borrowToken.connect(lender).approve(poolAddress, amount);
+
+        //     // Lender lends into the pool
+        //     const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+        //     await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+        //     await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+        //     expect(3).eq(3);
+        // });
+
+        it("During collection period, borrower can't withdraw tokens lent or repay interest or request extension: ", async function() {
+            let { admin, borrower, lender, protocolFeeCollector } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+            let poolStrategy = env.yields.compoundYield;
+
+            // Approving Borrow tokens to the lender
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await borrowToken.connect(admin).transfer(lender.address, amount);
+            await borrowToken.connect(lender).approve(poolAddress, amount);
+
+            // Lender lends into the pool
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            //It is still the collection period, and we will try to withdraw the tokens lent as the borrower
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith("12");
+
+            // It is still the collection period, and we will try to repay interest as the borrower
+            // Taking any arbitrary amount as repayment amount as env.repayments.connect(borrower).getInterestDueTillInstalment(pool.address) will return 0
+            //const interestForCurrentPeriod = (await env.repayments.connect(borrower).getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
+            //console.log(interestForCurrentPeriod.toString());
+
+            const repayAmount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals-2)); 
+
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, repayAmount.mul(2));
+            await borrowToken.connect(admin).transfer(borrower.address, repayAmount.mul(2));
+            await borrowToken.connect(borrower).approve(env.repayments.address, repayAmount);
+
+            await expect(env.repayments.connect(borrower).repay(pool.address, repayAmount)).to.be.revertedWith("Pool is not Initiliazed");
+
+            //It is still the collection period, borrower should not be able to request extension:
+            await expect(env.extenstion.connect(borrower).requestExtension(pool.address)).to.be.revertedWith("Transaction reverted without a reason");
+        });
     });
 }
