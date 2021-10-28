@@ -860,7 +860,7 @@ export async function yearnPoolCollectionStage(
                 .connect(admin)
                 .correspondingBorrowTokens(
                     LiquidatorCollateralBalDiff,
-                    env.poolFactory.address,
+                    env.priceOracle.address,
                     testPoolFactoryParams._liquidatorRewardFraction
                 );
             // console.log({BorrowEquivalent: BorrowEquivalent.toString()});

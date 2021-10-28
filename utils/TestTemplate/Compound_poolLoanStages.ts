@@ -856,11 +856,12 @@ export async function compoundPoolCollectionStage(
             const LiquidatorCollateralBalanceAfter = await collateralToken.balanceOf(random.address);
             let LiquidatorCollateralBalDiff = LiquidatorCollateralBalanceAfter.sub(LiquidatorCollateralBalanceBefore);
             // let liquidatorRewardFraction = await env.poolFactory.connect(admin).liquidatorRewardFraction();
+            console.log(env.poolFactory.address)
             const BorrowEquivalent = await pool
                 .connect(admin)
                 .correspondingBorrowTokens(
                     LiquidatorCollateralBalDiff,
-                    env.poolFactory.address,
+                    env.priceOracle.address,
                     testPoolFactoryParams._liquidatorRewardFraction
                 );
             // console.log({BorrowEquivalent: BorrowEquivalent.toString()});
