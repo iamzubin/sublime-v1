@@ -32,7 +32,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     uint256 public creditLineCounter;
 
-    uint256 public constant YEAR_IN_SECONDS = 365 days;
+    uint256 constant YEAR_IN_SECONDS = 365 days;
 
     struct CreditLineVariables {
         CreditLineStatus status;

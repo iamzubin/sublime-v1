@@ -534,7 +534,7 @@ export async function CreditLines(
             // console.log({ interestDue: interestDue.toString() });
 
             const _creditVars = await creditLine.connect(borrower).creditLineVariables(values);
-            const _yearTime = await creditLine.connect(admin).yearInSeconds();
+            const _yearTime = 365*24*60*60;
             const scaler = BigNumber.from('10').pow(30);
             const _interest = _creditVars.principal.mul(_borrowRate).mul(10).div(scaler).div(_yearTime);
             // console.log({ _interest: _interest.toString() });
