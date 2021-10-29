@@ -332,7 +332,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _interestLeft = getInterestLeft(_poolID);
         require(
             (_amount < _interestLeft) != _isLastRepayment,
-            'Repayments::repayAmount complete interest must be repaid along with principal'
+            'Repayments::repay complete interest must be repaid along with principal'
         );
 
         if (_amount < _interestLeft) {
@@ -369,21 +369,13 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
         uint256 _initialAmount = _amount;
 
-        // pay off the overdue
-        uint256 _interestOverdue = _repayExtension(_poolID);
-        _amount = _amount.sub(_interestOverdue, "doesnt cover overdue interest");
-
-        if(_amount == 0) {
-            return _updateRepaidAmount(_poolID, _initialAmount.sub(_amount));
-        }
-
         // pay off grace penality
         uint256 _gracePenaltyDue = _repayGracePenalty(_poolID);
         _amount = _amount.sub(_gracePenaltyDue, "doesnt cover grace penality");
 
-        if(_amount == 0) {
-            return _updateRepaidAmount(_poolID, _initialAmount.sub(_amount));
-        }
+        // pay off the overdue
+        uint256 _interestOverdue = _repayExtension(_poolID);
+        _amount = _amount.sub(_interestOverdue, "doesnt cover overdue interest");
 
         // pay interest
         uint256 _interestRepaid = _repayInterest(_poolID, _amount, _isLastRepayment);
