@@ -520,7 +520,7 @@ export async function preActivePoolChecks(
             await expect(env.extenstion.connect(borrower).requestExtension(pool.address)).to.be.revertedWith("Transaction reverted without a reason");
         });
 
-        it.only("During collection period, no one can liquidate lender or request margin call: ", async function() {
+        it("During collection period, no one can liquidate lender or request margin call: ", async function() {
             let{admin, lender, borrower} = env.entities;
             let random = env.entities.extraLenders[33];
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
