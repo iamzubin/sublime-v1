@@ -203,7 +203,8 @@ const config: HardhatUserConfig = {
     },
     gasReporter: {
         enabled: true,
-        outputFile: "gasReport.md",
+        outputFile: 'gasReport.md',
+        noColors: true,
         gasPrice: 100,
         currency: 'USD',
         coinmarketcap: 'c40041ca-81fa-4564-8f95-175e388534c1',

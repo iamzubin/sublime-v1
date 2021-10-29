@@ -579,7 +579,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function _repay(
         uint256 _id,
         uint256 _amount,
-        bool _fromSavingsAccount
+        bool _fromSavingsAccount,
+        uint256 _principlePaid
     ) internal {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         address _defaultStrategy = defaultStrategy;
@@ -592,12 +593,14 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 require(success, 'creditLine::repay - remainig value transfered successfully');
                 _savingsAccount.deposit{value: _amount}(_amount, _borrowAsset, _defaultStrategy, _lender);
             } else {
+                IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
+                IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
                 _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
             }
         } else {
             _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
         }
-        _savingsAccount.increaseAllowanceToCreditLine(_amount, _borrowAsset, _lender);
+        _savingsAccount.increaseAllowanceToCreditLine(_principlePaid, _borrowAsset, _lender);
     }
 
     function repay(
@@ -613,7 +616,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         uint256 _interestToPay = _totalInterestAccrued.sub(creditLineVariables[_id].totalInterestRepaid);
         uint256 _totalCurrentDebt = _interestToPay.add(creditLineVariables[_id].principal);
-
+        uint256 _principlePaid = 0;
         bool _totalRemainingIsRepaid = false;
 
         if (_amount >= _totalCurrentDebt) {
@@ -626,11 +629,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = _totalInterestAccrued;
             creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
             creditLineVariables[_id].totalInterestRepaid = _totalInterestAccrued;
+            _principlePaid = _amount.sub(_interestToPay);
         } else {
             creditLineVariables[_id].totalInterestRepaid = _amount;
         }
 
-        _repay(_id, _amount, _fromSavingsAccount);
+        _repay(_id, _amount, _fromSavingsAccount, _principlePaid);
 
         if (creditLineVariables[_id].principal == 0) {
             _resetCreditLine(_id);
