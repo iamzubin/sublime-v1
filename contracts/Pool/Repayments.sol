@@ -348,7 +348,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    function _updateRepaidAmount(uint256 _scaledRepaidAmount) internal returns(uint256) {
+    function _updateRepaidAmount(address _poolID, uint256 _scaledRepaidAmount) internal returns(uint256) {
         uint256 _toPay = _scaledRepaidAmount.div(10**30);
         repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_toPay);
         return _toPay;
@@ -367,31 +367,29 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
             require(_loanStatus == 1, 'Repayments:repayInterest Pool should be active.');
         }
 
-        uint256 _amountRequired = 0;
+        uint256 _initialAmount = _amount;
 
         // pay off the overdue
         uint256 _interestOverdue = _repayExtension(_poolID);
         _amount = _amount.sub(_interestOverdue, "doesnt cover overdue interest");
-        _amountRequired = _amountRequired.add(_interestOverdue);
 
         if(_amount == 0) {
-            return _updateRepaidAmount(_amountRequired);
+            return _updateRepaidAmount(_poolID, _initialAmount.sub(_amount));
         }
 
         // pay off grace penality
         uint256 _gracePenaltyDue = _repayGracePenalty(_poolID);
         _amount = _amount.sub(_gracePenaltyDue, "doesnt cover grace penality");
-        _amountRequired = _amountRequired.add(_gracePenaltyDue);
 
         if(_amount == 0) {
-            return _updateRepaidAmount(_amountRequired);
+            return _updateRepaidAmount(_poolID, _initialAmount.sub(_amount));
         }
 
         // pay interest
         uint256 _interestRepaid = _repayInterest(_poolID, _amount, _isLastRepayment);
-        _amountRequired = _amountRequired.add(_interestRepaid);
+        _amount = _amount.sub(_interestRepaid);
 
-        return _updateRepaidAmount(_amountRequired);
+        return _updateRepaidAmount(_poolID, _initialAmount.sub(_amount));
     }
 
     /// @notice Used to pay off the principal of the loan, once the overdues and interests are repaid
