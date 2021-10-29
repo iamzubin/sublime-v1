@@ -1,9 +1,9 @@
-import { poolCreationTest } from '../../utils/TestTemplate/PoolCreationTemplate';
-import { poolCreationTestCases as testCases } from '../../utils/TestCases/pool_creation_test_cases';
+import { CreditLines } from '../../utils/TestTemplate/CreditLines_template';
+import { psLoanStagesTestCases as testCases } from '../../utils/TestCases/pool_simulations_loan_stages_test_cases';
 
-xdescribe('Testing pool creation', function () {
+describe('CreditLine tests', function () {
     testCases.forEach((testCase) => {
-        poolCreationTest(
+        CreditLines(
             testCase.Amount,
             testCase.Whale1,
             testCase.Whale2,

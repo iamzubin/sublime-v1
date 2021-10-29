@@ -21,7 +21,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
 
     mapping(bytes32 => address) uniswapPools;
 
-    function initialize(address _admin) public initializer {
+    function initialize(address _admin) external initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_admin);
     }
@@ -80,7 +80,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
     }
 
-    function getLatestPrice(address num, address den) public view override returns (uint256, uint256) {
+    function getLatestPrice(address num, address den) external view override returns (uint256, uint256) {
         uint256 _price;
         uint256 _decimals;
         (_price, _decimals) = getChainlinkLatestPrice(num, den);

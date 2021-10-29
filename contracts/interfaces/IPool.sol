@@ -84,7 +84,7 @@ interface IPool {
      * @param liquidator address of the liquidator
      */
     event PoolLiquidated(address indexed liquidator);
-    
+
     function getLoanStatus() external view returns (uint256);
 
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable;
@@ -103,7 +103,7 @@ interface IPool {
 
     function getBalanceDetails(address _lender) external view returns (uint256, uint256);
 
-    function getTokensLent() external view returns (uint256);
+    function totalSupply() external view returns (uint256);
 
     function closeLoan() external payable;
 }

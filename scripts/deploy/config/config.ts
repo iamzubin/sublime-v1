@@ -4,8 +4,7 @@ import { DeploymentParams } from '../../../utils/types';
 import kovanConfig from './kovan.json';
 import rinkebyConfig from './rinkeby.json';
 
-import { getPoolInitSigHash } from "../../../utils/createEnv/poolLogic";
-
+import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
 
 function getConfig(network: string): DeploymentParams {
     let networkConfig;
@@ -42,7 +41,7 @@ function createConfig(rawConfig: any): DeploymentParams {
         _minBorrowFraction: ethers.utils.parseUnits(rawConfig.poolFactory.minBorrowFraction + '', 30),
         _protocolFeeFraction: ethers.utils.parseUnits(rawConfig.poolFactory.protocolFeeFraction + '', 30),
         protocolFeeCollector: rawConfig.poolFactory.protocolFeeCollector,
-        noStrategy: ethers.constants.AddressZero
+        noStrategy: ethers.constants.AddressZero,
     };
     return config;
 }

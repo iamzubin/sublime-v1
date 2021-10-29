@@ -132,7 +132,7 @@ interface IPoolFactory {
      * @param noStrategy address of noYield contract
      */
     event NoStrategyUpdated(address noStrategy);
-    
+
     function savingsAccount() external view returns (address);
 
     function owner() external view returns (address);
