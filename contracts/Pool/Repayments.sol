@@ -302,12 +302,64 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _transferTokens(msg.sender, _poolID, _asset, _amountRepaid);
     }
 
+    function _repayExtension(address _poolID) internal returns(uint256) {
+        if (repayVariables[_poolID].isLoanExtensionActive) {
+            uint256 _interestOverdue = getInterestOverdue(_poolID);
+            repayVariables[_poolID].isLoanExtensionActive = false; // deactivate loan extension flag
+            repayVariables[_poolID].loanDurationCovered = (getInstalmentsCompleted(_poolID).add(10**30))
+                .mul(repayConstants[_poolID].repaymentInterval)
+                .div(10**30);
+            emit ExtensionRepaid(_poolID, _interestOverdue);
+            return _interestOverdue;
+        } else {
+            return 0;
+        }
+    }
+
+    function _repayGracePenalty(address _poolID) internal returns(uint256) {
+        bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
+
+        if (_isBorrowerLate) {
+            uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
+            emit GracePenaltyRepaid(_poolID, _penalty);
+            return _penalty;
+        } else {
+            return 0;
+        }
+    }
+
+    function _repayInterest(address _poolID, uint256 _amount, bool _isLastRepayment) internal returns(uint256) {
+        uint256 _interestLeft = getInterestLeft(_poolID);
+        require(
+            (_amount < _interestLeft) != _isLastRepayment,
+            'Repayments::repayAmount complete interest must be repaid along with principal'
+        );
+
+        if (_amount < _interestLeft) {
+            uint256 _interestPerSecond = getInterestPerSecond(_poolID);
+            uint256 _newDurationRepaid = _amount.mul(10**30).div(_interestPerSecond); // dividing exponents
+            repayVariables[_poolID].loanDurationCovered = repayVariables[_poolID].loanDurationCovered.add(_newDurationRepaid);
+            emit InterestRepaid(_poolID, _amount);
+            return _amount;
+        } else {
+            repayVariables[_poolID].loanDurationCovered = repayConstants[_poolID].loanDuration; // full interest repaid
+            emit InterestRepaymentComplete(_poolID, _interestLeft);
+            return _interestLeft;
+        }
+    }
+
+    function _updateRepaidAmount(uint256 _scaledRepaidAmount) internal returns(uint256) {
+        uint256 _toPay = _scaledRepaidAmount.div(10**30);
+        repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_toPay);
+        return _toPay;
+    }
+
     function _repay(
         address _poolID,
         uint256 _amount,
         address _asset,
         bool _isLastRepayment
-    ) internal returns (uint256 _amountRequired) {
+    ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
         {
@@ -315,60 +367,31 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
             require(_loanStatus == 1, 'Repayments:repayInterest Pool should be active.');
         }
 
-        _amountRequired = 0;
+        uint256 _amountRequired = 0;
 
-        // First pay off the overdue
-        if (repayVariables[_poolID].isLoanExtensionActive) {
-            uint256 _interestOverdue = getInterestOverdue(_poolID);
+        // pay off the overdue
+        uint256 _interestOverdue = _repayExtension(_poolID);
+        _amount = _amount.sub(_interestOverdue, "doesnt cover overdue interest");
+        _amountRequired = _amountRequired.add(_interestOverdue);
 
-            require(_amount >= _interestOverdue, "doesnt cover overdue interest");
-
-            _amount = _amount.sub(_interestOverdue);
-            _amountRequired = _amountRequired.add(_interestOverdue);
-            repayVariables[_poolID].isLoanExtensionActive = false; // deactivate loan extension flag
-            repayVariables[_poolID].loanDurationCovered = (getInstalmentsCompleted(_poolID).add(10**30))
-                .mul(repayConstants[_poolID].repaymentInterval)
-                .div(10**30);
-            emit ExtensionRepaid(_poolID, _interestOverdue);
-        }
-        // Second pay off the interest
-        if (_amount != 0) {
-            uint256 _interestLeft = getInterestLeft(_poolID);
-            bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
-
-            // adding grace penalty if applicable
-            if (_isBorrowerLate) {
-                uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
-                _amount = _amount.sub(_penalty, "doesnt cover grace penality");
-                _amountRequired = _amountRequired.add(_penalty);
-                emit GracePenaltyRepaid(_poolID, _penalty);
-            }
-
-            require(
-                (_amount < _interestLeft) != _isLastRepayment,
-                'Repayments::repayAmount complete interest must be repaid along with principal'
-            );
-
-            if (_amount < _interestLeft) {
-                uint256 _interestPerSecond = getInterestPerSecond(_poolID);
-                uint256 _loanDurationCovered = _amount.mul(10**30).div(_interestPerSecond); // dividing exponents
-                repayVariables[_poolID].loanDurationCovered = repayVariables[_poolID].loanDurationCovered.add(_loanDurationCovered);
-                _amountRequired = _amountRequired.add(_amount);
-                emit InterestRepaid(_poolID, _amount);
-            } else {
-                repayVariables[_poolID].loanDurationCovered = repayConstants[_poolID].loanDuration; // full interest repaid
-                _amount = _amount.sub(_interestLeft);
-                _amountRequired = _amountRequired.add(_interestLeft);
-                emit InterestRepaymentComplete(_poolID, _amount);
-            }
+        if(_amount == 0) {
+            return _updateRepaidAmount(_amountRequired);
         }
 
-        _amountRequired = _amountRequired.div(10**30);
-        require(_amountRequired != 0 || _isLastRepayment, 'Repayments::repayAmount not necessary');
-        if(_amountRequired == 0) {
-            return 0;
+        // pay off grace penality
+        uint256 _gracePenaltyDue = _repayGracePenalty(_poolID);
+        _amount = _amount.sub(_gracePenaltyDue, "doesnt cover grace penality");
+        _amountRequired = _amountRequired.add(_gracePenaltyDue);
+
+        if(_amount == 0) {
+            return _updateRepaidAmount(_amountRequired);
         }
-        repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_amountRequired);
+
+        // pay interest
+        uint256 _interestRepaid = _repayInterest(_poolID, _amount, _isLastRepayment);
+        _amountRequired = _amountRequired.add(_interestRepaid);
+
+        return _updateRepaidAmount(_amountRequired);
     }
 
     /// @notice Used to pay off the principal of the loan, once the overdues and interests are repaid
