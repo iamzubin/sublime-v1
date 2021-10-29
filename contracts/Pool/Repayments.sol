@@ -374,8 +374,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
             }
         }
 
-        require(_amountRequired != 0, 'Repayments::repayAmount not necessary');
         _amountRequired = _amountRequired.div(10**30);
+        require(_amountRequired != 0 || _isLastRepayment, 'Repayments::repayAmount not necessary');
+        if(_amountRequired == 0) {
+            return 0;
+        }
         repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_amountRequired);
 
         if (_asset == address(0)) {

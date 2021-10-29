@@ -37,7 +37,7 @@ import { expectApproxEqual } from '../../../utils/helpers';
 import { blockTravel } from '../../../utils/time';
 import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
 
-describe('Pool Margin calls cases', function () {
+describe.skip('Pool Margin calls cases', function () {
     testCases.forEach((testCase) => {
         marginCallTests(
             testCase.Amount,

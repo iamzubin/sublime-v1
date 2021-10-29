@@ -12,7 +12,7 @@ import {
 } from '../../../utils/types';
 import hre from 'hardhat';
 const { ethers, network } = hre;
-import { expect, assert } from 'chai';
+import { assert, expect } from 'chai';
 
 import {
     extensionParams,
@@ -36,8 +36,9 @@ import { CompoundYield } from '@typechain/CompoundYield';
 import { expectApproxEqual } from '../../../utils/helpers';
 import { blockTravel } from '../../../utils/time';
 import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
+import { extendEnvironment } from 'hardhat/config';
 
-describe('Pool Margin calls cases', function () {
+describe('Pool Repayment cases', function () {
     testCases.forEach((testCase) => {
         marginCallTests(
             testCase.Amount,
@@ -64,7 +65,7 @@ export async function marginCallTests(
     chainlinkBorrow: Address,
     chainlinkCollateral: Address
 ): Promise<any> {
-    describe('Pool Margin calls', async () => {
+    describe('Pool Repayment', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -154,15 +155,21 @@ export async function marginCallTests(
 
             await collateralAsset
                 .connect(env.impersonatedAccounts[0])
-                .transfer(borrower.address, poolParams.collateralAmount.mul(BigNumber.from(10).pow(CTDecimals)));
+                .transfer(borrower.address, poolParams.collateralAmount);
             await collateralAsset
                 .connect(borrower)
-                .approve(poolAddress, poolParams.collateralAmount.mul(BigNumber.from(10).pow(CTDecimals)));
+                .approve(poolAddress, poolParams.collateralAmount);
 
             // Note: Transferring 3 times the poolSize to lender from whale
             await borrowAsset
                 .connect(env.impersonatedAccounts[0])
-                .transfer(lender.address, poolParams.poolSize.mul(3).mul(BigNumber.from(10).pow(BTDecimals)));
+                .transfer(lender.address, poolParams.poolSize.mul(3));
+            await borrowAsset
+                .connect(env.impersonatedAccounts[0])
+                .transfer(borrower.address, poolParams.poolSize.mul(3));
+            await borrowAsset
+                .connect(env.impersonatedAccounts[0])
+                .transfer(env.entities.extraLenders[1].address, poolParams.poolSize.mul(3));
 
             pool = await createNewPool(env, borrowAsset, collateralAsset, iyield, salt, false, {
                 _poolSize: poolParams.poolSize,
@@ -176,30 +183,128 @@ export async function marginCallTests(
             });
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
+
+            // fix default signers
+            pool = pool.connect(env.entities.borrower);
+            env.repayments = env.repayments.connect(env.entities.lender);
+            env.poolFactory = env.poolFactory.connect(env.entities.borrower);
+            env.savingsAccount = env.savingsAccount.connect(env.entities.borrower);
         });
 
-        describe("Any extra collateral posted to a lender during margin call belong to the lender", () => {
+        describe("Repay interest", () => {
+            let lentAmount: BigNumber, lentAmount1: BigNumber;
+            let totalPoolInterest: BigNumber;
             before(async () => {
                 const minBorrowFraction = await env.poolFactory.minBorrowFraction();
                 const minPoolSize = poolParams.poolSize.mul(minBorrowFraction).div(SCALER);
-                const lentAmount = minPoolSize.mul(4).div(3);
+                lentAmount = minPoolSize.mul(4).div(3);
+                await borrowAsset.connect(env.entities.lender).approve(pool.address, lentAmount);
                 await pool.connect(env.entities.lender).lend(env.entities.lender.address, lentAmount, false);
 
                 const { loanStartTime } = await pool.poolConstants();
                 await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
                 await pool.connect(env.entities.borrower).withdrawBorrowedAmount();
+                totalPoolInterest = (await env.repayments.getInterestLeft(pool.address)).div(SCALER);
             });
 
-            beforeEach(async () => {
-                await env.priceOracle.connect(env.entities.admin).setChainlinkFeedAddress(borrowAsset.address, ChainLinkAggregators['ETH/USD']);
-            });
-
-            afterEach(async () => {
-                await env.priceOracle.connect(env.entities.admin).setChainlinkFeedAddress(borrowAsset.address, chainlinkBorrow);
-            });
-
-            it("margin call made", async () => {
+            it("repay interest for first period", async () => {
+                const instalmentNo = (await env.repayments.getCurrentInstalmentInterval(pool.address)).div(SCALER); 
+                assert(instalmentNo.toString() == "1", "Wrong instalment");
+                const interestForFirstPeriod = (await env.repayments.getInterestDueTillInstalmentDeadline(pool.address)).div(SCALER);
+                await borrowAsset
+                    .connect(env.entities.extraLenders[1])
+                    .approve(env.repayments.address, interestForFirstPeriod);
+                await env.repayments
+                    .connect(env.entities.extraLenders[1])
+                    .repay(pool.address, interestForFirstPeriod);
                 
+                const { loanDurationCovered } = await env.repayments.repayVariables(pool.address);
+                const { repaymentInterval } = await env.repayments.repayConstants(pool.address);
+
+                expectApproxEqual(
+                    loanDurationCovered.div(SCALER), 
+                    repaymentInterval.div(SCALER), 
+                    1, 
+                    `loanDurationCovered doesn't represent entire first period. Expected: ${repaymentInterval.div(SCALER)} Actual: ${loanDurationCovered.div(SCALER)}`
+                );
+            });
+
+            it("can't repay all interest for entire loan without repaying principal", async () => {
+                const interestLeft = (await env.repayments.getInterestLeft(pool.address)).div(SCALER);
+                // Note: interestLeft.add(1) is necessary as when div by SCALER we are cutting down the decimal parts and to ensure compelte repaymet, we should send little higher
+                await borrowAsset
+                    .connect(env.entities.extraLenders[1])
+                    .approve(env.repayments.address, interestLeft.add(1));
+                await expect(
+                    env.repayments
+                        .connect(env.entities.extraLenders[1])
+                        .repay(pool.address, interestLeft.add(1))
+                ).to.be.revertedWith("Repayments::repayAmount complete interest must be repaid along with principal");
+            });
+
+            it("should be able to repay slightly less than total interest", async () => {
+                const interestLeft = (await env.repayments.getInterestLeft(pool.address)).div(SCALER);
+                await borrowAsset
+                    .connect(env.entities.extraLenders[1])
+                    .approve(env.repayments.address, interestLeft);
+                await env.repayments
+                    .connect(env.entities.extraLenders[1])
+                    .repay(pool.address, interestLeft.sub(1));
+            });
+
+            it("can't repay some portion of principle", async () => {
+                const interestLeft = (await env.repayments.getInterestLeft(pool.address)).div(SCALER);
+                const principal = await pool.totalSupply();
+                await borrowAsset
+                    .connect(env.entities.extraLenders[1])
+                    .approve(env.repayments.address, interestLeft.add(principal).sub(1));
+                await expect(
+                    env.repayments
+                        .connect(env.entities.extraLenders[1])
+                        .repayPrincipal(pool.address)
+                ).to.be.revertedWith("");
+            });
+
+            it("close loan", async () => {
+                const interestLeft = (await env.repayments.getInterestLeft(pool.address)).div(SCALER);
+                const principal = await pool.totalSupply();
+                await borrowAsset
+                    .connect(env.entities.extraLenders[1])
+                    .approve(env.repayments.address, interestLeft.add(principal));
+                
+                const collateralBeforeRepay = await env.savingsAccount.balanceInShares(env.entities.borrower.address, collateralAsset.address, iyield.address);
+                const { baseLiquidityShares, extraLiquidityShares } = await pool.poolVariables();
+                await env.repayments
+                    .connect(env.entities.extraLenders[1])
+                    .repayPrincipal(pool.address);
+                const collateralAfterRepay = await env.savingsAccount.balanceInShares(env.entities.borrower.address, collateralAsset.address, iyield.address);
+                const collateralIncrease = await iyield.callStatic.getTokensForShares(collateralAfterRepay.sub(collateralBeforeRepay), collateralAsset.address);
+
+                assert(
+                    collateralAfterRepay.sub(collateralBeforeRepay).eq(baseLiquidityShares.add(extraLiquidityShares)), 
+                    `Collateral shares not correctly returned to borrower Expected: ${baseLiquidityShares.add(extraLiquidityShares)} Actual: ${collateralAfterRepay.sub(collateralBeforeRepay)}`
+                );
+                assert(
+                    collateralIncrease.gte(poolParams.collateralAmount), 
+                    `Collateral locked is returned back Expected: ${poolParams.collateralAmount} Actual: ${collateralIncrease}`
+                );
+
+                const loanStatus = await pool.getLoanStatus();
+                assert(loanStatus.eq(2), "Loan hasn't closed");
+                const borrowAssetAllowanceRemaining = await borrowAsset.allowance(env.entities.extraLenders[1].address, env.repayments.address);
+                assert(borrowAssetAllowanceRemaining.eq(0), `Incorrect interest + principal transferred Expected: 0, Actual: ${borrowAssetAllowanceRemaining}`);
+            });
+
+            it("lenders withdraw repayments and lent amount", async () => {
+                const balanceDetails = await pool.getBalanceDetails(env.entities.lender.address);
+                const balanceBefore = await borrowAsset.balanceOf(env.entities.lender.address);
+                await pool.connect(env.entities.lender).withdrawLiquidity();
+                const balanceAfter = await borrowAsset.balanceOf(env.entities.lender.address);
+
+                assert(
+                    balanceAfter.sub(balanceBefore).eq(totalPoolInterest.mul(balanceDetails[0]).div(balanceDetails[1]).add(lentAmount)), 
+                    `Amount lent + interest not correctly received by lender Expected: ${(totalPoolInterest.mul(balanceDetails[0]).div(balanceDetails[1]).add(lentAmount))} Actual: ${balanceAfter.sub(balanceBefore)}`
+                );
             });
         });
     });
