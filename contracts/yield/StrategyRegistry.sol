@@ -14,7 +14,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
 
     mapping(address => bool) public override registry;
 
-    function initialize(address _owner, uint256 _maxStrategies) public initializer {
+    function initialize(address _owner, uint256 _maxStrategies) external initializer {
         require(_maxStrategies != 0, 'StrategyRegistry::initialize maxStrategies cannot be zero');
         __Ownable_init();
         super.transferOwnership(_owner);
@@ -38,6 +38,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
     function addStrategy(address _strategy) external override onlyOwner {
         require(strategies.length.add(1) <= maxStrategies, "StrategyRegistry::addStrategy - Can't add more strategies");
         require(!registry[_strategy], 'StrategyRegistry::addStrategy - Strategy already exists');
+        require(_strategy != address(0), 'StrategyRegistry::addStrategy - _strategy cannot be address(0)');
         registry[_strategy] = true;
         strategies.push(_strategy);
 
@@ -72,6 +73,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
             strategies[_strategyIndex] == _oldStrategy,
             "StrategyRegistry::updateStrategy - index to update and strategy address don't match"
         );
+        require(!registry[_newStrategy], 'StrategyRegistry::updateStrategy - New strategy already exists');
         strategies[_strategyIndex] = _newStrategy;
 
         registry[_oldStrategy] = false;

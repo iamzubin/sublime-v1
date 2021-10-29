@@ -21,7 +21,12 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
 
     address payable public savingsAccount;
 
-    function initialize(address _owner, address payable _savingsAccount) public initializer {
+    modifier onlySavingsAccount() {
+        require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
+        _;
+    }
+
+    function initialize(address _owner, address payable _savingsAccount) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
 
@@ -32,7 +37,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         tokenAddress = asset;
     }
 
-    function updateSavingsAccount(address payable _savingsAccount) public onlyOwner {
+    function updateSavingsAccount(address payable _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
 
@@ -43,6 +48,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     }
 
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+        require(_wallet != address(0), 'cant burn');
         uint256 amount = IERC20(_asset).balanceOf(address(this));
         IERC20(_asset).safeTransfer(_wallet, received);
         received = amount;
@@ -52,25 +58,40 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         address user,
         address asset,
         uint256 amount
-    ) public payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
-        IERC20(asset).safeTransferFrom(user, address(this), amount);
+        if (asset != address(0)) {
+            IERC20(asset).safeTransferFrom(user, address(this), amount);
+        } else {
+            require(msg.value == amount, 'Invest: ETH amount');
+        }
         sharesReceived = amount;
         emit LockedTokens(user, asset, sharesReceived);
     }
 
-    function unlockTokens(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256 tokensReceived) {
+    function unlockTokens(address asset, uint256 amount)
+        external
+        override
+        onlySavingsAccount
+        nonReentrant
+        returns (uint256 tokensReceived)
+    {
         tokensReceived = _unlockTokens(asset, amount);
     }
 
-    function unlockShares(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256 received) {
-        received = unlockTokens(asset, amount);
+    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
+        received = _unlockTokens(asset, amount);
     }
 
     function _unlockTokens(address asset, uint256 amount) internal returns (uint256 received) {
         require(amount != 0, 'Invest: amount');
         received = amount;
-        IERC20(asset).safeTransfer(savingsAccount, received);
+        if (asset == address(0)) {
+            (bool success, ) = savingsAccount.call{value: received}('');
+            require(success, 'Transfer failed');
+        } else {
+            IERC20(asset).safeTransfer(savingsAccount, received);
+        }
         emit UnlockedTokens(asset, received);
     }
 
@@ -80,10 +101,5 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
 
     function getSharesForTokens(uint256 amount, address asset) external pure override returns (uint256 shares) {
         shares = amount;
-    }
-
-    modifier onlySavingsAccount() {
-        require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
-        _;
     }
 }

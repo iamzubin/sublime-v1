@@ -31,6 +31,7 @@ import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '../../typechain/IYield';
 import { zeroAddress } from '../../utils/constants';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
@@ -60,13 +61,13 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
                 _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
                 _marginCallDuration: testPoolFactoryParams._marginCallDuration,
                 _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
-                _poolInitFuncSelector: testPoolFactoryParams._poolInitFuncSelector,
-                _poolTokenInitFuncSelector: testPoolFactoryParams._poolTokenInitFuncSelector,
+                _poolInitFuncSelector: getPoolInitSigHash(),
                 _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
                 _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
                 _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
                 protocolFeeCollector: '',
                 _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                noStrategy: '',
             } as PoolFactoryInitParams,
             CreditLineDefaultStrategy.Compound,
             {
@@ -86,7 +87,6 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
 
         let poolAddress = await calculateNewPoolAddress(env, USDT, ETH, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
-            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)), // 10 usdt
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
@@ -105,7 +105,6 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
 
         let pool = await createNewPool(env, USDT, ETH, iyield, salt, false, {
             _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(6)), // max possible borrow tokens in pool
-            _volatilityThreshold: BigNumber.from(20).mul(BigNumber.from(10).pow(28)),
             _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
             _collateralAmount: BigNumber.from(1).mul(BigNumber.from(10).pow(18)), // 1 eth
             _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28

@@ -26,7 +26,7 @@ export async function incrementChain(network: Network, blocks: number, blockTime
 import poolContractMeta from '../artifacts/contracts/Pool/Pool.sol/Pool.json';
 import proxyMeta from '../artifacts/contracts/Proxy.sol/SublimeProxy.json';
 
-import { createPoolParams, testPoolFactoryParams } from './constants';
+import { createPoolParams, testPoolFactoryParams, zeroAddress } from './constants';
 
 const _interface = new ethers.utils.Interface(poolContractMeta.abi);
 const initializeFragement = _interface.getFunction('initialize');
@@ -42,7 +42,6 @@ export async function getPoolAddress(
     transferFromSavingsAccount: Boolean,
     {
         _poolSize = createPoolParams._poolSize,
-        _collateralVolatilityThreshold = createPoolParams._collateralVolatilityThreshold,
         _collateralRatio = createPoolParams._collateralRatio,
         _borrowRate = createPoolParams._borrowRate,
         _repaymentInterval = createPoolParams._repaymentInterval,
@@ -50,6 +49,7 @@ export async function getPoolAddress(
         _collateralAmount = createPoolParams._collateralAmount,
         _loanWithdrawalDuration = testPoolFactoryParams._loanWithdrawalDuration,
         _collectionPeriod = testPoolFactoryParams._collectionPeriod,
+        _lenderVerifier = zeroAddress,
     }
 ) {
     const poolData = _interface.encodeFunctionData(initializeFragement, [
@@ -59,12 +59,12 @@ export async function getPoolAddress(
         borrowToken,
         collateralToken,
         _collateralRatio,
-        _collateralVolatilityThreshold,
         _repaymentInterval,
         _noOfRepaymentIntervals,
         strategy,
         _collateralAmount,
         transferFromSavingsAccount,
+        _lenderVerifier,
         _loanWithdrawalDuration,
         _collectionPeriod,
     ]);

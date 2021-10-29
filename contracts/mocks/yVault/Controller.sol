@@ -124,7 +124,7 @@ contract Controller {
 
     function setStrategy(address _token, address _strategy) public {
         require(msg.sender == strategist || msg.sender == governance, '!strategist');
-        require(approvedStrategies[_token][_strategy] == true, '!approved');
+        require(approvedStrategies[_token][_strategy], '!approved');
 
         address _current = strategies[_token];
         if (_current != address(0)) {

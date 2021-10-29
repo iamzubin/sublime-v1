@@ -34,11 +34,12 @@ import { Extension } from '../../typechain/Extension';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool', async () => {
     let savingsAccount: SavingsAccount;
@@ -53,6 +54,7 @@ describe('Pool', async () => {
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -126,6 +128,10 @@ describe('Pool', async () => {
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
 
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
@@ -142,7 +148,6 @@ describe('Pool', async () => {
     describe('Use Pool', async () => {
         let extenstion: Extension;
         let poolImpl: Pool;
-        let poolTokenImpl: PoolToken;
         let poolFactory: PoolFactory;
         let repaymentImpl: Repayments;
 
@@ -158,8 +163,6 @@ describe('Pool', async () => {
                 _gracePeriodPenaltyFraction,
                 _liquidatorRewardFraction,
                 _loanWithdrawalDuration,
-                _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
                 _poolCancelPenalityFraction,
                 _protocolFeeFraction,
             } = testPoolFactoryParams;
@@ -170,16 +173,15 @@ describe('Pool', async () => {
                     _collectionPeriod,
                     _loanWithdrawalDuration,
                     _marginCallDuration,
-                    _poolInitFuncSelector,
-                    _poolTokenInitFuncSelector,
+                    getPoolInitSigHash(),
                     _liquidatorRewardFraction,
                     _poolCancelPenalityFraction,
                     _minborrowFraction,
                     _protocolFeeFraction,
-                    protocolFeeCollector.address
+                    protocolFeeCollector.address,
+                    noYield.address
                 );
             poolImpl = await deployHelper.pool.deployPool();
-            poolTokenImpl = await deployHelper.pool.deployPoolToken();
             repaymentImpl = await deployHelper.pool.deployRepayments();
 
             await poolFactory
@@ -187,7 +189,6 @@ describe('Pool', async () => {
                 .setImplementations(
                     poolImpl.address,
                     repaymentImpl.address,
-                    poolTokenImpl.address,
                     verification.address,
                     strategyRegistry.address,
                     priceOracle.address,
@@ -198,15 +199,8 @@ describe('Pool', async () => {
 
         describe('Failed Cases', async () => {
             it('Should revert/fail when unsupported token is used as borrow token while creating a pool', async () => {
-                let {
-                    _poolSize,
-                    _collateralVolatilityThreshold,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
                 await expect(
                     poolFactory
                         .connect(borrower)
@@ -216,7 +210,6 @@ describe('Pool', async () => {
                             Contracts.cWBTC,
                             Contracts.LINK,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,
@@ -232,15 +225,8 @@ describe('Pool', async () => {
             it('Should revert/fail when unsupported token is used collateral token while creating a pool', async () => {
                 await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
 
-                let {
-                    _poolSize,
-                    _collateralVolatilityThreshold,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
                 await expect(
                     poolFactory
                         .connect(borrower)
@@ -250,7 +236,6 @@ describe('Pool', async () => {
                             Contracts.DAI,
                             Contracts.Maximillion,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,
@@ -269,7 +254,6 @@ describe('Pool', async () => {
                         .setImplementations(
                             poolImpl.address,
                             repaymentImpl.address,
-                            poolTokenImpl.address,
                             verification.address,
                             strategyRegistry.address,
                             priceOracle.address,
@@ -303,7 +287,6 @@ describe('Pool', async () => {
                 .setImplementations(
                     poolImpl.address,
                     repaymentImpl.address,
-                    poolTokenImpl.address,
                     verification.address,
                     strategyRegistry.address,
                     priceOracle.address,
@@ -326,29 +309,15 @@ describe('Pool', async () => {
                 {}
             );
 
-            const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-            let newPoolToken: string = getContractAddress({
-                from: poolFactory.address,
-                nonce,
-            });
-
             // console.log({
             //   generatedPoolAddress,
             //   msgSender: borrower.address,
-            //   newPoolToken,
             //   savingsAccountFromPoolFactory: await poolFactory.savingsAccount(),
             //   savingsAccount: savingsAccount.address
             // });
 
-            let {
-                _poolSize,
-                _collateralVolatilityThreshold,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _collateralAmount,
-            } = createPoolParams;
+            let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                createPoolParams;
 
             await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 
@@ -363,7 +332,6 @@ describe('Pool', async () => {
                         Contracts.DAI,
                         Contracts.LINK,
                         _collateralRatio,
-                        _collateralVolatilityThreshold,
                         _repaymentInterval,
                         _noOfRepaymentIntervals,
                         aaveYield.address,
@@ -375,13 +343,7 @@ describe('Pool', async () => {
                     )
             )
                 .to.emit(poolFactory, 'PoolCreated')
-                .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-            let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
-            expect(await newlyCreatedToken.name()).eq('Pool Tokens');
-            expect(await newlyCreatedToken.symbol()).eq('OBPT');
-            expect(await newlyCreatedToken.decimals()).eq(18);
+                .withArgs(generatedPoolAddress, borrower.address);
         });
 
         describe('Deposit Collateral', () => {
@@ -397,7 +359,6 @@ describe('Pool', async () => {
                     .setImplementations(
                         poolImpl.address,
                         repaymentImpl.address,
-                        poolTokenImpl.address,
                         verification.address,
                         strategyRegistry.address,
                         priceOracle.address,
@@ -420,29 +381,15 @@ describe('Pool', async () => {
                     {}
                 );
 
-                const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-                let newPoolToken: string = getContractAddress({
-                    from: poolFactory.address,
-                    nonce,
-                });
-
                 // console.log({
                 //   generatedPoolAddress,
                 //   msgSender: borrower.address,
-                //   newPoolToken,
                 //   savingsAccountFromPoolFactory: await poolFactory.savingsAccount(),
                 //   savingsAccount: savingsAccount.address
                 // });
 
-                let {
-                    _poolSize,
-                    _collateralVolatilityThreshold,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
 
                 await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 
@@ -457,7 +404,6 @@ describe('Pool', async () => {
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,
@@ -469,13 +415,7 @@ describe('Pool', async () => {
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
-                    .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-                let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
-                expect(await newlyCreatedToken.name()).eq('Pool Tokens');
-                expect(await newlyCreatedToken.symbol()).eq('OBPT');
-                expect(await newlyCreatedToken.decimals()).eq(18);
+                    .withArgs(generatedPoolAddress, borrower.address);
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
             });
@@ -522,7 +462,6 @@ describe('Pool', async () => {
                     .setImplementations(
                         poolImpl.address,
                         repaymentImpl.address,
-                        poolTokenImpl.address,
                         verification.address,
                         strategyRegistry.address,
                         priceOracle.address,
@@ -545,29 +484,15 @@ describe('Pool', async () => {
                     {}
                 );
 
-                const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-                let newPoolToken: string = getContractAddress({
-                    from: poolFactory.address,
-                    nonce,
-                });
-
                 // console.log({
                 //   generatedPoolAddress,
                 //   msgSender: borrower.address,
-                //   newPoolToken,
                 //   savingsAccountFromPoolFactory: await poolFactory.savingsAccount(),
                 //   savingsAccount: savingsAccount.address
                 // });
 
-                let {
-                    _poolSize,
-                    _collateralVolatilityThreshold,
-                    _collateralRatio,
-                    _borrowRate,
-                    _repaymentInterval,
-                    _noOfRepaymentIntervals,
-                    _collateralAmount,
-                } = createPoolParams;
+                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                    createPoolParams;
 
                 await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
 
@@ -582,7 +507,6 @@ describe('Pool', async () => {
                             Contracts.DAI,
                             Contracts.LINK,
                             _collateralRatio,
-                            _collateralVolatilityThreshold,
                             _repaymentInterval,
                             _noOfRepaymentIntervals,
                             aaveYield.address,
@@ -594,13 +518,7 @@ describe('Pool', async () => {
                         )
                 )
                     .to.emit(poolFactory, 'PoolCreated')
-                    .withArgs(generatedPoolAddress, borrower.address, newPoolToken);
-
-                let newlyCreatedToken: PoolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
-                expect(await newlyCreatedToken.name()).eq('Pool Tokens');
-                expect(await newlyCreatedToken.symbol()).eq('OBPT');
-                expect(await newlyCreatedToken.decimals()).eq(18);
+                    .withArgs(generatedPoolAddress, borrower.address);
 
                 pool = await deployHelper.pool.getPool(generatedPoolAddress);
                 await pool.connect(borrower).depositCollateral(_collateralAmount, false);

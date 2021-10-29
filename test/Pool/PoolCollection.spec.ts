@@ -36,11 +36,12 @@ import { IYield } from '../../typechain/IYield';
 
 import { Contracts } from '../../existingContracts/compound.json';
 import { sha256 } from '@ethersproject/sha2';
-import { PoolToken } from '../../typechain/PoolToken';
 import { Repayments } from '../../typechain/Repayments';
 import { ContractTransaction } from '@ethersproject/contracts';
 import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { NoYield } from '@typechain/NoYield';
+import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool Collection stage', async () => {
     let savingsAccount: SavingsAccount;
@@ -56,13 +57,13 @@ describe('Pool Collection stage', async () => {
 
     let extenstion: Extension;
     let poolImpl: Pool;
-    let poolTokenImpl: PoolToken;
     let poolFactory: PoolFactory;
     let repaymentImpl: Repayments;
 
     let aaveYield: AaveYield;
     let yearnYield: YearnYield;
     let compoundYield: CompoundYield;
+    let noYield: NoYield;
 
     let BatTokenContract: ERC20;
     let LinkTokenContract: ERC20;
@@ -136,6 +137,10 @@ describe('Pool Collection stage', async () => {
         await strategyRegistry.connect(admin).addStrategy(compoundYield.address);
         await compoundYield.connect(admin).updateProtocolAddresses(Contracts.DAI, Contracts.cDAI);
 
+        noYield = await deployHelper.core.deployNoYield();
+        await noYield.initialize(admin.address, savingsAccount.address);
+        await strategyRegistry.connect(admin).addStrategy(noYield.address);
+
         verification = await deployHelper.helper.deployVerification();
         await verification.connect(admin).initialize(admin.address);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
@@ -158,8 +163,6 @@ describe('Pool Collection stage', async () => {
             _gracePeriodPenaltyFraction,
             _liquidatorRewardFraction,
             _loanWithdrawalDuration,
-            _poolInitFuncSelector,
-            _poolTokenInitFuncSelector,
             _poolCancelPenalityFraction,
             _protocolFeeFraction,
         } = testPoolFactoryParams;
@@ -170,20 +173,19 @@ describe('Pool Collection stage', async () => {
                 _collectionPeriod,
                 _loanWithdrawalDuration,
                 _marginCallDuration,
-                _poolInitFuncSelector,
-                _poolTokenInitFuncSelector,
+                getPoolInitSigHash(),
                 _liquidatorRewardFraction,
                 _poolCancelPenalityFraction,
                 _minborrowFraction,
                 _protocolFeeFraction,
-                protocolFeeCollector.address
+                protocolFeeCollector.address,
+                noYield.address
             );
         await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.LINK, true);
 
         await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.DAI, true);
 
         poolImpl = await deployHelper.pool.deployPool();
-        poolTokenImpl = await deployHelper.pool.deployPoolToken();
         repaymentImpl = await deployHelper.pool.deployRepayments();
 
         await repaymentImpl
@@ -195,7 +197,6 @@ describe('Pool Collection stage', async () => {
             .setImplementations(
                 poolImpl.address,
                 repaymentImpl.address,
-                poolTokenImpl.address,
                 verification.address,
                 strategyRegistry.address,
                 priceOracle.address,
@@ -206,7 +207,6 @@ describe('Pool Collection stage', async () => {
 
     describe('Pool that borrows ERC20 with ERC20 as collateral', async () => {
         let pool: Pool;
-        let poolToken: PoolToken;
         let collateralToken: ERC20;
         let borrowToken: ERC20;
         let poolStrategy: IYield;
@@ -232,21 +232,8 @@ describe('Pool Collection stage', async () => {
                 {}
             );
 
-            const nonce = (await poolFactory.provider.getTransactionCount(poolFactory.address)) + 1;
-            let newPoolToken: string = getContractAddress({
-                from: poolFactory.address,
-                nonce,
-            });
-
-            let {
-                _poolSize,
-                _collateralVolatilityThreshold,
-                _collateralRatio,
-                _borrowRate,
-                _repaymentInterval,
-                _noOfRepaymentIntervals,
-                _collateralAmount,
-            } = createPoolParams;
+            let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
+                createPoolParams;
             await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount); // Transfer quantity to borrower
 
             await collateralToken.connect(borrower).approve(generatedPoolAddress, _collateralAmount);
@@ -259,7 +246,6 @@ describe('Pool Collection stage', async () => {
                     Contracts.LINK,
                     Contracts.DAI,
                     _collateralRatio,
-                    _collateralVolatilityThreshold,
                     _repaymentInterval,
                     _noOfRepaymentIntervals,
                     poolStrategy.address,
@@ -270,15 +256,13 @@ describe('Pool Collection stage', async () => {
                     zeroAddress
                 );
 
-            poolToken = await deployHelper.pool.getPoolToken(newPoolToken);
-
             pool = await deployHelper.pool.getPool(generatedPoolAddress);
         });
 
         it('Lend Tokens directly', async () => {
             const amount = createPoolParams._poolSize.div(10);
-            const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+            const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyBefore = await pool.totalSupply();
             await borrowToken.connect(admin).transfer(lender.address, amount);
             await borrowToken.connect(lender).approve(pool.address, amount);
 
@@ -286,10 +270,10 @@ describe('Pool Collection stage', async () => {
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+            const poolTokenBalanceAfter = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfter = await pool.totalSupply();
             assert(
                 poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
                 `Pool tokens not minted correctly. amount: ${amount} Expected: ${poolTokenBalanceBefore.add(
@@ -307,21 +291,21 @@ describe('Pool Collection stage', async () => {
         it('Lend Tokens from savings account by depositing with same account in savingsAccount', async () => {
             const amount = createPoolParams._poolSize.div(10);
             await borrowToken.connect(admin).transfer(lender.address, amount);
-            await borrowToken.connect(lender).approve(savingsAccount.address, amount);
-            await savingsAccount.connect(lender).deposit(amount, borrowToken.address, zeroAddress, lender.address);
+            await borrowToken.connect(lender).approve(noYield.address, amount);
+            await savingsAccount.connect(lender).deposit(amount, borrowToken.address, noYield.address, lender.address);
 
-            const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+            const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyBefore = await pool.totalSupply();
             await savingsAccount.connect(lender).approve(amount, borrowToken.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+            const poolTokenBalanceAfter = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfter = await pool.totalSupply();
             assert(
                 poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
                 `Pool tokens not minted correctly. amount: ${amount} Expected: ${poolTokenBalanceBefore.add(
@@ -339,21 +323,21 @@ describe('Pool Collection stage', async () => {
         it('Lend Tokens from savings account by depositing and lending with different account in savingsAccount', async () => {
             const amount = createPoolParams._poolSize.div(10);
             await borrowToken.connect(admin).transfer(lender1.address, amount);
-            await borrowToken.connect(lender1).approve(savingsAccount.address, amount);
-            await savingsAccount.connect(lender1).deposit(amount, borrowToken.address, zeroAddress, lender1.address);
+            await borrowToken.connect(lender1).approve(noYield.address, amount);
+            await savingsAccount.connect(lender1).deposit(amount, borrowToken.address, noYield.address, lender1.address);
 
-            const poolTokenBalanceBefore = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyBefore = await poolToken.totalSupply();
+            const poolTokenBalanceBefore = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyBefore = await pool.totalSupply();
             await savingsAccount.connect(lender1).approve(amount, borrowToken.address, pool.address);
 
             const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
-            await lendExpect.to.emit(poolToken, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
-            const poolTokenBalanceAfter = await poolToken.balanceOf(lender.address);
-            const poolTokenTotalSupplyAfter = await poolToken.totalSupply();
+            const poolTokenBalanceAfter = await pool.balanceOf(lender.address);
+            const poolTokenTotalSupplyAfter = await pool.totalSupply();
             assert(
                 poolTokenBalanceAfter.toString() == poolTokenBalanceBefore.add(amount).toString(),
                 `Pool tokens not minted correctly. amount: ${amount} Expected: ${poolTokenBalanceBefore.add(

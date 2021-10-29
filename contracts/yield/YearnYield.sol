@@ -25,21 +25,21 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      */
     mapping(address => address) public override liquidityToken;
 
-    event ProtocolAddressesUpdated(address asset, address protocolToken);
+    event ProtocolAddressesUpdated(address indexed asset, address indexed protocolToken);
 
     modifier onlySavingsAccount() {
         require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
-    function initialize(address _owner, address payable _savingsAccount) public initializer {
+    function initialize(address _owner, address payable _savingsAccount) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
 
         _updateSavingsAccount(_savingsAccount);
     }
 
-    function updateSavingsAccount(address payable _savingsAccount) public onlyOwner {
+    function updateSavingsAccount(address payable _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
 
@@ -55,6 +55,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     }
 
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner nonReentrant returns (uint256 received) {
+        require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
         uint256 amount = IERC20(investedTo).balanceOf(address(this));
 
@@ -80,7 +81,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         address user,
         address asset,
         uint256 amount
-    ) public payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
 
         address investedTo = liquidityToken[asset];
@@ -101,7 +102,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @param amount the amount of asset
      * @return received amount of tokens received
      **/
-    function unlockTokens(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256 received) {
+    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
         require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
 
@@ -117,7 +118,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         emit UnlockedTokens(asset, received);
     }
 
-    function unlockShares(address asset, uint256 amount) public override onlySavingsAccount nonReentrant returns (uint256) {
+    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
         if (amount == 0) {
             return 0;
         }

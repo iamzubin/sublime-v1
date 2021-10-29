@@ -70,5 +70,13 @@
         "minBorrowFraction": 0.5,
         "protocolFeeFraction": 0.01,
         "protocolFeeCollector": "0x0000000000000000000000000000000000000000"
+    },
+    "creditLines": {
+        "defaultStrategy": "0x0000000000000000000000000000000000000000",
+        "protocolFee": {
+            "fraction": 0.02,
+            "collector": "0x0000000000000000000000000000000000000000"
+        },
+        "liquidatorRewardFraction": 0.04
     }
 }

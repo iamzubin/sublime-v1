@@ -16,7 +16,6 @@ export interface Contracts {
     priceOracle: Address;
     extension: Address;
     poolLogic: Address;
-    poolTokenLogic: Address;
     repaymentLogic: Address;
     poolFactory: Address;
 }

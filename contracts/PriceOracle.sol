@@ -21,11 +21,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
 
     mapping(bytes32 => address) uniswapPools;
 
-    event ChainlinkFeedUpdated(address token, address priceOracle);
-    event UniswapFeedUpdated(address token1, address token2, bytes32 feedId, address pool);
-    event UniswapPriceAveragingPeriodUpdated(uint32 uniswapPriceAveragingPeriod);
-
-    function initialize(address _admin) public initializer {
+    function initialize(address _admin) external initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_admin);
     }
@@ -80,11 +76,11 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         if (uint256(num) < uint256(den)) {
             return keccak256(abi.encodePacked(num, den));
         } else {
-            return keccak256(abi.encodePacked(num, den));
+            return keccak256(abi.encodePacked(den, num));
         }
     }
 
-    function getLatestPrice(address num, address den) public view override returns (uint256, uint256) {
+    function getLatestPrice(address num, address den) external view override returns (uint256, uint256) {
         uint256 _price;
         uint256 _decimals;
         (_price, _decimals) = getChainlinkLatestPrice(num, den);

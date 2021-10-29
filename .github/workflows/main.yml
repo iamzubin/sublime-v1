@@ -13,6 +13,8 @@ jobs:
         run: npm install --save-dev
       - name: Build the contracts
         run: npm run build
+      - name: Check contract size
+        run: npm run checksize
       - name: Run tests and get coverage
         run: npm run coverage
       - name: Upload reports to Codecov
