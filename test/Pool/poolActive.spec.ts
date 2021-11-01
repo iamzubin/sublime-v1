@@ -486,7 +486,7 @@ describe('Pool Active stage', async () => {
                         await pool.connect(random).liquidatePool(false, false, false);
                     });
 
-                    it.only("Can't liquidate if repay is more than interest for extended period", async () => {
+                    it("Can't liquidate if repay is more than interest for extended period", async () => {
                         await extenstion.connect(borrower).requestExtension(pool.address);
                         await extenstion.connect(lender).voteOnExtension(pool.address);
 
