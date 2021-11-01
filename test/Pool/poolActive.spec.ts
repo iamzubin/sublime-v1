@@ -486,16 +486,16 @@ describe('Pool Active stage', async () => {
                         await pool.connect(random).liquidatePool(false, false, false);
                     });
 
-                    it("Can't liquidate if repay is more than interest for extended period", async () => {
+                    it.only("Can't liquidate if repay is more than interest for extended period", async () => {
                         await extenstion.connect(borrower).requestExtension(pool.address);
                         await extenstion.connect(lender).voteOnExtension(pool.address);
 
                         const interestForCurrentPeriod = (await repaymentImpl.getInterestDueTillInstalmentDeadline(pool.address)).div(
                             scaler
                         );
-                        await borrowToken.connect(random).approve(repaymentImpl.address, interestForCurrentPeriod);
+                        await borrowToken.connect(random).approve(repaymentImpl.address, interestForCurrentPeriod.add(1));
                         const endOfExtension: BigNumber = (await repaymentImpl.getNextInstalmentDeadline(pool.address)).div(scaler);
-                        await repaymentImpl.connect(random).repay(pool.address, interestForCurrentPeriod);
+                        await repaymentImpl.connect(random).repay(pool.address, interestForCurrentPeriod.add(1));
 
                         const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction
                             .mul(createPoolParams._repaymentInterval)
@@ -522,7 +522,7 @@ describe('Pool Active stage', async () => {
 
                         interestForCurrentPeriod = (await repaymentImpl.getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
                         assert(
-                            interestForCurrentPeriod.toString() != '0',
+                            interestForCurrentPeriod.eq(0),
                             `Interest not charged correctly. Actual: ${interestForCurrentPeriod.toString()} Expected: 0`
                         );
                         await borrowToken.connect(random).approve(repaymentImpl.address, interestForCurrentPeriod);
