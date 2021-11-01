@@ -59,7 +59,7 @@ export const psLoanStagesTestCases = [
     //     chainlinkCollateralParam: ChainLinkAggregators['BTC/USD'],
     // },
     {
-        Amount: 100,
+        Amount: 10,
         Whale1: UNIWhale,
         Whale2: WhaleAccount,
         BorrowTokenParam: Contracts.USDC,
