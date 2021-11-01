@@ -91,7 +91,7 @@ function print(data: any) {
     console.log(JSON.stringify(data, null, 4));
 }
 
-export function expectApproxEqual(a: BigNumberish, b: BigNumberish, delta: BigNumberish = BigNumber.from(1000)) {
+export function expectApproxEqual(a: BigNumberish, b: BigNumberish, delta: BigNumberish = BigNumber.from(1000), errorMessage?: string) {
     let _a: BigNumber = BigNumber.from(a);
     let _b: BigNumber = BigNumber.from(b);
     let aGreaterThanB = _a.gte(_b);
@@ -103,5 +103,5 @@ export function expectApproxEqual(a: BigNumberish, b: BigNumberish, delta: BigNu
         _b = BigNumber.from(a);
     }
     let _delta = _a.sub(_b);
-    expect(_delta).lte(delta);
+    expect(_delta.lte(delta), errorMessage);
 }
