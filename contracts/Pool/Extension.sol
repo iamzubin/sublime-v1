@@ -17,11 +17,11 @@ contract Extension is Initializable, IExtension {
     using SafeMath for uint256;
 
     struct ExtensionVariables {
-        uint256 periodWhenExtensionIsPassed;
+        bool hasExtensionPassed;
         uint256 totalExtensionSupport;
         uint256 extensionVoteEndTime;
         uint256 repaymentInterval;
-        mapping(address => uint256) lastVoteTime;
+        mapping(address => uint256) lastVotedExtension;
     }
 
     /**
@@ -80,7 +80,7 @@ contract Extension is Initializable, IExtension {
         require(block.timestamp > _extensionVoteEndTime, 'Extension::requestExtension - Extension requested already'); // _extensionVoteEndTime is 0 when no extension is active
 
         // This check is required so that borrower doesn't ask for more extension if previously an extension is already granted
-        require(extensions[_pool].periodWhenExtensionIsPassed == 0, 'Extension::requestExtension: Extension already availed');
+        require(!extensions[_pool].hasExtensionPassed, 'Extension::requestExtension: Extension already availed');
 
         extensions[_pool].totalExtensionSupport = 0; // As we can multiple voting every time new voting start we have to make previous votes 0
         IRepayment _repayment = IRepayment(poolFactory.repaymentImpl());
@@ -88,6 +88,29 @@ contract Extension is Initializable, IExtension {
         _extensionVoteEndTime = (_nextDueTime).div(10**30);
         extensions[_pool].extensionVoteEndTime = _extensionVoteEndTime; // this makes extension request single use
         emit ExtensionRequested(_extensionVoteEndTime);
+    }
+
+    function removeVotes(address _from, address _to, uint256 _amount) external override {
+        address _pool = msg.sender;
+        if(extensions[_pool].hasExtensionPassed) {
+            return;
+        }
+
+        uint256 _extensionVoteEndTime = extensions[_pool].extensionVoteEndTime;
+
+        if(
+            _extensionVoteEndTime != 0 &&
+            _extensionVoteEndTime <= block.timestamp
+        ) {
+            if(extensions[_pool].lastVotedExtension[_from] == _extensionVoteEndTime) {
+                extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.sub(_amount);
+            }
+
+            if(extensions[_pool].lastVotedExtension[_to] == _extensionVoteEndTime) {
+                extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.add(_amount);
+            }
+
+        }
     }
 
     /**
@@ -103,16 +126,15 @@ contract Extension is Initializable, IExtension {
 
         uint256 _votingPassRatio = votingPassRatio;
 
-        uint256 _lastVoteTime = extensions[_pool].lastVoteTime[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
-        uint256 _repaymentInterval = extensions[_pool].repaymentInterval;
-        require(_lastVoteTime < _extensionVoteEndTime.sub(_repaymentInterval), 'Pool::voteOnExtension - you have already voted');
+        uint256 _lastVotedExtension = extensions[_pool].lastVotedExtension[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
+        require(_lastVotedExtension != _extensionVoteEndTime, 'Pool::voteOnExtension - you have already voted');
 
         uint256 _extensionSupport = extensions[_pool].totalExtensionSupport;
-        _lastVoteTime = block.timestamp;
+        _lastVotedExtension = _extensionVoteEndTime;
         _extensionSupport = _extensionSupport.add(_balance);
 
-        extensions[_pool].lastVoteTime[msg.sender] = _lastVoteTime;
-        emit LenderVoted(msg.sender, _extensionSupport, _lastVoteTime);
+        extensions[_pool].lastVotedExtension[msg.sender] = _lastVotedExtension;
+        emit LenderVoted(msg.sender, _extensionSupport, _lastVotedExtension);
         extensions[_pool].totalExtensionSupport = _extensionSupport;
 
         if (((_extensionSupport)) >= (_totalSupply.mul(_votingPassRatio)).div(10**30)) {
@@ -128,13 +150,12 @@ contract Extension is Initializable, IExtension {
         IPoolFactory _poolFactory = poolFactory;
         IRepayment _repayment = IRepayment(_poolFactory.repaymentImpl());
 
-        uint256 _currentLoanInterval = _repayment.getCurrentLoanInterval(_pool);
-        extensions[_pool].periodWhenExtensionIsPassed = _currentLoanInterval;
+        extensions[_pool].hasExtensionPassed = true;
         extensions[_pool].extensionVoteEndTime = block.timestamp; // voting is over
 
-        _repayment.instalmentDeadlineExtended(_pool, _currentLoanInterval);
+        _repayment.instalmentDeadlineExtended(_pool);
 
-        emit ExtensionPassed(_currentLoanInterval);
+        emit ExtensionPassed(_pool);
     }
 
     /**

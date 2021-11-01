@@ -65,6 +65,22 @@ export async function marginCallTests(
     chainlinkBorrow: Address,
     chainlinkCollateral: Address
 ): Promise<any> {
+    let snapshotId: any;
+
+    before(async () => {
+        snapshotId = await network.provider.request({
+            method: 'evm_snapshot',
+            params: [],
+        });
+    });
+
+    after(async () => {
+        await network.provider.request({
+            method: 'evm_revert',
+            params: [snapshotId],
+        });
+    });
+
     describe('Pool Repayment', async () => {
         let env: Environment;
         let pool: Pool;
