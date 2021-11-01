@@ -211,7 +211,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice This function determine the current instalment interval
     /// @param _poolID The address of the pool for which we want the current instalment interval
     /// @return scaled instalment interval
-    function getCurrentInstalmentInterval(address _poolID) external view returns (uint256) {
+    function getCurrentInstalmentInterval(address _poolID) public view returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         return _instalmentsCompleted.add(10**30);
     }
@@ -415,7 +415,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     /// @notice This function activates the instalment deadline
     /// @param _poolID address of the pool for which deadline is extended
-    /// @param _period period for which the deadline is extended
     function instalmentDeadlineExtended(address _poolID) external override {
         require(msg.sender == poolFactory.extension(), 'Repayments::repaymentExtended - Invalid caller');
 

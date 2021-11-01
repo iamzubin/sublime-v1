@@ -17,7 +17,7 @@ contract Extension is Initializable, IExtension {
     using SafeMath for uint256;
 
     struct ExtensionVariables {
-        uint256 hasExtensionPassed;
+        bool hasExtensionPassed;
         uint256 totalExtensionSupport;
         uint256 extensionVoteEndTime;
         uint256 repaymentInterval;
@@ -155,7 +155,7 @@ contract Extension is Initializable, IExtension {
 
         _repayment.instalmentDeadlineExtended(_pool);
 
-        emit ExtensionPassed(_currentLoanInterval);
+        emit ExtensionPassed(_pool);
     }
 
     /**
