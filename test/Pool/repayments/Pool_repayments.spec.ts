@@ -239,7 +239,7 @@ export async function marginCallTests(
                     env.repayments
                         .connect(env.entities.extraLenders[1])
                         .repay(pool.address, interestLeft.add(1))
-                ).to.be.revertedWith("Repayments::repayAmount complete interest must be repaid along with principal");
+                ).to.be.revertedWith("Repayments::repay complete interest must be repaid along with principal");
             });
 
             it("should be able to repay slightly less than total interest", async () => {
