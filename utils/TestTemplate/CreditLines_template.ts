@@ -55,6 +55,16 @@ export async function CreditLines(
 ): Promise<any> {
     const hre = require('hardhat');
     const { ethers, network } = hre;
+    let snapshotId: any;
+
+    describe('Create Snapshot', async () => {
+        it('Trying Creating Snapshot', async () => {
+            snapshotId = await network.provider.request({
+                method: 'evm_snapshot',
+                params: [],
+            });
+        });
+    });
 
     describe(`CreditLines ${BorrowToken}/${CollateralToken}: Requesting credit lines`, async () => {
         let env: Environment;
@@ -1387,6 +1397,15 @@ export async function CreditLines(
             console.log({
                 creditLineAllowanceBefore: creditLineAllowanceBefore.toString(),
                 creditLineAllowanceAfter: creditLineAllowanceAfter.toString(),
+            });
+        });
+    });
+
+    describe('Restore Snapshot', async () => {
+        it('Trying to restore Snapshot', async () => {
+            await network.provider.request({
+                method: 'evm_revert',
+                params: [snapshotId],
             });
         });
     });

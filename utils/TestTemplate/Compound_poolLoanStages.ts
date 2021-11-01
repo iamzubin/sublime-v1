@@ -49,6 +49,17 @@ export async function compoundPoolCollectionStage(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
+    let snapshotId: any;
+
+    describe('Create Snapshot', async () => {
+        it('Trying Creating Snapshot', async () => {
+            snapshotId = await network.provider.request({
+                method: 'evm_snapshot',
+                params: [],
+            });
+        });
+    });
+
     describe('Pool Simulation: Collection Stage', async () => {
         let env: Environment;
         let pool: Pool;
@@ -1790,6 +1801,15 @@ export async function compoundPoolCollectionStage(
                 `Pool not terminated correctly. Expected: ${BigNumber.from('5').toString()} 
                 Actual: ${LoanStatus}`
             );
+        });
+    });
+
+    describe('Restore Snapshot', async () => {
+        it('Trying to restore Snapshot', async () => {
+            await network.provider.request({
+                method: 'evm_revert',
+                params: [snapshotId],
+            });
         });
     });
 }
