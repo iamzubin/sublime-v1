@@ -12,7 +12,7 @@ import {
 } from '../../../utils/types';
 import hre from 'hardhat';
 const { ethers, network } = hre;
-import { expect, assert } from 'chai';
+import { assert, expect } from 'chai';
 
 import {
     extensionParams,
@@ -23,7 +23,7 @@ import {
     zeroAddress,
     ChainLinkAggregators,
 } from '../../../utils/constants';
-import { testVars as testCases } from "./Pool_marginCall_testEnv";
+import { testVars as testCases } from "./PoolToken_testEnv";
 
 import DeployHelper from '../../../utils/deploys';
 import { ERC20 } from '../../../typechain/ERC20';
@@ -36,9 +36,10 @@ import { CompoundYield } from '@typechain/CompoundYield';
 import { expectApproxEqual } from '../../../utils/helpers';
 import { blockTravel } from '../../../utils/time';
 import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
+import { extendEnvironment } from 'hardhat/config';
 
-describe.skip('Pool Margin calls cases', function () {
-    testCases.forEach((testCase) => {
+describe('Pool Repayment cases', function () {
+    testCases.forEach((testCase: any) => {
         marginCallTests(
             testCase.Amount,
             testCase.Whale1,
@@ -80,7 +81,7 @@ export async function marginCallTests(
         });
     });
 
-    describe('Pool Margin calls', async () => {
+    describe('Pool Repayment', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -170,15 +171,21 @@ export async function marginCallTests(
 
             await collateralAsset
                 .connect(env.impersonatedAccounts[0])
-                .transfer(borrower.address, poolParams.collateralAmount.mul(BigNumber.from(10).pow(CTDecimals)));
+                .transfer(borrower.address, poolParams.collateralAmount);
             await collateralAsset
                 .connect(borrower)
-                .approve(poolAddress, poolParams.collateralAmount.mul(BigNumber.from(10).pow(CTDecimals)));
+                .approve(poolAddress, poolParams.collateralAmount);
 
             // Note: Transferring 3 times the poolSize to lender from whale
             await borrowAsset
                 .connect(env.impersonatedAccounts[0])
-                .transfer(lender.address, poolParams.poolSize.mul(3).mul(BigNumber.from(10).pow(BTDecimals)));
+                .transfer(lender.address, poolParams.poolSize.mul(3));
+            await borrowAsset
+                .connect(env.impersonatedAccounts[0])
+                .transfer(borrower.address, poolParams.poolSize.mul(3));
+            await borrowAsset
+                .connect(env.impersonatedAccounts[0])
+                .transfer(env.entities.extraLenders[1].address, poolParams.poolSize.mul(3));
 
             pool = await createNewPool(env, borrowAsset, collateralAsset, iyield, salt, false, {
                 _poolSize: poolParams.poolSize,
@@ -192,31 +199,16 @@ export async function marginCallTests(
             });
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
+
+            // fix default signers
+            pool = pool.connect(env.entities.borrower);
+            env.repayments = env.repayments.connect(env.entities.lender);
+            env.poolFactory = env.poolFactory.connect(env.entities.borrower);
+            env.savingsAccount = env.savingsAccount.connect(env.entities.borrower);
         });
 
-        describe("Any extra collateral posted to a lender during margin call belong to the lender", () => {
-            before(async () => {
-                const minBorrowFraction = await env.poolFactory.minBorrowFraction();
-                const minPoolSize = poolParams.poolSize.mul(minBorrowFraction).div(SCALER);
-                const lentAmount = minPoolSize.mul(4).div(3);
-                await pool.connect(env.entities.lender).lend(env.entities.lender.address, lentAmount, false);
+        describe("Pool Token transfers during extension voting", async () => {
 
-                const { loanStartTime } = await pool.poolConstants();
-                await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
-                await pool.connect(env.entities.borrower).withdrawBorrowedAmount();
-            });
-
-            beforeEach(async () => {
-                await env.priceOracle.connect(env.entities.admin).setChainlinkFeedAddress(borrowAsset.address, ChainLinkAggregators['ETH/USD']);
-            });
-
-            afterEach(async () => {
-                await env.priceOracle.connect(env.entities.admin).setChainlinkFeedAddress(borrowAsset.address, chainlinkBorrow);
-            });
-
-            it("margin call made", async () => {
-                
-            });
         });
     });
 }
