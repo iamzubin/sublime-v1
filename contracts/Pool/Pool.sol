@@ -107,14 +107,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     }
 
     /**
-     * @notice checks if the msg.sender is pool's latest extension implementation
-     */
-    modifier onlyExtension() {
-        require(msg.sender == IPoolFactory(poolFactory).extension(), '5');
-        _;
-    }
-
-    /**
      * @notice checks if the msg.sender is pool's latest repayment implementation
      */
     modifier onlyRepaymentImpl() {
