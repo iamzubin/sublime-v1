@@ -9,8 +9,6 @@ import '../interfaces/IPool.sol';
 import '../interfaces/IPoolFactory.sol';
 import '../interfaces/IRepayment.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * @title Repayments contract
  * @dev For accuracy considering base itself as (10**30)
@@ -242,7 +240,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _gracePeriodFraction = repayConstants[_poolID].gracePeriodFraction;
         uint256 _nextInstalmentDeadline = getNextInstalmentDeadline(_poolID);
         uint256 _gracePeriodDeadline = _nextInstalmentDeadline.add(_gracePeriodFraction.mul(_repaymentInterval).div(10**30));
-        console.log(_currentTime, _gracePeriodDeadline, _nextInstalmentDeadline);
 
         require(_currentTime <= _gracePeriodDeadline, 'Borrower has defaulted');
 
