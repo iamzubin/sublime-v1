@@ -416,11 +416,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice This function activates the instalment deadline
     /// @param _poolID address of the pool for which deadline is extended
     /// @param _period period for which the deadline is extended
-    function instalmentDeadlineExtended(address _poolID, uint256 _period) external override {
+    function instalmentDeadlineExtended(address _poolID) external override {
         require(msg.sender == poolFactory.extension(), 'Repayments::repaymentExtended - Invalid caller');
 
         repayVariables[_poolID].isLoanExtensionActive = true;
-        repayVariables[_poolID].loanExtensionPeriod = _period;
+        repayVariables[_poolID].loanExtensionPeriod = getCurrentInstalmentInterval(_poolID);
     }
 
     /// @notice Returns the loanDurationCovered till now and the interest per second which will help in interest calculation
