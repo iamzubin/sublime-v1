@@ -90,7 +90,7 @@ contract Extension is Initializable, IExtension {
         emit ExtensionRequested(_extensionVoteEndTime);
     }
 
-    function removeVotes(address _user, uint256 _amount) external {
+    function removeVotes(address _from, address _to, uint256 _amount) external override {
         address _pool = msg.sender;
         if(extensions[_pool].periodWhenExtensionIsPassed == 0) {
             return;
@@ -100,10 +100,16 @@ contract Extension is Initializable, IExtension {
 
         if(
             _extensionVoteEndTime != 0 &&
-            _extensionVoteEndTime <= block.timestamp && 
-            extensions[_pool].lastVotedExtension[_user] == _extensionVoteEndTime
+            _extensionVoteEndTime <= block.timestamp
         ) {
-            extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.sub(_amount);
+            if(extensions[_pool].lastVotedExtension[_from] == _extensionVoteEndTime) {
+                extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.sub(_amount);
+            }
+
+            if(extensions[_pool].lastVotedExtension[_to] == _extensionVoteEndTime) {
+                extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.add(_amount);
+            }
+
         }
     }
 
@@ -121,7 +127,6 @@ contract Extension is Initializable, IExtension {
         uint256 _votingPassRatio = votingPassRatio;
 
         uint256 _lastVotedExtension = extensions[_pool].lastVotedExtension[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
-        uint256 _repaymentInterval = extensions[_pool].repaymentInterval;
         require(_lastVotedExtension != _extensionVoteEndTime, 'Pool::voteOnExtension - you have already voted');
 
         uint256 _extensionSupport = extensions[_pool].totalExtensionSupport;

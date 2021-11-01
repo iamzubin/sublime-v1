@@ -437,7 +437,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         _withdrawRepayment(_from);
         _withdrawRepayment(_to);
 
-        IExtension(_poolFactory.extension()).removeVotes(_amount);
+        IExtension(IPoolFactory(poolFactory).extension()).removeVotes(_from, _to, _amount);
 
         //transfer extra liquidity shares
         uint256 _liquidityShare = lenders[_from].extraLiquidityShares;

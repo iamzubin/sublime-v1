@@ -297,7 +297,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _amount amount repaid by the borrower
     function repay(address _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
-        uint256 _amountRepaid = _repay(_poolID, _amount, _asset, false);
+        uint256 _amountRepaid = _repay(_poolID, _amount, false);
 
         _transferTokens(msg.sender, _poolID, _asset, _amountRepaid);
     }
@@ -357,7 +357,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function _repay(
         address _poolID,
         uint256 _amount,
-        address _asset,
         bool _isLastRepayment
     ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
@@ -389,7 +388,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool
     function repayPrincipal(address payable _poolID) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
-        uint256 _interestToRepay = _repay(_poolID, MAX_INT, _asset, true);
+        uint256 _interestToRepay = _repay(_poolID, MAX_INT, true);
         IPool _pool = IPool(_poolID);
 
         require(!repayVariables[_poolID].isLoanExtensionActive, 'Repayments:repayPrincipal Repayment overdue unpaid');

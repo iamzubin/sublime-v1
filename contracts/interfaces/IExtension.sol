@@ -33,5 +33,5 @@ interface IExtension {
 
     function closePoolExtension() external;
 
-    function removeVotes() external;
+    function removeVotes(address _from, address _to, uint256 _amount) external;
 }
