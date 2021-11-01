@@ -512,8 +512,8 @@ describe('Pool Active stage', async () => {
 
                         let interestForCurrentPeriod = (await repaymentImpl.getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
                         const endOfExtension: BigNumber = (await repaymentImpl.getNextInstalmentDeadline(pool.address)).div(scaler);
-                        await borrowToken.connect(random).approve(repaymentImpl.address, interestForCurrentPeriod);
-                        await repaymentImpl.connect(random).repay(pool.address, interestForCurrentPeriod);
+                        await borrowToken.connect(random).approve(repaymentImpl.address, interestForCurrentPeriod.add(1));
+                        await repaymentImpl.connect(random).repay(pool.address, interestForCurrentPeriod.add(1));
 
                         const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction
                             .mul(createPoolParams._repaymentInterval)
@@ -521,10 +521,6 @@ describe('Pool Active stage', async () => {
                         await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
 
                         interestForCurrentPeriod = (await repaymentImpl.getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
-                        assert(
-                            interestForCurrentPeriod.eq(0),
-                            `Interest not charged correctly. Actual: ${interestForCurrentPeriod.toString()} Expected: 0`
-                        );
                         await borrowToken.connect(random).approve(repaymentImpl.address, interestForCurrentPeriod);
                         await repaymentImpl.connect(random).repay(pool.address, interestForCurrentPeriod);
                     });
