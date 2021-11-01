@@ -32,4 +32,6 @@ interface IExtension {
     function initializePoolExtension(uint256 _repaymentInterval) external;
 
     function closePoolExtension() external;
+
+    function removeVotes() external;
 }

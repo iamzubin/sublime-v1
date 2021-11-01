@@ -21,7 +21,7 @@ contract Extension is Initializable, IExtension {
         uint256 totalExtensionSupport;
         uint256 extensionVoteEndTime;
         uint256 repaymentInterval;
-        mapping(address => uint256) lastVoteTime;
+        mapping(address => uint256) lastVotedExtension;
     }
 
     /**
@@ -90,6 +90,23 @@ contract Extension is Initializable, IExtension {
         emit ExtensionRequested(_extensionVoteEndTime);
     }
 
+    function removeVotes(address _user, uint256 _amount) external {
+        address _pool = msg.sender;
+        if(extensions[_pool].periodWhenExtensionIsPassed == 0) {
+            return;
+        }
+
+        uint256 _extensionVoteEndTime = extensions[_pool].extensionVoteEndTime;
+
+        if(
+            _extensionVoteEndTime != 0 &&
+            _extensionVoteEndTime <= block.timestamp && 
+            extensions[_pool].lastVotedExtension[_user] == _extensionVoteEndTime
+        ) {
+            extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.sub(_amount);
+        }
+    }
+
     /**
      * @notice used for requesting an extension by a borrower
      * @param _pool address of the Pool
@@ -103,16 +120,16 @@ contract Extension is Initializable, IExtension {
 
         uint256 _votingPassRatio = votingPassRatio;
 
-        uint256 _lastVoteTime = extensions[_pool].lastVoteTime[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
+        uint256 _lastVotedExtension = extensions[_pool].lastVotedExtension[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
         uint256 _repaymentInterval = extensions[_pool].repaymentInterval;
-        require(_lastVoteTime < _extensionVoteEndTime.sub(_repaymentInterval), 'Pool::voteOnExtension - you have already voted');
+        require(_lastVotedExtension != _extensionVoteEndTime, 'Pool::voteOnExtension - you have already voted');
 
         uint256 _extensionSupport = extensions[_pool].totalExtensionSupport;
-        _lastVoteTime = block.timestamp;
+        _lastVotedExtension = _extensionVoteEndTime;
         _extensionSupport = _extensionSupport.add(_balance);
 
-        extensions[_pool].lastVoteTime[msg.sender] = _lastVoteTime;
-        emit LenderVoted(msg.sender, _extensionSupport, _lastVoteTime);
+        extensions[_pool].lastVotedExtension[msg.sender] = _lastVotedExtension;
+        emit LenderVoted(msg.sender, _extensionSupport, _lastVotedExtension);
         extensions[_pool].totalExtensionSupport = _extensionSupport;
 
         if (((_extensionSupport)) >= (_totalSupply.mul(_votingPassRatio)).div(10**30)) {
