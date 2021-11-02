@@ -107,14 +107,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     }
 
     /**
-     * @notice checks if the msg.sender is pool's latest extension implementation
-     */
-    modifier onlyExtension() {
-        require(msg.sender == IPoolFactory(poolFactory).extension(), '5');
-        _;
-    }
-
-    /**
      * @notice checks if the msg.sender is pool's latest repayment implementation
      */
     modifier onlyRepaymentImpl() {
@@ -443,6 +435,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         //Withdraw repayments for user
         _withdrawRepayment(_from);
         _withdrawRepayment(_to);
+
+        IExtension(IPoolFactory(poolFactory).extension()).removeVotes(_from, _to, _amount);
 
         //transfer extra liquidity shares
         uint256 _liquidityShare = lenders[_from].extraLiquidityShares;

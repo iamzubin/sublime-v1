@@ -191,7 +191,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(10**30)) {
-            return 0;
+            revert("Pool completely repaid");
         }
         uint256 _loanExtensionPeriod = repayVariables[_poolID].loanExtensionPeriod;
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
@@ -211,7 +211,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice This function determine the current instalment interval
     /// @param _poolID The address of the pool for which we want the current instalment interval
     /// @return scaled instalment interval
-    function getCurrentInstalmentInterval(address _poolID) external view returns (uint256) {
+    function getCurrentInstalmentInterval(address _poolID) public view returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         return _instalmentsCompleted.add(10**30);
     }
@@ -297,21 +297,68 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _amount amount repaid by the borrower
     function repay(address _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
-        uint256 _amountRepaid = _repay(_poolID, _amount, _asset, false);
-        if (_asset == address(0)) {
-            if (msg.value > _amountRepaid) {
-                (bool success, ) = payable(address(msg.sender)).call{value: msg.value.sub(_amountRepaid)}('');
-                require(success, 'Transfer failed');
-            }
+        uint256 _amountRepaid = _repay(_poolID, _amount, false);
+
+        _transferTokens(msg.sender, _poolID, _asset, _amountRepaid);
+    }
+
+    function _repayExtension(address _poolID) internal returns(uint256) {
+        if (repayVariables[_poolID].isLoanExtensionActive) {
+            uint256 _interestOverdue = getInterestOverdue(_poolID);
+            repayVariables[_poolID].isLoanExtensionActive = false; // deactivate loan extension flag
+            repayVariables[_poolID].loanDurationCovered = (getInstalmentsCompleted(_poolID).add(10**30))
+                .mul(repayConstants[_poolID].repaymentInterval)
+                .div(10**30);
+            emit ExtensionRepaid(_poolID, _interestOverdue);
+            return _interestOverdue;
+        } else {
+            return 0;
         }
+    }
+
+    function _repayGracePenalty(address _poolID) internal returns(uint256) {
+        bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
+
+        if (_isBorrowerLate) {
+            uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
+            emit GracePenaltyRepaid(_poolID, _penalty);
+            return _penalty;
+        } else {
+            return 0;
+        }
+    }
+
+    function _repayInterest(address _poolID, uint256 _amount, bool _isLastRepayment) internal returns(uint256) {
+        uint256 _interestLeft = getInterestLeft(_poolID);
+        require(
+            (_amount < _interestLeft) != _isLastRepayment,
+            'Repayments::repay complete interest must be repaid along with principal'
+        );
+
+        if (_amount < _interestLeft) {
+            uint256 _interestPerSecond = getInterestPerSecond(_poolID);
+            uint256 _newDurationRepaid = _amount.mul(10**30).div(_interestPerSecond); // dividing exponents
+            repayVariables[_poolID].loanDurationCovered = repayVariables[_poolID].loanDurationCovered.add(_newDurationRepaid);
+            emit InterestRepaid(_poolID, _amount);
+            return _amount;
+        } else {
+            repayVariables[_poolID].loanDurationCovered = repayConstants[_poolID].loanDuration; // full interest repaid
+            emit InterestRepaymentComplete(_poolID, _interestLeft);
+            return _interestLeft;
+        }
+    }
+
+    function _updateRepaidAmount(address _poolID, uint256 _scaledRepaidAmount) internal returns(uint256) {
+        uint256 _toPay = _scaledRepaidAmount.div(10**30);
+        repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_toPay);
+        return _toPay;
     }
 
     function _repay(
         address _poolID,
         uint256 _amount,
-        address _asset,
         bool _isLastRepayment
-    ) internal returns (uint256 _amountRequired) {
+    ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
         {
@@ -319,72 +366,21 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
             require(_loanStatus == 1, 'Repayments:repayInterest Pool should be active.');
         }
 
-        _amountRequired = 0;
-        uint256 _interestPerSecond = getInterestPerSecond(_poolID);
-        // First pay off the overdue
+        uint256 _initialAmount = _amount;
 
-        if (repayVariables[_poolID].isLoanExtensionActive) {
-            uint256 _interestOverdue = getInterestOverdue(_poolID);
+        // pay off grace penality
+        uint256 _gracePenaltyDue = _repayGracePenalty(_poolID);
+        _amount = _amount.sub(_gracePenaltyDue, "doesnt cover grace penality");
 
-            if (_amount >= _interestOverdue) {
-                _amount = _amount.sub(_interestOverdue);
-                _amountRequired = _amountRequired.add(_interestOverdue);
-                repayVariables[_poolID].isLoanExtensionActive = false; // deactivate loan extension flag
-                repayVariables[_poolID].loanDurationCovered = (getInstalmentsCompleted(_poolID).add(10**30))
-                    .mul(repayConstants[_poolID].repaymentInterval)
-                    .div(10**30);
-                emit ExtensionRepaymentComplete(_poolID, _interestOverdue);
-            } else {
-                _amountRequired = _amountRequired.add(_amount);
-                repayVariables[_poolID].loanDurationCovered = repayVariables[_poolID].loanDurationCovered.add(
-                    _amount.mul(10**30).div(_interestPerSecond)
-                );
-                emit PartialExtensionRepaid(_poolID, _amount);
-                _amount = 0;
-            }
-        }
-        // Second pay off the interest
-        if (_amount != 0) {
-            uint256 _interestLeft = getInterestLeft(_poolID);
-            bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
+        // pay off the overdue
+        uint256 _interestOverdue = _repayExtension(_poolID);
+        _amount = _amount.sub(_interestOverdue, "doesnt cover overdue interest");
 
-            // adding grace penalty if applicable
-            if (_isBorrowerLate) {
-                uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
-                _amount = _amount.sub(_penalty);
-                _amountRequired = _amountRequired.add(_penalty);
-                emit GracePenaltyRepaid(_poolID, _penalty);
-            }
+        // pay interest
+        uint256 _interestRepaid = _repayInterest(_poolID, _amount, _isLastRepayment);
+        _amount = _amount.sub(_interestRepaid);
 
-            require(
-                (_amount < _interestLeft) != _isLastRepayment,
-                'Repayments::repayAmount complete interest must be repaid along with principal'
-            );
-
-            if (_amount < _interestLeft) {
-                uint256 _loanDurationCovered = _amount.mul(10**30).div(_interestPerSecond); // dividing exponents
-                repayVariables[_poolID].loanDurationCovered = repayVariables[_poolID].loanDurationCovered.add(_loanDurationCovered);
-                _amountRequired = _amountRequired.add(_amount);
-                emit InterestRepaid(_poolID, _amount);
-            } else {
-                repayVariables[_poolID].loanDurationCovered = repayConstants[_poolID].loanDuration; // full interest repaid
-                _amount = _amount.sub(_interestLeft);
-                _amountRequired = _amountRequired.add(_interestLeft);
-                emit InterestRepaymentComplete(_poolID, _amount);
-            }
-        }
-
-        require(_amountRequired != 0, 'Repayments::repayAmount not necessary');
-        _amountRequired = _amountRequired.div(10**30);
-        repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_amountRequired);
-
-        if (_asset == address(0)) {
-            require(_amountRequired <= msg.value, 'Repayments::repayAmount amount does not match message value.');
-            (bool success, ) = payable(address(_poolID)).call{value: _amountRequired}('');
-            require(success, 'Transfer failed');
-        } else {
-            IERC20(_asset).safeTransferFrom(msg.sender, _poolID, _amountRequired);
-        }
+        return _updateRepaidAmount(_poolID, _initialAmount.sub(_amount));
     }
 
     /// @notice Used to pay off the principal of the loan, once the overdues and interests are repaid
@@ -392,7 +388,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool
     function repayPrincipal(address payable _poolID) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
-        uint256 _amountRepaid = _repay(_poolID, MAX_INT, _asset, true);
+        uint256 _interestToRepay = _repay(_poolID, MAX_INT, true);
         IPool _pool = IPool(_poolID);
 
         require(!repayVariables[_poolID].isLoanExtensionActive, 'Repayments:repayPrincipal Repayment overdue unpaid');
@@ -403,18 +399,8 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         );
 
         uint256 _amount = _pool.totalSupply();
-
-        if (_asset == address(0)) {
-            (bool success, ) = _poolID.call{value: _amount}('');
-            require(success, 'Transfer failed');
-            uint256 _amountPaid = _amount.add(_amountRepaid);
-            if (msg.value > _amountPaid) {
-                (bool success1, ) = payable(address(msg.sender)).call{value: msg.value.sub(_amountPaid)}('');
-                require(success1, 'Transfer failed');
-            }
-        } else {
-            IERC20(_asset).safeTransferFrom(msg.sender, _poolID, _amount);
-        }
+        uint256 _amountToPay = _amount.add(_interestToRepay);
+        _transferTokens(msg.sender, _poolID, _asset, _amountToPay);
         emit PrincipalRepaid(_poolID, _amount);
 
         IPool(_poolID).closeLoan();
@@ -429,12 +415,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     /// @notice This function activates the instalment deadline
     /// @param _poolID address of the pool for which deadline is extended
-    /// @param _period period for which the deadline is extended
-    function instalmentDeadlineExtended(address _poolID, uint256 _period) external override {
+    function instalmentDeadlineExtended(address _poolID) external override {
         require(msg.sender == poolFactory.extension(), 'Repayments::repaymentExtended - Invalid caller');
 
         repayVariables[_poolID].isLoanExtensionActive = true;
-        repayVariables[_poolID].loanExtensionPeriod = _period;
+        repayVariables[_poolID].loanExtensionPeriod = getCurrentInstalmentInterval(_poolID);
     }
 
     /// @notice Returns the loanDurationCovered till now and the interest per second which will help in interest calculation
@@ -450,4 +435,17 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getGracePeriodFraction() external view override returns (uint256) {
         return gracePeriodFraction;
     }
+
+    function _transferTokens(address _from, address _to, address _asset, uint256 _amount) internal {
+        if (_asset == address(0)) {
+            (bool transferSuccess, ) = _to.call{value: _amount}('');
+            require(transferSuccess, '_transferTokens: Transfer failed');
+            if (msg.value != _amount) {
+                (bool refundSuccess, ) = payable(_from).call{value: msg.value.sub(_amount)}('');
+                require(refundSuccess, '_transferTokens: Refund failed');
+            }
+        } else {
+            IERC20(_asset).safeTransferFrom(_from, _to, _amount);
+        }
+    } 
 }

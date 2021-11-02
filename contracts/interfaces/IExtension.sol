@@ -17,9 +17,9 @@ interface IExtension {
 
     /**
      * @notice emitted when the requested extension for Pools is approved
-     * @param loanInterval the value of the current loan interval for Pools
+     * @param poolID the address of the pool for which extension passed
      */
-    event ExtensionPassed(uint256 loanInterval);
+    event ExtensionPassed(address poolID);
 
     /**
      * @notice emitted when the lender for Pools has voted on extension request
@@ -32,4 +32,6 @@ interface IExtension {
     function initializePoolExtension(uint256 _repaymentInterval) external;
 
     function closePoolExtension() external;
+
+    function removeVotes(address _from, address _to, uint256 _amount) external;
 }
