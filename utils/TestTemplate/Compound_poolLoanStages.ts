@@ -108,8 +108,10 @@ export async function compoundPoolCollectionStage(
             CollateralAsset = await deployHelper.mock.getMockERC20(env.mockTokenContracts[1].contract.address);
             iyield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
+            console.log('Getting decimals');
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            console.log('Received decimals');
 
             poolAddress = await calculateNewPoolAddress(env, BorrowAsset, CollateralAsset, iyield, salt, false, {
                 _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)),
