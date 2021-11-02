@@ -23,7 +23,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     uint256 constant MAX_INT = 2**256 - 1;
 
     IPoolFactory poolFactory;
-    address savingsAccount;
 
     enum LoanStatus {
         COLLECTION, //denotes collection period

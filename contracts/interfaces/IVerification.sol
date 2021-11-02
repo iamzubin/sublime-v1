@@ -25,12 +25,12 @@ interface IVerification {
     /// @notice Event emitted when an address is linked to masterAddress
     /// @param linkedAddress The address which is linked to masterAddress
     /// @param masterAddress The masterAddress to which address is linked
-    event addressLinked(address indexed linkedAddress, address indexed masterAddress);
+    event AddressLinked(address indexed linkedAddress, address indexed masterAddress);
 
     /// @notice Event emitted when an address is unlinked from a masterAddress
     /// @param linkedAddress The address which is linked to masterAddress
     /// @param masterAddress The masterAddress to which address was linked
-    event addressUnlinked(address indexed linkedAddress, address indexed masterAddress);
+    event AddressUnlinked(address indexed linkedAddress, address indexed masterAddress);
 
     function isUser(address _user, address _verifier) external view returns (bool);
 
