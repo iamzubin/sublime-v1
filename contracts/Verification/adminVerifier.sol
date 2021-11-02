@@ -5,7 +5,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '../interfaces/IVerification.sol';
 import '../interfaces/IVerifier.sol';
 
-contract adminVerifier is Initializable, IVerifier, OwnableUpgradeable {
+contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
     IVerification public verification;
 
     mapping(address => string) public userData;
