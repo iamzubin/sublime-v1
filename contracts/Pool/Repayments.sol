@@ -23,7 +23,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     uint256 constant MAX_INT = 2**256 - 1;
 
     IPoolFactory poolFactory;
-    address savingsAccount;
 
     enum LoanStatus {
         COLLECTION, //denotes collection period
@@ -211,7 +210,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice This function determine the current instalment interval
     /// @param _poolID The address of the pool for which we want the current instalment interval
     /// @return scaled instalment interval
-    function getCurrentInstalmentInterval(address _poolID) external view returns (uint256) {
+    function getCurrentInstalmentInterval(address _poolID) public view returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         return _instalmentsCompleted.add(10**30);
     }
@@ -297,7 +296,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _amount amount repaid by the borrower
     function repay(address _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
-        uint256 _amountRepaid = _repay(_poolID, _amount, _asset, false);
+        uint256 _amountRepaid = _repay(_poolID, _amount, false);
 
         _transferTokens(msg.sender, _poolID, _asset, _amountRepaid);
     }
@@ -357,7 +356,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function _repay(
         address _poolID,
         uint256 _amount,
-        address _asset,
         bool _isLastRepayment
     ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
@@ -389,7 +387,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool
     function repayPrincipal(address payable _poolID) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
-        uint256 _interestToRepay = _repay(_poolID, MAX_INT, _asset, true);
+        uint256 _interestToRepay = _repay(_poolID, MAX_INT, true);
         IPool _pool = IPool(_poolID);
 
         require(!repayVariables[_poolID].isLoanExtensionActive, 'Repayments:repayPrincipal Repayment overdue unpaid');
@@ -416,12 +414,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     /// @notice This function activates the instalment deadline
     /// @param _poolID address of the pool for which deadline is extended
-    /// @param _period period for which the deadline is extended
-    function instalmentDeadlineExtended(address _poolID, uint256 _period) external override {
+    function instalmentDeadlineExtended(address _poolID) external override {
         require(msg.sender == poolFactory.extension(), 'Repayments::repaymentExtended - Invalid caller');
 
         repayVariables[_poolID].isLoanExtensionActive = true;
-        repayVariables[_poolID].loanExtensionPeriod = _period;
+        repayVariables[_poolID].loanExtensionPeriod = getCurrentInstalmentInterval(_poolID);
     }
 
     /// @notice Returns the loanDurationCovered till now and the interest per second which will help in interest calculation

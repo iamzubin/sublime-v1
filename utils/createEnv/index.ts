@@ -184,7 +184,7 @@ export async function createEnvironment(
         await initCreditLine(
             env.creditLine,
             admin,
-            zeroAddress,
+            yields.noYield.address,
             env.priceOracle,
             env.savingsAccount,
             env.strategyRegistry,

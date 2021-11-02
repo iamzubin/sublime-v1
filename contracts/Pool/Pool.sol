@@ -353,10 +353,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares) > _penalty) {
             _collateralShares = poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares).sub(_penalty);
         }
-        uint256 _collateralTokens = _collateralShares;
-        if (_poolSavingsStrategy != address(0)) {
-            _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralShares, _collateralAsset);
-        }
+        // uint256 _collateralTokens = _collateralShares;
+        uint256 _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralShares, _collateralAsset);
+
         poolVariables.baseLiquidityShares = _penalty;
         delete poolVariables.extraLiquidityShares;
 
@@ -436,6 +435,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         //Withdraw repayments for user
         _withdrawRepayment(_from);
         _withdrawRepayment(_to);
+
+        IExtension(IPoolFactory(poolFactory).extension()).removeVotes(_from, _to, _amount);
 
         //transfer extra liquidity shares
         uint256 _liquidityShare = lenders[_from].extraLiquidityShares;
@@ -524,9 +525,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _collateralAsset = poolConstants.collateralAsset;
         // note: extra liquidity shares are not applicable as the loan never reaches active state
         uint256 _collateralTokens = poolVariables.baseLiquidityShares;
-        if (_poolSavingsStrategy != address(0)) {
-            _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralTokens, _collateralAsset);
-        }
+        _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralTokens, _collateralAsset);
+
         uint256 _liquidationTokens = correspondingBorrowTokens(
             _collateralTokens,
             _poolFactory.priceOracle(),
@@ -665,9 +665,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _interest = interestToPay().mul(_balance).div(totalSupply());
         address _collateralAsset = poolConstants.collateralAsset;
         address _strategy = poolConstants.poolSavingsStrategy;
-        uint256 _currentCollateralTokens = _strategy == address(0)
-            ? _liquidityShares
-            : IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
+        uint256 _currentCollateralTokens = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
+
         uint256 _equivalentCollateral = getEquivalentTokens(_collateralAsset, poolConstants.borrowAsset, _currentCollateralTokens);
         _ratio = _equivalentCollateral.mul(10**30).div(_balance.add(_interest));
     }
@@ -718,9 +717,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
 
         uint256 _collateralTokens = _collateralLiquidityShare;
-        if (_poolSavingsStrategy != address(0)) {
-            _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralLiquidityShare, _collateralAsset);
-        }
+        _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralLiquidityShare, _collateralAsset);
+
         uint256 _poolBorrowTokens = correspondingBorrowTokens(
             _collateralTokens,
             _poolFactory.priceOracle(),
@@ -729,7 +727,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         delete poolVariables.extraLiquidityShares;
         delete poolVariables.baseLiquidityShares;
 
-        _deposit(_fromSavingsAccount, false, _borrowAsset, _poolBorrowTokens, address(0), msg.sender, address(this));
+        _deposit(_fromSavingsAccount, false, _borrowAsset, _poolBorrowTokens, _poolFactory.noStrategyAddress(), msg.sender, address(this));
         _withdraw(_toSavingsAccount, _recieveLiquidityShare, _collateralAsset, _poolSavingsStrategy, _collateralTokens);
         emit PoolLiquidated(msg.sender);
     }
@@ -843,12 +841,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         (uint256 _lenderCollateralLPShare, uint256 _lenderBalance) = _updateLenderSharesDuringLiquidation(_lender);
 
         uint256 _lenderCollateralTokens = _lenderCollateralLPShare;
-        if (_poolSavingsStrategy != address(0)) {
-            _lenderCollateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(
-                _lenderCollateralLPShare,
-                poolConstants.collateralAsset
-            );
-        }
+        _lenderCollateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_lenderCollateralLPShare, poolConstants.collateralAsset);
 
         _liquidateForLender(_fromSavingsAccount, _lender, _lenderCollateralTokens);
 

@@ -157,8 +157,6 @@ interface IPoolFactory {
 
     function liquidatorRewardFraction() external view returns (uint256);
 
-    function votingPassRatio() external view returns (uint256);
-
     function poolCancelPenaltyFraction() external view returns (uint256);
 
     function getProtocolFeeData() external view returns (uint256, address);

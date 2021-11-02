@@ -97,7 +97,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         bytes32 _hashedMessage = keccak256(_messageToSign);
         address _signer = ECDSA.recover(_hashedMessage, _approval);
         linkedAddresses[msg.sender] = _signer;
-        emit addressLinked(msg.sender, _signer);
+        emit AddressLinked(msg.sender, _signer);
     }
 
     /// @notice Unlink address with master address
@@ -108,7 +108,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         require(_linkedTo != address(0), 'V:UA-Address not linked');
         require(_linkedTo == msg.sender, 'V:UA-Not linked to sender');
         delete linkedAddresses[_linkedAddress];
-        emit addressUnlinked(_linkedAddress, _linkedTo);
+        emit AddressUnlinked(_linkedAddress, _linkedTo);
     }
 
     /// @notice User to verify if an address is linked to a master address that is registered with verifier
