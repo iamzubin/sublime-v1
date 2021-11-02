@@ -49,6 +49,17 @@ export async function compoundPoolCollectionStage(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
+    let snapshotId: any;
+
+    describe('Create Snapshot', async () => {
+        it('Trying Creating Snapshot', async () => {
+            snapshotId = await network.provider.request({
+                method: 'evm_snapshot',
+                params: [],
+            });
+        });
+    });
+
     describe('Pool Simulation: Collection Stage', async () => {
         let env: Environment;
         let pool: Pool;
@@ -856,7 +867,7 @@ export async function compoundPoolCollectionStage(
             const LiquidatorCollateralBalanceAfter = await collateralToken.balanceOf(random.address);
             let LiquidatorCollateralBalDiff = LiquidatorCollateralBalanceAfter.sub(LiquidatorCollateralBalanceBefore);
             // let liquidatorRewardFraction = await env.poolFactory.connect(admin).liquidatorRewardFraction();
-            console.log(env.poolFactory.address)
+            console.log(env.poolFactory.address);
             const BorrowEquivalent = await pool
                 .connect(admin)
                 .correspondingBorrowTokens(
@@ -1285,28 +1296,28 @@ export async function compoundPoolCollectionStage(
             it('Only borrower should be able to request extension', async function () {
                 let { admin, borrower, lender } = env.entities;
                 let random = env.entities.extraLenders[10];
-    
+
                 // Requesting margin call
                 await expect(env.extenstion.connect(random).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
                 await expect(env.extenstion.connect(lender).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
                 await env.extenstion.connect(borrower).requestExtension(pool.address);
             });
-    
+
             it('Extension passes only when majority lenders vote', async function () {
                 let { admin, borrower, lender } = env.entities;
                 let lender1 = env.entities.extraLenders[3];
-    
+
                 // await env.extenstion.connect(borrower).requestExtension(pool.address);
                 await env.extenstion.connect(lender1).voteOnExtension(pool.address);
                 await env.extenstion.connect(lender).voteOnExtension(pool.address);
                 const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
                 assert(isLoanExtensionActive, 'Extension not active');
             });
-    
+
             it("Can't vote after extension is passed", async () => {
                 let { admin, borrower, lender } = env.entities;
                 let lender1 = env.entities.extraLenders[3];
-    
+
                 // await env.extenstion.connect(borrower).requestExtension(pool.address);
                 // await env.extenstion.connect(lender).voteOnExtension(pool.address);
                 // const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
@@ -1315,11 +1326,11 @@ export async function compoundPoolCollectionStage(
                     'Pool::voteOnExtension - Voting is over'
                 );
             });
-    
+
             it('Cannot liquidate pool after extension is passed', async () => {
                 let { admin, borrower, lender } = env.entities;
                 let random = env.entities.extraLenders[10];
-    
+
                 // await env.extenstion.connect(borrower).requestExtension(pool.address);
                 // await env.extenstion.connect(lender).voteOnExtension(pool.address);
                 // const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
@@ -1328,18 +1339,18 @@ export async function compoundPoolCollectionStage(
                     'Pool::liquidatePool - Borrower didnt default'
                 );
             });
-    
+
             it('Should be able to repay after extension is passed', async () => {
                 let { admin, borrower, lender } = env.entities;
                 let random = env.entities.extraLenders[10];
                 let borrowToken = env.mockTokenContracts[0].contract;
                 const scaler = BigNumber.from(10).pow(30);
-    
+
                 // await env.extenstion.connect(borrower).requestExtension(pool.address);
                 // await env.extenstion.connect(lender).voteOnExtension(pool.address);
                 // const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
                 // assert(isLoanExtensionActive, 'Extension not active');
-    
+
                 let interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(
                     scaler
                 );
@@ -1784,6 +1795,15 @@ export async function compoundPoolCollectionStage(
                 `Pool not terminated correctly. Expected: ${BigNumber.from('5').toString()} 
                 Actual: ${LoanStatus}`
             );
+        });
+    });
+
+    describe('Restore Snapshot', async () => {
+        it('Trying to restore Snapshot', async () => {
+            await network.provider.request({
+                method: 'evm_revert',
+                params: [snapshotId],
+            });
         });
     });
 }
