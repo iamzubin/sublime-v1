@@ -1357,17 +1357,19 @@ export async function compoundPoolCollectionStage(
                     scaler
                 );
                 const endOfExtension: BigNumber = (await env.repayments.connect(admin).getNextInstalmentDeadline(pool.address)).div(scaler);
-    
+
                 await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestForCurrentPeriod.add(1));
                 await borrowToken.connect(admin).transfer(random.address, interestForCurrentPeriod.add(1));
                 await borrowToken.connect(random).approve(env.repayments.address, interestForCurrentPeriod.add(1));
                 await env.repayments.connect(random).repay(pool.address, interestForCurrentPeriod.add(1));
-    
+
                 const gracePeriod: BigNumber = repaymentParams.gracePeriodFraction.mul(createPoolParams._repaymentInterval).div(scaler);
                 await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
-    
-                interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(scaler);
-    
+
+                interestForCurrentPeriod = (await env.repayments.connect(admin).getInterestDueTillInstalmentDeadline(pool.address)).div(
+                    scaler
+                );
+
                 await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, interestForCurrentPeriod);
                 await borrowToken.connect(admin).transfer(random.address, interestForCurrentPeriod);
                 await borrowToken.connect(random).approve(env.repayments.address, interestForCurrentPeriod);

@@ -190,7 +190,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(10**30)) {
-            revert("Pool completely repaid");
+            revert('Pool completely repaid');
         }
         uint256 _loanExtensionPeriod = repayVariables[_poolID].loanExtensionPeriod;
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
@@ -301,7 +301,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _transferTokens(msg.sender, _poolID, _asset, _amountRepaid);
     }
 
-    function _repayExtension(address _poolID) internal returns(uint256) {
+    function _repayExtension(address _poolID) internal returns (uint256) {
         if (repayVariables[_poolID].isLoanExtensionActive) {
             uint256 _interestOverdue = getInterestOverdue(_poolID);
             repayVariables[_poolID].isLoanExtensionActive = false; // deactivate loan extension flag
@@ -315,7 +315,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    function _repayGracePenalty(address _poolID) internal returns(uint256) {
+    function _repayGracePenalty(address _poolID) internal returns (uint256) {
         bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
 
         if (_isBorrowerLate) {
@@ -327,12 +327,13 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    function _repayInterest(address _poolID, uint256 _amount, bool _isLastRepayment) internal returns(uint256) {
+    function _repayInterest(
+        address _poolID,
+        uint256 _amount,
+        bool _isLastRepayment
+    ) internal returns (uint256) {
         uint256 _interestLeft = getInterestLeft(_poolID);
-        require(
-            (_amount < _interestLeft) != _isLastRepayment,
-            'Repayments::repay complete interest must be repaid along with principal'
-        );
+        require((_amount < _interestLeft) != _isLastRepayment, 'Repayments::repay complete interest must be repaid along with principal');
 
         if (_amount < _interestLeft) {
             uint256 _interestPerSecond = getInterestPerSecond(_poolID);
@@ -347,7 +348,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    function _updateRepaidAmount(address _poolID, uint256 _scaledRepaidAmount) internal returns(uint256) {
+    function _updateRepaidAmount(address _poolID, uint256 _scaledRepaidAmount) internal returns (uint256) {
         uint256 _toPay = _scaledRepaidAmount.div(10**30);
         repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_toPay);
         return _toPay;
@@ -369,11 +370,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
         // pay off grace penality
         uint256 _gracePenaltyDue = _repayGracePenalty(_poolID);
-        _amount = _amount.sub(_gracePenaltyDue, "doesnt cover grace penality");
+        _amount = _amount.sub(_gracePenaltyDue, 'doesnt cover grace penality');
 
         // pay off the overdue
         uint256 _interestOverdue = _repayExtension(_poolID);
-        _amount = _amount.sub(_interestOverdue, "doesnt cover overdue interest");
+        _amount = _amount.sub(_interestOverdue, 'doesnt cover overdue interest');
 
         // pay interest
         uint256 _interestRepaid = _repayInterest(_poolID, _amount, _isLastRepayment);
@@ -435,7 +436,12 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         return gracePeriodFraction;
     }
 
-    function _transferTokens(address _from, address _to, address _asset, uint256 _amount) internal {
+    function _transferTokens(
+        address _from,
+        address _to,
+        address _asset,
+        uint256 _amount
+    ) internal {
         if (_asset == address(0)) {
             (bool transferSuccess, ) = _to.call{value: _amount}('');
             require(transferSuccess, '_transferTokens: Transfer failed');
@@ -446,5 +452,5 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         } else {
             IERC20(_asset).safeTransferFrom(_from, _to, _amount);
         }
-    } 
+    }
 }

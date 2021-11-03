@@ -23,7 +23,7 @@ import {
     zeroAddress,
     ChainLinkAggregators,
 } from '../../../utils/constants';
-import { testVars as testCases } from "./Pool_marginCall_testEnv";
+import { testVars as testCases } from './Pool_marginCall_testEnv';
 
 import DeployHelper from '../../../utils/deploys';
 import { ERC20 } from '../../../typechain/ERC20';
@@ -100,7 +100,7 @@ export async function marginCallTests(
             loanWithdrawalDuration: 200,
             noOfRepaymentIntervals: 100,
             repaymentInterval: 1000,
-        }
+        };
         const SCALER = BigNumber.from(10).pow(30);
 
         before(async () => {
@@ -194,7 +194,7 @@ export async function marginCallTests(
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
 
-        describe("Any extra collateral posted to a lender during margin call belong to the lender", () => {
+        describe('Any extra collateral posted to a lender during margin call belong to the lender', () => {
             before(async () => {
                 const minBorrowFraction = await env.poolFactory.minBorrowFraction();
                 const minPoolSize = poolParams.poolSize.mul(minBorrowFraction).div(SCALER);
@@ -207,16 +207,16 @@ export async function marginCallTests(
             });
 
             beforeEach(async () => {
-                await env.priceOracle.connect(env.entities.admin).setChainlinkFeedAddress(borrowAsset.address, ChainLinkAggregators['ETH/USD']);
+                await env.priceOracle
+                    .connect(env.entities.admin)
+                    .setChainlinkFeedAddress(borrowAsset.address, ChainLinkAggregators['ETH/USD']);
             });
 
             afterEach(async () => {
                 await env.priceOracle.connect(env.entities.admin).setChainlinkFeedAddress(borrowAsset.address, chainlinkBorrow);
             });
 
-            it("margin call made", async () => {
-                
-            });
+            it('margin call made', async () => {});
         });
     });
 }
