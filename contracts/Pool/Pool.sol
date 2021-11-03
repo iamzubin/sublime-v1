@@ -614,7 +614,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         //transfer liquidity provided
         SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _toTransfer, address(this), msg.sender);
 
-        // TODO: Something wrong in the below event. Please have a look
         emit LiquidityWithdrawn(_toTransfer, msg.sender);
     }
 

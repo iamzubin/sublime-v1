@@ -17,9 +17,10 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         address oracle;
         uint256 decimals;
     }
-    mapping(address => PriceData) chainlinkFeedAddresses;
+    mapping(address => PriceData) public chainlinkFeedAddresses;
+    mapping(address => uint256) decimals;
 
-    mapping(bytes32 => address) uniswapPools;
+    mapping(bytes32 => address) public uniswapPools;
 
     function initialize(address _admin) external initializer {
         OwnableUpgradeable.__Ownable_init();
@@ -36,14 +37,13 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         int256 price2;
         (, price1, , , ) = AggregatorV3Interface(_feedData1.oracle).latestRoundData();
         (, price2, , , ) = AggregatorV3Interface(_feedData2.oracle).latestRoundData();
-        // TODO: Store token decimals when adding and don't query for every price get
         uint256 price = uint256(price1)
             .mul(10**_feedData2.decimals)
             .mul(10**30)
             .div(uint256(price2))
             .div(10**_feedData1.decimals)
-            .mul(10**getDecimals(den))
-            .div(10**getDecimals(num));
+            .mul(10**decimals[den])
+            .div(10**decimals[num]);
         return (price, 30);
     }
 
@@ -111,6 +111,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
     function setChainlinkFeedAddress(address token, address priceOracle) external onlyOwner {
         uint256 priceOracleDecimals = AggregatorV3Interface(priceOracle).decimals();
         chainlinkFeedAddresses[token] = PriceData(priceOracle, priceOracleDecimals);
+        decimals[token] = getDecimals(token);
         emit ChainlinkFeedUpdated(token, priceOracle);
     }
 

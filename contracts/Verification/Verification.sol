@@ -79,7 +79,6 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev unregistering master address doesn't affect linked addreses mapping to master address, though they would not be verified by this verifier anymore
     /// @param _masterAddress address which is being unregistered
     /// @param _verifier verifier address from which master address is unregistered
-    // TODO: Remove verifier as arg
     function unregisterMasterAddress(address _masterAddress, address _verifier) external override {
         if (msg.sender != super.owner()) {
             require(masterAddresses[_masterAddress][msg.sender] || msg.sender == _verifier, 'V:UMA-Invalid verifier');

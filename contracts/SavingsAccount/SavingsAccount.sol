@@ -32,8 +32,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         _;
     }
 
-    // TODO : Track strategies per user and limit no of strategies to 5
-
     /**
      * @dev initialize the contract
      * @param _owner address of the owner of the savings account contract

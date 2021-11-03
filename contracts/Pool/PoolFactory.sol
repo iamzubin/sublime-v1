@@ -32,12 +32,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param max the maximum threshold for the parameter
      */
     struct Limits {
-        // TODO: Optimize to uint128 or even less
         uint256 min;
         uint256 max;
     }
 
-    // TODO contract addresses should end with Impl
     /**
      * @notice function definition of the pool contract
      */
