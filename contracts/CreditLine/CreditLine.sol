@@ -346,9 +346,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset,
         bool _requestAsLender
     ) external returns (uint256) {
-        //require(userData[borrower].blockCreditLineRequests == true,
-        //        "CreditLine: External requests blocked");
-        require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL: No price feed');
+        require(_borrowAsset != _collateralAsset, "R: cant borrow lent token");
+        require(_requestTo != msg.sender, "R: cant borrow from self");
+        require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'R: No price feed');
 
         address _lender = _requestTo;
         address _borrower = msg.sender;
