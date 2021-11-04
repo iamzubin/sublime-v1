@@ -596,7 +596,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         } else {
             _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
         }
-        _savingsAccount.increaseAllowanceToCreditLine(_principlePaid, _borrowAsset, _lender);
+        if(_principlePaid != 0) {
+            _savingsAccount.increaseAllowanceToCreditLine(_principlePaid, _borrowAsset, _lender);   
+        }
     }
 
     function repay(
@@ -613,11 +615,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _interestToPay = _totalInterestAccrued.sub(creditLineVariables[_id].totalInterestRepaid);
         uint256 _totalCurrentDebt = _interestToPay.add(creditLineVariables[_id].principal);
         uint256 _principlePaid = 0;
-        bool _totalRemainingIsRepaid = false;
 
         if (_amount >= _totalCurrentDebt) {
-            _totalRemainingIsRepaid = true;
+            emit CompleteCreditLineRepaid(_id, _amount);
             _amount = _totalCurrentDebt;
+        } else {
+            emit PartialCreditLineRepaid(_id, _amount);
         }
 
         if (_amount > _interestToPay) {
@@ -634,12 +637,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         if (creditLineVariables[_id].principal == 0) {
             _resetCreditLine(_id);
-        }
-
-        if (_totalRemainingIsRepaid) {
-            emit CompleteCreditLineRepaid(_id, _amount);
-        } else {
-            emit PartialCreditLineRepaid(_id, _amount);
         }
     }
 
