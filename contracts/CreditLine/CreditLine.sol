@@ -617,8 +617,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _principlePaid = 0;
 
         if (_amount >= _totalCurrentDebt) {
-            emit CompleteCreditLineRepaid(_id, _amount);
             _amount = _totalCurrentDebt;
+            emit CompleteCreditLineRepaid(_id, _amount);
         } else {
             emit PartialCreditLineRepaid(_id, _amount);
         }
