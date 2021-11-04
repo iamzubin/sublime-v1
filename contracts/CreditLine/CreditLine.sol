@@ -627,7 +627,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineVariables[_id].totalInterestRepaid = _totalInterestAccrued;
             _principlePaid = _amount.sub(_interestToPay);
         } else {
-            creditLineVariables[_id].totalInterestRepaid = _amount;
+            creditLineVariables[_id].totalInterestRepaid = creditLineVariables[_id].totalInterestRepaid.add(_amount);
         }
 
         _repay(_id, _amount, _fromSavingsAccount, _principlePaid);
