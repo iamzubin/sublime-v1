@@ -166,7 +166,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice add collateral to a pool
-     * @param _amount amount of collateral to be deposited denominated in collateral aseset
+     * @param _amount amount of collateral to be deposited denominated in collateral asset
      * @param _transferFromSavingsAccount if true, collateral is transferred from msg.sender's savings account, if false, it is transferred from their wallet
      */
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable override {
@@ -386,6 +386,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _fromSavingsAccount
     ) external payable nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
+        require(_lender != poolConstants.borrower, "cant lend to self");
         if (_lenderVerifier != address(0)) {
             require(IVerification(IPoolFactory(poolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'invalid lender');
         }
@@ -425,6 +426,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_to != address(0)) {
             require(!paused(), 'ERC20Pausable: token transfer while paused');
         }
+        require(_to != poolConstants.borrower, "cant lend to self");
 
         if (_from == address(0) || _to == address(0)) {
             return;
