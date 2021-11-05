@@ -17,7 +17,7 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
     mapping(address => string) public userData;
 
     /**
-     * @notice stores the verification contract instance
+     * @notice emitted when verification contract address is updated
      * @param verification address of the updated verification contract
      */
     event VerificationUpdated(address indexed verification);
