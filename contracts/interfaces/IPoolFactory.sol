@@ -88,10 +88,10 @@ interface IPoolFactory {
     event LiquidatorRewardFractionUpdated(uint256 updatedLiquidatorRewardFraction);
 
     /**
-     * @notice emitted when poolCancelPenaltyFraction variable is updated
-     * @param updatedPoolCancelPenaltyFraction updated value of poolCancelPenaltyFraction
+     * @notice emitted when poolCancelPenaltyMultiple variable is updated
+     * @param updatedPoolCancelPenaltyMultiple updated value of poolCancelPenaltyMultiple
      */
-    event PoolCancelPenaltyFractionUpdated(uint256 updatedPoolCancelPenaltyFraction);
+    event PoolCancelPenaltyMultipleUpdated(uint256 updatedPoolCancelPenaltyMultiple);
 
     /**
      * @notice emitted when fee that protocol changes for pools is updated
@@ -157,7 +157,7 @@ interface IPoolFactory {
 
     function liquidatorRewardFraction() external view returns (uint256);
 
-    function poolCancelPenaltyFraction() external view returns (uint256);
+    function poolCancelPenaltyMultiple() external view returns (uint256);
 
     function getProtocolFeeData() external view returns (uint256, address);
 

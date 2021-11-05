@@ -16,16 +16,6 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
  * @author Sublime
  */
 contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
-    /**
-     * @notice assigning hash of "MINTER_ROLE" as a constant
-     */
-    bytes32 public constant MINTER_ROLE = keccak256('MINTER_ROLE');
-
-    /**
-     * @notice assigning hash of "PAUSER_ROLE" as a constant
-     */
-    bytes32 public constant PAUSER_ROLE = keccak256('PAUSER_ROLE');
-
     /*
      * @notice Used to define limits for the Pool parameters
      * @param min the minimum threshold for the parameter
@@ -104,7 +94,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /**
      * @notice the fraction used for calculating the penalty when the pool is cancelled
      */
-    uint256 public override poolCancelPenaltyFraction;
+    uint256 public override poolCancelPenaltyMultiple;
 
     /**
      * @notice Contract Address of no yield
@@ -180,6 +170,21 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         return OwnableUpgradeable.owner();
     }
 
+    /**
+     * @notice used to initialize the pool factory
+     * @dev initializer can only be run once
+     * @param _admin address of admin
+     * @param _collectionPeriod period for which lenders can lend for pool
+     * @param _loanWithdrawalDuration period for which lent tokens can be withdrawn after pool starts
+     * @param _marginCallDuration duration of margin call before which collateral ratio has to be maintained
+     * @param _poolInitFuncSelector function signature for initializing pool
+     * @param _liquidatorRewardFraction fraction of liquidation amount which is given to liquidator as reward multiplied by 10**30
+     * @param _poolCancelPenaltyMultiple multiple of borrow rate of pool as penality for cancellation of pool multiplied by 10**30
+     * @param _minBorrowFraction amountCollected/amountRequested for a pool, if less than fraction by pool start time then pool can be cancelled without penality multiplied by 10**30
+     * @param _protocolFeeFraction fraction of amount borrowed in pool which is collected as protocol fee
+     * @param _protocolFeeCollector address where protocol fee is collected
+     * @param _noStrategy address of the no strategy address
+     */
     function initialize(
         address _admin,
         uint256 _collectionPeriod,
@@ -187,7 +192,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _marginCallDuration,
         bytes4 _poolInitFuncSelector,
         uint256 _liquidatorRewardFraction,
-        uint256 _poolCancelPenaltyFraction,
+        uint256 _poolCancelPenaltyMultiple,
         uint256 _minBorrowFraction,
         uint256 _protocolFeeFraction,
         address _protocolFeeCollector,
@@ -202,13 +207,24 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updateMarginCallDuration(_marginCallDuration);
         _updatepoolInitFuncSelector(_poolInitFuncSelector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
-        _updatePoolCancelPenaltyFraction(_poolCancelPenaltyFraction);
+        _updatePoolCancelPenaltyMultiple(_poolCancelPenaltyMultiple);
         _updateMinBorrowFraction(_minBorrowFraction);
         _updateProtocolFeeFraction(_protocolFeeFraction);
         _updateProtocolFeeCollector(_protocolFeeCollector);
         _updateNoStrategy(_noStrategy);
     }
 
+    /**
+     * @notice used to setImplementation addresses
+     * @dev used to set some of the contracts pool factory interacts with. only admin can invoke
+     * @param _poolImpl address of the implementation address of pool
+     * @param _repaymentImpl address of the implementation address of repayments
+     * @param _userRegistry address of the user registry where users are verified
+     * @param _strategyRegistry address of the startegy registry where strategies are whitelisted
+     * @param _priceOracle address of the price oracle
+     * @param _savingsAccount address of the savings account contract
+     * @param _extension address of the extension contract for pools
+     */
     function setImplementations(
         address _poolImpl,
         address _repaymentImpl,
@@ -227,8 +243,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updatePriceoracle(_priceOracle);
     }
 
-    // check _collateralAmount
-    // check _salt
     /**
      * @notice invoked when a new borrow pool is created. deploys a new pool for every borrow request
      * @param _poolSize loan amount requested
@@ -541,6 +555,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit PriceOracleUpdated(_priceOracle);
     }
 
+    /**
+     * @notice used to update the extensions contract
+     * @param _extension address of the updated extensions contract
+     */
     function updatedExtension(address _extension) external onlyOwner {
         _updatedExtension(_extension);
     }
@@ -550,6 +568,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit ExtensionImplUpdated(_extension);
     }
 
+    /**
+     * @notice used to update the savings account contract
+     * @param _savingsAccount address of the updated savings account contract
+     */
     function updateSavingsAccount(address _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
@@ -572,6 +594,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit CollectionPeriodUpdated(_collectionPeriod);
     }
 
+    /**
+     * @notice used to update the loan withdrawal duration by owner
+     * @param _loanWithdrawalDuration updated value of loanWithdrawalDuration
+     */
     function updateLoanWithdrawalDuration(uint256 _loanWithdrawalDuration) external onlyOwner {
         _updateLoanWithdrawalDuration(_loanWithdrawalDuration);
     }
@@ -594,6 +620,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit MarginCallDurationUpdated(_marginCallDuration);
     }
 
+    /**
+     * @notice used to update the min borrow fraction by owner
+     * @param _minBorrowFraction updated value of min borrow fraction multiplied by 10**30
+     */
     function updateMinBorrowFraction(uint256 _minBorrowFraction) external onlyOwner {
         _updateMinBorrowFraction(_minBorrowFraction);
     }
@@ -605,7 +635,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
     /**
      * @notice used to update the reward fraction for liquidation of the Pool
-     * @param _liquidatorRewardFraction updated value of the reward fraction for liquidation
+     * @param _liquidatorRewardFraction updated value of the reward fraction for liquidation multiplied by 10**30
      */
     function updateLiquidatorRewardFraction(uint256 _liquidatorRewardFraction) external onlyOwner {
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
@@ -616,15 +646,23 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit LiquidatorRewardFractionUpdated(_liquidatorRewardFraction);
     }
 
-    function updatePoolCancelPenaltyFraction(uint256 _poolCancelPenaltyFraction) external onlyOwner {
-        _updatePoolCancelPenaltyFraction(_poolCancelPenaltyFraction);
+    /**
+     * @notice used to update the pool cancel penalty multiple
+     * @param _poolCancelPenaltyMultiple updated value of the pool cancel penalty multiple multiplied by 10**30
+     */
+    function updatePoolCancelPenaltyMultiple(uint256 _poolCancelPenaltyMultiple) external onlyOwner {
+        _updatePoolCancelPenaltyMultiple(_poolCancelPenaltyMultiple);
     }
 
-    function _updatePoolCancelPenaltyFraction(uint256 _poolCancelPenaltyFraction) internal {
-        poolCancelPenaltyFraction = _poolCancelPenaltyFraction;
-        emit PoolCancelPenaltyFractionUpdated(_poolCancelPenaltyFraction);
+    function _updatePoolCancelPenaltyMultiple(uint256 _poolCancelPenaltyMultiple) internal {
+        poolCancelPenaltyMultiple = _poolCancelPenaltyMultiple;
+        emit PoolCancelPenaltyMultipleUpdated(_poolCancelPenaltyMultiple);
     }
 
+    /**
+     * @notice used to update the fraction of borrowed amount charged as protocol fee
+     * @param _protocolFee updated value of protocol fee fraction multiplied by 10**30
+     */
     function updateProtocolFeeFraction(uint256 _protocolFee) external onlyOwner {
         _updateProtocolFeeFraction(_protocolFee);
     }
@@ -634,6 +672,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit ProtocolFeeFractionUpdated(_protocolFee);
     }
 
+    /**
+     * @notice used to update the address in which protocol fee is collected
+     * @param _protocolFeeCollector updated address of protocol fee collector
+     */
     function updateProtocolFeeCollector(address _protocolFeeCollector) external onlyOwner {
         _updateProtocolFeeCollector(_protocolFeeCollector);
     }
@@ -693,6 +735,11 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         emit LimitsUpdated('NoOfRepaymentIntervals', _min, _max);
     }
 
+    /**
+     * @notice used to query protocol fee fraction and address of the collector
+     * @return protocolFee Fraction multiplied by 10**30
+     * @return address of protocol fee collector
+     */
     function getProtocolFeeData() external view override returns (uint256, address) {
         return (protocolFeeFraction, protocolFeeCollector);
     }
