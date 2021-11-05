@@ -547,6 +547,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to terminate the pool
+     * @dev kill switch for owner to terminate the pool
      */
     function terminatePool() external onlyOwner {
         _withdrawAllCollateral(msg.sender, 0);
@@ -571,10 +572,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         emit PoolClosed();
     }
 
-    // Note - Only when closed, cancelled or terminated, lender can withdraw
-    //burns all shares and returns total remaining repayments along with provided liquidity
     /**
      * @notice used to return total remaining repayments along with provided liquidity to the lender
+     * @dev burns all shares and returns total remaining repayments along with provided liquidity
      */
     function withdrawLiquidity() external isLender(msg.sender) nonReentrant {
         LoanStatus _loanStatus = poolVariables.loanStatus;
@@ -620,7 +620,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     }
 
     /**
-     * @dev function is executed by lender to exercise margin call
+     * @notice function is executed by lender to exercise margin call
      * @dev It will revert in case collateral ratio is not below expected value
      * or the lender has already called it.
      */
@@ -658,6 +658,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to calculate the collateral ratio
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @param _balance the principal amount lent
      * @param _liquidityShares amount of collateral tokens available
      * @return _ratio the collateral ratio
@@ -674,6 +675,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to get the current collateral ratio of the borrow pool
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @return _ratio the current collateral ratio of the borrow pool
      */
     function getCurrentCollateralRatio() public returns (uint256 _ratio) {
@@ -684,6 +686,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to get the current collateral ratio of a lender
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @return _ratio the current collateral ratio of the lender
      */
     function getCurrentCollateralRatio(address _lender) public returns (uint256 _ratio) {
@@ -1006,6 +1009,10 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         return poolConstants.borrower;
     }
 
+    /**
+     * @notice used to total supply of pool tokens for the pool
+     * @return total supply of pool tokens
+     */
     function totalSupply() public view override(ERC20Upgradeable, IPool) returns (uint256) {
         return ERC20Upgradeable.totalSupply();
     }
