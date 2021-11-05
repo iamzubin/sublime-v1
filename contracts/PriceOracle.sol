@@ -18,7 +18,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         uint256 decimals;
     }
     /**
-     * @notice stores the price oracle and its decimals for chainlink feeds 
+     * @notice stores the price oracle and its decimals for chainlink feeds
      **/
     mapping(address => PriceData) public chainlinkFeedAddresses;
     mapping(address => uint256) decimals;

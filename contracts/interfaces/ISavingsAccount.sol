@@ -2,7 +2,6 @@
 pragma solidity 0.7.0;
 
 interface ISavingsAccount {
-    
     /**
      * @notice emitted when tokens are deposited into savings account
      * @param user address of user depositing the tokens
@@ -35,7 +34,7 @@ interface ISavingsAccount {
      * @notice emitted when all tokens are withdrawn
      * @param user address of user withdrawing tokens
      * @param tokenReceived amount of tokens withdrawn
-     * @param token address of the token withdrawn 
+     * @param token address of the token withdrawn
      */
     event WithdrawnAll(address indexed user, uint256 tokenReceived, address indexed token);
 
@@ -74,7 +73,7 @@ interface ISavingsAccount {
      * @notice emitted when credit line allowance is refreshed
      * @param token token for which allowance is increased
      * @param from address of user from whcih allowance is increased
-     * @param amount amount of tokens by which allowance is increased 
+     * @param amount amount of tokens by which allowance is increased
      */
     event CreditLineAllowanceRefreshed(address indexed token, address indexed from, uint256 amount);
 

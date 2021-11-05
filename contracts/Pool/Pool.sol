@@ -386,7 +386,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _fromSavingsAccount
     ) external payable nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
-        require(_lender != poolConstants.borrower, "cant lend to self");
+        require(_lender != poolConstants.borrower, 'cant lend to self');
         if (_lenderVerifier != address(0)) {
             require(IVerification(IPoolFactory(poolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'invalid lender');
         }
@@ -426,7 +426,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_to != address(0)) {
             require(!paused(), 'ERC20Pausable: token transfer while paused');
         }
-        require(_to != poolConstants.borrower, "cant lend to self");
+        require(_to != poolConstants.borrower, 'cant lend to self');
 
         if (_from == address(0) || _to == address(0)) {
             return;

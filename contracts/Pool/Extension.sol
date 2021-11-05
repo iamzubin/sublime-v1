@@ -100,26 +100,26 @@ contract Extension is Initializable, IExtension {
      * @param _to address of user to whom pool tokens are transferred
      * @param _amount amount of pool tokens transferred
      */
-    function removeVotes(address _from, address _to, uint256 _amount) external override {
+    function removeVotes(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) external override {
         address _pool = msg.sender;
-        if(extensions[_pool].hasExtensionPassed) {
+        if (extensions[_pool].hasExtensionPassed) {
             return;
         }
 
         uint256 _extensionVoteEndTime = extensions[_pool].extensionVoteEndTime;
 
-        if(
-            _extensionVoteEndTime != 0 &&
-            _extensionVoteEndTime <= block.timestamp
-        ) {
-            if(extensions[_pool].lastVotedExtension[_from] == _extensionVoteEndTime) {
+        if (_extensionVoteEndTime != 0 && _extensionVoteEndTime <= block.timestamp) {
+            if (extensions[_pool].lastVotedExtension[_from] == _extensionVoteEndTime) {
                 extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.sub(_amount);
             }
 
-            if(extensions[_pool].lastVotedExtension[_to] == _extensionVoteEndTime) {
+            if (extensions[_pool].lastVotedExtension[_to] == _extensionVoteEndTime) {
                 extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.add(_amount);
             }
-
         }
     }
 

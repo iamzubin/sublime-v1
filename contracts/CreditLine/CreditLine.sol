@@ -237,7 +237,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @notice used to initialize the contract
      * @dev can only be called once during the life cycle of the contract
      * @param _defaultStrategy default strategy used in credit lines
-     * @param _priceOracle address of the priceOracle 
+     * @param _priceOracle address of the priceOracle
      * @param _savingsAccount address of  the savings account contract
      * @param _strategyRegistry address of the strategy registry contract
      * @param _owner address of owner who can change global variables
@@ -313,7 +313,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @notice used to update the protocol fee fraction
      * @dev can only be updated by owner
      * @param _protocolFee fraction of the borrower amount collected as protocol fee
-     */        
+     */
     function updateProtocolFeeFraction(uint256 _protocolFee) external onlyOwner {
         _updateProtocolFeeFraction(_protocolFee);
     }
@@ -519,7 +519,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset,
         bool _requestAsLender
     ) external returns (uint256) {
-        require(_borrowAsset != _collateralAsset, "R: cant borrow lent token");
+        require(_borrowAsset != _collateralAsset, 'R: cant borrow lent token');
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'R: No price feed');
 
         address _lender = _requestTo;
@@ -782,8 +782,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         } else {
             _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
         }
-        if(_principlePaid != 0) {
-            _savingsAccount.increaseAllowanceToCreditLine(_principlePaid, _borrowAsset, _lender);   
+        if (_principlePaid != 0) {
+            _savingsAccount.increaseAllowanceToCreditLine(_principlePaid, _borrowAsset, _lender);
         }
     }
 
