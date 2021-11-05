@@ -30,6 +30,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         LIQUIDATED
     }
 
+    /**
+     * @notice counter that tracks the number of credit lines created
+     * @dev used to create unique identifier for credit lines
+     **/
     uint256 public creditLineCounter;
 
     uint256 constant YEAR_IN_SECONDS = 365 days;
@@ -54,17 +58,57 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool autoLiquidation;
         bool requestByLender;
     }
-    // creditLineId => Strategy => collateralShares
+    /**
+     * @notice stores the collateral shares in a credit line per strategy
+     * @dev creditLineId => Strategy => collateralShares
+     **/
     mapping(uint256 => mapping(address => uint256)) public collateralShareInStrategy;
+
+    /**
+     * @notice stores the variables to maintain a credit line
+     **/
     mapping(uint256 => CreditLineVariables) public creditLineVariables;
+
+    /**
+     * @notice stores the constants related to a credit line
+     **/
     mapping(uint256 => CreditLineConstants) public creditLineConstants;
 
+    /**
+     * @notice stores the address of savings account contract
+     **/
     address public savingsAccount;
+
+    /**
+     * @notice stores the address of price oracle contract
+     **/
     address public priceOracle;
+
+    /**
+     * @notice stores the address of strategy registry contract
+     **/
     address public strategyRegistry;
+
+    /**
+     * @notice stores the address of default strategy
+     **/
     address public defaultStrategy;
+
+    /**
+     * @notice stores the fraction of borrowed amount charged as fee by protocol
+     * @dev it is multiplied by 10**30
+     **/
     uint256 public protocolFeeFraction;
+
+    /**
+     * @notice address where protocol fee is collected
+     **/
     address public protocolFeeCollector;
+
+    /**
+     * @notice stores the fraction of amount liquidated given as reward to liquidator
+     * @dev it is multiplied by 10**30
+     **/
     uint256 public liquidatorRewardFraction;
     /**
      * @dev checks if Credit Line exists
