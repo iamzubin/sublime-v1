@@ -17,8 +17,17 @@ interface IYield {
      **/
     event UnlockedTokens(address indexed investedTo, uint256 collateralReceived);
 
+    /**
+     * @notice emitted when a shares are unlocked from yield
+     * @param asset address of the base token for which shares are being withdrawn
+     * @param sharesReleased amount of shares unlocked
+     */
     event UnlockedShares(address indexed asset, uint256 sharesReleased);
 
+    /**
+     * @notice emitted when savings account address is updated
+     * @param strategy updated address of the savings account contract
+     */
     event SavingsAccountUpdated(address indexed savingsAccount);
 
     /**

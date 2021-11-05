@@ -2,16 +2,80 @@
 pragma solidity 0.7.0;
 
 interface ISavingsAccount {
-    //events
+    
+    /**
+     * @notice emitted when tokens are deposited into savings account
+     * @param user address of user depositing the tokens
+     * @param amount amount of tokens deposited
+     * @param token address of token that is deposited
+     * @param strategy strategy into which tokens are deposited
+     */
     event Deposited(address indexed user, uint256 amount, address indexed token, address indexed strategy);
-    event StrategySwitched(address indexed user, address indexed token, address currentStrategy, address indexed newStrategy);
-    event Withdrawn(address indexed from, address indexed to, uint256 amountReceived, address indexed token, address strategy);
-    event WithdrawnAll(address indexed user, uint256 tokenReceived, address indexed token);
-    event Approved(address indexed token, address indexed from, address indexed to, uint256 amount);
-    event Transfer(address indexed token, address strategy, address indexed from, address indexed to, uint256 amount);
-    event CreditLineUpdated(address indexed _updatedCreditLine);
-    event StrategyRegistryUpdated(address indexed _updatedStrategyRegistry);
 
+    /**
+     * @notice emitted when tokens are switched from one strategy to another
+     * @param user address of user switching strategies
+     * @param token address of token for which strategies are switched
+     * @param currentStrategy address of the strategy from which tokens are switched
+     * @param newStrategy address of the strategy to which tokens are switched
+     */
+    event StrategySwitched(address indexed user, address indexed token, address currentStrategy, address indexed newStrategy);
+
+    /**
+     * @notice emitted when tokens are withdrawn from savings account
+     * @param from address of user from which tokens are withdrawn
+     * @param to address of user to which tokens are withdrawn
+     * @param amountReceived amount of tokens withdrawn
+     * @param token address of token that is withdrawn
+     * @param strategy strategy into which tokens are withdrawn
+     */
+    event Withdrawn(address indexed from, address indexed to, uint256 amountReceived, address indexed token, address strategy);
+
+    /**
+     * @notice emitted when all tokens are withdrawn
+     * @param user address of user withdrawing tokens
+     * @param tokenReceived amount of tokens withdrawn
+     * @param token address of the token withdrawn 
+     */
+    event WithdrawnAll(address indexed user, uint256 tokenReceived, address indexed token);
+
+    /**
+     * @notice emitted when tokens are approved
+     * @param token address of token approved
+     * @param from address of user from who tokens are approved
+     * @param to address of user to whom tokens are approved
+     * @param amount amount of tokens approved
+     */
+    event Approved(address indexed token, address indexed from, address indexed to, uint256 amount);
+
+    /**
+     * @notice emitted when tokens are transferred
+     * @param token address of token transferred
+     * @param strategy address of strategy from which tokens are transferred
+     * @param from address of user from whom tokens are transferred
+     * @param to address of user to whom tokens are transferred
+     * @param amount amount of tokens transferred
+     */
+    event Transfer(address indexed token, address strategy, address indexed from, address indexed to, uint256 amount);
+
+    /**
+     * @notice emitted when credit line address is updated
+     * @param updatedCreditLine updated credit line contract address
+     */
+    event CreditLineUpdated(address indexed updatedCreditLine);
+
+    /**
+     * @notice emitted when strategy registry is updated
+     * @param updatedStrategyRegistry updated strategy registry address
+     */
+    event StrategyRegistryUpdated(address indexed updatedStrategyRegistry);
+
+    /**
+     * @notice emitted when credit line allowance is refreshed
+     * @param token token for which allowance is increased
+     * @param from address of user from whcih allowance is increased
+     * @param amount amount of tokens by which allowance is increased 
+     */
     event CreditLineAllowanceRefreshed(address indexed token, address indexed from, uint256 amount);
 
     function deposit(

@@ -2,7 +2,16 @@
 pragma solidity 0.7.0;
 
 interface IStrategyRegistry {
+    /**
+     * @notice emitted when a strategy is added to registry
+     * @param strategy address of the stratgy added
+     */
     event StrategyAdded(address indexed strategy);
+
+    /**
+     * @notice emitted when a strategy is removed to registry
+     * @param strategy address of the stratgy removed
+     */
     event StrategyRemoved(address indexed strategy);
 
     function registry(address _strategy) external view returns (bool);
