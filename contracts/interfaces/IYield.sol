@@ -26,7 +26,7 @@ interface IYield {
 
     /**
      * @notice emitted when savings account address is updated
-     * @param strategy updated address of the savings account contract
+     * @param savingsAccount updated address of the savings account contract
      */
     event SavingsAccountUpdated(address indexed savingsAccount);
 
