@@ -109,7 +109,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @notice Used to unlock tokens from the protocol
      * @param asset the address of underlying token
      * @param amount the amount of asset
-     * @return received amount of tokens received
+     * @return tokensReceived received amount of tokens received
      **/
     function unlockTokens(address asset, uint256 amount)
         external
