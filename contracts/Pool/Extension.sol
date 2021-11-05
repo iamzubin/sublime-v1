@@ -25,10 +25,13 @@ contract Extension is Initializable, IExtension {
     }
 
     /**
-     * @notice used to keep track of Pool details
+     * @notice used to keep track of extension details against a pool
      */
     mapping(address => ExtensionVariables) public extensions;
     IPoolFactory poolFactory;
+    /**
+     * @notice used to store voting pass ratio for approving extension
+     */
     uint256 public votingPassRatio;
 
     /**
@@ -90,6 +93,13 @@ contract Extension is Initializable, IExtension {
         emit ExtensionRequested(_extensionVoteEndTime);
     }
 
+    /**
+     * @notice used to rebalance votes of from and to addresses when pool tokens are transferred
+     * @dev only pool can change its votes
+     * @param _from address of user from whom pool tokens are transferred
+     * @param _to address of user to whom pool tokens are transferred
+     * @param _amount amount of pool tokens transferred
+     */
     function removeVotes(address _from, address _to, uint256 _amount) external override {
         address _pool = msg.sender;
         if(extensions[_pool].hasExtensionPassed) {
@@ -178,6 +188,11 @@ contract Extension is Initializable, IExtension {
         emit VotingPassRatioUpdated(_votingPassRatio);
     }
 
+    /**
+     * @notice used to update the pool factory contract address
+     * @dev only owner can update
+     * @param _poolFactory updated pool factory contract address
+     */
     function updatePoolFactory(address _poolFactory) external onlyOwner {
         _updatePoolFactory(_poolFactory);
     }
