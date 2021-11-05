@@ -90,7 +90,7 @@ interface ISavingsAccount {
      * @param currentStrategy initial strategy of token
      * @param newStrategy new strategy to invest
      * @param token address of the token
-     * @param amount amount of **liquidity shares** to be reinvested
+     * @param amount amount of tokens to be reinvested
      */
     function switchStrategy(
         uint256 amount,
@@ -102,7 +102,7 @@ interface ISavingsAccount {
     /**
      * @dev Used to withdraw token from Saving Account
      * @param withdrawTo address to which token should be sent
-     * @param amount amount of liquidity shares to withdraw
+     * @param amount amount of tokens to withdraw
      * @param token address of the token to be withdrawn
      * @param strategy strategy from where token has to withdrawn(ex:- compound,Aave etc)
      * @param withdrawShares boolean indicating to withdraw in liquidity share or underlying token
