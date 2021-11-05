@@ -183,8 +183,8 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to lock tokens in available protocol
-     * @notice Asset Tokens to be locked must be approved to this contract by user
+     * @notice Used to lock tokens in protocol
+     * @dev Asset Tokens to be locked must be approved to this contract by user
      * @param asset the address of token to invest
      * @param amount the amount of asset
      * @return sharesReceived amount of shares received
@@ -209,7 +209,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to unlock tokens from available protocol
+     * @notice Used to unlock tokens from available protocol
      * @param asset the address of underlying token
      * @param amount the amount of asset
      * @return received amount of tokens received
@@ -230,7 +230,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to unlock shares
+     * @notice Used to unlock shares
      * @param asset the address of underlying token
      * @param amount the amount of shares to unlock
      * @return received amount of shares received
@@ -248,7 +248,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to get amount of underlying tokens for current number of shares
+     * @notice Used to get amount of underlying tokens for current number of shares
      * @param shares the amount of shares
      * @param asset the address of token locked
      * @return amount amount of underlying tokens
@@ -265,10 +265,10 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to get number of shares from an amount of underlying tokens
+     * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
      * @param asset the address of token
-     * @return amount amount of shares for given tokens
+     * @return shares amount of shares for given tokens
      **/
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
         shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
