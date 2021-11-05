@@ -6,10 +6,20 @@ import '../interfaces/IVerification.sol';
 import '../interfaces/IVerifier.sol';
 
 contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
+    /**
+     * @notice stores the verification contract instance
+     */
     IVerification public verification;
 
+    /**
+     * @notice stores the user metadata against their address
+     */
     mapping(address => string) public userData;
 
+    /**
+     * @notice stores the verification contract instance
+     * @param verification address of the updated verification contract
+     */
     event VerificationUpdated(address indexed verification);
 
     /// @notice Initializes the variables of the contract
@@ -21,6 +31,13 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
         _updateVerification(_verification);
     }
 
+    /**
+     * @notice used to register user
+     * @dev ohly owner can register users
+     * @param _user address of the user being registered
+     * @param _metadata metadata related to the user
+     * @param _isMasterLinked should master address be linked to itself
+     */
     function registerUser(
         address _user,
         string memory _metadata,
@@ -32,6 +49,11 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
         emit UserRegistered(_user, _isMasterLinked, _metadata);
     }
 
+    /**
+     * @notice used to unregister user
+     * @dev ohly owner can unregister users
+     * @param _user address of the user being unregistered
+     */
     function unregisterUser(address _user) external onlyOwner {
         require(bytes(userData[_user]).length != 0, 'User doesnt exists');
         delete userData[_user];
@@ -39,11 +61,16 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
         emit UserUnregistered(_user);
     }
 
+    /**
+     * @notice used to update verification contract address
+     * @dev ohly owner can update
+     * @param _verification address of the verification contract
+     */
     function updateVerification(address _verification) external onlyOwner {
         _updateVerification(_verification);
     }
 
-    function _updateVerification(address _verification) internal onlyOwner {
+    function _updateVerification(address _verification) internal {
         verification = IVerification(_verification);
         emit VerificationUpdated(_verification);
     }

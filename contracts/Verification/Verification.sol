@@ -29,7 +29,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     */
     string constant APPROVAL_MESSAGE = 'APPROVING ADDRESS TO BE LINKED TO ME ON SUBLIME';
 
-    /// @dev Prevents anyone other than a valid verifier from calling a function
+    /// @notice Prevents anyone other than a valid verifier from calling a function
     modifier onlyVerifier() {
         require(verifiers[msg.sender], 'Invalid verifier');
         _;
@@ -114,6 +114,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev view function
     /// @param _user address which has to be checked if mapped against a verified master address
     /// @param _verifier verifier with which master address has to be verified
+    /// @return if the user is linke dto a registered master address
     function isUser(address _user, address _verifier) external view override returns (bool) {
         address _masterAddress = linkedAddresses[_user];
         if (_masterAddress == address(0) || !masterAddresses[_masterAddress][_verifier]) {
