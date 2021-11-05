@@ -49,9 +49,9 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         emit SavingsAccountUpdated(_savingsAccount);
     }
 
-    function updateProtocolAddresses(address asset, address to) external onlyOwner {
-        liquidityToken[asset] = to;
-        emit ProtocolAddressesUpdated(asset, to);
+    function updateProtocolAddresses(address _asset, address _to) external onlyOwner {
+        liquidityToken[_asset] = _to;
+        emit ProtocolAddressesUpdated(_asset, _to);
     }
 
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner nonReentrant returns (uint256 received) {

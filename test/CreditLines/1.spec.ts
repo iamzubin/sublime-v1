@@ -78,8 +78,8 @@ describe('Credit Lines', async () => {
         strategyRegistry = await deployHelper.core.deployStrategyRegistry();
 
         //initialize
-        savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLines.address);
-        strategyRegistry.initialize(admin.address, 10);
+        await savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLines.address);
+        await strategyRegistry.initialize(admin.address, 10);
 
         await network.provider.request({
             method: 'hardhat_impersonateAccount',

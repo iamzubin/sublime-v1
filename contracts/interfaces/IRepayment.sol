@@ -23,15 +23,10 @@ interface IRepayment {
     /// @param repayAmount Amount being repayed
     event GracePenaltyRepaid(address indexed poolID, uint256 repayAmount);
 
-    /// @notice Event emitted when repayment for extension is partially done
-    /// @param poolID The address of the pool to which the partial repayment was made
-    /// @param repayAmount Amount being repayed
-    event PartialExtensionRepaid(address indexed poolID, uint256 repayAmount);
-
     /// @notice Event emitted when repayment for extension is completely done
     /// @param poolID The address of the pool to which interest was paid
     /// @param repayAmount Amount being re-payed by the borrower
-    event ExtensionRepaymentComplete(address indexed poolID, uint256 repayAmount); // Made during current period interest repayment
+    event ExtensionRepaid(address indexed poolID, uint256 repayAmount); // Made during current period interest repayment
 
     /// @notice Event to denote changes in the configurations of the pool factory
     event PoolFactoryUpdated(address indexed poolFactory);
@@ -56,7 +51,7 @@ interface IRepayment {
 
     function getCurrentLoanInterval(address poolID) external view returns (uint256);
 
-    function instalmentDeadlineExtended(address _poolID, uint256 _period) external;
+    function instalmentDeadlineExtended(address _poolID) external;
 
     function didBorrowerDefault(address _poolID) external view returns (bool);
 

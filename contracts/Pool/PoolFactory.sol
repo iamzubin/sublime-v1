@@ -104,11 +104,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     uint256 public override liquidatorRewardFraction;
 
     /**
-     * @notice the fraction specifying the voting pass threshold
-     */
-    uint256 public override votingPassRatio;
-
-    /**
      * @notice the fraction used for calculating the penalty when the pool is cancelled
      */
     uint256 public override poolCancelPenaltyFraction;
