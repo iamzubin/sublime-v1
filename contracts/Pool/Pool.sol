@@ -110,7 +110,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @notice checks if the msg.sender is pool's latest repayment implementation
      */
     modifier onlyRepaymentImpl() {
-        require(msg.sender == IPoolFactory(poolFactory).repaymentImpl(), '25');
+        require(msg.sender == IPoolFactory(poolFactory).repaymentImpl(), '38');
         _;
     }
 
@@ -171,6 +171,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable override {
         require(_amount != 0, '7');
+        require(balanceOf(msg.sender) == 0, "39");
         _depositCollateral(msg.sender, _amount, _transferFromSavingsAccount);
     }
 
@@ -274,7 +275,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _transferFromSavingsAccount
     ) external payable override nonReentrant {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, '9');
-
+        require(balanceOf(msg.sender) == 0, "39");
         require(getMarginCallEndTime(_lender) >= block.timestamp, '10');
 
         require(_amount != 0, '11');
@@ -386,7 +387,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _fromSavingsAccount
     ) external payable nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
-        require(_lender != poolConstants.borrower, 'cant lend to self');
+        address _borrower = poolConstants.borrower;
+        require(_lender != _borrower && _borrower != msg.sender, 'cant lend to self');
         if (_lenderVerifier != address(0)) {
             require(IVerification(IPoolFactory(poolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'invalid lender');
         }

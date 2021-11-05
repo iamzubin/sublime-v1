@@ -619,6 +619,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _strategy,
         bool _fromSavingsAccount
     ) internal {
+        require(creditLineConstants[_id].lender != msg.sender, "lender cant deposit collateral");
         if (_fromSavingsAccount) {
             _depositCollateralToSavingsAccount(_id, _amount, msg.sender);
         } else {
@@ -801,6 +802,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
+        require(creditLineConstants[_id].lender != msg.sender, "Lender cant repay");
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(_id);
         uint256 _totalInterestAccrued = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(
