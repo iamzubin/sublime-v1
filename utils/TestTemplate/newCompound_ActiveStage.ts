@@ -378,7 +378,7 @@ export async function preActivePoolChecks(
             await expect(env.repayments.connect(borrower).repay(pool.address, repayAmount)).to.be.revertedWith("Pool is not Initiliazed");
         });
 
-        it("Borrower can cancel the pool in the collection stage with a penalty: ", async function() {
+        it("Borrower (and noone else) can cancel the pool in the collection stage with a penalty: ", async function() {
             let{admin, lender, borrower} = env.entities;
             let random = env.entities.extraLenders[10]; // Random address
             let poolStrategy = env.yields.compoundYield;
@@ -411,6 +411,10 @@ export async function preActivePoolChecks(
 
             let penaltyForCancelling = poolCancelPenaltyFraction.mul(borrowRate).mul(baseLiquidityShares).div(scalingNumber).mul(penaltyTime).div(yearInSeconds).div(scalingNumber);
             //console.log("Penalty for Cancelling: ", penaltyForCancelling.toString());
+
+            // If more than minBorrowFraction of requested amount is met and before loanWithdrawlDeadline, if anyone tries to cancel, should be reverted.
+            await expect(pool.connect(random).cancelPool()).to.be.revertedWith('CP2');
+
             // Borrower cancels the pool in the collection stage itself
             await pool.connect(borrower).cancelPool();
 
@@ -558,9 +562,6 @@ export async function preActivePoolChecks(
 
             //Borrower request to withdraw smalller amount should be rejected
             await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('13');
-
-            const lenderPoolTokens = await pool.balanceOf(lender.address);
-            console.log(lenderPoolTokens.toString());
         });
 
         it("Anyone can cancel the pool if minBorrowFraction of request amount is not met and loan started without any penalty: ", async function() {
@@ -701,6 +702,7 @@ export async function preActivePoolChecks(
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
+
         it("Protocol Fee is subtracted when borrower withdraws borrow amount, along with withdraw event emission & adjusted tokens reaching the borrower: ", async function() {
             let { admin, borrower, lender, protocolFeeCollector } = env.entities;
             let random = env.entities.extraLenders[10]; // Random address
