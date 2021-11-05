@@ -54,7 +54,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool autoLiquidation;
         bool requestByLender;
     }
-    mapping(uint256 => mapping(address => uint256)) collateralShareInStrategy;
+    // creditLineId => Strategy => collateralShares
+    mapping(uint256 => mapping(address => uint256)) public collateralShareInStrategy;
     mapping(uint256 => CreditLineVariables) public creditLineVariables;
     mapping(uint256 => CreditLineConstants) public creditLineConstants;
 
@@ -67,7 +68,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     uint256 public liquidatorRewardFraction;
     /**
      * @dev checks if Credit Line exists
-     * @param _id credit hash
+     * @param _id identifier for the credit line
      **/
     modifier ifCreditLineExists(uint256 _id) {
         require(creditLineVariables[_id].status != CreditLineStatus.NOT_CREATED, 'Credit line does not exist');
@@ -76,7 +77,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @dev checks if called by credit Line Borrower
-     * @param _id creditLine Hash
+     * @param _id creditLine identifier
      **/
     modifier onlyCreditLineBorrower(uint256 _id) {
         require(creditLineConstants[_id].borrower == msg.sender, 'Only credit line Borrower can access');
@@ -85,43 +86,121 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @dev checks if called by credit Line Lender
-     * @param _id creditLine Hash
+     * @param _id creditLine identifier
      **/
     modifier onlyCreditLineLender(uint256 _id) {
         require(creditLineConstants[_id].lender == msg.sender, 'Only credit line Lender can access');
         _;
     }
 
+    /**
+     * @notice emitted when a request for new credit line is placed
+     * @param id id of the credit line for which request was made
+     * @param lender address of the lender for credit line
+     * @param borrower address of the borrower for credit line
+     */
     event CreditLineRequested(uint256 indexed id, address indexed lender, address indexed borrower);
 
+    /**
+     * @notice emitted when a credit line is liquidated
+     * @param id id of the credit line which is liquidated
+     * @param liquidator address of the liquidator
+     */
     event CreditLineLiquidated(uint256 indexed id, address indexed liquidator);
 
-    event BorrowedFromCreditLine(uint256 borrowAmount, uint256 indexed id);
+    /**
+     * @notice emitted when tokens are borrowed from credit line
+     * @param id id of the credit line from which tokens are borrowed
+     * @param borrowAmount amount of tokens borrowed
+     */
+    event BorrowedFromCreditLine(uint256 indexed id, uint256 borrowAmount);
+
+    /**
+     * @notice emitted when credit line is accepted
+     * @param id id of the credit line that was accepted
+     */
     event CreditLineAccepted(uint256 indexed id);
+
+    /**
+     * @notice emitted when credit line is completely repaid and reset
+     * @param id id of the credit line that is reset
+     */
     event CreditLineReset(uint256 indexed id);
+
+    /**
+     * @notice emitted when the credit line is partially repaid
+     * @param id id of the credit line
+     * @param repayAmount amount repaid
+     */
     event PartialCreditLineRepaid(uint256 indexed id, uint256 repayAmount);
+
+    /**
+     * @notice emitted when the credit line is completely repaid
+     * @param id id of the credit line
+     * @param repayAmount amount repaid
+     */
     event CompleteCreditLineRepaid(uint256 indexed id, uint256 repayAmount);
+
+    /**
+     * @notice emitted when the credit line is closed by one of the parties of credit line
+     * @param id id of the credit line
+     */
     event CreditLineClosed(uint256 indexed id);
 
+    /**
+     * @notice emitted when default strategy for the credit line is updated
+     * @param defaultStrategy address of the strategy contract that is used as default by credit lines
+     */
     event DefaultStrategyUpdated(address indexed defaultStrategy);
+
+    /**
+     * @notice emitted when the price oracle is updated
+     * @param priceOracle address of the updated price oracle
+     */
     event PriceOracleUpdated(address indexed priceOracle);
+
+    /**
+     * @notice emitted when the savings account address is updated
+     * @param savingsAccount address of the updated savingsAccount
+     */
     event SavingsAccountUpdated(address indexed savingsAccount);
+
+    /**
+     * @notice emitted when strategy registry address is updated
+     * @param strategyRegistry address of the updated strategy registry
+     */
     event StrategyRegistryUpdated(address indexed strategyRegistry);
 
-    /*
-     * @notice emitted when fee that protocol changes for pools is updated
+    /**
+     * @notice emitted when fee that protocol charges for credit line is updated
      * @param updatedProtocolFee updated value of protocolFeeFraction
      */
     event ProtocolFeeFractionUpdated(uint256 updatedProtocolFee);
 
-    /*
+    /**
      * @notice emitted when address which receives fee that protocol changes for pools is updated
      * @param updatedProtocolFeeCollector updated value of protocolFeeCollector
      */
     event ProtocolFeeCollectorUpdated(address indexed updatedProtocolFeeCollector);
 
+    /**
+     * @notice emitted when liquidatorRewardFraction is updated
+     * @param liquidatorRewardFraction fraction of the liquidated amount given as reward to the liquidator
+     */
     event LiquidationRewardFractionUpdated(uint256 liquidatorRewardFraction);
 
+    /**
+     * @notice used to initialize the contract
+     * @dev can only be called once during the life cycle of the contract
+     * @param _defaultStrategy default strategy used in credit lines
+     * @param _priceOracle address of the priceOracle 
+     * @param _savingsAccount address of  the savings account contract
+     * @param _strategyRegistry address of the strategy registry contract
+     * @param _owner address of owner who can change global variables
+     * @param _protocolFeeFraction fraction of the fee charged by protocol
+     * @param _protocolFeeCollector address to which protocol fee is charged to
+     * @param _liquidatorRewardFraction fraction of the liquidated amount given as reward to the liquidator
+     */
     function initialize(
         address _defaultStrategy,
         address _priceOracle,
@@ -144,6 +223,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
     }
 
+    /**
+     * @notice used to update the default strategy
+     * @dev can only be updated by owner
+     * @param _defaultStrategy address of the updated default strategy
+     */
     function updateDefaultStrategy(address _defaultStrategy) external onlyOwner {
         _updateDefaultStrategy(_defaultStrategy);
     }
@@ -153,6 +237,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit DefaultStrategyUpdated(_defaultStrategy);
     }
 
+    /**
+     * @notice used to update the price oracle
+     * @dev can only be updated by owner
+     * @param _priceOracle address of the updated price oracle
+     */
     function updatePriceOracle(address _priceOracle) external onlyOwner {
         _updatePriceOracle(_priceOracle);
     }
@@ -162,6 +251,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit PriceOracleUpdated(_priceOracle);
     }
 
+    /**
+     * @notice used to update the savings account address
+     * @dev can only be updated by owner
+     * @param _savingsAccount address of the updated savings account
+     */
     function updateSavingsAccount(address _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
@@ -171,6 +265,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit SavingsAccountUpdated(_savingsAccount);
     }
 
+    /**
+     * @notice used to update the protocol fee fraction
+     * @dev can only be updated by owner
+     * @param _protocolFee fraction of the borrower amount collected as protocol fee
+     */        
     function updateProtocolFeeFraction(uint256 _protocolFee) external onlyOwner {
         _updateProtocolFeeFraction(_protocolFee);
     }
@@ -180,6 +279,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit ProtocolFeeFractionUpdated(_protocolFee);
     }
 
+    /**
+     * @notice used to update the protocol fee collector
+     * @dev can only be updated by owner
+     * @param _protocolFeeCollector address in which protocol fee is collected
+     */
     function updateProtocolFeeCollector(address _protocolFeeCollector) external onlyOwner {
         _updateProtocolFeeCollector(_protocolFeeCollector);
     }
@@ -190,6 +294,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit ProtocolFeeCollectorUpdated(_protocolFeeCollector);
     }
 
+    /**
+     * @notice used to update the strategy registry address
+     * @dev can only be updated by owner
+     * @param _strategyRegistry address of the updated strategy registry
+     */
     function updateStrategyRegistry(address _strategyRegistry) external onlyOwner {
         _updateStrategyRegistry(_strategyRegistry);
     }
@@ -200,6 +309,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit StrategyRegistryUpdated(_strategyRegistry);
     }
 
+    /**
+     * @notice used to update the liquidatorRewardFraction
+     * @dev can only be updated by owner
+     * @param _rewardFraction fraction of liquidated amount given to liquidator as reward
+     */
     function updateLiquidatorRewardFraction(uint256 _rewardFraction) external onlyOwner {
         _updateLiquidatorRewardFraction(_rewardFraction);
     }
@@ -214,7 +328,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev Used to Calculate Interest Per second on given principal and Interest rate
      * @param _principal principal Amount for which interest has to be calculated.
      * @param _borrowRate It is the Interest Rate at which Credit Line is approved
-     * @return uint256 interest per second for the given parameters
+     * @return interest per second for the given parameters
      */
     function calculateInterest(
         uint256 _principal,
@@ -228,8 +342,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @dev Used to calculate interest accrued since last repayment
-     * @param _id Hash of the credit line for which interest accrued has to be calculated
-     * @return uint256 interest accrued over current borrowed amount since last repayment
+     * @param _id identifier for the credit line
+     * @return interest accrued over current borrowed amount since last repayment
      */
 
     function calculateInterestAccrued(uint256 _id) public view returns (uint256) {
@@ -242,8 +356,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @dev Used to calculate current debt of borrower against a credit line.
-     * @param _id Hash of the credit line for which current debt has to be calculated
-     * @return uint256 current debt of borrower
+     * @param _id identifier for the credit line
+     * @return current debt of borrower
      */
     function calculateCurrentDebt(uint256 _id) public view returns (uint256) {
         uint256 _interestAccrued = calculateInterestAccrued(_id);
@@ -254,6 +368,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         return _currentDebt;
     }
 
+    /**
+     * @notice used to calculate amount that can be borrowed by the borrower
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view.
+            borrowableAmount changes per block as interest changes per block.
+     * @param _id identifier for the credit line
+     * @return amount that can be borrowed from the credit line
+     */
     function calculateBorrowableAmount(uint256 _id) external returns (uint256) {
         CreditLineStatus _status = creditLineVariables[_id].status;
         require(
@@ -330,10 +451,18 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
-     * @dev used to request a credit line by a borrower
-     * @param _requestTo Address to which creditLine is requested, if borrower creates request then lender address and if lennder creates then borrower address
+     * @notice used to request a credit line either by borrower or lender
+     * @param _requestTo Address to which creditLine is requested, 
+                        if borrower creates request then lender address and 
+                        if lender creates then borrower address
      * @param _borrowLimit maximum borrow amount in a credit line
      * @param _borrowRate Interest Rate at which credit Line is requested
+     * @param _autoLiquidation if true, anyone can liquidate loan, otherwise only lender
+     * @param _collateralRatio ratio of the collateral to the debt below which credit line can be liquidated
+     * @param _borrowAsset address of the token to be borrowed
+     * @param _collateralAsset address of the token provided as collateral
+     * @param _requestAsLender if true, lender is placing request, otherwise borrower
+     * @return identifier for the credit line
      */
 
     function request(
@@ -401,8 +530,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
-     * @dev used to Accept a credit line by a specified lender
-     * @param _id Credit line hash which represents the credit Line Unique Hash
+     * @notice used to accept a credit line
+     * @dev if borrower places request, lender can accept and vice versa
+     * @param _id identifier for the credit line
      */
     function accept(uint256 _id) external {
         require(
@@ -419,6 +549,17 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit CreditLineAccepted(_id);
     }
 
+    /**
+     * @notice used to deposit collateral into the credit line
+     * @dev collateral tokens have to be approved in savingsAccount or token contract(unless ether).
+            If transferred from savings account, the tokens are transferred from strategies in the 
+            order prespecified in strategy registry
+     * @param _id identifier for the credit line
+     * @param _amount amount of collateral being deposited
+     * @param _strategy strategy to which collateral is to be deposited in case transfer is not from savings account
+     * @param _fromSavingsAccount if true, tokens are transferred from savingsAccount 
+                                otherwise direct from collateral token contract
+     */
     function depositCollateral(
         uint256 _id,
         uint256 _amount,
@@ -481,6 +622,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(_activeAmount == _amountInTokens, 'insufficient balance');
     }
 
+    /**
+     * @notice used to borrow tokens from credit line by borrower
+     * @dev only borrower can call this function. Amount that can actually be borrowed is 
+            min(amount based on borrowLimit, allowance to creditLine contract, balance of lender)
+     * @param _id identifier for the credit line
+     * @param _amount amount of tokens to borrow
+     */
     function borrow(uint256 _id, uint256 _amount) external payable nonReentrant onlyCreditLineBorrower(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         uint256 _currentDebt = calculateCurrentDebt(_id);
@@ -530,7 +678,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);
             IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
         }
-        emit BorrowedFromCreditLine(_tokenDiffBalance, _id);
+        emit BorrowedFromCreditLine(_id, _tokenDiffBalance);
     }
 
     function _repayFromSavingsAccount(
@@ -567,11 +715,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         revert('CreditLine::_repayFromSavingsAccount - Insufficient balance');
     }
 
-    /**
-     * @dev used to repay assest to credit line
-     * @param _amount amount which borrower wants to repay to credit line
-     * @param _id Credit line hash which represents the credit Line Unique Hash
-     */
     function _repay(
         uint256 _id,
         uint256 _amount,
@@ -601,6 +744,14 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         }
     }
 
+    /**
+     * @notice used to repay interest and principal to credit line. Interest has to be repaid before repaying principal
+     * @dev partial repayments possible
+     * @param _id identifier for the credit line
+     * @param _amount amount being repaid
+     * @param _fromSavingsAccount if true, tokens are transferred from savingsAccount 
+                                otherwise direct from collateral token contract
+     */
     function repay(
         uint256 _id,
         uint256 _amount,
@@ -648,8 +799,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
-     * @dev used to close credit line once by borrower or lender
-     * @param _id Credit line hash which represents the credit Line Unique Hash
+     * @dev used to close credit line by borrower or lender
+     * @param _id identifier for the credit line
      */
     function close(uint256 _id) external ifCreditLineExists(_id) {
         require(
@@ -663,6 +814,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit CreditLineClosed(_id);
     }
 
+    /**
+     * @notice used to calculate the current collateral ratio
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view.
+            Interest is also considered while calculating debt
+     * @param _id identifier for the credit line
+     * @return collateral ratio multiplied by 10**30 to retain precision
+     */
     function calculateCurrentCollateralRatio(uint256 _id) public ifCreditLineExists(_id) returns (uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
@@ -674,6 +832,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         return currentCollateralRatio;
     }
 
+    /**
+     * @notice used to calculate the total collateral tokens
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
+     * @param _id identifier for the credit line
+     * @return total collateral tokens deposited into the credit line
+     */
     function calculateTotalCollateralTokens(uint256 _id) public returns (uint256 _amount) {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
@@ -690,6 +854,14 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         }
     }
 
+    /**
+     * @notice used to withdraw any excess collateral
+     * @dev collateral can't be withdraw if collateralRatio goes below the ideal value. Only borrower can withdraw
+     * @param _id identifier for the credit line
+     * @param _amount amount of collateral to withdraw
+     * @param _toSavingsAccount if true, tokens are transferred from savingsAccount 
+                                otherwise direct from collateral token contract
+     */
     function withdrawCollateral(
         uint256 _id,
         uint256 _amount,
@@ -701,6 +873,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         _transferCollateral(_id, _collateralAsset, _amount, _toSavingsAccount);
     }
 
+    /**
+     * @notice used to calculate the collateral that can be withdrawn
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
+     * @param _id identifier for the credit line
+     * @return total collateral withdrawable by borrower
+     */
     function withdrawableCollateral(uint256 _id) public returns (uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
@@ -759,6 +937,14 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         revert('insufficient collateral');
     }
 
+    /**
+     * @notice used to liquidate credit line in case collateral ratio goes above the threshold
+     * @dev if lender liquidates, then collateral is directly transferred. 
+            If autoLiquidation is true, anyone can liquidate by providing enough borrow tokens
+     * @param _id identifier for the credit line
+     * @param _savingsAccount if true, tokens are transferred from savingsAccount 
+                                otherwise direct from collateral token contract
+     */
     function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
 
@@ -785,6 +971,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit CreditLineLiquidated(_id, msg.sender);
     }
 
+    /**
+     * @notice used to calculate the borrow tokens necessary for liquidator to liquidate
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
+     * @param _id identifier for the credit line
+     * @return borrow tokens necessary for liquidator to liquidate
+     */
     function borrowTokensToLiquidate(uint256 _id) external returns (uint256) {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
