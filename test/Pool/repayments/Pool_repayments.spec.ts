@@ -250,7 +250,7 @@ export async function marginCallTests(
                 await env.repayments.connect(env.entities.extraLenders[1]).repay(pool.address, interestLeft.sub(1));
             });
 
-            it("can't repay some portion of principle", async () => {
+            it("can't repay some portion of principal", async () => {
                 const interestLeft = (await env.repayments.getInterestLeft(pool.address)).div(SCALER);
                 const principal = await pool.totalSupply();
                 await borrowAsset.connect(env.entities.extraLenders[1]).approve(env.repayments.address, interestLeft.add(principal).sub(1));

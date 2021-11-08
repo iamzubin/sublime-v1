@@ -85,7 +85,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _user address of the borrower
      */
     modifier onlyBorrower(address _user) {
-        require(_user == poolConstants.borrower, '1');
+        require(_user == poolConstants.borrower, 'OB1');
         _;
     }
 
@@ -94,7 +94,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _lender address of the lender
      */
     modifier isLender(address _lender) {
-        require(balanceOf(_lender) != 0, '2');
+        require(balanceOf(_lender) != 0, 'IL1');
         _;
     }
 
@@ -102,7 +102,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @notice checks if the msg.sender is pool's valid owner
      */
     modifier onlyOwner() {
-        require(msg.sender == IPoolFactory(poolFactory).owner(), '3');
+        require(msg.sender == IPoolFactory(poolFactory).owner(), 'OO1');
         _;
     }
 
@@ -110,7 +110,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @notice checks if the msg.sender is pool's latest repayment implementation
      */
     modifier onlyRepaymentImpl() {
-        require(msg.sender == IPoolFactory(poolFactory).repaymentImpl(), '25');
+        require(msg.sender == IPoolFactory(poolFactory).repaymentImpl(), 'OR1');
         _;
     }
 
@@ -166,11 +166,12 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice add collateral to a pool
-     * @param _amount amount of collateral to be deposited denominated in collateral aseset
+     * @param _amount amount of collateral to be deposited denominated in collateral asset
      * @param _transferFromSavingsAccount if true, collateral is transferred from msg.sender's savings account, if false, it is transferred from their wallet
      */
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable override {
-        require(_amount != 0, '7');
+        require(_amount != 0, 'DC1');
+        require(balanceOf(msg.sender) == 0, 'DC2');
         _depositCollateral(msg.sender, _amount, _transferFromSavingsAccount);
     }
 
@@ -190,7 +191,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             poolConstants.collateralAsset,
             poolConstants.borrowAmountRequested
         );
-        require(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30), '36');
+        require(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30), 'ID1');
         _depositCollateral(_borrower, _amount, _transferFromSavingsAccount);
     }
 
@@ -273,11 +274,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _amount,
         bool _transferFromSavingsAccount
     ) external payable override nonReentrant {
-        require(poolVariables.loanStatus == LoanStatus.ACTIVE, '9');
+        require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'ACMC1');
+        require(balanceOf(msg.sender) == 0, 'ACMC2');
+        require(getMarginCallEndTime(_lender) >= block.timestamp, 'ACMC3');
 
-        require(getMarginCallEndTime(_lender) >= block.timestamp, '10');
-
-        require(_amount != 0, '11');
+        require(_amount != 0, 'ACMC4');
 
         uint256 _sharesReceived = _deposit(
             _transferFromSavingsAccount,
@@ -310,14 +311,14 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             _poolStatus == LoanStatus.COLLECTION &&
                 poolConstants.loanStartTime < block.timestamp &&
                 block.timestamp < poolConstants.loanWithdrawalDeadline,
-            '12'
+            'WBA1'
         );
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
-        require(_tokensLent >= _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30), '13');
+        require(_tokensLent >= _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30), 'WBA2');
 
         poolVariables.loanStatus = LoanStatus.ACTIVE;
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
-        require(_currentCollateralRatio >= poolConstants.idealCollateralRatio, '14');
+        require(_currentCollateralRatio >= poolConstants.idealCollateralRatio, 'WBA3');
 
         uint256 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
         uint256 _repaymentInterval = poolConstants.repaymentInterval;
@@ -386,11 +387,12 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _fromSavingsAccount
     ) external payable nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
+        address _borrower = poolConstants.borrower;
+        require(_lender != _borrower && _borrower != msg.sender, 'L1');
         if (_lenderVerifier != address(0)) {
-            require(IVerification(IPoolFactory(poolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'invalid lender');
+            require(IVerification(IPoolFactory(poolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'L2');
         }
-        require(poolVariables.loanStatus == LoanStatus.COLLECTION, '15');
-        require(block.timestamp < poolConstants.loanStartTime, '16');
+        require(poolVariables.loanStatus == LoanStatus.COLLECTION && block.timestamp < poolConstants.loanStartTime, 'L3');
         uint256 _borrowAmountNeeded = poolConstants.borrowAmountRequested;
         uint256 _lentAmount = totalSupply();
         if (_amount.add(_lentAmount) > _borrowAmountNeeded) {
@@ -423,14 +425,15 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _amount
     ) internal override {
         if (_to != address(0)) {
-            require(!paused(), 'ERC20Pausable: token transfer while paused');
+            require(!paused(), 'TT1');
         }
+        require(_to != poolConstants.borrower, 'TT2');
 
         if (_from == address(0) || _to == address(0)) {
             return;
         }
-        require(getMarginCallEndTime(_from) == 0, '18');
-        require(getMarginCallEndTime(_to) == 0, '19');
+        require(getMarginCallEndTime(_from) == 0, 'TT3');
+        require(getMarginCallEndTime(_to) == 0, 'TT4');
 
         //Withdraw repayments for user
         _withdrawRepayment(_from);
@@ -488,7 +491,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         // note: extra liquidity shares are not applicable as the loan never reaches active state
         uint256 _collateralLiquidityShare = poolVariables.baseLiquidityShares;
         uint256 _penaltyTime = _calculatePenaltyTime(_loanStartTime, _loanWithdrawalDeadline);
-        uint256 _cancelPenaltyMultiple = _poolFactory.poolCancelPenaltyFraction();
+        uint256 _cancelPenaltyMultiple = _poolFactory.poolCancelPenaltyMultiple();
         uint256 penalty = _cancelPenaltyMultiple
             .mul(poolConstants.borrowRate)
             .mul(_collateralLiquidityShare)
@@ -518,8 +521,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _receiveLiquidityShare if true, equivalent liquidity tokens are withdrawn. If false, assets are withdrawn
      */
     function liquidateCancelPenalty(bool _toSavingsAccount, bool _receiveLiquidityShare) external nonReentrant {
-        require(poolVariables.loanStatus == LoanStatus.CANCELLED, '');
-        require(poolVariables.penaltyLiquidityAmount == 0, '');
+        require(poolVariables.loanStatus == LoanStatus.CANCELLED, 'LCP1');
+        require(poolVariables.penaltyLiquidityAmount == 0, 'LCP2');
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
         address _collateralAsset = poolConstants.collateralAsset;
@@ -545,6 +548,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to terminate the pool
+     * @dev kill switch for owner to terminate the pool
      */
     function terminatePool() external onlyOwner {
         _withdrawAllCollateral(msg.sender, 0);
@@ -558,7 +562,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @notice called to close the loan after repayment of principal
      */
     function closeLoan() external payable override nonReentrant onlyRepaymentImpl {
-        require(poolVariables.loanStatus == LoanStatus.ACTIVE, '22');
+        require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'CL1');
 
         poolVariables.loanStatus = LoanStatus.CLOSED;
 
@@ -569,10 +573,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         emit PoolClosed();
     }
 
-    // Note - Only when closed, cancelled or terminated, lender can withdraw
-    //burns all shares and returns total remaining repayments along with provided liquidity
     /**
      * @notice used to return total remaining repayments along with provided liquidity to the lender
+     * @dev burns all shares and returns total remaining repayments along with provided liquidity
      */
     function withdrawLiquidity() external isLender(msg.sender) nonReentrant {
         LoanStatus _loanStatus = poolVariables.loanStatus;
@@ -582,7 +585,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
                 _loanStatus == LoanStatus.CANCELLED ||
                 _loanStatus == LoanStatus.DEFAULTED ||
                 _loanStatus == LoanStatus.TERMINATED,
-            '24'
+            'WL1'
         );
 
         //gets amount through liquidity shares
@@ -614,22 +617,21 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         //transfer liquidity provided
         SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _toTransfer, address(this), msg.sender);
 
-        // TODO: Something wrong in the below event. Please have a look
         emit LiquidityWithdrawn(_toTransfer, msg.sender);
     }
 
     /**
-     * @dev function is executed by lender to exercise margin call
+     * @notice function is executed by lender to exercise margin call
      * @dev It will revert in case collateral ratio is not below expected value
      * or the lender has already called it.
      */
 
     function requestMarginCall() external isLender(msg.sender) {
-        require(poolVariables.loanStatus == LoanStatus.ACTIVE, '4');
+        require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'RMC1');
 
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
-        require(getMarginCallEndTime(msg.sender) == 0, 'RMC1');
-        require(poolConstants.idealCollateralRatio > getCurrentCollateralRatio(msg.sender), '26');
+        require(getMarginCallEndTime(msg.sender) == 0, 'RMC2');
+        require(poolConstants.idealCollateralRatio > getCurrentCollateralRatio(msg.sender), 'RMC3');
 
         lenders[msg.sender].marginCallEndTime = block.timestamp.add(_poolFactory.marginCallDuration());
 
@@ -657,6 +659,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to calculate the collateral ratio
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @param _balance the principal amount lent
      * @param _liquidityShares amount of collateral tokens available
      * @return _ratio the collateral ratio
@@ -673,6 +676,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to get the current collateral ratio of the borrow pool
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @return _ratio the current collateral ratio of the borrow pool
      */
     function getCurrentCollateralRatio() public returns (uint256 _ratio) {
@@ -683,6 +687,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to get the current collateral ratio of a lender
+     * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @return _ratio the current collateral ratio of the lender
      */
     function getCurrentCollateralRatio(address _lender) public returns (uint256 _ratio) {
@@ -707,8 +712,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     ) external payable nonReentrant {
         LoanStatus _currentPoolStatus = poolVariables.loanStatus;
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
-        require(_currentPoolStatus == LoanStatus.ACTIVE, 'Pool::liquidatePool - Cant liquidate inactive pool');
-        require(IRepayment(_poolFactory.repaymentImpl()).didBorrowerDefault(address(this)), 'Pool::liquidatePool - Borrower didnt default');
+        require(_currentPoolStatus == LoanStatus.ACTIVE, 'LP1');
+        require(IRepayment(_poolFactory.repaymentImpl()).didBorrowerDefault(address(this)), 'LP2');
         poolVariables.loanStatus = LoanStatus.DEFAULTED;
 
         address _collateralAsset = poolConstants.collateralAsset;
@@ -767,13 +772,13 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _lender address of the lender to be liquidated
      */
     function _canLenderBeLiquidated(address _lender) internal {
-        require((poolVariables.loanStatus == LoanStatus.ACTIVE) && (block.timestamp > poolConstants.loanWithdrawalDeadline), '27');
+        require((poolVariables.loanStatus == LoanStatus.ACTIVE) && (block.timestamp > poolConstants.loanWithdrawalDeadline), 'CLBL1');
         uint256 _marginCallEndTime = lenders[_lender].marginCallEndTime;
-        require(getMarginCallEndTime(_lender) != 0, 'No margin call has been called.');
-        require(_marginCallEndTime < block.timestamp, '28');
+        require(getMarginCallEndTime(_lender) != 0, 'CLBL2');
+        require(_marginCallEndTime < block.timestamp, 'CLBL3');
 
-        require(poolConstants.idealCollateralRatio > getCurrentCollateralRatio(_lender), '29');
-        require(balanceOf(_lender) != 0, '30');
+        require(poolConstants.idealCollateralRatio > getCurrentCollateralRatio(_lender), 'CLBL4');
+        require(balanceOf(_lender) != 0, 'CLBL5');
     }
 
     /**
@@ -977,9 +982,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice used to receive ethers from savings accounts
      */
-    receive() external payable {
-        // require(msg.sender == IPoolFactory(poolFactory).savingsAccount(), '35');
-    }
+    receive() external payable {}
 
     /**
      * @notice used to get the equivalent amount of tokens from source to target tokens
@@ -1005,6 +1008,10 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         return poolConstants.borrower;
     }
 
+    /**
+     * @notice used to total supply of pool tokens for the pool
+     * @return total supply of pool tokens
+     */
     function totalSupply() public view override(ERC20Upgradeable, IPool) returns (uint256) {
         return ERC20Upgradeable.totalSupply();
     }

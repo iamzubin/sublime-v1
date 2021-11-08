@@ -18,26 +18,42 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    /**
+     * @notice address of the strategy registry used to whitelist strategies
+     */
     address public strategyRegistry;
+
+    /**
+     * @notice address of the credit lines contract
+     */
     address public creditLine;
 
-    //user -> token -> strategy (underlying address) -> amount (shares)
+    /**
+     * @notice mapping from user to token to strategy to balance of shares
+     * @dev user -> token -> strategy (underlying address) -> amount (shares)
+     */
     mapping(address => mapping(address => mapping(address => uint256))) public override balanceInShares;
 
-    //user => token => to => amount
+    /**
+     * @notice mapping from user to token to toAddress for approval to amount approved
+     * @dev user => token => to => amount
+     */
     mapping(address => mapping(address => mapping(address => uint256))) public allowance;
 
+    /**
+     * @notice modifier to check if address is the credit line
+     * @param _caller address to check if credit line
+     */
     modifier onlyCreditLine(address _caller) {
         require(_caller == creditLine, 'Invalid caller');
         _;
     }
 
-    // TODO : Track strategies per user and limit no of strategies to 5
-
     /**
      * @dev initialize the contract
      * @param _owner address of the owner of the savings account contract
      * @param _strategyRegistry address of the strategy registry
+     * @param _creditLine address of the credit line contract
      **/
     function initialize(
         address _owner,
@@ -51,6 +67,11 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         _updateStrategyRegistry(_strategyRegistry);
     }
 
+    /**
+     * @notice used to update credit line contract address
+     * @dev only owner can update
+     * @param _creditLine updated address of credit lines
+     */
     function updateCreditLine(address _creditLine) external onlyOwner {
         _updateCreditLine(_creditLine);
     }
@@ -61,6 +82,11 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit CreditLineUpdated(_creditLine);
     }
 
+    /**
+     * @notice used to update strategy registry address
+     * @dev only owner can update
+     * @param _strategyRegistry updated address of strategy registry
+     */
     function updateStrategyRegistry(address _strategyRegistry) external onlyOwner {
         _updateStrategyRegistry(_strategyRegistry);
     }
@@ -71,6 +97,14 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit StrategyRegistryUpdated(_strategyRegistry);
     }
 
+    /**
+     * @notice used to deposit tokens into strategy via savings account
+     * @dev if token is address(0), then it is Ether
+     * @param _amount amount of tokens deposited
+     * @param _token address of token contract
+     * @param _strategy address of the strategy into which tokens are to be deposited
+     * @param _to address to deposit to
+     */
     function deposit(
         uint256 _amount,
         address _token,
@@ -113,7 +147,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @param _currentStrategy initial strategy of token
      * @param _newStrategy new strategy to invest
      * @param _token address of the token
-     * @param _amount amount of **liquidity shares** to be reinvested
+     * @param _amount amount of tokens to be reinvested
      */
     function switchStrategy(
         uint256 _amount,
@@ -149,7 +183,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     /**
      * @dev Used to withdraw token from Saving Account
      * @param _to address to which token should be sent
-     * @param _amount amount of liquidity shares to withdraw
+     * @param _amount amount of tokens to withdraw
      * @param _token address of the token to be withdrawn
      * @param _strategy strategy from where token has to withdrawn(ex:- compound,Aave etc)
      * @param _withdrawShares boolean indicating to withdraw in liquidity share or underlying token
@@ -178,6 +212,15 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         return _amountReceived;
     }
 
+    /**
+     * @dev Used to withdraw token from allowance of Saving Account
+     * @param _from address from which tokens will be withdrawn
+     * @param _to address to which token should be withdrawn
+     * @param _amount amount of tokens to withdraw
+     * @param _token address of the token to be withdrawn
+     * @param _strategy strategy from where token has to withdrawn(ex:- compound,Aave etc)
+     * @param _withdrawShares boolean indicating to withdraw in liquidity share or underlying token
+     */
     function withdrawFrom(
         uint256 _amount,
         address _token,
@@ -235,6 +278,10 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         }
     }
 
+    /**
+     * @notice used to withdraw a token from all strategies
+     * @param _token address of token which is to be withdrawn
+     */
     function withdrawAll(address _token) external override nonReentrant returns (uint256 _tokenReceived) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
@@ -256,6 +303,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit WithdrawnAll(msg.sender, _tokenReceived, _token);
     }
 
+    /**
+     * @notice used to approve allowance to an address
+     * @dev this is prone to race condition, hence increaseAllowance is recommended
+     * @param _amount amount of tokens approved
+     * @param _token address of token approved
+     * @param _to address of the user approved to
+     */
     function approve(
         uint256 _amount,
         address _token,
@@ -266,6 +320,12 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit Approved(_token, msg.sender, _to, _amount);
     }
 
+    /**
+     * @notice used to increase allowance to an address
+     * @param _amount amount of tokens allowance is increased by
+     * @param _token address of token approved
+     * @param _to address of the address approved to
+     */
     function increaseAllowance(
         uint256 _amount,
         address _token,
@@ -277,6 +337,12 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit Approved(_token, msg.sender, _to, _updatedAllowance);
     }
 
+    /**
+     * @notice used to decrease allowance to an address
+     * @param _amount amount of tokens allowance is decreased by
+     * @param _token address of token approved
+     * @param _to address of the user approved to
+     */
     function decreaseAllowance(
         uint256 _amount,
         address _token,
@@ -288,6 +354,12 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit Approved(_token, msg.sender, _to, _updatedAllowance);
     }
 
+    /**
+     * @notice used by credit lines to replenish the allowance once the credit line pricinpal is repaid
+     * @param _amount amount of tokens allowance is increased by
+     * @param _token address of token approved
+     * @param _from address of the lender of the credit line which is being replenished
+     */
     function increaseAllowanceToCreditLine(
         uint256 _amount,
         address _token,
@@ -298,6 +370,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit CreditLineAllowanceRefreshed(_token, _from, _amount);
     }
 
+    /**
+     * @notice used to transfer tokens
+     * @param _amount amount of tokens transferred
+     * @param _token address of token transferred
+     * @param _strategy address of the strategy from which tokens are transferred
+     * @param _to address of the user tokens are transferred to
+     */
     function transfer(
         uint256 _amount,
         address _token,
@@ -323,6 +402,14 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         return _amount;
     }
 
+    /**
+     * @notice used to transfer tokens from allowance by another address
+     * @param _amount amount of tokens transferred
+     * @param _token address of token transferred
+     * @param _strategy address of the strategy from which tokens are transferred
+     * @param _from address from whose allowance tokens are transferred
+     * @param _to address of the user tokens are transferred to
+     */
     function transferFrom(
         uint256 _amount,
         address _token,
@@ -355,6 +442,12 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         return _amount;
     }
 
+    /**
+     * @notice used to query total tokens of a token with a user
+     * @param _user address of the user
+     * @param _token address of token
+     * @return _totalTokens total number of tokens of the token with the user
+     */
     function getTotalTokens(address _user, address _token) external override returns (uint256 _totalTokens) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
