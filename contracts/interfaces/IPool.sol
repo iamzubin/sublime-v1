@@ -17,8 +17,6 @@ interface IPool {
      */
     event PoolClosed();
 
-    // borrower and sharesReceived might not be necessary
-
     /**
      * @notice emitted when borrower posts collateral
      * @param borrower address of the borrower
@@ -26,8 +24,6 @@ interface IPool {
      * @param sharesReceived shares received after transferring collaterla to pool savings strategy
      */
     event CollateralAdded(address indexed borrower, uint256 amount, uint256 sharesReceived);
-
-    // borrower and sharesReceived might not be necessary
 
     /**
      * @notice emitted when borrower posts collateral after a margin call

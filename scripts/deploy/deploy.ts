@@ -15,7 +15,7 @@ import {
 import { createSavingsAccount, initSavingsAccount } from '../../utils/createEnv/savingsAccount';
 import { createStrategyRegistry, initStrategyRegistry } from '../../utils/createEnv/strategyRegistry';
 import { createCreditLines, initCreditLine } from '../../utils/createEnv/creditLines';
-import { createAaveYieldWithInit, createCompoundYieldWithInit, createYearnYieldWithInit } from '../../utils/createEnv/yields';
+import { createAaveYieldWithInit, createCompoundYieldWithInit, createYearnYieldWithInit, createNoYieldWithInit } from '../../utils/createEnv/yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from '../../utils/createEnv/verification';
 import { createPriceOracle, setPriceOracleFeeds } from '../../utils/createEnv/priceOracle';
 import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from '../../utils/createEnv/poolFactory';
@@ -75,7 +75,10 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     await initStrategyRegistry(strategyRegistry, deployer, admin.address, strategyRegistryParams.maxStrategies);
 
-    await (await strategyRegistry.connect(admin).addStrategy(zeroAddress)).wait();
+    console.log('Deploy and initialize noYield');
+
+    const noYield: IYield = await createNoYieldWithInit(proxyAdmin, admin, savingsAccount);
+    await (await strategyRegistry.connect(admin).addStrategy(noYield.address)).wait();
 
     let aaveYield: IYield;
     if (aaveYieldParams?.wethGateway) {
@@ -92,7 +95,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         console.log('Deploy and initialize yearnYield');
 
         yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, savingsAccount, yearnYieldPairs);
-        await strategyRegistry.connect(admin).addStrategy(yearnYield.address);
+        await (await strategyRegistry.connect(admin).addStrategy(yearnYield.address)).wait();
     } else {
         yearnYield = IYield__factory.connect(zeroAddress, admin);
     }

@@ -108,7 +108,7 @@ const config: HardhatUserConfig = {
         kovan_fork: {
             url: 'http://127.0.0.1:8545',
             // @ts-ignore
-            accounts: process.env.PRIVATE_KEYS ? process.env.PRIVATE_KEYS.split(',') : [],
+            accounts: kovanPrivateKeys,
             saveDeployments: process.env.SAVE_DEPLOYMENT && process.env.SAVE_DEPLOYMENT.toLowerCase() === 'true' ? true : false,
             loggingEnabled: process.env.LOGGING && process.env.LOGGING.toLowerCase() === 'true' ? true : false,
             gasPrice: 1000000000,

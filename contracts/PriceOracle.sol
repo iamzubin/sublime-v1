@@ -17,15 +17,34 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         address oracle;
         uint256 decimals;
     }
-    mapping(address => PriceData) chainlinkFeedAddresses;
+    /**
+     * @notice stores the price oracle and its decimals for chainlink feeds
+     **/
+    mapping(address => PriceData) public chainlinkFeedAddresses;
+    mapping(address => uint256) decimals;
 
-    mapping(bytes32 => address) uniswapPools;
+    /**
+     * @notice stores the addresses of price feeds for uniswap token pairs
+     **/
+    mapping(bytes32 => address) public uniswapPools;
 
+    /**
+     * @notice Used to initialize the price oracle contract
+     * @dev can only be invoked once
+     * @param _admin owner of the price oracle
+     **/
     function initialize(address _admin) external initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_admin);
     }
 
+    /**
+     * @notice Used to get price of the num vs den token from chainlink
+     * @param num the address of the token for which price in queried
+     * @param den the address of the token in which price is queried
+     * @return price of the num in terms of den
+     * @return no of decimals for the price
+     **/
     function getChainlinkLatestPrice(address num, address den) public view returns (uint256, uint256) {
         PriceData memory _feedData1 = chainlinkFeedAddresses[num];
         PriceData memory _feedData2 = chainlinkFeedAddresses[den];
@@ -36,17 +55,21 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         int256 price2;
         (, price1, , , ) = AggregatorV3Interface(_feedData1.oracle).latestRoundData();
         (, price2, , , ) = AggregatorV3Interface(_feedData2.oracle).latestRoundData();
-        // TODO: Store token decimals when adding and don't query for every price get
         uint256 price = uint256(price1)
             .mul(10**_feedData2.decimals)
             .mul(10**30)
             .div(uint256(price2))
             .div(10**_feedData1.decimals)
-            .mul(10**getDecimals(den))
-            .div(10**getDecimals(num));
+            .mul(10**decimals[den])
+            .div(10**decimals[num]);
         return (price, 30);
     }
 
+    /**
+     * @notice Used to get decimals for a token
+     * @param _token address of the token
+     * @return number of decimals for the token
+     **/
     function getDecimals(address _token) internal view returns (uint8) {
         if (_token == address(0)) {
             return 18;
@@ -61,6 +84,13 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
     }
 
+    /**
+     * @notice Used to get price of the num vs den token from uniswap
+     * @param num the address of the token for which price in queried
+     * @param den the address of the token in which price is queried
+     * @return price of the num in terms of den
+     * @return no of decimals for the price
+     **/
     function getUniswapLatestPrice(address num, address den) public view returns (uint256, uint256) {
         bytes32 _poolTokensId = getUniswapPoolTokenId(num, den);
         address _pool = uniswapPools[_poolTokensId];
@@ -80,6 +110,13 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
     }
 
+    /**
+     * @notice Used to get price of the num vs den token
+     * @param num the address of the token for which price in queried
+     * @param den the address of the token in which price is queried
+     * @return price of the num in terms of den
+     * @return no of decimals for the price
+     **/
     function getLatestPrice(address num, address den) external view override returns (uint256, uint256) {
         uint256 _price;
         uint256 _decimals;
@@ -94,6 +131,12 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         revert("PriceOracle::getLatestPrice - Price Feed doesn't exist");
     }
 
+    /**
+     * @notice used to check if price feed exists between 2 tokens
+     * @param token1 one of the token for which price feed is to be checked
+     * @param token2 other token for which price feed is to be checked
+     * @return if price feed exists for the token pair
+     **/
     function doesFeedExist(address token1, address token2) external view override returns (bool) {
         if (chainlinkFeedAddresses[token1].oracle != address(0) && chainlinkFeedAddresses[token2].oracle != address(0)) {
             return true;
@@ -108,12 +151,26 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         return false;
     }
 
+    /**
+     * @notice Used to set the price feed address for a token in chainlink
+     * @dev only owner can set
+     * @param token address of token for which price feed is added
+     * @param priceOracle addrewss of the price feed for the token
+     **/
     function setChainlinkFeedAddress(address token, address priceOracle) external onlyOwner {
         uint256 priceOracleDecimals = AggregatorV3Interface(priceOracle).decimals();
         chainlinkFeedAddresses[token] = PriceData(priceOracle, priceOracleDecimals);
+        decimals[token] = getDecimals(token);
         emit ChainlinkFeedUpdated(token, priceOracle);
     }
 
+    /**
+     * @notice Used to set the price feed address for a token pair in uniswap
+     * @dev only owner can set
+     * @param token1 address of one of the tokens for which price feed is added
+     * @param token2 address of other token for which price feed is added
+     * @param pool addrewss of the price feed for the token pair
+     **/
     function setUniswapFeedAddress(
         address token1,
         address token2,
@@ -124,6 +181,11 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         emit UniswapFeedUpdated(token1, token2, _poolTokensId, pool);
     }
 
+    /**
+     * @notice Used to set the period in which uniswap price is averaged
+     * @dev only owner can set. This is used to prevent attacks to control price feed
+     * @param _uniswapPriceAveragingPeriod period for uniswap price averaging
+     **/
     function setUniswapPriceAveragingPeriod(uint32 _uniswapPriceAveragingPeriod) external onlyOwner {
         uniswapPriceAveragingPeriod = _uniswapPriceAveragingPeriod;
         emit UniswapPriceAveragingPeriodUpdated(_uniswapPriceAveragingPeriod);
