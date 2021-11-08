@@ -369,7 +369,7 @@ export async function compoundPoolCollectionStage(
             const { loanStartTime } = await pool.poolConstants();
             await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
 
-            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith('13');
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith('WBA2');
 
             let LoanStatus = (await pool.poolVariables()).loanStatus;
             assert(
@@ -559,7 +559,7 @@ export async function compoundPoolCollectionStage(
             it('Lender should not be able to request margin call if price has not reached threshold', async function () {
                 let { admin, borrower, lender } = env.entities;
                 // Requesting margin call
-                await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('26');
+                await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('RMC3');
             });
 
             it('Lender should be able to request margin call only if the price goes down', async function () {
@@ -1338,7 +1338,7 @@ export async function compoundPoolCollectionStage(
                 // const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
                 // assert(isLoanExtensionActive, 'Extension not active');
                 await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                    'Pool::liquidatePool - Borrower didnt default'
+                    'LP2'
                 );
             });
 

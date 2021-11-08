@@ -286,7 +286,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Lender cannot withdraw tokens', async () => {
-                await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('24');
+                await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('WL1');
             });
 
             it("Borrower can't withdraw", async () => {
@@ -409,7 +409,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Lender cannot withdraw tokens', async () => {
-                await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('24');
+                await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('WL1');
             });
 
             it('Borrower can withdraw', async () => {
@@ -515,7 +515,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
                 await pool.connect(borrower).cancelPool();
                 const balance = await pool.balanceOf(lender.address);
                 await expect(pool.connect(lender).transfer(lender1.address, balance)).to.be.revertedWith(
-                    'ERC20Pausable: token transfer while paused'
+                    'TT1'
                 );
             });
 
@@ -1199,7 +1199,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             });
 
             it('Lender cannot withdraw tokens', async () => {
-                await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('24');
+                await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('WL1');
             });
 
             it('Borrower can withdraw', async () => {
@@ -1321,7 +1321,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
 
             it('Lender cannot withdraw tokens', async () => {
                 await subject();
-                await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('24');
+                await expect(pool.connect(lender).withdrawLiquidity()).to.revertedWith('WL1');
             });
 
             it('Borrower can withdraw', async () => {
