@@ -18,20 +18,37 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    /**
+     * @notice stores the address of savings account contract
+     **/
     address payable public savingsAccount;
 
     /**
-     * @dev stores the address of contract to invest in
+     * @notice stores the address of liquidity token for a given base token
      */
     mapping(address => address) public override liquidityToken;
 
+    /**
+     * @notice emitted when liquidity token address of an asset is updated
+     * @param asset the address of asset
+     * @param protocolToken address of the liquidity token for the asset
+     **/
     event ProtocolAddressesUpdated(address indexed asset, address indexed protocolToken);
 
+    /**
+     * @notice checks if contract is invoked by savings account
+     **/
     modifier onlySavingsAccount() {
         require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
+    /**
+     * @notice used to initialize the variables in the contract
+     * @dev can only be called once
+     * @param _owner address of the owner
+     * @param _savingsAccount address of the savings account contract
+     **/
     function initialize(address _owner, address payable _savingsAccount) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
@@ -39,6 +56,11 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         _updateSavingsAccount(_savingsAccount);
     }
 
+    /**
+     * @notice used to update savings account contract address
+     * @dev can only be called by owner
+     * @param _savingsAccount address of updated savings account contract
+     **/
     function updateSavingsAccount(address payable _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
@@ -49,11 +71,23 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         emit SavingsAccountUpdated(_savingsAccount);
     }
 
-    function updateProtocolAddresses(address _asset, address _to) external onlyOwner {
-        liquidityToken[_asset] = _to;
-        emit ProtocolAddressesUpdated(_asset, _to);
+    /**
+     * @notice used to update liquidity token for a asset
+     * @dev can only be called by owner
+     * @param _asset address of the token
+     * @param _liquidityToken address of the liquidityToken for the given token
+     **/
+    function updateProtocolAddresses(address _asset, address _liquidityToken) external onlyOwner {
+        liquidityToken[_asset] = _liquidityToken;
+        emit ProtocolAddressesUpdated(_asset, _liquidityToken);
     }
 
+    /**
+     * @notice used to withdraw all tokens of a type in case of emergencies
+     * @dev only owner can withdraw
+     * @param _asset address of the token being withdrawn
+     * @param _wallet address to which tokens are withdrawn
+     */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner nonReentrant returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
@@ -70,7 +104,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     }
 
     /**
-     * @dev Used to lock tokens in available protocol
+     * @notice Used to lock tokens in available protocol
      * @dev Asset Tokens to be locked must be approved to this contract by user
      * @param user the address of user
      * @param asset the address of token to invest
@@ -97,7 +131,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     }
 
     /**
-     * @dev Used to unlock tokens from available protocol
+     * @notice Used to unlock tokens from available protocol
      * @param asset the address of underlying token
      * @param amount the amount of asset
      * @return received amount of tokens received
@@ -118,6 +152,12 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         emit UnlockedTokens(asset, received);
     }
 
+    /**
+     * @notice Used to unlock shares
+     * @param asset the address of underlying token
+     * @param amount the amount of shares to unlock
+     * @return received amount of shares received
+     **/
     function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
         if (amount == 0) {
             return 0;
@@ -140,6 +180,12 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         amount = IyVault(liquidityToken[asset]).getPricePerFullShare().mul(shares).div(1e18);
     }
 
+    /**
+     * @notice Used to get number of shares from an amount of underlying tokens
+     * @param amount the amount of tokens
+     * @param asset the address of token
+     * @return shares amount of shares for given tokens
+     **/
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
         shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
     }

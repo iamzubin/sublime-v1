@@ -45,19 +45,19 @@ interface IPoolFactory {
      */
     event PriceOracleUpdated(address indexed updatedPriceOracle);
 
-    /*
+    /**
      * @notice emitted when the Extension.sol is updated
      * @param updatedExtension address of the new implementation of the Extension
      */
     event ExtensionImplUpdated(address indexed updatedExtension);
 
-    /*
+    /**
      * @notice emitted when the SavingsAccount.sol is updated
      * @param savingsAccount address of the new implementation of the SavingsAccount
      */
     event SavingsAccountUpdated(address indexed savingsAccount);
 
-    /*
+    /**
      * @notice emitted when the collection period parameter for Pools is updated
      * @param updatedCollectionPeriod the new value of the collection period for Pools
      */
@@ -75,7 +75,7 @@ interface IPoolFactory {
      */
     event MarginCallDurationUpdated(uint256 updatedMarginCallDuration);
 
-    /*
+    /**
      * @notice emitted when miBorrowFraction variable is updated
      * @param updatedMinBorrowFraction Updated value of miBorrowFraction
      */
@@ -87,25 +87,25 @@ interface IPoolFactory {
      */
     event LiquidatorRewardFractionUpdated(uint256 updatedLiquidatorRewardFraction);
 
-    /*
-     * @notice emitted when poolCancelPenaltyFraction variable is updated
-     * @param updatedPoolCancelPenaltyFraction updated value of poolCancelPenaltyFraction
+    /**
+     * @notice emitted when poolCancelPenaltyMultiple variable is updated
+     * @param updatedPoolCancelPenaltyMultiple updated value of poolCancelPenaltyMultiple
      */
-    event PoolCancelPenaltyFractionUpdated(uint256 updatedPoolCancelPenaltyFraction);
+    event PoolCancelPenaltyMultipleUpdated(uint256 updatedPoolCancelPenaltyMultiple);
 
-    /*
+    /**
      * @notice emitted when fee that protocol changes for pools is updated
      * @param updatedProtocolFee updated value of protocolFeeFraction
      */
     event ProtocolFeeFractionUpdated(uint256 updatedProtocolFee);
 
-    /*
+    /**
      * @notice emitted when address which receives fee that protocol changes for pools is updated
      * @param updatedProtocolFeeCollector updated value of protocolFeeCollector
      */
     event ProtocolFeeCollectorUpdated(address updatedProtocolFeeCollector);
 
-    /*
+    /**
      * @notice emitted when threhsolds for one of the parameters (poolSizeLimit, collateralRatioLimit, borrowRateLimit, repaymentIntervalLimit, noOfRepaymentIntervalsLimit) is updated
      * @param limitType specifies the parameter whose limits are being updated
      * @param max maximum threshold value for limitType
@@ -157,7 +157,7 @@ interface IPoolFactory {
 
     function liquidatorRewardFraction() external view returns (uint256);
 
-    function poolCancelPenaltyFraction() external view returns (uint256);
+    function poolCancelPenaltyMultiple() external view returns (uint256);
 
     function getProtocolFeeData() external view returns (uint256, address);
 

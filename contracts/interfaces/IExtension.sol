@@ -7,6 +7,11 @@ interface IExtension {
      * @param votingPassRatio the new value of the voting pass threshold for  Pools
      */
     event VotingPassRatioUpdated(uint256 votingPassRatio);
+
+    /**
+     * @notice emitted when the pool factory is updated in extension
+     * @param poolFactory updated address of pool factory
+     */
     event PoolFactoryUpdated(address indexed poolFactory);
 
     /**
@@ -33,5 +38,9 @@ interface IExtension {
 
     function closePoolExtension() external;
 
-    function removeVotes(address _from, address _to, uint256 _amount) external;
+    function removeVotes(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) external;
 }

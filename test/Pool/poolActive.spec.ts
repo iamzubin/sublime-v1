@@ -703,7 +703,7 @@ describe('Pool Active stage', async () => {
 
                     await expect(pool.cancelPool()).to.be.revertedWith('CP1');
 
-                    await expect(pool.closeLoan()).to.be.revertedWith('25');
+                    await expect(pool.closeLoan()).to.be.revertedWith('38');
                 });
             });
 

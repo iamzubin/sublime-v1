@@ -9,11 +9,27 @@ import '../interfaces/IStrategyRegistry.sol';
 contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistry {
     using SafeMath for uint256;
 
+    /**
+     * @notice list of whitelisted strategies
+     **/
     address[] public strategies;
+    /**
+     * @notice max strategies allowed to be whitelisted
+     * @dev this limit ensures that strategies array is not too big to iterate
+     **/
     uint256 public maxStrategies;
 
+    /**
+     * @notice registry which maps whitelisted strategies to true
+     **/
     mapping(address => bool) public override registry;
 
+    /**
+     * @notice used to initialize the paramters of strategy registry
+     * @dev can only be called once
+     * @param _owner address of the owner
+     * @param _maxStrategies maximum number of strategies allowed
+     **/
     function initialize(address _owner, uint256 _maxStrategies) external initializer {
         require(_maxStrategies != 0, 'StrategyRegistry::initialize maxStrategies cannot be zero');
         __Ownable_init();
@@ -22,11 +38,20 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         maxStrategies = _maxStrategies;
     }
 
+    /**
+     * @notice used to update max strategies allowed
+     * @dev only owner can invoke
+     * @param _maxStrategies updated number of max strategies allowed
+     **/
     function updateMaxStrategies(uint256 _maxStrategies) external onlyOwner {
         require(_maxStrategies != 0, 'StrategyRegistry::updateMaxStrategies should be more than zero');
         maxStrategies = _maxStrategies;
     }
 
+    /**
+     * @notice used to get whitelisted strategies list
+     * @return array of whitelisted strategies
+     **/
     function getStrategies() external view override returns (address[] memory) {
         return strategies;
     }

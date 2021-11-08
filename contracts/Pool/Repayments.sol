@@ -21,6 +21,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     using SafeMath for uint256;
 
     uint256 constant MAX_INT = 2**256 - 1;
+    uint256 constant YEAR_IN_SECONDS = 365 days;
 
     IPoolFactory poolFactory;
 
@@ -35,7 +36,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     uint256 gracePenaltyRate;
     uint256 gracePeriodFraction; // fraction of the repayment interval
-    uint256 constant YEAR_IN_SECONDS = 365 days;
 
     struct RepaymentVariables {
         uint256 repaidAmount;
@@ -55,12 +55,18 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         address repayAsset;
     }
 
+    /**
+     * @notice used to maintain the variables related to repayment against a pool
+     */
     mapping(address => RepaymentVariables) public repayVariables;
+
+    /**
+     * @notice used to maintain the constants related to repayment against a pool
+     */
     mapping(address => RepaymentConstants) public repayConstants;
 
     /// @notice determines if the pool is active or not based on whether repayments have been started by the
     ///borrower for this particular pool or not
-    /// @dev mapping(address => repayConstants) public repayConstants is imported from RepaymentStorage.sol
     /// @param _poolID address of the pool for which we want to test statu
     modifier isPoolInitialized(address _poolID) {
         require(repayConstants[_poolID].numberOfTotalRepayments != 0, 'Pool is not Initiliazed');
@@ -74,6 +80,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _;
     }
 
+    /**
+     * @notice modifier used to check if msg.sender is the owner
+     */
     modifier onlyOwner() {
         require(msg.sender == poolFactory.owner(), 'Not owner');
         _;
@@ -95,6 +104,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
+    /**
+     * @notice used to update pool factory address
+     * @param _poolFactory address of pool factory contract
+     */
     function updatePoolFactory(address _poolFactory) external onlyOwner {
         _updatePoolFactory(_poolFactory);
     }
@@ -105,6 +118,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit PoolFactoryUpdated(_poolFactory);
     }
 
+    /**
+     * @notice used to update grace period as a fraction of repayment interval
+     * @param _gracePeriodFraction updated value of gracePeriodFraction multiplied by 10**30
+     */
     function updateGracePeriodFraction(uint256 _gracePeriodFraction) external onlyOwner {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
@@ -114,6 +131,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit GracePeriodFractionUpdated(_gracePeriodFraction);
     }
 
+    /**
+     * @notice used to update grace penality rate
+     * @param _gracePenaltyRate value of grace penality rate multiplied by 10**30
+     */
     function updateGracePenaltyRate(uint256 _gracePenaltyRate) external onlyOwner {
         _updateGracePenaltyRate(_gracePenaltyRate);
     }
@@ -147,7 +168,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         repayConstants[msg.sender].repayAsset = lentAsset;
     }
 
-    /*
+    /**
      * @notice returns the number of repayment intervals that have been repaid,
      * if repayment interval = 10 secs, loan duration covered = 55 secs, repayment intervals covered = 5
      * @param _poolID address of the pool
@@ -190,7 +211,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
         if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(10**30)) {
-            revert("Pool completely repaid");
+            revert('Pool completely repaid');
         }
         uint256 _loanExtensionPeriod = repayVariables[_poolID].loanExtensionPeriod;
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
@@ -233,7 +254,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool for which we want to inquire if grace penalty is applicable or not
     /// @return boolean value indicating if applicable or not
     function isGracePenaltyApplicable(address _poolID) public view returns (bool) {
-        //uint256 _loanStartTime = repayConstants[_poolID].loanStartTime;
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
         uint256 _currentTime = block.timestamp.mul(10**30);
         uint256 _gracePeriodFraction = repayConstants[_poolID].gracePeriodFraction;
@@ -301,7 +321,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _transferTokens(msg.sender, _poolID, _asset, _amountRepaid);
     }
 
-    function _repayExtension(address _poolID) internal returns(uint256) {
+    function _repayExtension(address _poolID) internal returns (uint256) {
         if (repayVariables[_poolID].isLoanExtensionActive) {
             uint256 _interestOverdue = getInterestOverdue(_poolID);
             repayVariables[_poolID].isLoanExtensionActive = false; // deactivate loan extension flag
@@ -315,7 +335,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    function _repayGracePenalty(address _poolID) internal returns(uint256) {
+    function _repayGracePenalty(address _poolID) internal returns (uint256) {
         bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
 
         if (_isBorrowerLate) {
@@ -327,12 +347,13 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    function _repayInterest(address _poolID, uint256 _amount, bool _isLastRepayment) internal returns(uint256) {
+    function _repayInterest(
+        address _poolID,
+        uint256 _amount,
+        bool _isLastRepayment
+    ) internal returns (uint256) {
         uint256 _interestLeft = getInterestLeft(_poolID);
-        require(
-            (_amount < _interestLeft) != _isLastRepayment,
-            'Repayments::repay complete interest must be repaid along with principal'
-        );
+        require((_amount < _interestLeft) != _isLastRepayment, 'Repayments::repay complete interest must be repaid along with principal');
 
         if (_amount < _interestLeft) {
             uint256 _interestPerSecond = getInterestPerSecond(_poolID);
@@ -347,7 +368,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         }
     }
 
-    function _updateRepaidAmount(address _poolID, uint256 _scaledRepaidAmount) internal returns(uint256) {
+    function _updateRepaidAmount(address _poolID, uint256 _scaledRepaidAmount) internal returns (uint256) {
         uint256 _toPay = _scaledRepaidAmount.div(10**30);
         repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_toPay);
         return _toPay;
@@ -369,11 +390,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
         // pay off grace penality
         uint256 _gracePenaltyDue = _repayGracePenalty(_poolID);
-        _amount = _amount.sub(_gracePenaltyDue, "doesnt cover grace penality");
+        _amount = _amount.sub(_gracePenaltyDue, 'doesnt cover grace penality');
 
         // pay off the overdue
         uint256 _interestOverdue = _repayExtension(_poolID);
-        _amount = _amount.sub(_interestOverdue, "doesnt cover overdue interest");
+        _amount = _amount.sub(_interestOverdue, 'doesnt cover overdue interest');
 
         // pay interest
         uint256 _interestRepaid = _repayInterest(_poolID, _amount, _isLastRepayment);
@@ -435,7 +456,12 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         return gracePeriodFraction;
     }
 
-    function _transferTokens(address _from, address _to, address _asset, uint256 _amount) internal {
+    function _transferTokens(
+        address _from,
+        address _to,
+        address _asset,
+        uint256 _amount
+    ) internal {
         if (_asset == address(0)) {
             (bool transferSuccess, ) = _to.call{value: _amount}('');
             require(transferSuccess, '_transferTokens: Transfer failed');
@@ -446,5 +472,5 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         } else {
             IERC20(_asset).safeTransferFrom(_from, _to, _amount);
         }
-    } 
+    }
 }
