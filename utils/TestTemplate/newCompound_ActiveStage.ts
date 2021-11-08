@@ -184,6 +184,7 @@ export async function preActivePoolChecks(
             const poolTokenBalanceOfLenderFinal = await pool.balanceOf(lender.address);
             const poolTokenBalanceOfRandomFinal = await pool.balanceOf(random.address);
             //console.log("Lender: ", poolTokenBalanceOfLenderFinal.toString(), "Random: ", poolTokenBalanceOfRandomFinal.toString());
+            //console.log(poolTokenBalanceOfRandomFinal.sub(poolTokenBalanceOfRandomInitial).toString());
             assert(poolTokenBalanceOfRandomFinal.sub(poolTokenBalanceOfRandomInitial).gt(0) , "The pool token balance of random address did not increase after transfer from lender");            
         
              //Returning the pool tokens to the lender
@@ -214,7 +215,7 @@ export async function preActivePoolChecks(
             `Pool should have been in active stage, found in: ${loanStatus}`);
 
             //Withdrawing tokens by the lender should fail
-            await expect(pool.connect(lender).withdrawLiquidity()).to.be.revertedWith('24');
+            await expect(pool.connect(lender).withdrawLiquidity()).to.be.revertedWith('WL1');
         });
 
         it("Before borrower withdraws in this period, extension request is not possible: ", async function() {
@@ -240,7 +241,7 @@ export async function preActivePoolChecks(
             await expect(env.extenstion.connect(lender).requestExtension(pool.address)).to.be.revertedWith('Not Borrower');
 
             // The borrower too shouldn't be able to request extension in this period
-            await expect(env.extenstion.connect(borrower).requestExtension(pool.address)).to.be.revertedWith('Transaction reverted without a reason');
+            await expect(env.extenstion.connect(borrower).requestExtension(pool.address)).to.be.revertedWith('Extension::requestExtension - Uninitialized pool');
         });
 
         it("Lender should not be able to request margin calls in this time period: ", async function() {
@@ -268,7 +269,7 @@ export async function preActivePoolChecks(
             `Pool should have been in collection stage, found in: ${loanStatus}`);
 
             //The request for this margin call should fail
-            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
+            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('RMC1');
         });
 
         it("Loan repayment shouldn't be possible in this time-frame: ", async function() {
@@ -322,14 +323,14 @@ export async function preActivePoolChecks(
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
             //The request for this margin call should fail
-            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
+            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('RMC1');
             // By the borrower
-            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
+            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('RMC1');
             // By random
-            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('4');
+            await expect(pool.connect(lender).requestMarginCall()).to.be.revertedWith('RMC1');
             
             // The request to liquidate lender during this period should fail
-            await expect(pool.connect(random).liquidateForLender(lender.address, false, false, false)).to.be.revertedWith("27");
+            await expect(pool.connect(random).liquidateForLender(lender.address, false, false, false)).to.be.revertedWith("CLBL1");
             
             /*
             // Request to liquidate pool should fail during this period
@@ -362,7 +363,7 @@ export async function preActivePoolChecks(
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
             //It is still the collection period, and we will try to withdraw the tokens lent as the borrower
-            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith("12");
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith("WBA1");
 
             // It is still the collection period, and we will try to repay interest as the borrower
             // Taking any arbitrary amount as repayment amount as env.repayments.connect(borrower).getInterestDueTillInstalment(pool.address) will return 0
@@ -561,7 +562,7 @@ export async function preActivePoolChecks(
             `Pool should have been in active stage, found in: ${loanStatus}`);
 
             //Borrower request to withdraw smalller amount should be rejected
-            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('13');
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.revertedWith('WBA2');
         });
 
         it("Anyone can cancel the pool if minBorrowFraction of request amount is not met and loan started without any penalty: ", async function() {
@@ -576,7 +577,7 @@ export async function preActivePoolChecks(
 
             // The balance of the pool is equivalent to the balance of the collateralShares of the pool
             const collateralBalancePoolBeforeCancel = await env.savingsAccount.connect(admin).balanceInShares(pool.address, collateralToken.address, poolStrategy.address);
-            console.log("Collateral Token Balance of Pool: ", collateralBalancePoolBeforeCancel.toString());
+            //console.log("Collateral Token Balance of Pool: ", collateralBalancePoolBeforeCancel.toString());
 
             let baseLiquidityShares = (await pool.poolVariables()).baseLiquidityShares;
             let poolCancelPenaltyFraction = testPoolFactoryParams._poolCancelPenalityFraction;
@@ -592,7 +593,7 @@ export async function preActivePoolChecks(
 
             // Balance of the borrower now (collateral submitted - penalty imposed)
             const borrowerCollateralSharesAfterCancel = await env.savingsAccount.connect(borrower).balanceInShares(borrower.address, collateralToken.address, poolStrategy.address);
-            console.log(borrowerCollateralSharesAfterCancel.toString());
+            //console.log(borrowerCollateralSharesAfterCancel.toString());
 
             assert(collateralBalancePoolBeforeCancel.toString() == borrowerCollateralSharesAfterCancel.toString(), "Penalty deducted");    
         });
@@ -727,22 +728,22 @@ export async function preActivePoolChecks(
             await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
 
             const borrowAssetBalanceBorrower = await borrowToken.balanceOf(borrower.address);
-            console.log(borrowAssetBalanceBorrower.toString());
+            //console.log(borrowAssetBalanceBorrower.toString());
 
             const tokensLent = await pool.totalSupply();
-            console.log(tokensLent.toString());
+            //console.log(tokensLent.toString());
             
             // Borrower withdraws borrow tokens
             await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.emit(pool, "AmountBorrowed").withArgs(amount);
 
             const borrowAssetBalanceBorrowerAfter = await borrowToken.balanceOf(borrower.address);
-            console.log(borrowAssetBalanceBorrowerAfter.toString());
+            //console.log(borrowAssetBalanceBorrowerAfter.toString());
 
             const protocolFee = tokensLent.mul(testPoolFactoryParams._protocolFeeFraction).div(scaler);
-            console.log(protocolFee.toString());
+            //console.log(protocolFee.toString());
 
             const checkProtcolFee = await borrowToken.balanceOf(protocolFeeCollector.address);
-            console.log(checkProtcolFee.toString());
+            //console.log(checkProtcolFee.toString());
             // IMO, we are not really comparing the exact tokens. That is, the protocolFee is in terms of poolTokens and we are checking Sublime's borrowToken balance.
             // But since the poolTokens are generated in 1:1 ratio of borrowTokens, therefore the numbers are same
             expect(checkProtcolFee).to.eq(protocolFee); 

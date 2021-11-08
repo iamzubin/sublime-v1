@@ -49,7 +49,7 @@ export async function cancellationChecks(
     chainlinkBorrow: Address,
     ChainlinkCollateral: Address
 ): Promise<any> {
-    describe('Some Describe descriptions: ', async () => {
+    describe('Testing suite for various pool cancellation scenarios: ', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -61,7 +61,7 @@ export async function cancellationChecks(
         let Compound: CompoundYield;
 
         const scaler = BigNumber.from('10').pow(30);
-        before(async () => {
+        beforeEach(async () => {
             env = await createEnvironment(
                 hre,
                 [WhaleAccount1, WhaleAccount2],
@@ -188,6 +188,57 @@ export async function cancellationChecks(
             await expect(pool.connect(borrower).cancelPool()).to.be.revertedWith("CP1");
             await expect(pool.connect(lender).cancelPool()).to.be.revertedWith("CP1");
             await expect(pool.connect(random).cancelPool()).to.be.revertedWith("CP1");
+        });
+
+        it("Pool can be cancelled by anyone after the loanWithdrawalDeadline: ", async function() {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let poolStrategy = env.yields.compoundYield;
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+
+            // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+
+            // Lender actually lends his Borrow Tokens
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            //Try to travel past the loanwithdrawal deadline:
+            const {loanWithdrawalDeadline} = await pool.poolConstants();
+            await blockTravel(network, parseInt(loanWithdrawalDeadline.add(1).toString()));
+
+            // The balance of the pool is equivalent to the balance of the collateralShares of the pool
+            const collateralBalancePoolBeforeCancel = await env.savingsAccount.connect(admin).balanceInShares(pool.address, collateralToken.address, poolStrategy.address);
+            console.log("Collateral Token Balance of Pool: ", collateralBalancePoolBeforeCancel.toString());
+
+            // Check whether the pool has went into the active stage of the loan or not
+            let {loanStatus} = await pool.poolVariables();
+            console.log(loanStatus.toString());
+
+            let baseLiquidityShares = (await pool.poolVariables()).baseLiquidityShares;
+            let poolCancelPenaltyFraction = testPoolFactoryParams._poolCancelPenalityFraction;
+            let borrowRate = (await pool.poolConstants()).borrowRate;
+            let scalingNumber = BigNumber.from(10).pow(30);
+            let penaltyTime = (await pool.poolConstants()).repaymentInterval;
+            let yearInSeconds = 365*24*60*60;
+
+            let penaltyForCancelling = poolCancelPenaltyFraction.mul(borrowRate).mul(baseLiquidityShares).div(scalingNumber).mul(penaltyTime).div(yearInSeconds).div(scalingNumber);
+            console.log("Penalty for Cancelling: ", penaltyForCancelling.toString());
+            
+            // Borrower cancels the pool in the collection stage itself
+            await pool.connect(random).cancelPool();
+
+            // Checking the status of the loan
+            let newLoanStage = (await pool.poolVariables()).loanStatus;
+            assert.equal(newLoanStage.toString(), "3", 
+            `Pool should have been in active stage, found in: ${newLoanStage}`);
         });
     });
 }
