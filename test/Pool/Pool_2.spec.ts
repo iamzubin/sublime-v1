@@ -277,7 +277,7 @@ describe('Pool', async () => {
 
             it('Lender should not be able to withdraw the tokens lent (collection stage)', async () => {
                 //   console.log(await pool.connect(lender).poolVariables());
-                await expect(pool.connect(lender).withdrawLiquidity()).to.be.revertedWith('24');
+                await expect(pool.connect(lender).withdrawLiquidity()).to.be.revertedWith('WL1');
             });
         });
     });

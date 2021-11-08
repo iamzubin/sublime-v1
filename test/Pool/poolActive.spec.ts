@@ -302,7 +302,7 @@ describe('Pool Active stage', async () => {
             });
 
             it("Borrower can't withdraw again", async () => {
-                await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith('12');
+                await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith('WBA1');
             });
 
             it('Pool cannot be cancelled by anyone', async () => {
@@ -409,7 +409,7 @@ describe('Pool Active stage', async () => {
                     await blockTravel(network, parseInt(endOfPeriod.add(10).toString()));
 
                     await expect(pool.liquidatePool(false, false, false)).to.be.revertedWith(
-                        'Pool::liquidatePool - Borrower didnt default'
+                        'LP2'
                     );
                 });
             });
@@ -445,7 +445,7 @@ describe('Pool Active stage', async () => {
                         await extenstion.connect(lender).voteOnExtension(pool.address);
 
                         await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'Pool::liquidatePool - Borrower didnt default'
+                            'LP2'
                         );
                     });
 
@@ -502,7 +502,7 @@ describe('Pool Active stage', async () => {
                             .div(scaler);
                         await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
                         await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'Pool::liquidatePool - Borrower didnt default'
+                            'LP2'
                         );
                     });
 
@@ -539,7 +539,7 @@ describe('Pool Active stage', async () => {
                         await blockTravel(network, parseInt(extensionVoteEndTime.add(1).toString()));
 
                         await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'Pool::liquidatePool - Borrower didnt default'
+                            'LP2'
                         );
                     });
 
@@ -703,7 +703,7 @@ describe('Pool Active stage', async () => {
 
                     await expect(pool.cancelPool()).to.be.revertedWith('CP1');
 
-                    await expect(pool.closeLoan()).to.be.revertedWith('38');
+                    await expect(pool.closeLoan()).to.be.revertedWith('OR1');
                 });
             });
 
@@ -719,13 +719,13 @@ describe('Pool Active stage', async () => {
                 it("Margin called lender, can't send pool tokens", async () => {
                     await pool.connect(lender).requestMarginCall();
 
-                    await expect(pool.connect(lender).transfer(random.address, 5)).to.be.revertedWith('18');
+                    await expect(pool.connect(lender).transfer(random.address, 5)).to.be.revertedWith('TT3');
                 });
 
                 it("Margin called lender, can't receive pool tokens", async () => {
                     await pool.connect(lender).requestMarginCall();
 
-                    await expect(pool.connect(lender1).transfer(lender.address, 5)).to.be.revertedWith('19');
+                    await expect(pool.connect(lender1).transfer(lender.address, 5)).to.be.revertedWith('TT4');
                 });
 
                 it('Multiple lender can initiate margin call', async () => {
@@ -735,7 +735,7 @@ describe('Pool Active stage', async () => {
                 });
 
                 it('Only lender can initiate margin call', async () => {
-                    await expect(pool.connect(random).requestMarginCall()).to.be.revertedWith('2');
+                    await expect(pool.connect(random).requestMarginCall()).to.be.revertedWith('IL1');
                 });
 
                 it("Margin call can't be liquidated, if borrower adds collateral for margin call", async () => {
@@ -758,7 +758,7 @@ describe('Pool Active stage', async () => {
                     await pool.connect(borrower).addCollateralInMarginCall(lender.address, amount, false);
 
                     await expect(pool.liquidateForLender(lender.address, false, false, false)).to.be.revertedWith(
-                        'No margin call has been called.'
+                        'CLBL2'
                     );
                 });
 
@@ -769,7 +769,7 @@ describe('Pool Active stage', async () => {
 
                     await priceOracle.connect(admin).setChainlinkFeedAddress(Contracts.LINK, ChainLinkAggregators['LINK/USD']);
 
-                    await expect(pool.liquidateForLender(lender.address, false, false, false)).to.be.revertedWith('29');
+                    await expect(pool.liquidateForLender(lender.address, false, false, false)).to.be.revertedWith('CLBL4');
                 });
 
                 it("If collateral ratio below ideal after margin call time, Anyone can liquidate lender's part of collateral", async () => {

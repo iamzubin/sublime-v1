@@ -418,7 +418,7 @@ describe('Pool With Compound Strategy', async () => {
         it('User cannot borrow if lender/s has not supplied minimum number of tokens', async () => {
             const { loanStartTime } = await pool.poolConstants();
             await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
-            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith('13');
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.be.revertedWith('WBA2');
         });
     });
 
