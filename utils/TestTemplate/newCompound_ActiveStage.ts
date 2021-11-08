@@ -331,15 +331,29 @@ export async function preActivePoolChecks(
             
             // The request to liquidate lender during this period should fail
             await expect(pool.connect(random).liquidateForLender(lender.address, false, false, false)).to.be.revertedWith("CLBL1");
-            
-            /*
-            // Request to liquidate pool should fail during this period
-            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
-            await borrowToken.connect(admin).transfer(random.address, amount);
-            await borrowToken.connect(random).approve(pool.address, amount);
+        });
 
-            expect (await pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith("Pool::liquidatePool - Cant liquidate inactive pool");
-            */
+        it("Request to liquidate pool should fail during this period (collection period): ", async function() {
+            let{admin, lender, borrower} = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let poolStrategy = env.yields.compoundYield;
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+
+            // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
+            await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
+            await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
+
+            // Lender actually lends his Borrow Tokens
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            await expect (pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith('LP1');
         });
 
         it("During collection period, borrower can't withdraw tokens lent or repay interst or request extension: ", async function() {
