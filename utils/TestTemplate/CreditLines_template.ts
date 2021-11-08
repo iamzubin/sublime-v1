@@ -229,33 +229,6 @@ export async function CreditLines(
             ).to.be.revertedWith('R: No price feed');
         });
 
-        xit('CreditLine Request: Should revert if collateral ratio is less than liquidation threshold', async function () {
-            let { admin, borrower, lender } = env.entities;
-            let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
-            let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
-            let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(50);
-            let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
-            let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
-
-            creditLine = env.creditLine;
-
-            await expect(
-                creditLine
-                    .connect(lender)
-                    .request(
-                        borrower.address,
-                        borrowLimit,
-                        _borrowRate,
-                        _autoLiquidation,
-                        _collateralRatio,
-                        _borrowAsset,
-                        _collateralAsset,
-                        true
-                    )
-            ).to.be.revertedWith('CL: collateral ratio should be higher');
-        });
-
         it('Creditline Request: Check for correct request', async function () {
             let { admin, borrower, lender } = env.entities;
             let borrowLimit: BigNumber = BigNumber.from('10').mul('1000000000000000000'); // 10e18
@@ -653,20 +626,24 @@ export async function CreditLines(
             );
         });
 
-        // Changed
-        xit('Creditline Active: collateral ratio should not go down after withdraw', async function () {
+        it('Creditline Active: collateral ratio should not go down after withdraw', async function () {
             let { admin, borrower, lender } = env.entities;
-            let amount: BigNumber = BigNumber.from('100');
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let amount: BigNumber = BigNumber.from('10').mul(BigNumber.from('10').pow(BTDecimals));
 
             await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
                 "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
             );
         });
 
-        xit('Creditline Active: Borrower borrows amount', async function () {
+        it('Creditline Active: Borrower borrows amount', async function () {
             let { admin, borrower, lender } = env.entities;
-            let amount: BigNumber = BigNumber.from('100');
-            let deposit: BigNumber = BigNumber.from('10000');
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            let amount: BigNumber = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 borrow tokens
+            let deposit: BigNumber = BigNumber.from(10).mul(BigNumber.from(10).pow(CTDecimals)); // 10 collateral tokens
+
+            let unlimited = BigNumber.from(10).pow(60);
 
             await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, deposit);
             await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, deposit);
@@ -677,14 +654,10 @@ export async function CreditLines(
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
             await env.mockTokenContracts[0].contract.connect(lender).approve(env.yields.compoundYield.address, amount);
-            console.log('Savings Account');
-            await env.savingsAccount.connect(lender).approve(amount, _borrowAsset, borrower.address);
-            await env.savingsAccount.connect(lender).deposit(amount, _borrowAsset, env.yields.compoundYield.address, lender.address);
-            console.log('Savings Account - transfer and deposit done');
 
-            // let Lender_balance = await env.savingsAccount.connect(admin).callStatic.balanceInShares(lender.address, _borrowAsset, env.yields.compoundYield.address);
-            // console.log(Lender_balance.toString());
-            console.log('Test Lender - ', lender.address);
+            await env.savingsAccount.connect(lender).deposit(amount, _borrowAsset, env.yields.compoundYield.address, lender.address);
+            await env.savingsAccount.connect(lender).approve(unlimited, _borrowAsset, creditLine.address);
+
             await creditLine.connect(borrower).borrow(values, amount);
         });
     });

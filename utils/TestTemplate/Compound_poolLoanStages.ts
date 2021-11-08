@@ -1337,9 +1337,7 @@ export async function compoundPoolCollectionStage(
                 // await env.extenstion.connect(lender).voteOnExtension(pool.address);
                 // const { isLoanExtensionActive } = await env.repayments.connect(admin).repayVariables(pool.address);
                 // assert(isLoanExtensionActive, 'Extension not active');
-                await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                    'LP2'
-                );
+                await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith('LP2');
             });
 
             it('Should be able to repay after extension is passed', async () => {
