@@ -594,11 +594,9 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, collateralAmout);
         await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, collateralAmout);
 
-        await creditLine
-            .connect(borrower)
-            .depositCollateral(valuesNew, collateralAmout, env.yields.compoundYield.address, false, {
-                value: ethers.utils.parseEther('10'),
-            });
+        await creditLine.connect(borrower).depositCollateral(valuesNew, collateralAmout, env.yields.compoundYield.address, false, {
+            value: ethers.utils.parseEther('10'),
+        });
 
         const CreditVars = await creditLine.connect(borrower).creditLineVariables(valuesNew);
         // console.log({ Principal: CreditVars.principal.toString() });

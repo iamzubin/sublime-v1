@@ -544,7 +544,7 @@ export async function CreditLines(
             );
         });
 
-        xit('Creditline Active: Deposit Collateral directly from wallet', async function () {
+        it('Creditline Active: Deposit Collateral directly from wallet', async function () {
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
 
@@ -585,7 +585,8 @@ export async function CreditLines(
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
 
-            await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
+            // Creditline already accepted in previous test
+            // await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
             let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(amountForDeposit, _collateralAsset);
             // console.log({ amountForDeposit: amountForDeposit.toString() });
@@ -652,6 +653,7 @@ export async function CreditLines(
             );
         });
 
+        // Changed
         xit('Creditline Active: collateral ratio should not go down after withdraw', async function () {
             let { admin, borrower, lender } = env.entities;
             let amount: BigNumber = BigNumber.from('100');

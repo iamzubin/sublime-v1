@@ -462,17 +462,19 @@ describe('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, borrowerCollateral);
         await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, borrowerCollateral);
 
-        await creditLine
-            .connect(borrower)
-            .depositCollateral(values, borrowerCollateral, env.yields.compoundYield.address, false, {
-                value: ethers.utils.parseEther('500'),
-            });
+        console.log('Check1');
+        await creditLine.connect(borrower).depositCollateral(values, borrowerCollateral, env.yields.compoundYield.address, false, {
+            value: ethers.utils.parseEther('500'),
+        });
 
+        console.log('Check2');
         await env.savingsAccount
             .connect(lender)
             .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address);
+        console.log('Check2.1');
         await env.savingsAccount.connect(lender).approve(unlimited, env.mockTokenContracts[0].contract.address, creditLine.address);
 
+        console.log('Check3');
         const BorrowerBalance = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
         await creditLine.connect(borrower).borrow(values, borrowAmount);
         const BorrowerBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
@@ -598,11 +600,9 @@ describe('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, collateralAmout);
         await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, collateralAmout);
 
-        await creditLine
-            .connect(borrower)
-            .depositCollateral(valuesNew, collateralAmout, env.yields.compoundYield.address, false, {
-                value: ethers.utils.parseEther('10'),
-            });
+        await creditLine.connect(borrower).depositCollateral(valuesNew, collateralAmout, env.yields.compoundYield.address, false, {
+            value: ethers.utils.parseEther('10'),
+        });
 
         const CreditVars = await creditLine.connect(borrower).creditLineVariables(valuesNew);
         // console.log({ Principal: CreditVars.principal.toString() });

@@ -11,6 +11,8 @@ import '../interfaces/ISavingsAccount.sol';
 import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IStrategyRegistry.sol';
 
+import 'hardhat/console.sol';
+
 /**
  * @title Credit Line contract with Methods related to credit Line
  * @notice Implements the functions related to Credit Line
@@ -495,6 +497,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
             (_currentDebt.add(_amount)).mul(10**_decimals)
         );
+
+        console.log('CL: Expected', _collateralRatioIfAmountIsWithdrawn);
+        console.log('CL: Change', creditLineConstants[_id].idealCollateralRatio);
+        console.log('CL: Condition', _collateralRatioIfAmountIsWithdrawn > creditLineConstants[_id].idealCollateralRatio);
         require(
             _collateralRatioIfAmountIsWithdrawn > creditLineConstants[_id].idealCollateralRatio,
             "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
