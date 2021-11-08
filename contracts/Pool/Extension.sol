@@ -78,7 +78,7 @@ contract Extension is Initializable, IExtension {
      */
     function requestExtension(address _pool) external onlyBorrower(_pool) {
         uint256 _repaymentInterval = extensions[_pool].repaymentInterval;
-        require(_repaymentInterval != 0, "Extension::requestExtension - Uninitialized pool");
+        require(_repaymentInterval != 0, 'Extension::requestExtension - Uninitialized pool');
         uint256 _extensionVoteEndTime = extensions[_pool].extensionVoteEndTime;
         require(block.timestamp > _extensionVoteEndTime, 'Extension::requestExtension - Extension requested already'); // _extensionVoteEndTime is 0 when no extension is active
 

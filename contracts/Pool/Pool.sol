@@ -171,7 +171,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable override {
         require(_amount != 0, '7');
-        require(balanceOf(msg.sender) == 0, "39");
+        require(balanceOf(msg.sender) == 0, '39');
         _depositCollateral(msg.sender, _amount, _transferFromSavingsAccount);
     }
 
@@ -275,7 +275,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _transferFromSavingsAccount
     ) external payable override nonReentrant {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, '9');
-        require(balanceOf(msg.sender) == 0, "39");
+        require(balanceOf(msg.sender) == 0, '39');
         require(getMarginCallEndTime(_lender) >= block.timestamp, '10');
 
         require(_amount != 0, '11');
