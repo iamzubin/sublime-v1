@@ -522,8 +522,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _receiveLiquidityShare if true, equivalent liquidity tokens are withdrawn. If false, assets are withdrawn
      */
     function liquidateCancelPenalty(bool _toSavingsAccount, bool _receiveLiquidityShare) external nonReentrant {
-        require(poolVariables.loanStatus == LoanStatus.CANCELLED, '');
-        require(poolVariables.penaltyLiquidityAmount == 0, '');
+        require(poolVariables.loanStatus == LoanStatus.CANCELLED, 'LCP1');
+        require(poolVariables.penaltyLiquidityAmount == 0, 'LCP2');
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
         address _collateralAsset = poolConstants.collateralAsset;
@@ -983,9 +983,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice used to receive ethers from savings accounts
      */
-    receive() external payable {
-        // require(msg.sender == IPoolFactory(poolFactory).savingsAccount(), '35');
-    }
+    receive() external payable {}
 
     /**
      * @notice used to get the equivalent amount of tokens from source to target tokens

@@ -391,9 +391,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
 
     function calculateInterestAccrued(uint256 _id) public view returns (uint256) {
-        uint256 _lastPrincipleUpdateTime = creditLineVariables[_id].lastPrincipalUpdateTime;
-        if (_lastPrincipleUpdateTime == 0) return 0;
-        uint256 _timeElapsed = (block.timestamp).sub(_lastPrincipleUpdateTime);
+        uint256 _lastPrincipalUpdateTime = creditLineVariables[_id].lastPrincipalUpdateTime;
+        if (_lastPrincipalUpdateTime == 0) return 0;
+        uint256 _timeElapsed = (block.timestamp).sub(_lastPrincipalUpdateTime);
         uint256 _interestAccrued = calculateInterest(creditLineVariables[_id].principal, creditLineConstants[_id].borrowRate, _timeElapsed);
         return _interestAccrued;
     }
@@ -763,7 +763,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _id,
         uint256 _amount,
         bool _fromSavingsAccount,
-        uint256 _principlePaid
+        uint256 _principalPaid
     ) internal {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         address _defaultStrategy = defaultStrategy;
@@ -783,8 +783,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         } else {
             _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
         }
-        if (_principlePaid != 0) {
-            _savingsAccount.increaseAllowanceToCreditLine(_principlePaid, _borrowAsset, _lender);
+        if (_principalPaid != 0) {
+            _savingsAccount.increaseAllowanceToCreditLine(_principalPaid, _borrowAsset, _lender);
         }
     }
 
@@ -810,7 +810,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         uint256 _interestToPay = _totalInterestAccrued.sub(creditLineVariables[_id].totalInterestRepaid);
         uint256 _totalCurrentDebt = _interestToPay.add(creditLineVariables[_id].principal);
-        uint256 _principlePaid = 0;
+        uint256 _principalPaid = 0;
 
         if (_amount >= _totalCurrentDebt) {
             _amount = _totalCurrentDebt;
@@ -824,12 +824,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = _totalInterestAccrued;
             creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
             creditLineVariables[_id].totalInterestRepaid = _totalInterestAccrued;
-            _principlePaid = _amount.sub(_interestToPay);
+            _principalPaid = _amount.sub(_interestToPay);
         } else {
             creditLineVariables[_id].totalInterestRepaid = creditLineVariables[_id].totalInterestRepaid.add(_amount);
         }
 
-        _repay(_id, _amount, _fromSavingsAccount, _principlePaid);
+        _repay(_id, _amount, _fromSavingsAccount, _principalPaid);
 
         if (creditLineVariables[_id].principal == 0) {
             _resetCreditLine(_id);
