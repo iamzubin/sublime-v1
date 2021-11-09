@@ -41,7 +41,7 @@ import { expectApproxEqual } from '../../utils/helpers';
 import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
 import { isAddress } from 'ethers/lib/utils';
 
-describe('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
+describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;
@@ -184,27 +184,7 @@ describe('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
                 _collateralAsset,
                 true
             )
-        ).to.be.revertedWith('CL: No price feed');
-    });
-
-    xit('CreditLine Request: Should revert if collateral ratio is less than liquidation threshold', async function () {
-        let { admin, borrower, lender } = env.entities;
-        creditLine = env.creditLine;
-
-        await expect(
-            creditLine
-                .connect(lender)
-                .request(
-                    borrower.address,
-                    borrowLimit,
-                    _borrowRate,
-                    _autoLiquidation,
-                    _collateralRatio,
-                    _borrowAsset,
-                    _collateralAsset,
-                    true
-                )
-        ).to.be.revertedWith('CL: collateral ratio should be higher');
+        ).to.be.revertedWith('R: No price feed');
     });
 
     it('Creditline Request: Check for correct request', async function () {
@@ -462,19 +442,17 @@ describe('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, borrowerCollateral);
         await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, borrowerCollateral);
 
-        console.log('Check1');
         await creditLine.connect(borrower).depositCollateral(values, borrowerCollateral, env.yields.compoundYield.address, false, {
             value: ethers.utils.parseEther('500'),
         });
 
-        console.log('Check2');
         await env.savingsAccount
             .connect(lender)
             .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address);
-        console.log('Check2.1');
+        console.log('Check1');
         await env.savingsAccount.connect(lender).approve(unlimited, env.mockTokenContracts[0].contract.address, creditLine.address);
 
-        console.log('Check3');
+        console.log('Check2');
         const BorrowerBalance = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
         await creditLine.connect(borrower).borrow(values, borrowAmount);
         const BorrowerBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);

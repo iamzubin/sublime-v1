@@ -184,27 +184,7 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
                 _collateralAsset,
                 true
             )
-        ).to.be.revertedWith('CL: No price feed');
-    });
-
-    xit('CreditLine Request: Should revert if collateral ratio is less than liquidation threshold', async function () {
-        let { admin, borrower, lender } = env.entities;
-        creditLine = env.creditLine;
-
-        await expect(
-            creditLine
-                .connect(lender)
-                .request(
-                    borrower.address,
-                    borrowLimit,
-                    _borrowRate,
-                    _autoLiquidation,
-                    _collateralRatio,
-                    _borrowAsset,
-                    _collateralAsset,
-                    true
-                )
-        ).to.be.revertedWith('CL: collateral ratio should be higher');
+        ).to.be.revertedWith('R: No price feed');
     });
 
     it('Creditline Request: Check for correct request', async function () {
