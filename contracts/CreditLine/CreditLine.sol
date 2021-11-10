@@ -457,7 +457,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = _newInterestAccrued;
     }
 
-    function _depositCollateralToSavingsAccount(
+    function _depositCollateralFromSavingsAccount(
         uint256 _id,
         uint256 _amount,
         address _sender
@@ -491,7 +491,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 return;
             }
         }
-        revert('CreditLine::_depositCollateralToSavingsAccount - Insufficient balance');
+        revert('CreditLine::_depositCollateralFromSavingsAccount - Insufficient balance');
     }
 
     /**
@@ -621,7 +621,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal {
         require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
         if (_fromSavingsAccount) {
-            _depositCollateralToSavingsAccount(_id, _amount, msg.sender);
+            _depositCollateralFromSavingsAccount(_id, _amount, msg.sender);
         } else {
             address _collateralAsset = creditLineConstants[_id].collateralAsset;
             ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
