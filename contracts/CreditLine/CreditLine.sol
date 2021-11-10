@@ -138,6 +138,21 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
+     * @notice emitted when a collateral is deposited into credit line
+     * @param id id of the credit line
+     * @param amount amount of collateral deposited
+     * @param strategy address of the strategy into which collateral is deposited
+     */
+    event CollateralDeposited(uint256 indexed id, uint256 amount, address indexed strategy);
+
+    /**
+     * @notice emitted when collateral is withdrawn from credit line
+     * @param id id of the credit line
+     * @param amount amount of collateral withdrawn
+     */
+    event CollateralWithdrawn(uint256 indexed id, uint256 amount);
+
+    /**
      * @notice emitted when a request for new credit line is placed
      * @param id id of the credit line for which request was made
      * @param lender address of the lender for credit line
@@ -611,6 +626,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) external payable nonReentrant ifCreditLineExists(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
+        emit CollateralDeposited(_id, _amount, _strategy);
     }
 
     function _depositCollateral(
@@ -916,6 +932,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(_amount <= _withdrawableCollateral, 'Collateral ratio cant go below ideal');
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         _transferCollateral(_id, _collateralAsset, _amount, _toSavingsAccount);
+        emit CollateralWithdrawn(_id, _amount);
     }
 
     /**
