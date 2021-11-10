@@ -7,6 +7,11 @@ interface IExtension {
      * @param votingPassRatio the new value of the voting pass threshold for  Pools
      */
     event VotingPassRatioUpdated(uint256 votingPassRatio);
+
+    /**
+     * @notice emitted when the pool factory is updated in extension
+     * @param poolFactory updated address of pool factory
+     */
     event PoolFactoryUpdated(address indexed poolFactory);
 
     /**

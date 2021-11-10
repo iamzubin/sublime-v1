@@ -21,28 +21,63 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    //Aave related addresses
+    /**
+     * @notice address of wethGateway used to deposit ETH to aave
+     */
     address public wethGateway;
+
+    /**
+     * @notice address of protocolDataProvider which provides info about aTokens related to any token
+     */
     address public protocolDataProvider;
+
+    /**
+     * @notice address of lendingPoolAddressesProvider used to get the pool related to any token
+     */
     address public lendingPoolAddressesProvider;
 
+    /**
+     * @notice address of savings account contract
+     */
     address payable public savingsAccount;
+
+    /**
+     * @notice aave referral code to represent sublime
+     */
     uint16 public referralCode;
 
+    /**
+     * @notice emitted when aave protocol related addresses are updated
+     * @param wethGateway address of wethGateway
+     * @param protocolDataProvider address of protocol data provider
+     * @param lendingPoolAddressesProvider address of lending pool addresses provider
+     */
     event AaveAddressesUpdated(
         address indexed wethGateway,
         address indexed protocolDataProvider,
         address indexed lendingPoolAddressesProvider
     );
+
+    /**
+     * @notice emitted when aave referral code is updated
+     * @param referralCode updated referral code
+     */
     event ReferralCodeUpdated(uint16 referralCode);
 
+    /**
+     * @notice verifies if savings account invoked the contract
+     */
     modifier onlySavingsAccount() {
         require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
     /**
-     * @dev To initialize the contract addresses interacting with this contract
+     * @notice To initialize the contract addresses interacting with this contract
+     * @dev can only be initialized once
+     * @param _owner address of owner
+     * @param _savingsAccount address of the savings account contract
+     * @param _wethGateway address of wethGateway
      * @param _protocolDataProvider the address of ProtocolDataProvider
      * @param _lendingPoolAddressesProvider the address of LendingPoolAddressesProvider
      **/
@@ -61,7 +96,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to get liquidity token address from asset address
+     * @notice Used to get liquidity token address from asset address
      * @param asset the address of underlying token
      * @return aToken address of liquidity token
      **/
@@ -73,6 +108,11 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         }
     }
 
+    /**
+     * @notice used to update savings account address
+     * @dev only owner can update
+     * @param _savingsAccount address of the updated savings account
+     */
     function updateSavingsAccount(address payable _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
@@ -83,6 +123,13 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         emit SavingsAccountUpdated(_savingsAccount);
     }
 
+    /**
+     * @notice used to update aave protocol related addresses
+     * @dev only owner can update
+     * @param _wethGateway address of wethGateway
+     * @param _protocolDataProvider address of protocol data provider
+     * @param _lendingPoolAddressesProvider address of lending pool addresses provider
+     */
     function updateAaveAddresses(
         address _wethGateway,
         address _protocolDataProvider,
@@ -105,11 +152,22 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         emit AaveAddressesUpdated(_wethGateway, _protocolDataProvider, _lendingPoolAddressesProvider);
     }
 
+    /**
+     * @notice used to update referral code
+     * @dev only owner can update
+     * @param _referralCode updated referral code
+     */
     function updateReferralCode(uint16 _referralCode) external onlyOwner {
         referralCode = _referralCode;
         emit ReferralCodeUpdated(_referralCode);
     }
 
+    /**
+     * @notice used to withdraw all tokens of a type in case of emergencies
+     * @dev only owner can withdraw
+     * @param _asset address of the token being withdrawn
+     * @param _wallet address to which tokens are withdrawn
+     */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
         uint256 amount = IERC20(liquidityToken(_asset)).balanceOf(address(this));
@@ -125,8 +183,8 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to lock tokens in available protocol
-     * @notice Asset Tokens to be locked must be approved to this contract by user
+     * @notice Used to lock tokens in protocol
+     * @dev Asset Tokens to be locked must be approved to this contract by user
      * @param asset the address of token to invest
      * @param amount the amount of asset
      * @return sharesReceived amount of shares received
@@ -151,7 +209,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to unlock tokens from available protocol
+     * @notice Used to unlock tokens from available protocol
      * @param asset the address of underlying token
      * @param amount the amount of asset
      * @return received amount of tokens received
@@ -171,6 +229,12 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         emit UnlockedTokens(asset, received);
     }
 
+    /**
+     * @notice Used to unlock shares
+     * @param asset the address of underlying token
+     * @param amount the amount of shares to unlock
+     * @return received amount of shares received
+     **/
     function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
         if (amount == 0) {
             return 0;
@@ -184,7 +248,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     /**
-     * @dev Used to get amount of underlying tokens for current number of shares
+     * @notice Used to get amount of underlying tokens for current number of shares
      * @param shares the amount of shares
      * @param asset the address of token locked
      * @return amount amount of underlying tokens
@@ -200,6 +264,12 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         );
     }
 
+    /**
+     * @notice Used to get number of shares from an amount of underlying tokens
+     * @param amount the amount of tokens
+     * @param asset the address of token
+     * @return shares amount of shares for given tokens
+     **/
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
         shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
     }
@@ -256,6 +326,5 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(tokensBefore);
     }
 
-    //to apply check
     receive() external payable {}
 }

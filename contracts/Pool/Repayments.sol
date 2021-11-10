@@ -21,6 +21,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     using SafeMath for uint256;
 
     uint256 constant MAX_INT = 2**256 - 1;
+    uint256 constant YEAR_IN_SECONDS = 365 days;
 
     IPoolFactory poolFactory;
 
@@ -35,7 +36,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     uint256 gracePenaltyRate;
     uint256 gracePeriodFraction; // fraction of the repayment interval
-    uint256 constant YEAR_IN_SECONDS = 365 days;
 
     struct RepaymentVariables {
         uint256 repaidAmount;
@@ -55,12 +55,18 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         address repayAsset;
     }
 
+    /**
+     * @notice used to maintain the variables related to repayment against a pool
+     */
     mapping(address => RepaymentVariables) public repayVariables;
+
+    /**
+     * @notice used to maintain the constants related to repayment against a pool
+     */
     mapping(address => RepaymentConstants) public repayConstants;
 
     /// @notice determines if the pool is active or not based on whether repayments have been started by the
     ///borrower for this particular pool or not
-    /// @dev mapping(address => repayConstants) public repayConstants is imported from RepaymentStorage.sol
     /// @param _poolID address of the pool for which we want to test statu
     modifier isPoolInitialized(address _poolID) {
         require(repayConstants[_poolID].numberOfTotalRepayments != 0, 'Pool is not Initiliazed');
@@ -74,6 +80,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _;
     }
 
+    /**
+     * @notice modifier used to check if msg.sender is the owner
+     */
     modifier onlyOwner() {
         require(msg.sender == poolFactory.owner(), 'Not owner');
         _;
@@ -95,6 +104,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
+    /**
+     * @notice used to update pool factory address
+     * @param _poolFactory address of pool factory contract
+     */
     function updatePoolFactory(address _poolFactory) external onlyOwner {
         _updatePoolFactory(_poolFactory);
     }
@@ -105,6 +118,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit PoolFactoryUpdated(_poolFactory);
     }
 
+    /**
+     * @notice used to update grace period as a fraction of repayment interval
+     * @param _gracePeriodFraction updated value of gracePeriodFraction multiplied by 10**30
+     */
     function updateGracePeriodFraction(uint256 _gracePeriodFraction) external onlyOwner {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
@@ -114,6 +131,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit GracePeriodFractionUpdated(_gracePeriodFraction);
     }
 
+    /**
+     * @notice used to update grace penality rate
+     * @param _gracePenaltyRate value of grace penality rate multiplied by 10**30
+     */
     function updateGracePenaltyRate(uint256 _gracePenaltyRate) external onlyOwner {
         _updateGracePenaltyRate(_gracePenaltyRate);
     }
@@ -147,7 +168,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         repayConstants[msg.sender].repayAsset = lentAsset;
     }
 
-    /*
+    /**
      * @notice returns the number of repayment intervals that have been repaid,
      * if repayment interval = 10 secs, loan duration covered = 55 secs, repayment intervals covered = 5
      * @param _poolID address of the pool
@@ -233,7 +254,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool for which we want to inquire if grace penalty is applicable or not
     /// @return boolean value indicating if applicable or not
     function isGracePenaltyApplicable(address _poolID) public view returns (bool) {
-        //uint256 _loanStartTime = repayConstants[_poolID].loanStartTime;
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
         uint256 _currentTime = block.timestamp.mul(10**30);
         uint256 _gracePeriodFraction = repayConstants[_poolID].gracePeriodFraction;

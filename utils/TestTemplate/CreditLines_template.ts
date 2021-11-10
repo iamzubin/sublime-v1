@@ -226,7 +226,7 @@ export async function CreditLines(
                     _collateralAsset,
                     true
                 )
-            ).to.be.revertedWith('CL: No price feed');
+            ).to.be.revertedWith('R: No price feed');
         });
 
         xit('CreditLine Request: Should revert if collateral ratio is less than liquidation threshold', async function () {

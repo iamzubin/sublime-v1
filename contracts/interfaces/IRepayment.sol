@@ -29,12 +29,15 @@ interface IRepayment {
     event ExtensionRepaid(address indexed poolID, uint256 repayAmount); // Made during current period interest repayment
 
     /// @notice Event to denote changes in the configurations of the pool factory
+    /// @param poolFactory updated pool factory address
     event PoolFactoryUpdated(address indexed poolFactory);
 
     /// @notice Event to denote changes in the configurations of the Grace Penalty Rate
+    /// @param gracePenaltyRate updated gracePenaltyRate
     event GracePenaltyRateUpdated(uint256 indexed gracePenaltyRate);
 
     /// @notice Event to denote changes in the configurations of the Grace Period Fraction
+    /// @param gracePeriodFraction updated gracePeriodFraction
     event GracePeriodFractionUpdated(uint256 indexed gracePeriodFraction);
 
     function initializeRepayment(
