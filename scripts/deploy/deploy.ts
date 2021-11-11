@@ -15,7 +15,12 @@ import {
 import { createSavingsAccount, initSavingsAccount } from '../../utils/createEnv/savingsAccount';
 import { createStrategyRegistry, initStrategyRegistry } from '../../utils/createEnv/strategyRegistry';
 import { createCreditLines, initCreditLine } from '../../utils/createEnv/creditLines';
-import { createAaveYieldWithInit, createCompoundYieldWithInit, createYearnYieldWithInit, createNoYieldWithInit } from '../../utils/createEnv/yields';
+import {
+    createAaveYieldWithInit,
+    createCompoundYieldWithInit,
+    createYearnYieldWithInit,
+    createNoYieldWithInit,
+} from '../../utils/createEnv/yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from '../../utils/createEnv/verification';
 import { createPriceOracle, setPriceOracleFeeds } from '../../utils/createEnv/priceOracle';
 import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from '../../utils/createEnv/poolFactory';
@@ -172,7 +177,19 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     console.log('initialize credit lines');
     // TODO
-    // await initCreditLine(creditLine, admin, );
+    await initCreditLine(
+        creditLine,
+        admin,
+        noYield.address,
+        priceOracle.address,
+        savingsAccount.address,
+        strategyRegistry.address,
+        {
+            _protocolFeeFraction: '100000000000',
+            _liquidatorRewardFraction: '10000000',
+        },
+        admin
+    );
 
     return {
         savingsAccount: savingsAccount.address,
@@ -180,6 +197,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         creditLines: creditLine.address,
         proxyAdmin: proxyAdmin.address,
         admin: admin.address,
+        noYield: noYield ? noYield.address : 'Contract not deplyed in this network',
         aaveYield: aaveYield ? aaveYield.address : 'Contract not deployed in this network',
         yearnYield: yearnYield ? yearnYield.address : 'Contract not deployed in this network',
         compoundYield: compoundYield ? compoundYield.address : 'Contract not deployed in this network',
@@ -192,3 +210,22 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         poolFactory: poolFactory.address,
     };
 }
+
+// {
+//     "savingsAccount": "0x3a495b65EFbB4Db0BE408C862ca8d33d9703209c",
+//     "strategyRegistry": "0x9Af5CaF81b9985cB691f7763b7bE0412bb05b3dC",
+//     "creditLines": "0xD077B6d3ed11d0aDD036D7d9b1Ac9d4FdE561fF4",
+//     "proxyAdmin": "0x03f484190bc6889B28739Af182D996df57B02CC9",
+//     "admin": "0x4813CB98f2322CFb9fbf2f2dAFe01297FD70D19e",
+//     "noYield": "0x4EB3d11dC0ffD11fEBb379413840371b66384B4B",
+//     "aaveYield": "0xf15bB845dFDeDB72c4E7c31356f03C46b64fcE60",
+//     "yearnYield": "0x0000000000000000000000000000000000000000",
+//     "compoundYield": "0x90a17f297CC6e85CA67251e7B4A888F9de16b192",
+//     "verification": "0x19c388671f9B773fcBad80009e20eEE470F1AD26",
+//     "adminVerifier": "0x6c906de6bcb1e3bFAd75F049e6C4F6f4DAC7043E",
+//     "priceOracle": "0xeD24708d93576ca2296BE201a5e105ECAF2f6F2f",
+//     "extension": "0xe493BA7Bee4468b8FBA61256E457A098Aa7cCA17",
+//     "poolLogic": "0x0f5E1f09Ff37a4f2F68939cEb1A3a151Fa0AB418",
+//     "repaymentLogic": "0x71E925ad07dA7542855d89a52bf6d139349F9b33",
+//     "poolFactory": "0xa50E7C3444844Ef6773f3181f0a1f42B6321b677"
+//   }

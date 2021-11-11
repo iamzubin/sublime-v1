@@ -17,11 +17,11 @@
     "deploy": "npx hardhat run scripts/deploy --network",
     "chain": "npx hardhat node --no-deploy",
     "listAccount": "npx hardhat accounts --network",
-    "verify": "npx hardhat run scripts/verify.ts --network",
+    "verify": "npx hardhat run scripts/verify/verify.ts --network",
     "deployEnv:kovan": "npx hardhat test test/templateProxyDelegate.ts --network kovan",
     "removeSolidityLogs": "npx hardhat remove-logs",
     "checksize": "npx hardhat size-contracts",
-    "clean":"npx hardhat clean"
+    "clean": "npx hardhat clean"
   },
   "repository": {
     "type": "git",

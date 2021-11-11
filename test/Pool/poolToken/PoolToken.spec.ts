@@ -23,7 +23,7 @@ import {
     zeroAddress,
     ChainLinkAggregators,
 } from '../../../utils/constants';
-import { testVars as testCases } from "./PoolToken_testEnv";
+import { testVars as testCases } from './PoolToken_testEnv';
 
 import DeployHelper from '../../../utils/deploys';
 import { ERC20 } from '../../../typechain/ERC20';
@@ -101,7 +101,7 @@ export async function marginCallTests(
             loanWithdrawalDuration: 200,
             noOfRepaymentIntervals: 100,
             repaymentInterval: 1000,
-        }
+        };
         const SCALER = BigNumber.from(10).pow(30);
 
         before(async () => {
@@ -169,20 +169,12 @@ export async function marginCallTests(
                 _repaymentInterval: poolParams.repaymentInterval,
             });
 
-            await collateralAsset
-                .connect(env.impersonatedAccounts[0])
-                .transfer(borrower.address, poolParams.collateralAmount);
-            await collateralAsset
-                .connect(borrower)
-                .approve(poolAddress, poolParams.collateralAmount);
+            await collateralAsset.connect(env.impersonatedAccounts[0]).transfer(borrower.address, poolParams.collateralAmount);
+            await collateralAsset.connect(borrower).approve(poolAddress, poolParams.collateralAmount);
 
             // Note: Transferring 3 times the poolSize to lender from whale
-            await borrowAsset
-                .connect(env.impersonatedAccounts[0])
-                .transfer(lender.address, poolParams.poolSize.mul(3));
-            await borrowAsset
-                .connect(env.impersonatedAccounts[0])
-                .transfer(borrower.address, poolParams.poolSize.mul(3));
+            await borrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, poolParams.poolSize.mul(3));
+            await borrowAsset.connect(env.impersonatedAccounts[0]).transfer(borrower.address, poolParams.poolSize.mul(3));
             await borrowAsset
                 .connect(env.impersonatedAccounts[0])
                 .transfer(env.entities.extraLenders[1].address, poolParams.poolSize.mul(3));
@@ -207,8 +199,6 @@ export async function marginCallTests(
             env.savingsAccount = env.savingsAccount.connect(env.entities.borrower);
         });
 
-        describe("Pool Token transfers during extension voting", async () => {
-
-        });
+        describe('Pool Token transfers during extension voting', async () => {});
     });
 }
