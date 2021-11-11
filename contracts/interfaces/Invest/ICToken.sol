@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.8.10;
 
 interface ICToken {
     function underlying() external view returns (address);

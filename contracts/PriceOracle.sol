@@ -1,16 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.7.0;
+pragma solidity 0.8.10;
 
-import '@chainlink/contracts/src/v0.7/interfaces/AggregatorV3Interface.sol';
+import '@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol';
 import '@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
 import './interfaces/IPriceOracle.sol';
 
 contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
-    using SafeMath for uint256;
 
     uint32 uniswapPriceAveragingPeriod;
     struct PriceData {
@@ -56,12 +54,12 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         (, price1, , , ) = AggregatorV3Interface(_feedData1.oracle).latestRoundData();
         (, price2, , , ) = AggregatorV3Interface(_feedData2.oracle).latestRoundData();
         uint256 price = uint256(price1)
-            .mul(10**_feedData2.decimals)
-            .mul(10**30)
-            .div(uint256(price2))
-            .div(10**_feedData1.decimals)
-            .mul(10**decimals[den])
-            .div(10**decimals[num]);
+            *(10**_feedData2.decimals)
+            *(10**30)
+            /(uint256(price2))
+            /(10**_feedData1.decimals)
+            *(10**decimals[den])
+            /(10**decimals[num]);
         return (price, 30);
     }
 
