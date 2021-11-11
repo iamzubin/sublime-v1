@@ -233,12 +233,16 @@ export async function cancellationChecks(
             console.log("Penalty for Cancelling: ", penaltyForCancelling.toString());
             
             // Borrower cancels the pool in the collection stage itself
-            await pool.connect(random).cancelPool();
+            await expect(pool.connect(random).cancelPool()).to.emit(pool, "PoolCancelled");
 
             // Checking the status of the loan
             let newLoanStage = (await pool.poolVariables()).loanStatus;
             assert.equal(newLoanStage.toString(), "3", 
             `Pool should have been in active stage, found in: ${newLoanStage}`);
         });
+
+        // it("Pool cancellation should lead to cancelling of any open extension: ", async function() {
+
+        // });
     });
 }
