@@ -246,7 +246,7 @@ describe('WBTC-DAI Credit Lines', async () => {
             let _borrower: string = borrower.address;
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = Contracts.DAI;
             let _collateralAsset: string = Contracts.WBTC;
 

@@ -449,7 +449,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _currentDebt = calculateCurrentDebt(_id);
 
-        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).div(
+        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).mul(10**30).div(
             10**_decimals
         );
 
@@ -700,9 +700,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
 
-        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
-            (_currentDebt.add(_amount)).mul(10**_decimals)
-        );
+        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices
+            .mul(_totalCollateralToken)
+            .div((_currentDebt.add(_amount)).mul(10**_decimals))
+            .mul(10**30);
         require(
             _collateralRatioIfAmountIsWithdrawn > creditLineConstants[_id].idealCollateralRatio,
             "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
@@ -889,7 +890,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
 
         uint256 currentDebt = calculateCurrentDebt(_id);
-        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).div(10**_decimals);
+        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).mul(10**30).div(
+            10**_decimals
+        );
+
         return currentCollateralRatio;
     }
 

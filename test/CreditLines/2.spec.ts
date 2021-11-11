@@ -235,7 +235,7 @@ describe('Credit Lines', async () => {
             let _borrower: string = borrower.address;
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = Contracts.DAI;
             let _collateralAsset: string = Contracts.LINK;
 
@@ -300,6 +300,9 @@ describe('Credit Lines', async () => {
             await savingsAccount.connect(lender).deposit(largeAmount.mul(100), DaiTokenContract.address, noYield.address, lender.address);
 
             await savingsAccount.connect(lender).approve(amountToBorrow, DaiTokenContract.address, creditLine.address);
+            let borrowableAmount = await creditLine.connect(lender).callStatic.calculateBorrowableAmount(borrowerCreditLine);
+            // console.log({borrowableAmount});
+            // 10000000000000000000 10 DAI
 
             await creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow);
         });
