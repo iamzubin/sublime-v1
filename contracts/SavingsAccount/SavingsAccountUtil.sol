@@ -2,8 +2,8 @@
 pragma solidity 0.8.10;
 
 import '../interfaces/ISavingsAccount.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 
 library SavingsAccountUtil {
     using SafeERC20 for IERC20;

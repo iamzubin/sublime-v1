@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
 import '../interfaces/IStrategyRegistry.sol';
 

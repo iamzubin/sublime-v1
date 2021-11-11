@@ -2,7 +2,7 @@
 pragma solidity 0.8.10;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts/cryptography/ECDSA.sol';
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import '../interfaces/IVerification.sol';
 
 /// @title Contract that handles linking identity of user to address
