@@ -68,13 +68,13 @@ describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
             [
-                { asset: Contracts.USDT, liquidityToken: Contracts.cUSDT },
+                { asset: Contracts.USDC, liquidityToken: Contracts.cUSDC },
                 { asset: zeroAddress, liquidityToken: Contracts.cETH },
             ] as CompoundPair[],
             [] as YearnPair[],
             [
                 { tokenAddress: zeroAddress, feedAggregator: ChainLinkAggregators['ETH/USD'] },
-                { tokenAddress: Contracts.USDT, feedAggregator: ChainLinkAggregators['USDT/USD'] },
+                { tokenAddress: Contracts.USDC, feedAggregator: ChainLinkAggregators['USDC/USD'] },
             ] as PriceOracleSource[],
             {
                 votingPassRatio: extensionParams.votingPassRatio,
@@ -109,7 +109,7 @@ describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`)); // one pool factory - one salt => 1 unique pool
         let { admin, borrower, lender } = env.entities;
         let deployHelper: DeployHelper = new DeployHelper(admin);
-        let USDT: ERC20 = await deployHelper.mock.getMockERC20(Contracts.USDT);
+        let USDT: ERC20 = await deployHelper.mock.getMockERC20(Contracts.USDC);
         let ETH: ERC20 = await deployHelper.mock.getMockERC20(zeroAddress); // this is made into type only for matching the signature
         let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
@@ -448,7 +448,7 @@ describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
 
         await env.savingsAccount
             .connect(lender)
-            .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address);
+            .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address, { gasLimit: 200000});
         console.log('Check1');
         await env.savingsAccount.connect(lender).approve(unlimited, env.mockTokenContracts[0].contract.address, creditLine.address);
 
@@ -546,6 +546,7 @@ describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
         let { admin, borrower, lender } = env.entities;
         let CTDecimals = BigNumber.from('18');
         let withdrawAmount = BigNumber.from('1').mul(BigNumber.from('10').pow(CTDecimals));
+        // let withdrawAmount = BigNumber.from('100');
         await creditLine.connect(borrower).withdrawCollateral(values, withdrawAmount, false);
     });
 

@@ -11,8 +11,6 @@ import '../interfaces/ISavingsAccount.sol';
 import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IStrategyRegistry.sol';
 
-import 'hardhat/console.sol';
-
 /**
  * @title Credit Line contract with Methods related to credit Line
  * @notice Implements the functions related to Credit Line
@@ -703,9 +701,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _tokenDiffBalance;
         if (_borrowAsset != address(0)) {
             uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
-            console.log('_withdrawBorrowAmount');
             _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
-            console.log('_withdrawBorrowAmount done');
             uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         } else {
