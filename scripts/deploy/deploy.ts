@@ -181,12 +181,12 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         creditLine,
         admin,
         noYield.address,
-        priceOracle.address,
-        savingsAccount.address,
-        strategyRegistry.address,
+        priceOracle,
+        savingsAccount,
+        strategyRegistry,
         {
-            _protocolFeeFraction: '100000000000',
-            _liquidatorRewardFraction: '10000000',
+            _protocolFeeFraction: '1750000000000000000000000000',
+            _liquidatorRewardFraction: '92000000000000000000000000000',
         },
         admin
     );

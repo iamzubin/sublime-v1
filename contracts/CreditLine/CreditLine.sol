@@ -44,7 +44,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 totalInterestRepaid;
         uint256 lastPrincipalUpdateTime;
         uint256 interestAccruedTillLastPrincipalUpdate;
-        uint256 collateralAmount;
     }
 
     struct CreditLineConstants {
@@ -700,10 +699,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
 
-        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices
-            .mul(_totalCollateralToken)
-            .div((_currentDebt.add(_amount)).mul(10**_decimals))
-            .mul(10**30);
+        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(10**30).div((_currentDebt.add(_amount)).mul(10**_decimals)).mul(
+            _totalCollateralToken
+        );
+
         require(
             _collateralRatioIfAmountIsWithdrawn > creditLineConstants[_id].idealCollateralRatio,
             "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
