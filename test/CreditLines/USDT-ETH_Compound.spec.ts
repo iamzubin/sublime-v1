@@ -448,7 +448,7 @@ describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
 
         await env.savingsAccount
             .connect(lender)
-            .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address, { gasLimit: 200000});
+            .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address);
         console.log('Check1');
         await env.savingsAccount.connect(lender).approve(unlimited, env.mockTokenContracts[0].contract.address, creditLine.address);
 
