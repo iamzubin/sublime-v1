@@ -514,9 +514,7 @@ describe('Pool Borrow Withdrawal stage', async () => {
             it('Pool tokens are not transferrable after pool cancel', async () => {
                 await pool.connect(borrower).cancelPool();
                 const balance = await pool.balanceOf(lender.address);
-                await expect(pool.connect(lender).transfer(lender1.address, balance)).to.be.revertedWith(
-                    'TT1'
-                );
+                await expect(pool.connect(lender).transfer(lender1.address, balance)).to.be.revertedWith('TT1');
             });
 
             it('Once pool is cancelled anyone can liquidate penality, direct penality withdrawal', async () => {
