@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IVerification {
     /// @notice Event emitted when a verifier is added as valid by admin

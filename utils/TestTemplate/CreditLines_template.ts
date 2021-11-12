@@ -181,7 +181,7 @@ export async function CreditLines(
             let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
             let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
@@ -209,7 +209,7 @@ export async function CreditLines(
             let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
             let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
@@ -235,7 +235,7 @@ export async function CreditLines(
             let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
             let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
@@ -285,7 +285,7 @@ export async function CreditLines(
             let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
             let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
@@ -456,7 +456,7 @@ export async function CreditLines(
             _liquidationThreshold = BigNumber.from(100);
             _borrowRate = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             _autoLiquidation = true;
-            _collateralRatio = BigNumber.from(200);
+            _collateralRatio = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             _borrowAsset = env.mockTokenContracts[0].contract.address;
             _collateralAsset = env.mockTokenContracts[1].contract.address;
 
@@ -921,7 +921,7 @@ export async function CreditLines(
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
 
@@ -964,6 +964,7 @@ export async function CreditLines(
 
             await timeTravel(network, 86400 * 10); // 10 days
 
+            await creditLine.connect(borrower).calculateBorrowableAmount(creditLineNumber); // the call is only for triggering the console events
             let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
 
             expect(borrowableAmount).lte(borrowLimit);
@@ -977,7 +978,7 @@ export async function CreditLines(
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
 
@@ -1094,7 +1095,7 @@ export async function CreditLines(
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
 
@@ -1218,7 +1219,7 @@ export async function CreditLines(
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
 

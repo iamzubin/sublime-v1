@@ -55,7 +55,7 @@ describe('Create Snapshot', async () => {
     });
 });
 
-describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
+describe.only('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;
@@ -385,7 +385,7 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
             .connect(admin)
             .balanceInShares(random.address, _collateralAsset, env.yields.compoundYield.address);
 
-        console.log('Random address', random.address);
+        // console.log('Random address', random.address);
         await creditLine.connect(random).depositCollateral(values, amountForDeposit, env.yields.compoundYield.address, true);
 
         const collateralBalanceInSharesAfter = await env.savingsAccount

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
@@ -44,7 +44,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 totalInterestRepaid;
         uint256 lastPrincipalUpdateTime;
         uint256 interestAccruedTillLastPrincipalUpdate;
-        uint256 collateralAmount;
     }
 
     struct CreditLineConstants {
@@ -136,6 +135,21 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineConstants[_id].lender == msg.sender, 'Only credit line Lender can access');
         _;
     }
+
+    /**
+     * @notice emitted when a collateral is deposited into credit line
+     * @param id id of the credit line
+     * @param amount amount of collateral deposited
+     * @param strategy address of the strategy into which collateral is deposited
+     */
+    event CollateralDeposited(uint256 indexed id, uint256 amount, address indexed strategy);
+
+    /**
+     * @notice emitted when collateral is withdrawn from credit line
+     * @param id id of the credit line
+     * @param amount amount of collateral withdrawn
+     */
+    event CollateralWithdrawn(uint256 indexed id, uint256 amount);
 
     /**
      * @notice emitted when a request for new credit line is placed
@@ -434,7 +448,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _currentDebt = calculateCurrentDebt(_id);
 
-        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).div(
+        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).mul(10**30).div(
             10**_decimals
         );
 
@@ -457,7 +471,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = _newInterestAccrued;
     }
 
-    function _depositCollateralToSavingsAccount(
+    function _depositCollateralFromSavingsAccount(
         uint256 _id,
         uint256 _amount,
         address _sender
@@ -491,7 +505,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 return;
             }
         }
-        revert('CreditLine::_depositCollateralToSavingsAccount - Insufficient balance');
+        revert('CreditLine::_depositCollateralFromSavingsAccount - Insufficient balance');
     }
 
     /**
@@ -611,6 +625,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) external payable nonReentrant ifCreditLineExists(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
+        emit CollateralDeposited(_id, _amount, _strategy);
     }
 
     function _depositCollateral(
@@ -621,7 +636,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal {
         require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
         if (_fromSavingsAccount) {
-            _depositCollateralToSavingsAccount(_id, _amount, msg.sender);
+            _depositCollateralFromSavingsAccount(_id, _amount, msg.sender);
         } else {
             address _collateralAsset = creditLineConstants[_id].collateralAsset;
             ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
@@ -684,9 +699,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
 
-        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
-            (_currentDebt.add(_amount)).mul(10**_decimals)
+        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(10**30).div((_currentDebt.add(_amount)).mul(10**_decimals)).mul(
+            _totalCollateralToken
         );
+
         require(
             _collateralRatioIfAmountIsWithdrawn > creditLineConstants[_id].idealCollateralRatio,
             "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
@@ -873,7 +889,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
 
         uint256 currentDebt = calculateCurrentDebt(_id);
-        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).div(10**_decimals);
+        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).mul(10**30).div(
+            10**_decimals
+        );
+
         return currentCollateralRatio;
     }
 
@@ -916,6 +935,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(_amount <= _withdrawableCollateral, 'Collateral ratio cant go below ideal');
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         _transferCollateral(_id, _collateralAsset, _amount, _toSavingsAccount);
+        emit CollateralWithdrawn(_id, _amount);
     }
 
     /**
