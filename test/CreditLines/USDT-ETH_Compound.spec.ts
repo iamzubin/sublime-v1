@@ -41,7 +41,7 @@ import { expectApproxEqual } from '../../utils/helpers';
 import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
 import { isAddress } from 'ethers/lib/utils';
 
-describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
+describe.skip('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;
@@ -68,13 +68,13 @@ describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
             hre,
             [WBTCWhale, WhaleAccount, Binance7],
             [
-                { asset: Contracts.USDC, liquidityToken: Contracts.cUSDC },
+                { asset: Contracts.USDT, liquidityToken: Contracts.cUSDT },
                 { asset: zeroAddress, liquidityToken: Contracts.cETH },
             ] as CompoundPair[],
             [] as YearnPair[],
             [
                 { tokenAddress: zeroAddress, feedAggregator: ChainLinkAggregators['ETH/USD'] },
-                { tokenAddress: Contracts.USDC, feedAggregator: ChainLinkAggregators['USDC/USD'] },
+                { tokenAddress: Contracts.USDT, feedAggregator: ChainLinkAggregators['USDT/USD'] },
             ] as PriceOracleSource[],
             {
                 votingPassRatio: extensionParams.votingPassRatio,
@@ -109,7 +109,7 @@ describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
         let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`)); // one pool factory - one salt => 1 unique pool
         let { admin, borrower, lender } = env.entities;
         let deployHelper: DeployHelper = new DeployHelper(admin);
-        let USDT: ERC20 = await deployHelper.mock.getMockERC20(Contracts.USDC);
+        let USDT: ERC20 = await deployHelper.mock.getMockERC20(Contracts.USDT);
         let ETH: ERC20 = await deployHelper.mock.getMockERC20(zeroAddress); // this is made into type only for matching the signature
         let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
 
@@ -437,6 +437,8 @@ describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
         await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, lenderAmount);
         await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, lenderAmount);
         await env.mockTokenContracts[0].contract.connect(lender).approve(env.yields.compoundYield.address, lenderAmount);
+        // Extra approval for usdt
+        // await env.mockTokenContracts[0].contract.connect(lender).safeApprove(env.mockTokenContracts[0].contract.address, lenderAmount);
 
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, borrowerCollateral);
         await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, borrowerCollateral);

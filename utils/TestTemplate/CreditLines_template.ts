@@ -665,12 +665,12 @@ export async function CreditLines(
         it('CreditLine Active: Only borrower can withdraw collateral from creditline', async function () {
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[40];
-    
+
             await expect(creditLine.connect(random).withdrawCollateral(values, 100, false)).to.be.revertedWith(
                 'Only credit line Borrower can access'
             );
         });
-    
+
         it('CreditLine Active: inactive creditline withdraw should be reverted', async function () {
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
@@ -705,12 +705,12 @@ export async function CreditLines(
             )
                 .to.emit(creditLine, 'CreditLineRequested')
                 .withArgs(valuesNew, random1.address, borrower.address);
-    
+
             await expect(creditLine.connect(random1).withdrawCollateral(valuesNew, 100, false)).to.be.revertedWith(
                 'Only credit line Borrower can access'
             );
         });
-    
+
         it('CreditLine Active: Collateral can be withdrawn if collateral ratio is maintained', async function () {
             let { admin, borrower, lender } = env.entities;
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
@@ -718,22 +718,22 @@ export async function CreditLines(
             // let withdrawAmount = BigNumber.from('100');
             await creditLine.connect(borrower).withdrawCollateral(values, withdrawAmount, false);
         });
-    
+
         it('CreditLine Active: collateral withdraw should be reverted if collateral ratio goes below ideal', async function () {
             let { admin, borrower, lender } = env.entities;
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
             let withdrawAmount = BigNumber.from('500').mul(BigNumber.from('10').pow(CTDecimals));
-    
+
             await expect(creditLine.connect(borrower).withdrawCollateral(values, withdrawAmount, false)).to.be.revertedWith(
                 'Collateral ratio cant go below ideal'
             );
         });
-    
+
         it('CreditLine Active: collateral withdraw should be reverted if deposited collateral amount is exceeded', async function () {
             let { admin, borrower, lender } = env.entities;
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
             let withdrawAmount = BigNumber.from('1000').mul(BigNumber.from('10').pow(CTDecimals));
-    
+
             await expect(creditLine.connect(borrower).withdrawCollateral(values, withdrawAmount, false)).to.be.revertedWith(
                 'Collateral ratio cant go below ideal'
             );
