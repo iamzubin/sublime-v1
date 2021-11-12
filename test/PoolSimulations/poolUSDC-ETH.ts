@@ -12,7 +12,9 @@ import {
     YearnPair,
 } from '../../utils/types';
 import hre from 'hardhat';
+const { ethers, network } = hre;
 import { Contracts } from '../../existingContracts/compound.json';
+import { expect, assert } from 'chai';
 
 import {
     WBTCWhale,
@@ -28,13 +30,38 @@ import {
 import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
-import { BigNumber } from 'ethers';
-import { IYield } from '../../typechain/IYield';
+import { BigNumber, BigNumberish } from 'ethers';
+import { IYield } from '@typechain/IYield';
+import { Address } from 'hardhat-deploy/dist/types';
+import { Pool } from '@typechain/Pool';
+import { CreditLine } from '../../typechain/CreditLine';
 import { zeroAddress } from '../../utils/constants';
 import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
+import { expectApproxEqual } from '../../utils/helpers';
+import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
 
 describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
+    let pool: Pool;
+    let poolAddress: Address;
+
+    let deployHelper: DeployHelper;
+    let BorrowAsset: ERC20;
+    let CollateralAsset: ERC20;
+    let iyield: IYield;
+    let creditLine: CreditLine;
+
+    let borrowLimit: BigNumber;
+    let collateralAmout: BigNumber;
+    let _liquidationThreshold: BigNumber;
+    let amountForDeposit: BigNumber;
+    let _borrowRate: BigNumberish;
+    let _autoLiquidation: boolean;
+    let _collateralRatio: BigNumberish;
+    let _borrowAsset: string;
+    let _collateralAsset: string;
+    let values: BigNumber;
+    let valuesNew: BigNumber;
     before(async () => {
         env = await createEnvironment(
             hre,

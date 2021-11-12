@@ -208,6 +208,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     ) internal returns (uint256 sharesReceived) {
         uint256 initialCTokenBalance = IERC20(cToken).balanceOf(address(this));
         //mint cToken
+        // IERC20(asset).safeApprove(cToken, amount);
         IERC20(asset).approve(cToken, amount);
         require(ICToken(cToken).mint(amount) == 0, 'Error in minting tokens');
         sharesReceived = IERC20(cToken).balanceOf(address(this)).sub(initialCTokenBalance);
