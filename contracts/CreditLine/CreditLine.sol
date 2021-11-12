@@ -1023,7 +1023,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         if (creditLineConstants[_id].autoLiquidation && _lender != msg.sender) {
             uint256 _borrowTokens = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
-            if(_borrowAsset == 0) {
+            if(_borrowAsset == address(0)) {
                 uint256 _returnETH = msg.value.sub(_borrowTokens, "Insufficient ETH to liquidate");
                 if(_returnETH != 0) {
                     (bool success, ) = msg.sender.call{value: _returnETH}('');
