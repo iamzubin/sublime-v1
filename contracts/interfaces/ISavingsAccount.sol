@@ -84,7 +84,7 @@ interface ISavingsAccount {
      * @param from address of user from whcih allowance is increased
      * @param amount amount of tokens by which allowance is increased
      */
-    event CreditLineAllowanceRefreshed(address indexed token, address indexed from, uint256 amount);
+    event CreditLineAllowanceRefreshed(address indexed token, address indexed from, address indexed to, uint256 amount);
 
     function deposit(
         uint256 amount,

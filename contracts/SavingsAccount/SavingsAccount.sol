@@ -362,7 +362,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     ) external override onlyCreditLine(msg.sender) {
         allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].add(_amount);
 
-        emit CreditLineAllowanceRefreshed(_token, _from, _amount);
+        emit CreditLineAllowanceRefreshed(_token, _from, msg.sender, _amount);
     }
 
     /**
