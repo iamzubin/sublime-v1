@@ -612,7 +612,7 @@ export async function preActivePoolChecks(
             assert(collateralBalancePoolBeforeCancel.toString() == borrowerCollateralSharesAfterCancel.toString(), "Penalty deducted");    
         });
     });
-
+    /*
     describe('After loan starts and before loanWithdrawalDeadline or lent amount withdraw: Part3', async () => {
         let env: Environment;
         let pool: Pool;
@@ -773,4 +773,5 @@ export async function preActivePoolChecks(
             await borrowToken.connect(protocolFeeCollector).transfer(admin.address, checkProtcolFee);
         });
     });
+    */
 }

@@ -232,7 +232,7 @@ export async function cancellationChecks(
             let penaltyForCancelling = poolCancelPenaltyFraction.mul(borrowRate).mul(baseLiquidityShares).div(scalingNumber).mul(penaltyTime).div(yearInSeconds).div(scalingNumber);
             console.log("Penalty for Cancelling: ", penaltyForCancelling.toString());
             
-            // Borrower cancels the pool in the collection stage itself
+            // A random entity tries to cancel the pool
             await expect(pool.connect(random).cancelPool()).to.emit(pool, "PoolCancelled");
 
             // Checking the status of the loan
@@ -241,8 +241,75 @@ export async function cancellationChecks(
             `Pool should have been in active stage, found in: ${newLoanStage}`);
         });
 
-        // it("Pool cancellation should lead to cancelling of any open extension: ", async function() {
+        it.only("Pool cannot be cancelled when extensions have been granted: ", async function() {
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            let {admin, borrower, lender} = env.entities;
+            let random = env.entities.extraLenders[33];
 
-        // });
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let minBorrowAmount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals));
+            let amount = minBorrowAmount.mul(2).div(3);
+            let amount1 = minBorrowAmount.add(10).div(3);
+
+            let lender1 = env.entities.extraLenders[3];
+
+            // Approving Borrow tokens to the lender
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await borrowToken.connect(admin).transfer(lender.address, amount);
+            await borrowToken.connect(lender).approve(poolAddress, amount);
+
+            // Lender lends into the pool
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            // Approving Borrow tokens to the lender1
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount1);
+            await borrowToken.connect(admin).transfer(lender1.address, amount1);
+            await borrowToken.connect(lender1).approve(poolAddress, amount1);
+
+            // Lender1 lends into the pool
+            const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, false));
+            await lendExpect1.to.emit(pool, 'LiquiditySupplied').withArgs(amount1, lender1.address);
+            await lendExpect1.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender1.address, amount1);
+
+            //block travel to escape withdraw interval
+            const { loanStartTime } = await pool.poolConstants();
+            await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
+
+            let {loanStatus} = await pool.poolVariables();
+            console.log(loanStatus);
+
+            await pool.connect(borrower).withdrawBorrowedAmount();
+
+            let Ext_Variables = await env.extenstion.connect(admin).extensions(pool.address);
+            let VoteEndTime = Ext_Variables.extensionVoteEndTime;
+            console.log(VoteEndTime.toString());
+
+            // Requesting the extension
+            await env.extenstion.connect(borrower).requestExtension(pool.address);
+
+            let Ext_Variables1 = await env.extenstion.connect(admin).extensions(pool.address);
+            let VoteEndTime1 = Ext_Variables1.extensionVoteEndTime;
+            console.log(VoteEndTime1.toString());
+
+            // Extension passes only when majority lenders vote in favour
+            /*
+                Wierd Bug: In the below lines, the lender1 votes first and then the lender and the test goes on as expected.
+                However, if I put the lender first and then the lender1 in terms of voting, then the test reverts with: `Voting Complete`  revert message
+            */
+            
+            await env.extenstion.connect(lender1).voteOnExtension(pool.address);
+            await env.extenstion.connect(lender).voteOnExtension(pool.address);
+            const {isLoanExtensionActive} = await env.repayments.connect(admin).repayVariables(pool.address);
+            
+            console.log("isLoanExtensionActive: ",isLoanExtensionActive);
+            assert(isLoanExtensionActive, 'Extension not active');
+
+            // Cancelling the pool
+            await expect(pool.connect(random).cancelPool()).to.be.revertedWith('CP1');
+        });
     });
 }
