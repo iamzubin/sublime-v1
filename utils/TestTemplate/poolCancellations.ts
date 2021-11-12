@@ -190,15 +190,16 @@ export async function cancellationChecks(
             await expect(pool.connect(random).cancelPool()).to.be.revertedWith("CP1");
         });
 
-        it("Pool can be cancelled by anyone after the loanWithdrawalDeadline: ", async function() {
+        it("Pool can be cancelled by anyone after the loanWithdrawalDeadline; corrected collateral is withdrawn to the borrower; pool tokens become non-transferable", async function() {
             let { admin, borrower, lender } = env.entities;
-            let random = env.entities.extraLenders[10]; // Random address
+            let random = env.entities.extraLenders[10];
             let poolStrategy = env.yields.compoundYield;
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
             let collateralToken = env.mockTokenContracts[1].contract;
             let borrowToken = env.mockTokenContracts[0].contract;
-            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+            let amount = BigNumber.from(100).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+            let strategy = env.yields.compoundYield.address;
 
             // Lender approves his borrow tokens to be used by the pool to get some Pool Tokens
             await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
@@ -215,33 +216,96 @@ export async function cancellationChecks(
             await blockTravel(network, parseInt(loanWithdrawalDeadline.add(1).toString()));
 
             // The balance of the pool is equivalent to the balance of the collateralShares of the pool
-            const collateralBalancePoolBeforeCancel = await env.savingsAccount.connect(admin).balanceInShares(pool.address, collateralToken.address, poolStrategy.address);
-            console.log("Collateral Token Balance of Pool: ", collateralBalancePoolBeforeCancel.toString());
+            // Before balances:
+            const collateralBalanceOfPoolInShares = await env.savingsAccount.connect(admin)
+                                                                            .balanceInShares(pool.address, collateralToken.address, poolStrategy.address);
+            const collateralBalanceOfPoolInTokens = await env.yields
+                                                                .compoundYield
+                                                                .callStatic
+                                                                .getTokensForShares(collateralBalanceOfPoolInShares, collateralToken.address);
+            console.log("Collateral Balance Of Pool In Tokens: ", collateralBalanceOfPoolInTokens.toString());
+            const collateralBalanceOfBorrowerInShares = await env.savingsAccount.connect(admin)
+                                                                                .balanceInShares(borrower.address, collateralToken.address, poolStrategy.address);
+            const collateralBalanceOfBorrowerInTokens = await env.yields.compoundYield.callStatic
+                                                                                .getTokensForShares(collateralBalanceOfBorrowerInShares, collateralToken.address);
 
-            // Check whether the pool has went into the active stage of the loan or not
-            let {loanStatus} = await pool.poolVariables();
-            console.log(loanStatus.toString());
+            /*
+            console.log("Collateral Balance of Pool before Cancellation: ", collateralBalanceOfPoolInTokens.toString());
+            console.log("Collateral Balance of Borrower before Cancellation: ", collateralBalanceOfBorrowerInTokens.toString());
+            console.log("Non saving account balance of Borrower: ", preCancelBorrower.toString());
+            */
 
+            //Penalty Calculation
             let baseLiquidityShares = (await pool.poolVariables()).baseLiquidityShares;
-            let poolCancelPenaltyFraction = testPoolFactoryParams._poolCancelPenalityFraction;
+            const {loanStartTime} = await pool.poolConstants();
+            let penaltyTime = ((await pool.poolConstants()).repaymentInterval).add(loanWithdrawalDeadline.sub(loanStartTime));
+            let penaltyMultiple = testPoolFactoryParams._poolCancelPenalityFraction;
             let borrowRate = (await pool.poolConstants()).borrowRate;
-            let scalingNumber = BigNumber.from(10).pow(30);
-            let penaltyTime = (await pool.poolConstants()).repaymentInterval;
             let yearInSeconds = 365*24*60*60;
+            const precisionNumber = BigNumber.from(10).pow(30);
 
-            let penaltyForCancelling = poolCancelPenaltyFraction.mul(borrowRate).mul(baseLiquidityShares).div(scalingNumber).mul(penaltyTime).div(yearInSeconds).div(scalingNumber);
-            console.log("Penalty for Cancelling: ", penaltyForCancelling.toString());
+            let penaltyAmount = penaltyMultiple
+                                    .mul(borrowRate)
+                                    .mul(baseLiquidityShares)
+                                    .div(precisionNumber)
+                                    .mul(penaltyTime)
+                                    .div(yearInSeconds)
+                                    .div(precisionNumber);
             
+            console.log(penaltyAmount.toString());
             // A random entity tries to cancel the pool
             await expect(pool.connect(random).cancelPool()).to.emit(pool, "PoolCancelled");
 
-            // Checking the status of the loan
-            let newLoanStage = (await pool.poolVariables()).loanStatus;
-            assert.equal(newLoanStage.toString(), "3", 
-            `Pool should have been in active stage, found in: ${newLoanStage}`);
+            // Checking whether the pool has been cancelled or not
+            let {loanStatus} = await pool.poolVariables();
+            //console.log("Loan Status: ", loanStatus);
+
+            // Pool tokens should not be transferable after a pool is closed:
+            const poolTokenBalanceOfLenderInitial = await pool.balanceOf(lender.address);
+            const poolTokenBalanceOfRandomInitial = await pool.balanceOf(random.address);
+
+            // Transferring lender's Pool Tokens to the random address to check whether the pool tokens are transferable or not
+            await expect(pool.connect(lender).transfer(random.address, (amount.div(2)))).to.be.revertedWith('TT1');
+
+            // Testing the pool token balance of the random address now
+            const poolTokenBalanceOfLenderFinal = await pool.balanceOf(lender.address);
+            const poolTokenBalanceOfRandomFinal = await pool.balanceOf(random.address);
+            assert(poolTokenBalanceOfRandomFinal.sub(poolTokenBalanceOfRandomInitial).eq(0) , "The pool token balance of random address should not have increased."); 
+            assert(poolTokenBalanceOfLenderInitial.sub(poolTokenBalanceOfLenderFinal).eq(0), "The lender's balance of pool tokens should not change");
+            
+            // Collateral should be auto-withdrawn to the borrower, after removing the penalty
+            //After balances:
+            const collateralBalanceOfPoolInSharesNext = await env.savingsAccount.connect(admin).balanceInShares(pool.address, collateralToken.address, strategy);
+            const collateralBalanceOfPoolInTokensNext = await env.yields.compoundYield.callStatic.getTokensForShares(collateralBalanceOfPoolInShares, collateralToken.address);
+
+            const collateralBalanceOfBorrowerInSharesNext = await env.savingsAccount.connect(admin).balanceInShares(borrower.address, collateralToken.address, poolStrategy.address);
+            const collateralBalanceOfBorrowerInTokensNext = await env.yields.compoundYield.callStatic.getTokensForShares(collateralBalanceOfBorrowerInShares, collateralToken.address);
+            
+            /*
+            This test to determine the auto-withdrawal of collateral minus penalty back to the borrower works when using shares. 
+            Fails when using tokens. See for yourselves using the console.log statments
+            
+            console.log("Collateral Balance of Pool after Cancellation: ", collateralBalanceOfPoolInTokensNext.toString());
+            console.log("Collateral Balance of Borrower after Cancellation: ", collateralBalanceOfBorrowerInTokensNext.toString());
+            console.log("Non saving account balance of Borrower: ", postCancelBorrower.toString());
+
+            console.log("Before Pool: ", collateralBalanceOfPoolInShares.toString());
+            console.log("After Pool: ", collateralBalanceOfPoolInSharesNext.toString());
+            console.log("Before Borrower: ", collateralBalanceOfBorrowerInShares.toString());
+            console.log("After Borrower: ", collateralBalanceOfBorrowerInSharesNext.toString());
+            */
+
+            let collateralBalanceOfBorrowerInSharesAfterCancel = await env.yields.compoundYield.callStatic.getTokensForShares(collateralBalanceOfBorrowerInSharesNext, collateralToken.address);
+            console.log(collateralBalanceOfBorrowerInSharesAfterCancel.toString());
+
+            let penaltyAmountInTokens = await env.yields.compoundYield.callStatic.getTokensForShares(penaltyAmount, CollateralAsset.address);
+            console.log(penaltyAmountInTokens.toString());
+
+            assert((collateralBalanceOfBorrowerInSharesNext.add(collateralBalanceOfPoolInSharesNext)).eq(collateralBalanceOfPoolInShares), "Collateral incorrectly withdrawn");
+            expectApproxEqual(collateralBalanceOfPoolInTokens.sub(collateralBalanceOfBorrowerInSharesAfterCancel) , penaltyAmountInTokens, 100, "The deducted amount and penalty varied too much");
         });
 
-        it.only("Pool cannot be cancelled when extensions have been granted: ", async function() {
+        it("Pool cannot be cancelled when extensions have been granted: ", async function() {
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
             let {admin, borrower, lender} = env.entities;
