@@ -55,7 +55,7 @@ describe('Create Snapshot', async () => {
     });
 });
 
-describe.only('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
+describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;
