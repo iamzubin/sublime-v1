@@ -211,6 +211,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         IERC20(asset).approve(cToken, amount);
         require(ICToken(cToken).mint(amount) == 0, 'Error in minting tokens');
         sharesReceived = IERC20(cToken).balanceOf(address(this)).sub(initialCTokenBalance);
+        IERC20(asset).approve(cToken, 0);
     }
 
     function _withdrawETH(address cToken, uint256 amount) internal returns (uint256 received) {

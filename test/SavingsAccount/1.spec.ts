@@ -285,14 +285,14 @@ describe('Test Savings Account (with ETH)', async () => {
                 zeroAddress,
                 yearnYield.address
             );
-            // gas price put to test
+            let sharesReceived = await yearnYield.getSharesForTokens(depositValueToTest, zeroAddress);
             await expect(
                 savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, yearnYield.address, randomAccount.address, {
                     value: depositValueToTest,
                 })
             )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(randomAccount.address, depositValueToTest, zeroAddress, yearnYield.address);
+                .withArgs(randomAccount.address, sharesReceived, zeroAddress, yearnYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
@@ -397,18 +397,22 @@ describe('Test Savings Account (with ETH)', async () => {
         });
 
         it('Should deposit into another account', async () => {
+            await savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, compoundYield.address, randomAccount.address, {
+                value: depositValueToTest,
+            })
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
                 compoundYield.address
             );
+            let sharesReceived = await compoundYield.getSharesForTokens(depositValueToTest, zeroAddress);
             await expect(
                 savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, compoundYield.address, randomAccount.address, {
                     value: depositValueToTest,
                 })
             )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(randomAccount.address, depositValueToTest, zeroAddress, compoundYield.address);
+                .withArgs(randomAccount.address, sharesReceived, zeroAddress, compoundYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
