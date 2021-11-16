@@ -285,14 +285,14 @@ describe('Test Savings Account (with ETH)', async () => {
                 zeroAddress,
                 yearnYield.address
             );
-            // gas price put to test
+            let sharesReceived = await yearnYield.callStatic.getSharesForTokens(depositValueToTest, zeroAddress);
             await expect(
                 savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, yearnYield.address, randomAccount.address, {
                     value: depositValueToTest,
                 })
             )
                 .to.emit(savingsAccount, 'Deposited')
-                .withArgs(randomAccount.address, depositValueToTest, zeroAddress, yearnYield.address);
+                .withArgs(randomAccount.address, sharesReceived, zeroAddress, yearnYield.address);
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
@@ -315,23 +315,20 @@ describe('Test Savings Account (with ETH)', async () => {
                 let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
                 let vault: IyVault = await deployHelper.mock.getMockIyVault(yearnEthLiquidityToken);
 
-                // console.log({
-                //     expectedEthToBeReleased: expectedEthToBeReleased.toString(),
-                //     sharesToWithdraw: sharesToWithdraw.toString(),
-                // });
+                const amountToWithdraw = await yearnYield.getTokensForShares(sharesToWithdraw, zeroAddress);
 
                 await expect(
                     savingsAccount
                         .connect(randomAccount)
-                        .withdraw(sharesToWithdraw, zeroAddress, yearnYield.address, withdrawAccount.address, false)
+                        .withdraw(amountToWithdraw, zeroAddress, yearnYield.address, withdrawAccount.address, false)
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
-                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, yearnYield.address);
+                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw.sub(1), zeroAddress, yearnYield.address);
 
                 const balanceAfterWithdraw = await withdrawAccount.getBalance();
 
                 const amountReceived: BigNumberish = BigNumber.from(balanceAfterWithdraw).sub(BigNumber.from(balanceBeforeWithdraw));
-                expect(sharesToWithdraw).eq(amountReceived);
+                expect(amountToWithdraw.sub(1)).eq(amountReceived);
             });
 
             it('Withdraw half of shares received to account (withdrawShares = true)', async () => {
@@ -397,6 +394,9 @@ describe('Test Savings Account (with ETH)', async () => {
         });
 
         it('Should deposit into another account', async () => {
+            await savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, compoundYield.address, randomAccount.address, {
+                value: depositValueToTest,
+            })
             const balanceLockedBeforeTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
                 zeroAddress,
@@ -407,8 +407,7 @@ describe('Test Savings Account (with ETH)', async () => {
                     value: depositValueToTest,
                 })
             )
-                .to.emit(savingsAccount, 'Deposited')
-                .withArgs(randomAccount.address, depositValueToTest, zeroAddress, compoundYield.address);
+                .to.emit(savingsAccount, 'Deposited');
 
             const balanceLockedAfterTransaction: BigNumber = await savingsAccount.balanceInShares(
                 randomAccount.address,
@@ -417,6 +416,8 @@ describe('Test Savings Account (with ETH)', async () => {
             );
 
             sharesReceivedWithCompound = balanceLockedAfterTransaction.sub(balanceLockedBeforeTransaction);
+            const eqTokensForSharesReceived = await compoundYield.callStatic.getTokensForShares(sharesReceivedWithCompound, zeroAddress);
+            expect(eqTokensForSharesReceived).lt(depositValueToTest);
         });
 
         context('Withdraw ETH', async () => {
