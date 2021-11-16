@@ -702,7 +702,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(10**30).div((_currentDebt.add(_amount)).mul(10**_decimals)).mul(
             _totalCollateralToken
         );
-
         require(
             _collateralRatioIfAmountIsWithdrawn > creditLineConstants[_id].idealCollateralRatio,
             "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"

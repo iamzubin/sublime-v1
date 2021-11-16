@@ -298,6 +298,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         AaveLendingPool(lendingPool).deposit(asset, amount, address(this), referralCode);
 
         sharesReceived = IERC20(aToken).balanceOf(address(this)).sub(aTokensBefore);
+        IERC20(asset).approve(lendingPool, 0);
     }
 
     function _withdrawETH(uint256 amount) internal returns (uint256 received) {

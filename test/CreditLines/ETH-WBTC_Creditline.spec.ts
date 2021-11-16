@@ -427,7 +427,7 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
     it('Creditline Active: collateral ratio should not go down after borrow', async function () {
         let { admin, borrower, lender } = env.entities;
         let BTDecimals = BigNumber.from('18');
-        let amount: BigNumber = BigNumber.from('10').mul(BigNumber.from('10').pow(BTDecimals));
+        let amount: BigNumber = BigNumber.from('100').mul(BigNumber.from('10').pow(BTDecimals));
 
         await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
             "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
@@ -496,14 +496,15 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
         const block = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
         const interval = BigNumber.from(block.timestamp).add(10); // block time stamp
         await blockTravel(network, parseInt(interval.toString()));
+        // await timeTravel(network, 86400 * 10); // time travel by 10 days
         let interestDue = await creditLine.connect(admin).calculateInterestAccrued(values);
-        // console.log({ interestDue: interestDue.toString() });
+        console.log({ interestDue: interestDue.toString() });
 
         const _creditVars = await creditLine.connect(borrower).creditLineVariables(values);
         const _yearTime = 365 * 24 * 60 * 60;
         const scaler = BigNumber.from('10').pow(30);
         const _interest = _creditVars.principal.mul(_borrowRate).mul(10).div(scaler).div(_yearTime);
-        // console.log({ _interest: _interest.toString() });
+        console.log({ _interest: _interest.toString() });
 
         assert(
             interestDue.toString() == _interest.toString(),
