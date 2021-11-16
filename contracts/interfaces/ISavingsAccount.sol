@@ -21,11 +21,11 @@ interface ISavingsAccount {
      * @param newStrategy address of the strategy to which tokens are switched
      */
     event StrategySwitched(
-        address indexed user, 
-        address indexed token, 
-        uint256 sharesDecreasedInCurrentStrategy, 
-        uint256 sharesIncreasedInNewStrategy, 
-        address currentStrategy, 
+        address indexed user,
+        address indexed token,
+        uint256 sharesDecreasedInCurrentStrategy,
+        uint256 sharesIncreasedInNewStrategy,
+        address currentStrategy,
         address indexed newStrategy
     );
 

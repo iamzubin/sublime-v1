@@ -233,7 +233,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _amount,
             'SavingsAccount::withdrawFrom allowance limit exceeding'
         );
-        
+
         _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
 
         balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
