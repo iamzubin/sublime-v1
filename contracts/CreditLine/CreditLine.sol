@@ -787,9 +787,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _lender = creditLineConstants[_id].lender;
         if (!_fromSavingsAccount) {
             if (_borrowAsset == address(0)) {
-                require(msg.value >= _amount, 'creditLine::repay - value should be eq or more than repay amount');
-                (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_amount)}(''); // transfer the remaining amount
-                require(success, 'creditLine::repay - remainig value transfered successfully');
+                require(msg.value == _amount, 'creditLine::repay - Ether sent not equal to repay amount');
                 _savingsAccount.deposit{value: _amount}(_amount, _borrowAsset, _defaultStrategy, _lender);
             } else {
                 IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
@@ -1003,7 +1001,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
-     * @notice used to liquidate credit line in case collateral ratio goes above the threshold
+     * @notice used to liquidate credit line in case collateral ratio goes below the threshold
      * @dev if lender liquidates, then collateral is directly transferred. 
             If autoLiquidation is true, anyone can liquidate by providing enough borrow tokens
      * @param _id identifier for the credit line
@@ -1028,8 +1026,16 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineVariables[_id].status = CreditLineStatus.LIQUIDATED;
 
         if (creditLineConstants[_id].autoLiquidation && _lender != msg.sender) {
-            uint256 _borrowToken = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
-            IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowToken);
+            uint256 _borrowTokens = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
+            if(_borrowAsset == address(0)) {
+                uint256 _returnETH = msg.value.sub(_borrowTokens, "Insufficient ETH to liquidate");
+                if(_returnETH != 0) {
+                    (bool success, ) = msg.sender.call{value: _returnETH}('');
+                    require(success, 'Transfer fail');
+                }
+            } else {
+                IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowTokens);
+            }
         }
 
         _transferCollateral(_id, _collateralAsset, _totalCollateralTokens, _toSavingsAccount);

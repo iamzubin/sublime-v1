@@ -207,6 +207,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         uint256 sharesBefore = IERC20(vault).balanceOf(address(this));
 
         //lock collateral in vault
+        IERC20(asset).approve(vault, 0);
         IERC20(asset).approve(vault, amount);
         IyVault(vault).deposit(amount);
 

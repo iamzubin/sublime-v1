@@ -14,6 +14,12 @@ interface IStrategyRegistry {
      */
     event StrategyRemoved(address indexed strategy);
 
+    /**
+     * @notice emitted when a maximum number of approved strategies is updated
+     * @param maxStrategies updated number of maximum approved strategies
+     */
+    event MaxStrategiesUpdated(uint256 maxStrategies);
+
     function registry(address _strategy) external view returns (bool);
 
     function getStrategies() external view returns (address[] memory);

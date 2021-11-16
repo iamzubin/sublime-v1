@@ -292,6 +292,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         address lendingPool = ILendingPoolAddressesProvider(lendingPoolAddressesProvider).getLendingPool();
 
         //approve collateral to vault
+        IERC20(asset).approve(lendingPool, 0);
         IERC20(asset).approve(lendingPool, amount);
 
         //lock collateral in vault
