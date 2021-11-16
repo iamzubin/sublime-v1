@@ -51,8 +51,9 @@ interface IPool {
     /**
      * @notice emitted when borrower withdraws loan
      * @param amount tokens the borrower withdrew
+     * @param protocolFee protocol fee deducted when borrower withdrew the amount 
      */
-    event AmountBorrowed(uint256 amount);
+    event AmountBorrowed(uint256 amount, unit256 protocolFee);
 
     /**
      * @notice emitted when lender withdraws from borrow pool
