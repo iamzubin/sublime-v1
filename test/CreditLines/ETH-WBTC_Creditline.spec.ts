@@ -1163,7 +1163,7 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
         const lenderSharesBeforeRepay = await savingsAccount
             .connect(borrower)
             .balanceInShares(lender.address, BorrowAsset.address, env.yields.noYield.address);
-        await creditLine.connect(borrower).repay(creditLineNumber, amountToRepay, false, {value: ethers.utils.parseEther('5')});
+        await creditLine.connect(borrower).repay(creditLineNumber, amountToRepay, false, { value: ethers.utils.parseEther('5') });
 
         // const borrowerBalanceAfterRepay = await BorrowAsset.balanceOf(borrower.address);
         const borrowerBalanceAfterRepay = await ethers.provider.getBalance(borrower.address);
@@ -1186,7 +1186,7 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
         const lenderSharesBeforeRepay = await savingsAccount
             .connect(borrower)
             .balanceInShares(lender.address, BorrowAsset.address, env.yields.noYield.address);
-        await creditLine.connect(borrower).repay(creditLineNumber, amountToRepay, false, {value: ethers.utils.parseEther('5')});
+        await creditLine.connect(borrower).repay(creditLineNumber, amountToRepay, false, { value: ethers.utils.parseEther('5') });
 
         // const borrowerBalanceAfterRepay = await BorrowAsset.balanceOf(borrower.address);
         const borrowerBalanceAfterRepay = await ethers.provider.getBalance(borrower.address);
@@ -1200,7 +1200,7 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
         await timeTravel(network, 86400 * 10); // 10 days
 
         await BorrowAsset.connect(borrower).approve(creditLine.address, amountToRepay);
-        await creditLine.connect(borrower).repay(creditLineNumber, amountToRepay, false, {value: ethers.utils.parseEther('5')});
+        await creditLine.connect(borrower).repay(creditLineNumber, amountToRepay, false, { value: ethers.utils.parseEther('5') });
 
         // const borrowerBalanceAfterSecondRepay = await BorrowAsset.balanceOf(borrower.address);
         const borrowerBalanceAfterSecondRepay = await ethers.provider.getBalance(borrower.address);
@@ -1221,7 +1221,9 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
         await BorrowAsset.connect(borrower).approve(env.yields.noYield.address, amountToRepay);
         await savingsAccount
             .connect(borrower)
-            .deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address, {value: ethers.utils.parseEther('5')});
+            .deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address, {
+                value: ethers.utils.parseEther('5'),
+            });
         await savingsAccount.connect(borrower).approve(amountToRepay, BorrowAsset.address, creditLine.address);
 
         const borrowerSharesBeforeRepay = await savingsAccount
@@ -1252,11 +1254,15 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
         await BorrowAsset.connect(borrower).approve(env.yields.compoundYield.address, amountToRepay.div(2));
         await savingsAccount
             .connect(borrower)
-            .deposit(amountToRepay.div(2), BorrowAsset.address, env.yields.noYield.address, borrower.address, {value: ethers.utils.parseEther('5')});
+            .deposit(amountToRepay.div(2), BorrowAsset.address, env.yields.noYield.address, borrower.address, {
+                value: ethers.utils.parseEther('5'),
+            });
 
         await savingsAccount
             .connect(borrower)
-            .deposit(amountToRepay.div(2), BorrowAsset.address, env.yields.compoundYield.address, borrower.address, {value: ethers.utils.parseEther('5')});
+            .deposit(amountToRepay.div(2), BorrowAsset.address, env.yields.compoundYield.address, borrower.address, {
+                value: ethers.utils.parseEther('5'),
+            });
         await savingsAccount.connect(borrower).approve(amountToRepay, BorrowAsset.address, creditLine.address);
 
         let creditLineAllowanceBefore = await savingsAccount
@@ -1321,11 +1327,15 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
         await BorrowAsset.connect(borrower).approve(env.yields.compoundYield.address, amountToRepay.div(2));
         await savingsAccount
             .connect(borrower)
-            .deposit(amountToRepay.div(2), BorrowAsset.address, env.yields.noYield.address, borrower.address, {value: ethers.utils.parseEther('60')});
+            .deposit(amountToRepay.div(2), BorrowAsset.address, env.yields.noYield.address, borrower.address, {
+                value: ethers.utils.parseEther('60'),
+            });
 
         await savingsAccount
             .connect(borrower)
-            .deposit(amountToRepay.div(2), BorrowAsset.address, env.yields.compoundYield.address, borrower.address, {value: ethers.utils.parseEther('60')});
+            .deposit(amountToRepay.div(2), BorrowAsset.address, env.yields.compoundYield.address, borrower.address, {
+                value: ethers.utils.parseEther('60'),
+            });
         await savingsAccount.connect(borrower).approve(amountToRepay, BorrowAsset.address, creditLine.address);
 
         let creditLineAllowanceBefore = await savingsAccount

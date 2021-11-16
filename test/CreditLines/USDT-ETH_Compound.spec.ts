@@ -41,7 +41,7 @@ import { expectApproxEqual } from '../../utils/helpers';
 import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
 import { isAddress } from 'ethers/lib/utils';
 
-describe.only('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
+describe('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;

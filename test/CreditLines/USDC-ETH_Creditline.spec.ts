@@ -46,7 +46,7 @@ import { isAddress } from 'ethers/lib/utils';
 
 let snapshotId: any;
 
-describe('Create Snapshot', async () => {
+describe.only('Create Snapshot', async () => {
     it('Trying Creating Snapshot', async () => {
         snapshotId = await network.provider.request({
             method: 'evm_snapshot',
@@ -55,7 +55,7 @@ describe('Create Snapshot', async () => {
     });
 });
 
-describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
+describe.only('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;
@@ -612,7 +612,7 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
     });
 });
 
-describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Amount`, async () => {
+describe.only(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Amount`, async () => {
     let env: Environment;
     let creditLine: CreditLine;
     let admin: SignerWithAddress;
@@ -782,7 +782,9 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Am
         await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
         await creditLine
             .connect(borrower)
-            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {value: ethers.utils.parseEther('1')});
+            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {
+                value: ethers.utils.parseEther('1'),
+            });
 
         let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
 
@@ -831,7 +833,9 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Am
         await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
         await creditLine
             .connect(borrower)
-            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {value: ethers.utils.parseEther('1')});
+            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {
+                value: ethers.utils.parseEther('1'),
+            });
 
         await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
         await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
@@ -888,7 +892,9 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Am
         await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
         await creditLine
             .connect(borrower)
-            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {value: ethers.utils.parseEther('1')});
+            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {
+                value: ethers.utils.parseEther('1'),
+            });
 
         await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
         await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
@@ -1025,7 +1031,7 @@ describe.skip(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Liquidate Credit L
     it.skip('Test Liquidation', async () => {});
 });
 
-describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, async () => {
+describe.only(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, async () => {
     let env: Environment;
     let creditLine: CreditLine;
     let admin: SignerWithAddress;
@@ -1134,7 +1140,9 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, as
         await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
         await creditLine
             .connect(borrower)
-            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {value: ethers.utils.parseEther('1')});
+            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {
+                value: ethers.utils.parseEther('1'),
+            });
 
         await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
         await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
@@ -1217,9 +1225,7 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, as
         let amountToRepay = BigNumber.from(5).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
 
         await BorrowAsset.connect(borrower).approve(env.yields.noYield.address, amountToRepay);
-        await savingsAccount
-            .connect(borrower)
-            .deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address);
+        await savingsAccount.connect(borrower).deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address);
         await savingsAccount.connect(borrower).approve(amountToRepay, BorrowAsset.address, creditLine.address);
 
         const borrowerSharesBeforeRepay = await savingsAccount
@@ -1381,7 +1387,7 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, as
     });
 });
 
-describe('Restore Snapshot', async () => {
+describe.only('Restore Snapshot', async () => {
     it('Trying to restore Snapshot', async () => {
         await network.provider.request({
             method: 'evm_revert',
