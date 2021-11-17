@@ -25,9 +25,9 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
 
     /** 
     @dev Message that has to be prefixed to the address when signing with master address so that specified address can be linked to it
-    e.g. If 0xabc is to be linked to 0xfed, then 0xfed has to sign ${APPROVAL_MESSAGE}0xabc with 0xfed's private key. This signed message has to be then submitted by 0xabc to linkAddress method
+    e.g. If 0xabc is to be linked to 0xfed, then 0xfed has to sign ${CHAIN_ID}${APPROVAL_MESSAGE}${EXPIRY_TIME}0xabc with 0xfed's private key. This signed message has to be then submitted by 0xabc to linkAddress method
     */
-    string constant APPROVAL_MESSAGE = 'APPROVING ADDRESS TO BE LINKED TO ME ON SUBLIME';
+    string constant APPROVAL_MESSAGE = '1APPROVING ADDRESS TO BE LINKED TO ME ON SUBLIME';
 
     /// @notice Prevents anyone other than a valid verifier from calling a function
     modifier onlyVerifier() {
@@ -90,9 +90,10 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @notice Link an address with a master address
     /// @dev Master address to which the address is being linked need not be verified
     /// @param _approval Signature made by the master address to link the address
-    function linkAddress(bytes memory _approval) external {
+    function linkAddress(bytes memory _approval, uint256 _expiresAt) external {
         require(linkedAddresses[msg.sender] == address(0), 'V:LA-Address already linked');
-        bytes memory _messageToSign = abi.encodePacked(APPROVAL_MESSAGE, msg.sender);
+        require(_expiresAt >= block.timestamp, 'V:LA-Approval expired');
+        bytes memory _messageToSign = abi.encodePacked(APPROVAL_MESSAGE, _expiresAt, msg.sender);
         bytes32 _hashedMessage = keccak256(_messageToSign);
         address _signer = ECDSA.recover(_hashedMessage, _approval);
         linkedAddresses[msg.sender] = _signer;
