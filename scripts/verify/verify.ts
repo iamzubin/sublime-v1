@@ -2,16 +2,16 @@ import hre from 'hardhat';
 import { getAddressesToVerify } from './populateLogicAddresses';
 
 async function verifyProxy(contracts: any) {
-    let [proxyAdmin] = await hre.ethers.getSigners();
+    // let [proxyAdmin] = await hre.ethers.getSigners();
 
-    console.log(`Verifying contracts on network ${hre.network.name}`);
+    // console.log(`Verifying contracts on network ${hre.network.name}`);
 
-    console.log(`Verifying strategy proxy ${contracts.strategyRegistry.proxy}`);
-    await hre.run('verify:verify', {
-        address: contracts.strategyRegistry.proxy,
-        constructorArguments: [contracts.strategyRegistry.logic, proxyAdmin.address, Buffer.from('')],
-        contract: 'contracts/Proxy.sol:SublimeProxy',
-    });
+    // console.log(`Verifying strategy proxy ${contracts.strategyRegistry.proxy}`);
+    // await hre.run('verify:verify', {
+    //     address: contracts.strategyRegistry.proxy,
+    //     constructorArguments: [contracts.strategyRegistry.logic, proxyAdmin.address, Buffer.from('')],
+    //     contract: 'contracts/Proxy.sol:SublimeProxy',
+    // });
 
     // you don't need to verify all proxies. If needed, just copy the code snippet above
     return 'Proxy Verified';
@@ -46,11 +46,11 @@ async function verifyLogic(contracts: any) {
         contract: 'contracts/yield/AaveYield.sol:AaveYield',
     });
 
-    console.log(`Verifying yearn yield logic ${contracts.yearnYield.logic}`);
+    console.log(`Verifying no yield logic ${contracts.noYield.logic}`);
     await hre.run('verify:verify', {
-        address: contracts.yearnYield.logic,
+        address: contracts.noYield.logic,
         constructorArguments: [],
-        contract: 'contracts/yield/YearnYield.sol:YearnYield',
+        contract: 'contracts/yield/NoYield.sol:NoYield',
     });
 
     console.log(`Verifying compound yield logic ${contracts.compoundYield.logic}`);
