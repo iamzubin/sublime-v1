@@ -46,7 +46,7 @@ import { isAddress } from 'ethers/lib/utils';
 
 let snapshotId: any;
 
-describe.only('Create Snapshot', async () => {
+describe('Create Snapshot', async () => {
     it('Trying Creating Snapshot', async () => {
         snapshotId = await network.provider.request({
             method: 'evm_snapshot',
@@ -55,7 +55,7 @@ describe.only('Create Snapshot', async () => {
     });
 });
 
-describe.only('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
+describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;
@@ -612,7 +612,7 @@ describe.only('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () =
     });
 });
 
-describe.only(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Amount`, async () => {
+describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Amount`, async () => {
     let env: Environment;
     let creditLine: CreditLine;
     let admin: SignerWithAddress;
@@ -1031,7 +1031,7 @@ describe.skip(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Liquidate Credit L
     it.skip('Test Liquidation', async () => {});
 });
 
-describe.only(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, async () => {
+describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, async () => {
     let env: Environment;
     let creditLine: CreditLine;
     let admin: SignerWithAddress;
@@ -1387,7 +1387,7 @@ describe.only(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines
     });
 });
 
-describe.only('Restore Snapshot', async () => {
+describe('Restore Snapshot', async () => {
     it('Trying to restore Snapshot', async () => {
         await network.provider.request({
             method: 'evm_revert',

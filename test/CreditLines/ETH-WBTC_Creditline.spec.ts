@@ -1219,11 +1219,9 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
         let amountToRepay = BigNumber.from(5).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
 
         await BorrowAsset.connect(borrower).approve(env.yields.noYield.address, amountToRepay);
-        await savingsAccount
-            .connect(borrower)
-            .deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address, {
-                value: ethers.utils.parseEther('5'),
-            });
+        await savingsAccount.connect(borrower).deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address, {
+            value: ethers.utils.parseEther('5'),
+        });
         await savingsAccount.connect(borrower).approve(amountToRepay, BorrowAsset.address, creditLine.address);
 
         const borrowerSharesBeforeRepay = await savingsAccount

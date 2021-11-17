@@ -1489,6 +1489,97 @@ export async function CreditLines(
         });
     });
 
+    describe.only(`Credit Lines ${BorrowToken}/${CollateralToken}: Updating Credit Line params`, async () => {
+        let env: Environment;
+        let creditLine: CreditLine;
+        let admin: SignerWithAddress;
+        let lender: SignerWithAddress;
+        let borrower: SignerWithAddress;
+
+        let deployHelper: DeployHelper;
+
+        let creditLineNumber: BigNumber;
+
+        let BorrowAsset: ERC20Detailed;
+        let CollateralAsset: ERC20Detailed;
+        let savingsAccount: SavingsAccount;
+
+        before(async () => {
+            env = await createEnvironment(
+                hre,
+                [WhaleAccount1, WhaleAccount2],
+                [
+                    { asset: BorrowToken, liquidityToken: liquidityBorrowToken },
+                    { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
+                ] as CompoundPair[],
+                [] as YearnPair[],
+                [
+                    { tokenAddress: BorrowToken, feedAggregator: chainlinkBorrow },
+                    { tokenAddress: CollateralToken, feedAggregator: ChainlinkCollateral },
+                ] as PriceOracleSource[],
+                {
+                    votingPassRatio: extensionParams.votingPassRatio,
+                } as ExtensionInitParams,
+                {
+                    gracePenalityRate: repaymentParams.gracePenalityRate,
+                    gracePeriodFraction: repaymentParams.gracePeriodFraction,
+                } as RepaymentsInitParams,
+                {
+                    admin: '',
+                    _collectionPeriod: testPoolFactoryParams._collectionPeriod,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
+                    _marginCallDuration: testPoolFactoryParams._marginCallDuration,
+                    _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
+                    _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
+                    _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
+                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
+                } as PoolFactoryInitParams,
+                CreditLineDefaultStrategy.NoStrategy,
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
+            );
+
+            creditLine = env.creditLine;
+            admin = env.entities.admin;
+            lender = env.entities.lender;
+            borrower = env.entities.borrower;
+            savingsAccount = env.savingsAccount;
+            deployHelper = new DeployHelper(admin);
+        });
+
+        it('Credit Line Update: Only owner can update the default strategy', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            await expect(creditLine.connect(random).updateDefaultStrategy(env.yields.compoundYield.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateDefaultStrategy(env.yields.compoundYield.address))
+                .to.emit(creditLine, 'DefaultStrategyUpdated')
+                .withArgs(env.yields.compoundYield.address);
+        });
+
+        it('Credit Line Update: Only owner can update the price oracle', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            await expect(creditLine.connect(random).updateDefaultStrategy(env.yields.compoundYield.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateDefaultStrategy(env.yields.compoundYield.address))
+                .to.emit(creditLine, 'DefaultStrategyUpdated')
+                .withArgs(env.yields.compoundYield.address);
+        });
+    });
+
     describe('Restore Snapshot', async () => {
         it('Trying to restore Snapshot', async () => {
             await network.provider.request({
