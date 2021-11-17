@@ -1489,7 +1489,7 @@ export async function CreditLines(
         });
     });
 
-    describe.only(`Credit Lines ${BorrowToken}/${CollateralToken}: Updating Credit Line params`, async () => {
+    describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Updating Credit Line params`, async () => {
         let env: Environment;
         let creditLine: CreditLine;
         let admin: SignerWithAddress;
@@ -1570,13 +1570,96 @@ export async function CreditLines(
             let admin = env.entities.admin;
             let random = env.entities.extraLenders[30];
 
-            await expect(creditLine.connect(random).updateDefaultStrategy(env.yields.compoundYield.address)).to.be.revertedWith(
+            await expect(creditLine.connect(random).updatePriceOracle(env.priceOracle.address)).to.be.revertedWith(
                 'Ownable: caller is not the owner'
             );
 
-            await expect(creditLine.connect(admin).updateDefaultStrategy(env.yields.compoundYield.address))
-                .to.emit(creditLine, 'DefaultStrategyUpdated')
-                .withArgs(env.yields.compoundYield.address);
+            await expect(creditLine.connect(admin).updatePriceOracle(env.priceOracle.address))
+                .to.emit(creditLine, 'PriceOracleUpdated')
+                .withArgs(env.priceOracle.address);
+        });
+
+        it('Credit Line Update: Only owner can update the savings account', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            await expect(creditLine.connect(random).updateSavingsAccount(env.savingsAccount.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateSavingsAccount(env.savingsAccount.address))
+                .to.emit(creditLine, 'SavingsAccountUpdated')
+                .withArgs(env.savingsAccount.address);
+        });
+
+        it('Credit Line Update: Only owner can update the strategy registry', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            await expect(creditLine.connect(random).updateStrategyRegistry(env.strategyRegistry.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateStrategyRegistry(zeroAddress)).to.be.revertedWith(
+                'CL::I zero address'
+            );
+
+            await expect(creditLine.connect(admin).updateStrategyRegistry(env.strategyRegistry.address))
+                .to.emit(creditLine, 'StrategyRegistryUpdated')
+                .withArgs(env.strategyRegistry.address);
+        });
+
+        it('Credit Line Update: Only owner can update the protocol fee fraction', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            let protocolFeeFraction = BigNumber.from(10).mul(BigNumber.from(10).pow(28));
+
+            await expect(creditLine.connect(random).updateProtocolFeeFraction(protocolFeeFraction)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateProtocolFeeFraction(protocolFeeFraction))
+                .to.emit(creditLine, 'ProtocolFeeFractionUpdated')
+                .withArgs(protocolFeeFraction);
+        });
+
+        it('Credit Line Update: Only owner can update the protocol fee collector', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+            let protocolFeeCollector = env.entities.extraLenders[99];
+
+            await expect(creditLine.connect(random).updateProtocolFeeCollector(protocolFeeCollector.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateProtocolFeeCollector(zeroAddress)).to.be.revertedWith(
+                'cant be 0 address'
+            );
+
+            await expect(creditLine.connect(admin).updateProtocolFeeCollector(protocolFeeCollector.address))
+                .to.emit(creditLine, 'ProtocolFeeCollectorUpdated')
+                .withArgs(protocolFeeCollector.address);
+        });
+
+        it('Credit Line Update: Only owner can update the liquidator reward fraction', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            let passLiquidatorFraction = BigNumber.from(5).mul(BigNumber.from(10).pow(28));
+            let failLiquidatorFraction = BigNumber.from(2).mul(BigNumber.from(10).pow(30));
+
+            await expect(creditLine.connect(random).updateLiquidatorRewardFraction(passLiquidatorFraction)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateLiquidatorRewardFraction(failLiquidatorFraction)).to.be.revertedWith(
+                'Fraction has to be less than 1'
+            );
+
+            await expect(creditLine.connect(admin).updateLiquidatorRewardFraction(passLiquidatorFraction))
+                .to.emit(creditLine, 'LiquidationRewardFractionUpdated')
+                .withArgs(passLiquidatorFraction);
         });
     });
 
