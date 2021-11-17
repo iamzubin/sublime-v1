@@ -13,8 +13,8 @@ interface IVerification {
     /// @notice Event emitted when a master address is verified by a valid verifier
     /// @param masterAddress The masterAddress which is verifier by the verifier
     /// @param verifier The verifier which verified the masterAddress
-    /// @param isMasterLinked Boolean that specifies if the master address is added as linked address as well. Only linked addresses are considered valid
-    event UserRegistered(address indexed masterAddress, address indexed verifier, bool indexed isMasterLinked);
+    /// @param activatesAt timestamp at which master address is activated and considered valid
+    event UserRegistered(address indexed masterAddress, address indexed verifier, uint256 activatesAt);
 
     /// @notice Event emitted when a master address is marked as invalid/unregisterd by a valid verifier
     /// @param masterAddress The masterAddress which is unregistered
@@ -24,8 +24,8 @@ interface IVerification {
 
     /// @notice Event emitted when an address is linked to masterAddress
     /// @param linkedAddress The address which is linked to masterAddress
-    /// @param masterAddress The masterAddress to which address is linked
-    event AddressLinked(address indexed linkedAddress, address indexed masterAddress);
+    /// @param activatesAt timestamp at which linked address is activated and considered valid
+    event AddressLinked(address indexed linkedAddress, address indexed masterAddress, uint256 activatesAt);
 
     /// @notice Event emitted when an address is unlinked from a masterAddress
     /// @param linkedAddress The address which is linked to masterAddress

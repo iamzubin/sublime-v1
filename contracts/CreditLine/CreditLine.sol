@@ -30,6 +30,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         LIQUIDATED
     }
 
+    struct Lock {
+        uint256 unlockTime;
+        uint256 value;
+    }
+
     /**
      * @notice counter that tracks the number of credit lines created
      * @dev used to create unique identifier for credit lines
@@ -37,6 +42,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     uint256 public creditLineCounter;
 
     uint256 constant YEAR_IN_SECONDS = 365 days;
+    bytes32 constant DEFAULT_STRATEGY_UPDATE_LOCK_SELECTOR = keccak256("UPDATE_DEFAULT_STRATEGY");
+    bytes32 constant PRICE_ORACLE_UPDATE_LOCK_SELECTOR = keccak256("PRICE_ORACLE_UPDATE");
+    bytes32 constant SAVINGS_ACCOUNT_UPDATE_LOCK_SELECTOR = keccak256("SAVINGS_ACCOUNT_UPDATE");
+    bytes32 constant PROTOCOL_FEE_FRACTION_UPDATE_LOCK_SELECTOR = keccak256("PROTOCOL_FEE_FRACTION_UPDATE");
+    bytes32 constant PROTOCOL_FEE_COLLECTOR_UPDATE_LOCK_SELECTOR = keccak256("PROTOCOL_FEE_COLLECTOR_UPDATE");
+    bytes32 constant STRATEGY_REGISTRY_UPDATE_LOCK_SELECTOR = keccak256("STRATEGY_REGISTRY_UPDATE");
+    bytes32 constant LIQUIDATOR_REWARD_FRACTION_UPDATE_LOCK_SELECTOR = keccak256("LIQUIDATOR_REWARD_FRACTION_UPDATE");
 
     struct CreditLineVariables {
         CreditLineStatus status;
@@ -74,6 +86,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     mapping(uint256 => CreditLineConstants) public creditLineConstants;
 
     /**
+     * @notice stores the timestamp at which locks are complete
+     **/
+    mapping(bytes32 => Lock) public locks;
+
+    /**
      * @notice stores the address of savings account contract
      **/
     address public savingsAccount;
@@ -109,6 +126,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev it is multiplied by 10**30
      **/
     uint256 public liquidatorRewardFraction;
+
+    /**
+     * @notice stores the time in seconds for which timeLock takes effect when changing any variable
+     * @dev timelocks are used when changing any sensitive variables by owner
+     **/
+    uint256 public timeLockDelay;
     /**
      * @dev checks if Credit Line exists
      * @param _id identifier for the credit line
@@ -247,6 +270,22 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     event LiquidationRewardFractionUpdated(uint256 liquidatorRewardFraction);
 
+    event LockReset(bytes32 lockId);
+
+    event DefaultStrategyUpdateRequested(address defaultStrategy, uint256 unlocksAt);
+
+    event PriceOracleUpdateRequested(address priceOracle, uint256 unlocksAt);
+
+    event SavingsAccountUpdateRequested(address savingsAccount, uint256 unlocksAt);
+
+    event ProtocolFeeFractionUpdateRequested(uint256 protocolFeeFraction, uint256 unlocksAt);
+
+    event ProtocolFeeCollectorUpdateRequested(address protocolFeeCollector, uint256 unlocksAt);
+
+    event StrategyRegistryUpdateRequested(address strategyRegistry, uint256 unlocksAt);
+
+    event LiquidatorRewardFractionUpdateRequested(uint256 liquidatorRewardFraction, uint256 unlocksAt);
+
     /**
      * @notice used to initialize the contract
      * @dev can only be called once during the life cycle of the contract
@@ -281,12 +320,35 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
     }
 
+    function _setLock(bytes32 _lockId, uint256 _value) internal returns(uint256) {
+        require(locks[_lockId].unlockTime == 0, "request already exists");
+        uint256 _unlocksAt = block.timestamp.add(timeLockDelay);
+        locks[_lockId] = Lock(_unlocksAt, _value);
+        return _unlocksAt;
+    }
+    
+    function resetLock(bytes32 _lockId) external onlyOwner {
+        require(locks[_lockId].unlockTime != 0, "Nothing to reset");
+        emit LockReset(_lockId);
+        delete locks[_lockId];
+    }
+
+    function requestDefaultStrategyUpdate(address _defaultStrategy) external onlyOwner {
+        bytes32 _lockId = DEFAULT_STRATEGY_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_defaultStrategy));
+        emit DefaultStrategyUpdateRequested(_defaultStrategy, _unlocksAt);
+    }
+
     /**
      * @notice used to update the default strategy
      * @dev can only be updated by owner
      * @param _defaultStrategy address of the updated default strategy
      */
     function updateDefaultStrategy(address _defaultStrategy) external onlyOwner {
+        bytes32 _lockId = DEFAULT_STRATEGY_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _defaultStrategy, "Param doesnt match request");
+        delete locks[_lockId];
         _updateDefaultStrategy(_defaultStrategy);
     }
 
@@ -295,12 +357,22 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit DefaultStrategyUpdated(_defaultStrategy);
     }
 
+    function requestPriceOralceUpdate(address _priceOracle) external onlyOwner {
+        bytes32 _lockId = PRICE_ORACLE_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_priceOracle));
+        emit PriceOracleUpdateRequested(_priceOracle, _unlocksAt);
+    }
+
     /**
      * @notice used to update the price oracle
      * @dev can only be updated by owner
      * @param _priceOracle address of the updated price oracle
      */
     function updatePriceOracle(address _priceOracle) external onlyOwner {
+        bytes32 _lockId = PRICE_ORACLE_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _priceOracle, "Param doesnt match request");
+        delete locks[_lockId];
         _updatePriceOracle(_priceOracle);
     }
 
@@ -309,12 +381,22 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit PriceOracleUpdated(_priceOracle);
     }
 
+    function requestSavingsAccountUpdate(address _savingsAccount) external onlyOwner {
+        bytes32 _lockId = SAVINGS_ACCOUNT_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_savingsAccount));
+        emit SavingsAccountUpdateRequested(_savingsAccount, _unlocksAt);
+    }
+
     /**
      * @notice used to update the savings account address
      * @dev can only be updated by owner
      * @param _savingsAccount address of the updated savings account
      */
     function updateSavingsAccount(address _savingsAccount) external onlyOwner {
+        bytes32 _lockId = SAVINGS_ACCOUNT_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _savingsAccount, "Param doesnt match request");
+        delete locks[_lockId];
         _updateSavingsAccount(_savingsAccount);
     }
 
@@ -323,12 +405,22 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit SavingsAccountUpdated(_savingsAccount);
     }
 
+    function requestProtocolFeeFractionUpdate(uint256 _protocolFee) external onlyOwner {
+        bytes32 _lockId = PROTOCOL_FEE_FRACTION_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, _protocolFee);
+        emit ProtocolFeeFractionUpdateRequested(_protocolFee, _unlocksAt);
+    }
+
     /**
      * @notice used to update the protocol fee fraction
      * @dev can only be updated by owner
      * @param _protocolFee fraction of the borrower amount collected as protocol fee
      */
     function updateProtocolFeeFraction(uint256 _protocolFee) external onlyOwner {
+        bytes32 _lockId = PROTOCOL_FEE_FRACTION_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(locks[_lockId].value == _protocolFee, "Param doesnt match request");
+        delete locks[_lockId];
         _updateProtocolFeeFraction(_protocolFee);
     }
 
@@ -337,12 +429,22 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit ProtocolFeeFractionUpdated(_protocolFee);
     }
 
+    function requestProtocolFeeCollectorUpdate(address _protocolFeeCollector) external onlyOwner {
+        bytes32 _lockId = PROTOCOL_FEE_COLLECTOR_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_protocolFeeCollector));
+        emit ProtocolFeeCollectorUpdateRequested(_protocolFeeCollector, _unlocksAt);
+    }
+
     /**
      * @notice used to update the protocol fee collector
      * @dev can only be updated by owner
      * @param _protocolFeeCollector address in which protocol fee is collected
      */
     function updateProtocolFeeCollector(address _protocolFeeCollector) external onlyOwner {
+        bytes32 _lockId = PROTOCOL_FEE_COLLECTOR_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _protocolFeeCollector, "Param doesnt match request");
+        delete locks[_lockId];
         _updateProtocolFeeCollector(_protocolFeeCollector);
     }
 
@@ -352,12 +454,22 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit ProtocolFeeCollectorUpdated(_protocolFeeCollector);
     }
 
+    function requestStrategyRegistryUpdate(address _strategyRegistry) external onlyOwner {
+        bytes32 _lockId = STRATEGY_REGISTRY_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_strategyRegistry));
+        emit StrategyRegistryUpdateRequested(_strategyRegistry, _unlocksAt);
+    }
+
     /**
      * @notice used to update the strategy registry address
      * @dev can only be updated by owner
      * @param _strategyRegistry address of the updated strategy registry
      */
     function updateStrategyRegistry(address _strategyRegistry) external onlyOwner {
+        bytes32 _lockId = STRATEGY_REGISTRY_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _strategyRegistry, "Param doesnt match request");
+        delete locks[_lockId];
         _updateStrategyRegistry(_strategyRegistry);
     }
 
@@ -367,12 +479,22 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit StrategyRegistryUpdated(_strategyRegistry);
     }
 
+    function requestLiquidatorRewardFractionUpdate(uint256 _rewardFraction) external onlyOwner {
+        bytes32 _lockId = LIQUIDATOR_REWARD_FRACTION_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, _rewardFraction);
+        emit LiquidatorRewardFractionUpdateRequested(_rewardFraction, _unlocksAt);
+    }
+
     /**
      * @notice used to update the liquidatorRewardFraction
      * @dev can only be updated by owner
      * @param _rewardFraction fraction of liquidated amount given to liquidator as reward
      */
     function updateLiquidatorRewardFraction(uint256 _rewardFraction) external onlyOwner {
+        bytes32 _lockId = LIQUIDATOR_REWARD_FRACTION_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(locks[_lockId].value == _rewardFraction, "Param doesnt match request");
+        delete locks[_lockId];
         _updateLiquidatorRewardFraction(_rewardFraction);
     }
 
