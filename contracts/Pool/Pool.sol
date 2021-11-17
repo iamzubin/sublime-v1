@@ -336,10 +336,12 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _protocolFee = _tokensLent.mul(_protocolFeeFraction).div(10**30);
         delete poolConstants.loanWithdrawalDeadline;
 
-        SavingsAccountUtil.transferTokens(_borrowAsset, _protocolFee, address(this), _collector);
-        SavingsAccountUtil.transferTokens(_borrowAsset, _tokensLent.sub(_protocolFee), address(this), msg.sender);
+        uint256 _feeAdjustedWithdrawalAmount = _tokensLent.sub(_protocolFee);
 
-        emit AmountBorrowed(_tokensLent.sub(_protocolFee), _protocolFee);
+        SavingsAccountUtil.transferTokens(_borrowAsset, _protocolFee, address(this), _collector);
+        SavingsAccountUtil.transferTokens(_borrowAsset, _feeAdjustedWithdrawalAmount, address(this), msg.sender);
+
+        emit AmountBorrowed(_feeAdjustedWithdrawalAmount, _protocolFee);
     }
 
     /**
