@@ -339,7 +339,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         SavingsAccountUtil.transferTokens(_borrowAsset, _protocolFee, address(this), _collector);
         SavingsAccountUtil.transferTokens(_borrowAsset, _tokensLent.sub(_protocolFee), address(this), msg.sender);
 
-        emit AmountBorrowed(_tokensLent, _protocolFee);
+        emit AmountBorrowed(_tokensLent.sub(_protocolFee), _protocolFee);
     }
 
     /**
