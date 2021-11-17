@@ -8,20 +8,32 @@ import '../interfaces/IVerification.sol';
 /// @title Contract that handles linking identity of user to address
 ///
 contract Verification is Initializable, IVerification, OwnableUpgradeable {
+
+    struct LinkedAddress {
+        address masterAddress;
+        uint256 activatesAt;
+    }
+
+    /// @notice Delay in seconds after which master address is activated once registered 
+    uint256 public masterAddressActivationDelay;
+
+    /// @notice Delay in seconds after which linked address is activated once registered
+    uint256 public linkedAddressActivationDelay;
+
     /// @notice Tells whether a given verifier is valid
     /// @dev Mapping that stores valid verifiers as added by admin. verifier -> true/false
     /// @return boolean that represents if the specified verifier is valid
     mapping(address => bool) public verifiers;
 
-    /// @notice Maps masterAddress with the verifier that was used to verify it
-    /// @dev Mapping is from masterAddress -> verifier -> bool(isVerified)
+    /// @notice Maps masterAddress with the verifier that was used to verify it and the time when master address is active
+    /// @dev Mapping is from masterAddress -> verifier -> activationTime
     /// @return Verifier used to verify the given master address
-    mapping(address => mapping(address => bool)) public masterAddresses;
+    mapping(address => mapping(address => uint256)) public masterAddresses;
 
-    /// @notice Maps linkedAddresses with the master address
-    /// @dev Mapping is linkedAddress -> MasterAddress
-    /// @return Returns the master address for the linkedAddress
-    mapping(address => address) public linkedAddresses;
+    /// @notice Maps linkedAddresses with the master address and activation time
+    /// @dev Mapping is linkedAddress -> (MasterAddress, activationTimestamp)
+    /// @return Returns the master address and activation time for the linkedAddress
+    mapping(address => LinkedAddress) public linkedAddresses;
 
     /** 
     @dev Message that has to be prefixed to the address when signing with master address so that specified address can be linked to it
@@ -67,12 +79,14 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _masterAddress address which is registered as verified
     /// @param _isMasterLinked boolean which specifies if the masterAddress has to be added as a linked address
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external override onlyVerifier {
-        require(!masterAddresses[_masterAddress][msg.sender], 'V:RMA-Already registered');
-        masterAddresses[_masterAddress][msg.sender] = true;
+        require(masterAddresses[_masterAddress][msg.sender] == 0, 'V:RMA-Already registered');
+        uint256 _masterAddressActivatesAt = block.timestamp.add(masterAddressActivationDelay);
+        masterAddresses[_masterAddress][msg.sender] = _masterAddressActivatesAt;
+        emit UserRegistered(_masterAddress, msg.sender, _masterAddressActivatesAt);
+
         if (_isMasterLinked) {
-            linkedAddresses[_masterAddress] = _masterAddress;
+            _linkedAddress(_masterAddress, _masterAddress);
         }
-        emit UserRegistered(_masterAddress, msg.sender, _isMasterLinked);
     }
 
     /// @notice Master address can be unregistered by registered verifier or owner
@@ -81,22 +95,27 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _verifier verifier address from which master address is unregistered
     function unregisterMasterAddress(address _masterAddress, address _verifier) external override {
         if (msg.sender != super.owner()) {
-            require(masterAddresses[_masterAddress][msg.sender] || msg.sender == _verifier, 'V:UMA-Invalid verifier');
+            require(masterAddresses[_masterAddress][msg.sender] != 0 || msg.sender == _verifier, 'V:UMA-Invalid verifier');
         }
         delete masterAddresses[_masterAddress][_verifier];
         emit UserUnregistered(_masterAddress, _verifier, msg.sender);
+    }
+
+    function _linkAddress(address _linked, address _master) internal {
+        uint256 _linkedAddressActivatesAt = block.timestamp.add(linkedAddressActivationDelay);
+        linkedAddresses[_master] = LinkedAddress(_master, _linkedAddressActivatesAt);
+        emit AddressLinked(_master, _master, _linkedAddressActivatesAt);
     }
 
     /// @notice Link an address with a master address
     /// @dev Master address to which the address is being linked need not be verified
     /// @param _approval Signature made by the master address to link the address
     function linkAddress(bytes memory _approval) external {
-        require(linkedAddresses[msg.sender] == address(0), 'V:LA-Address already linked');
+        require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
         bytes memory _messageToSign = abi.encodePacked(APPROVAL_MESSAGE, msg.sender);
         bytes32 _hashedMessage = keccak256(_messageToSign);
-        address _signer = ECDSA.recover(_hashedMessage, _approval);
-        linkedAddresses[msg.sender] = _signer;
-        emit AddressLinked(msg.sender, _signer);
+        address _master = ECDSA.recover(_hashedMessage, _approval);
+        _linkAddress(msg.sender, _master);
     }
 
     /// @notice Unlink address with master address
@@ -116,8 +135,14 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _verifier verifier with which master address has to be verified
     /// @return if the user is linke dto a registered master address
     function isUser(address _user, address _verifier) external view override returns (bool) {
-        address _masterAddress = linkedAddresses[_user];
-        if (_masterAddress == address(0) || !masterAddresses[_masterAddress][_verifier]) {
+        LinkedAddress _linkedAddress = linkedAddresses[_user];
+        uint256 _masterActivatesAt = masterAddresses[_linkedAddress.masterAddress][_verifier];
+        if (
+            _linkedAddress.masterAddress == address(0) || 
+            _linkedAddress.activatesAt > block.timestamp ||
+            _masterActivatesAt == 0 ||
+            _masterActivatesAt > block.timestamp
+        ) {
             return false;
         }
         return true;
