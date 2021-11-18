@@ -24,6 +24,14 @@ contract Extension is Initializable, IExtension {
         mapping(address => uint256) lastVotedExtension;
     }
 
+    struct Lock {
+        uint256 unlockTime;
+        uint256 value;
+    }
+
+    bytes32 constant VOTING_PASS_RATIO_UPDATE_LOCK_SELECTOR = keccak256("VOTING_PASS_RATIO_UPDATE");
+    bytes32 constant POOL_FACTORY_UPDATE_LOCK_SELECTOR = keccak256("POOL_FACTORY_UPDATE");
+
     /**
      * @notice used to keep track of extension details against a pool
      */
@@ -33,6 +41,17 @@ contract Extension is Initializable, IExtension {
      * @notice used to store voting pass ratio for approving extension
      */
     uint256 public votingPassRatio;
+
+    /**
+     * @notice stores the timestamp at which locks are complete
+     **/
+    mapping(bytes32 => Lock) public locks;
+
+    /**
+     * @notice stores the time in seconds for which timeLock takes effect when changing any variable
+     * @dev timelocks are used when changing any sensitive variables by owner
+     **/
+    uint256 public timeLockDelay;
 
     /**
      * @notice checks if the msg.sender is pool's valid owner
@@ -175,17 +194,47 @@ contract Extension is Initializable, IExtension {
         delete extensions[msg.sender];
     }
 
+    function _setLock(bytes32 _lockId, uint256 _value) internal returns(uint256) {
+        require(locks[_lockId].unlockTime == 0, "request already exists");
+        uint256 _unlocksAt = block.timestamp.add(timeLockDelay);
+        locks[_lockId] = Lock(_unlocksAt, _value);
+        return _unlocksAt;
+    }
+    
+    function resetLock(bytes32 _lockId) external onlyOwner {
+        require(locks[_lockId].unlockTime != 0, "Nothing to reset");
+        emit LockReset(_lockId);
+        delete locks[_lockId];
+    }
+
+    function requestVotingPassRatioUpdate(uint256 _votingPassRatio) external onlyOwner {
+        bytes32 _lockId = VOTING_PASS_RATIO_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, _votingPassRatio);
+        emit VotingPassRatioUpdateRequested(_votingPassRatio, _unlocksAt);
+    }
+
     /**
      * @notice used for updating the voting pass ratio of the Pool
      * @param _votingPassRatio the value of the new voting pass ratio
      */
     function updateVotingPassRatio(uint256 _votingPassRatio) external onlyOwner {
+        bytes32 _lockId = VOTING_PASS_RATIO_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(locks[_lockId].value == _votingPassRatio, "Param doesnt match request");
+        delete locks[_lockId];
         _updateVotingPassRatio(_votingPassRatio);
     }
 
     function _updateVotingPassRatio(uint256 _votingPassRatio) internal {
+        require(votingPassRatio <= 10**30, "Cant be more than 1");
         votingPassRatio = _votingPassRatio;
         emit VotingPassRatioUpdated(_votingPassRatio);
+    }
+
+    function requestPoolFactoryUpdate(address _poolFactory) external onlyOwner {
+        bytes32 _lockId = POOL_FACTORY_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_poolFactory));
+        emit PoolFactoryUpdateRequested(_poolFactory, _unlocksAt);
     }
 
     /**
@@ -194,6 +243,10 @@ contract Extension is Initializable, IExtension {
      * @param _poolFactory updated pool factory contract address
      */
     function updatePoolFactory(address _poolFactory) external onlyOwner {
+        bytes32 _lockId = POOL_FACTORY_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _poolFactory, "Param doesnt match request");
+        delete locks[_lockId];
         _updatePoolFactory(_poolFactory);
     }
 

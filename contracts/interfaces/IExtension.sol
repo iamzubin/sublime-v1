@@ -26,6 +26,12 @@ interface IExtension {
      */
     event ExtensionPassed(address poolID);
 
+    event LockReset(bytes32 lockId);
+
+    event VotingPassRatioUpdateRequested(uint256 votingPassRatio, uint256 unlocksAt);
+
+    event PoolFactoryUpdateRequested(address poolFactory, uint256 unlocksAt);
+
     /**
      * @notice emitted when the lender for Pools has voted on extension request
      * @param lender address of the lender who voted
