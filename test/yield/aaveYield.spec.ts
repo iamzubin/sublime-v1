@@ -73,11 +73,5 @@ describe('Aave Yield', async () => {
                 aaveYield.connect(randomAccount).updateReferralCode(123) // use any random number
             ).to.be.revertedWith('Ownable: caller is not the owner');
         });
-
-        it('should throw error when a random account tries to make emergency withdraw', async () => {
-            await expect(
-                aaveYield.connect(randomAccount).emergencyWithdraw(randomAccount.address, randomAccount.address)
-            ).to.be.revertedWith('Ownable: caller is not the owner');
-        });
     });
 });

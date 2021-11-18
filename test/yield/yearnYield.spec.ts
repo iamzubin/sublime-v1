@@ -64,11 +64,5 @@ describe('Yearn Yield', async () => {
                 yearnYield.connect(randomAccount).updateProtocolAddresses(randomAccount.address, randomAccount.address)
             ).to.be.revertedWith('Ownable: caller is not the owner');
         });
-
-        it('should throw error when a random account tries to make emergency withdraw', async () => {
-            await expect(
-                yearnYield.connect(randomAccount).emergencyWithdraw(randomAccount.address, randomAccount.address)
-            ).to.be.revertedWith('Ownable: caller is not the owner');
-        });
     });
 });

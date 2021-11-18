@@ -110,20 +110,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         emit ReferralCodeUpdated(_referralCode);
     }
 
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
-        require(_wallet != address(0), "cant burn");
-        uint256 amount = IERC20(liquidityToken(_asset)).balanceOf(address(this));
-
-        if (_asset == address(0)) {
-            received = _withdrawETH(amount);
-            (bool success, ) = _wallet.call{value: received}('');
-            require(success, 'Transfer failed');
-        } else {
-            received = _withdrawERC(_asset, amount);
-            IERC20(_asset).safeTransfer(_wallet, received);
-        }
-    }
-
     /**
      * @dev Used to lock tokens in available protocol
      * @notice Asset Tokens to be locked must be approved to this contract by user

@@ -63,11 +63,5 @@ describe('Compound Yield', async () => {
                 compoundYield.connect(randomAccount).updateProtocolAddresses(randomAccount.address, randomAccount.address)
             ).to.be.revertedWith('Ownable: caller is not the owner');
         });
-
-        it('should throw error when a random account tries to make emergency withdraw', async () => {
-            await expect(
-                compoundYield.connect(randomAccount).emergencyWithdraw(randomAccount.address, randomAccount.address)
-            ).to.be.revertedWith('Ownable: caller is not the owner');
-        });
     });
 });
