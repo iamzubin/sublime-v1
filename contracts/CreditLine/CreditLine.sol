@@ -445,9 +445,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
-
         uint256 _currentDebt = calculateCurrentDebt(_id);
-
         uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).mul(10**30).div(
             10**_decimals
         );
@@ -694,7 +692,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(_amount <= _borrowableAmount, "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount");
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
         address _lender = creditLineConstants[_id].lender;
-
         updateinterestAccruedTillLastPrincipalUpdate(_id);
         creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_amount);
         creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;

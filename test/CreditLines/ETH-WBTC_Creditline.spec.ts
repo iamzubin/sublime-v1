@@ -55,7 +55,7 @@ describe('Create Snapshot', async () => {
     });
 });
 
-describe.only('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
+describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;
@@ -440,9 +440,9 @@ describe.only('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () =
         let { admin, borrower, lender } = env.entities;
         let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
         let BTDecimals = BigNumber.from('18');
-        let lenderAmount = BigNumber.from('100').mul(BigNumber.from('10').pow(BTDecimals));
-        let borrowerCollateral = BigNumber.from('500').mul(BigNumber.from('10').pow(CTDecimals));
+        let lenderAmount = BigNumber.from('10').mul(BigNumber.from('10').pow(BTDecimals));
         let borrowAmount = BigNumber.from('1').mul(BigNumber.from('10').pow(BTDecimals));
+        let borrowerCollateral = BigNumber.from('500');
         let unlimited = BigNumber.from(10).pow(60);
 
         await env.mockTokenContracts[0].contract.connect(env.impersonatedAccounts[1]).transfer(admin.address, lenderAmount);
@@ -455,21 +455,17 @@ describe.only('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () =
 
         await creditLine.connect(borrower).depositCollateral(values, borrowerCollateral, env.yields.compoundYield.address, false);
 
-        console.log('Check1');
         await env.savingsAccount
             .connect(lender)
             .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address, {
-                value: ethers.utils.parseEther('100'),
+                value: ethers.utils.parseEther('10'),
             });
 
-        console.log('Check2');
         await env.savingsAccount.connect(lender).approve(unlimited, env.mockTokenContracts[0].contract.address, creditLine.address);
 
-        console.log('Check3');
         // const BorrowerBalance = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
         const BorrowerBalance = await ethers.provider.getBalance(borrower.address);
         await creditLine.connect(borrower).borrow(values, borrowAmount);
-        console.log('Check4');
         // const BorrowerBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
         const BorrowerBalanceAfter = await ethers.provider.getBalance(borrower.address);
         // const ProtocolFeeCollector = await env.mockTokenContracts[0].contract.balanceOf(
@@ -535,7 +531,6 @@ describe.only('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () =
         await expect(creditLine.connect(random1).close(valuesNew)).to.be.revertedWith('CreditLine: Credit line should be active.');
     });
 
-    // Fails
     it('CreditLine Active: Unpaid creditlines cannot be closed', async function () {
         let { admin, borrower, lender } = env.entities;
 
@@ -563,7 +558,8 @@ describe.only('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () =
     it('CreditLine Active: Collateral can be withdrawn if collateral ratio is maintained', async function () {
         let { admin, borrower, lender } = env.entities;
         let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
-        let withdrawAmount = BigNumber.from('1').mul(BigNumber.from('10').pow(CTDecimals));
+        let withdrawAmount = BigNumber.from('100');
+
         await creditLine.connect(borrower).withdrawCollateral(values, withdrawAmount, false);
     });
 
@@ -803,7 +799,8 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Calculate Borrowable Am
         let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
         let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
 
-        let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+        // let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+        let collateralAmountToDeposit = BigNumber.from(500);
 
         await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
         // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
@@ -862,7 +859,8 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Calculate Borrowable Am
         let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
         let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
 
-        let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+        // let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+        let collateralAmountToDeposit = BigNumber.from(500);
 
         await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
         // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
@@ -1110,7 +1108,8 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
         let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
         let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
 
-        let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+        // let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+        let collateralAmountToDeposit = BigNumber.from(500);
 
         await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
         // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
