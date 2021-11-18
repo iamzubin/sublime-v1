@@ -364,8 +364,8 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         // await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
         let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(amountForDeposit, _collateralAsset);
-        // console.log({ amountForDeposit: amountForDeposit.toString() });
-        // console.log({ liquidityShares: liquidityShares.toString() });
+        console.log({ amountForDeposit: amountForDeposit.toString() });
+        console.log({ liquidityShares: liquidityShares.mul(100).toString() });
 
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
         await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
@@ -465,10 +465,8 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         await env.savingsAccount
             .connect(lender)
             .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address);
-        console.log('Check1');
         await env.savingsAccount.connect(lender).approve(unlimited, env.mockTokenContracts[0].contract.address, creditLine.address);
 
-        console.log('Check2');
         const BorrowerBalance = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
         await creditLine.connect(borrower).borrow(values, borrowAmount);
         const BorrowerBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
@@ -533,7 +531,6 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         await expect(creditLine.connect(random1).close(valuesNew)).to.be.revertedWith('CreditLine: Credit line should be active.');
     });
 
-    // Fails
     it('CreditLine Active: Unpaid creditlines cannot be closed', async function () {
         let { admin, borrower, lender } = env.entities;
 

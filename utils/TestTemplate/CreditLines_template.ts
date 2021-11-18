@@ -738,6 +738,31 @@ export async function CreditLines(
                 'Collateral ratio cant go below ideal'
             );
         });
+
+        it('CreditLine Close: Close creditline with event emits and status update', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let random1 = env.entities.extraLenders[20];
+            await expect(creditLine.connect(borrower).accept(valuesNew)).to.emit(creditLine, 'CreditLineAccepted').withArgs(valuesNew);
+    
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, collateralAmout);
+    
+            await creditLine.connect(borrower).depositCollateral(valuesNew, collateralAmout, env.yields.compoundYield.address, false);
+    
+            const CreditVars = await creditLine.connect(borrower).creditLineVariables(valuesNew);
+            // console.log({ Principal: CreditVars.principal.toString() });
+            // console.log({ Interest: CreditVars.interestAccruedTillLastPrincipalUpdate.toString() });
+    
+            await expect(creditLine.connect(random1).close(valuesNew)).to.emit(creditLine, 'CreditLineClosed').withArgs(valuesNew);
+    
+            let StatusActual = (await creditLine.connect(admin).creditLineVariables(valuesNew)).status;
+            assert(
+                StatusActual.toString() == BigNumber.from('3').toString(),
+                `Creditline should be in closed Stage. Expected: ${BigNumber.from('3').toString()} 
+                Actual: ${StatusActual}`
+            );
+        });
     });
 
     describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Calculate Borrowable Amount`, async () => {
