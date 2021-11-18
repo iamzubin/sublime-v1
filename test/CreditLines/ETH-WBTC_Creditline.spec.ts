@@ -55,7 +55,7 @@ describe('Create Snapshot', async () => {
     });
 });
 
-describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
+describe.only('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
     let env: Environment;
     let pool: Pool;
     let poolAddress: Address;
@@ -455,16 +455,21 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
 
         await creditLine.connect(borrower).depositCollateral(values, borrowerCollateral, env.yields.compoundYield.address, false);
 
+        console.log('Check1');
         await env.savingsAccount
             .connect(lender)
             .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address, {
                 value: ethers.utils.parseEther('100'),
             });
+
+        console.log('Check2');
         await env.savingsAccount.connect(lender).approve(unlimited, env.mockTokenContracts[0].contract.address, creditLine.address);
 
+        console.log('Check3');
         // const BorrowerBalance = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
         const BorrowerBalance = await ethers.provider.getBalance(borrower.address);
         await creditLine.connect(borrower).borrow(values, borrowAmount);
+        console.log('Check4');
         // const BorrowerBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
         const BorrowerBalanceAfter = await ethers.provider.getBalance(borrower.address);
         // const ProtocolFeeCollector = await env.mockTokenContracts[0].contract.balanceOf(
