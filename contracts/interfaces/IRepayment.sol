@@ -40,6 +40,14 @@ interface IRepayment {
     /// @param gracePeriodFraction updated gracePeriodFraction
     event GracePeriodFractionUpdated(uint256 indexed gracePeriodFraction);
 
+    event GracePenaltyRateUpdateRequested(uint256 gracePenaltyRate, uint256 unlocksAt);
+
+    event LockReset(bytes32 lockId);
+
+    event PoolFactoryUpdateRequested(address poolFactory, uint256 unlocksAt);
+
+    event GracePeriodFractionUpdateRequested(uint256 gracePeriodFraction, uint256 unlocksAt);
+
     function initializeRepayment(
         uint256 numberOfTotalRepayments,
         uint256 repaymentInterval,

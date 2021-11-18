@@ -20,6 +20,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    bytes32 constant GRACE_PERIOD_FRACTION_UPDATE_LOCK_SELECTOR = keccak256("GRACE_PERIOD_FRACTION_UPDATE");
+    bytes32 constant POOL_FACTORY_UPDATE_LOCK_SELECTOR = keccak256("POOL_FACTORY_UPDATE");
+    bytes32 constant GRACE_PENALTY_RATE_UPDATE_LOCK_SELECTOR = keccak256("GRACE_PENALTY_RATE_UPDATE");
     uint256 constant MAX_INT = 2**256 - 1;
     uint256 constant YEAR_IN_SECONDS = 365 days;
 
@@ -33,9 +36,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         DEFAULTED, // Repaymennt defaulted by  borrower
         TERMINATED // Pool terminated by admin
     }
-
-    uint256 gracePenaltyRate;
-    uint256 gracePeriodFraction; // fraction of the repayment interval
 
     struct RepaymentVariables {
         uint256 repaidAmount;
@@ -55,6 +55,14 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         address repayAsset;
     }
 
+    struct Lock {
+        uint256 unlockTime;
+        uint256 value;
+    }
+
+    uint256 gracePenaltyRate;
+    uint256 gracePeriodFraction; // fraction of the repayment interval
+
     /**
      * @notice used to maintain the variables related to repayment against a pool
      */
@@ -64,6 +72,17 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
      * @notice used to maintain the constants related to repayment against a pool
      */
     mapping(address => RepaymentConstants) public repayConstants;
+
+    /**
+     * @notice stores the timestamp at which locks are complete
+     **/
+    mapping(bytes32 => Lock) public locks;
+
+    /**
+     * @notice stores the time in seconds for which timeLock takes effect when changing any variable
+     * @dev timelocks are used when changing any sensitive variables by owner
+     **/
+    uint256 public timeLockDelay;
 
     /// @notice determines if the pool is active or not based on whether repayments have been started by the
     ///borrower for this particular pool or not
@@ -104,11 +123,34 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
+    function _setLock(bytes32 _lockId, uint256 _value) internal returns(uint256) {
+        require(locks[_lockId].unlockTime == 0, "request already exists");
+        uint256 _unlocksAt = block.timestamp.add(timeLockDelay);
+        locks[_lockId] = Lock(_unlocksAt, _value);
+        return _unlocksAt;
+    }
+    
+    function resetLock(bytes32 _lockId) external onlyOwner {
+        require(locks[_lockId].unlockTime != 0, "Nothing to reset");
+        emit LockReset(_lockId);
+        delete locks[_lockId];
+    }
+
+    function requestPoolFactoryUpdate(address _poolFactory) external onlyOwner {
+        bytes32 _lockId = POOL_FACTORY_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_poolFactory));
+        emit PoolFactoryUpdateRequested(_poolFactory, _unlocksAt);
+    }
+
     /**
      * @notice used to update pool factory address
      * @param _poolFactory address of pool factory contract
      */
     function updatePoolFactory(address _poolFactory) external onlyOwner {
+        bytes32 _lockId = POOL_FACTORY_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _poolFactory, "Param doesnt match request");
+        delete locks[_lockId];
         _updatePoolFactory(_poolFactory);
     }
 
@@ -118,11 +160,21 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit PoolFactoryUpdated(_poolFactory);
     }
 
+    function requestGracePeriodFractionUpdate(uint256 _gracePeriodFraction) external onlyOwner {
+        bytes32 _lockId = GRACE_PERIOD_FRACTION_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, _gracePeriodFraction);
+        emit GracePeriodFractionUpdateRequested(_gracePeriodFraction, _unlocksAt);
+    }
+
     /**
      * @notice used to update grace period as a fraction of repayment interval
      * @param _gracePeriodFraction updated value of gracePeriodFraction multiplied by 10**30
      */
     function updateGracePeriodFraction(uint256 _gracePeriodFraction) external onlyOwner {
+        bytes32 _lockId = GRACE_PERIOD_FRACTION_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(locks[_lockId].value == _gracePeriodFraction, "Param doesnt match request");
+        delete locks[_lockId];
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
@@ -131,11 +183,21 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         emit GracePeriodFractionUpdated(_gracePeriodFraction);
     }
 
+    function requestGracePeriodRateUpdate(uint256 _gracePenaltyRate) external onlyOwner {
+        bytes32 _lockId = GRACE_PENALTY_RATE_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, _gracePenaltyRate);
+        emit GracePenaltyRateUpdateRequested(_gracePenaltyRate, _unlocksAt);
+    }
+
     /**
      * @notice used to update grace penality rate
      * @param _gracePenaltyRate value of grace penality rate multiplied by 10**30
      */
     function updateGracePenaltyRate(uint256 _gracePenaltyRate) external onlyOwner {
+        bytes32 _lockId = GRACE_PENALTY_RATE_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(locks[_lockId].value == _gracePenaltyRate, "Param doesnt match request");
+        delete locks[_lockId];
         _updateGracePenaltyRate(_gracePenaltyRate);
     }
 
