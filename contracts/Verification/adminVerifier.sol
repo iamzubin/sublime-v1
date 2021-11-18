@@ -6,6 +6,24 @@ import '../interfaces/IVerification.sol';
 import '../interfaces/IVerifier.sol';
 
 contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
+    struct Lock {
+        uint256 unlockTime;
+        uint256 value;
+    }
+
+    bytes32 constant VERIFICATION_UPDATE_LOCK_SELECTOR = keccak256("VERIFICATION_UPDATE");
+
+    /**
+     * @notice stores the timestamp at which locks are complete
+     **/
+    mapping(bytes32 => Lock) public locks;
+
+    /**
+     * @notice stores the time in seconds for which timeLock takes effect when changing any variable
+     * @dev timelocks are used when changing any sensitive variables by owner
+     **/
+    uint256 public timeLockDelay;
+
     /**
      * @notice stores the verification contract instance
      */
@@ -21,6 +39,10 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
      * @param verification address of the updated verification contract
      */
     event VerificationUpdated(address indexed verification);
+
+    event VerificationUpdateRequested(address indexed verification, uint256 unlocksAt);
+
+    event LockReset(bytes32 lockId);
 
     /// @notice Initializes the variables of the contract
     /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
@@ -61,12 +83,35 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
         emit UserUnregistered(_user);
     }
 
+    function _setLock(bytes32 _lockId, uint256 _value) internal returns(uint256) {
+        require(locks[_lockId].unlockTime == 0, "request already exists");
+        uint256 _unlocksAt = block.timestamp + timeLockDelay;
+        locks[_lockId] = Lock(_unlocksAt, _value);
+        return _unlocksAt;
+    }
+    
+    function resetLock(bytes32 _lockId) external onlyOwner {
+        require(locks[_lockId].unlockTime != 0, "Nothing to reset");
+        emit LockReset(_lockId);
+        delete locks[_lockId];
+    }
+
+    function requestVerificationUpdate(address _verification) external onlyOwner {
+        bytes32 _lockId = VERIFICATION_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_verification));
+        emit VerificationUpdateRequested(_verification, _unlocksAt);
+    }
+
     /**
      * @notice used to update verification contract address
      * @dev ohly owner can update
      * @param _verification address of the verification contract
      */
     function updateVerification(address _verification) external onlyOwner {
+        bytes32 _lockId = VERIFICATION_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _verification, "Param doesnt match request");
+        delete locks[_lockId];
         _updateVerification(_verification);
     }
 
