@@ -32,6 +32,20 @@ interface IVerification {
     /// @param masterAddress The masterAddress to which address was linked
     event AddressUnlinked(address indexed linkedAddress, address indexed masterAddress);
 
+    event LockReset(bytes32 lockId);
+
+    event TimeLockDelayUpdateRequested(uint256 timeLockDelay, uint256 unlocksAt);
+
+    event TimeLockDelayUpdated(uint256 timeLockDelay);
+
+    event MasterAddressActivationDelayRequested(uint256 masterAddressActivationDelay, uint256 unlocksAt);
+
+    event MasterAddressActivationDelayUpdated(uint256 masterAddressActivationDelay);
+
+    event LinkedAddressActivationDelayRequested(uint256 linkedAddressActivationDelay, uint256 unlocksAt);
+
+    event LinkedAddressActivationDelayUpdated(uint256 linkedAddressActivationDelay);
+
     function isUser(address _user, address _verifier) external view returns (bool);
 
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external;

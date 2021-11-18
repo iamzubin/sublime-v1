@@ -14,11 +14,31 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         uint256 activatesAt;
     }
 
+    struct Lock {
+        uint256 unlockTime;
+        uint256 value;
+    }
+
+    bytes32 constant TIME_LOCK_DELAY_UPDATE_LOCK_SELECTOR = keccak256("TIME_LOCK_DELAY_UPDATE");
+    bytes32 constant MASTER_ADDRESS_ACTIVATION_DELAY_UPDATE_LOCK_SELECTOR = keccak256("MASTER_ADDRESS_ACTIVATION_DELAY_UPDATE");
+    bytes32 constant LINKED_ADDRESS_ACTIVATION_DELAY_UPDATE_LOCK_SELECTOR = keccak256("LINKED_ADDRESS_ACTIVATION_DELAY_UPDATE");
+
+    /**
+     * @notice stores the time in seconds for which timeLock takes effect when changing any variable
+     * @dev timelocks are used when changing any sensitive variables by owner
+     **/
+    uint256 public timeLockDelay;
+
     /// @notice Delay in seconds after which master address is activated once registered 
     uint256 public masterAddressActivationDelay;
 
     /// @notice Delay in seconds after which linked address is activated once registered
     uint256 public linkedAddressActivationDelay;
+
+    /**
+     * @notice stores the timestamp at which locks are complete
+     **/
+    mapping(bytes32 => Lock) public locks;
 
     /// @notice Tells whether a given verifier is valid
     /// @dev Mapping that stores valid verifiers as added by admin. verifier -> true/false
@@ -103,8 +123,8 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
 
     function _linkAddress(address _linked, address _master) internal {
         uint256 _linkedAddressActivatesAt = block.timestamp + linkedAddressActivationDelay;
-        linkedAddresses[_master] = LinkedAddress(_master, _linkedAddressActivatesAt);
-        emit AddressLinked(_master, _master, _linkedAddressActivatesAt);
+        linkedAddresses[_linked] = LinkedAddress(_master, _linkedAddressActivatesAt);
+        emit AddressLinked(_linked, _master, _linkedAddressActivatesAt);
     }
 
     /// @notice Link an address with a master address
@@ -146,5 +166,75 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
             return false;
         }
         return true;
+    }
+
+    function _setLock(bytes32 _lockId, uint256 _value) internal returns(uint256) {
+        require(locks[_lockId].unlockTime == 0, "request already exists");
+        uint256 _unlocksAt = block.timestamp + timeLockDelay;
+        locks[_lockId] = Lock(_unlocksAt, _value);
+        return _unlocksAt;
+    }
+    
+    function resetLock(bytes32 _lockId) external onlyOwner {
+        require(locks[_lockId].unlockTime != 0, "Nothing to reset");
+        emit LockReset(_lockId);
+        delete locks[_lockId];
+    }
+
+    function requestTimeLockDelayUpdate(uint256 _timeLockDelay) external onlyOwner {
+        bytes32 _lockId = TIME_LOCK_DELAY_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, _timeLockDelay);
+        emit TimeLockDelayUpdateRequested(_timeLockDelay, _unlocksAt);
+    }
+
+    function updateTimeLockDelay(uint256 _timeLockDelay) external onlyOwner {
+        bytes32 _lockId = TIME_LOCK_DELAY_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(locks[_lockId].value == _timeLockDelay, "Param doesnt match request");
+        delete locks[_lockId];
+        _updateTimeLockDelay(_timeLockDelay);
+    }
+
+    function _updateTimeLockDelay(uint256 _timeLockDelay) internal {
+        timeLockDelay = _timeLockDelay;
+        emit TimeLockDelayUpdated(_timeLockDelay);
+    }
+
+    function requestMasterAddressActivationDelayUpdate(uint256 _masterAddressActivationDelay) external onlyOwner {
+        bytes32 _lockId = MASTER_ADDRESS_ACTIVATION_DELAY_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, _masterAddressActivationDelay);
+        emit MasterAddressActivationDelayRequested(_masterAddressActivationDelay, _unlocksAt);
+    }
+
+    function updateMasterAddressActivationDelay(uint256 _masterAddressActivationDelay) external onlyOwner {
+        bytes32 _lockId = MASTER_ADDRESS_ACTIVATION_DELAY_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(locks[_lockId].value == _masterAddressActivationDelay, "Param doesnt match request");
+        delete locks[_lockId];
+        _updateMasterAddressActivationDelay(_masterAddressActivationDelay);
+    }
+
+    function _updateMasterAddressActivationDelay(uint256 _masterAddressActivationDelay) internal {
+        masterAddressActivationDelay = _masterAddressActivationDelay;
+        emit MasterAddressActivationDelayUpdated(_masterAddressActivationDelay);
+    }
+
+    function requestLinkedAddressActivationDelayUpdate(uint256 _linkedAddressActivationDelay) external onlyOwner {
+        bytes32 _lockId = LINKED_ADDRESS_ACTIVATION_DELAY_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, _linkedAddressActivationDelay);
+        emit LinkedAddressActivationDelayRequested(_linkedAddressActivationDelay, _unlocksAt);
+    }
+
+    function updateLinkedAddressActivationDelay(uint256 _linkedAddressActivationDelay) external onlyOwner {
+        bytes32 _lockId = LINKED_ADDRESS_ACTIVATION_DELAY_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(locks[_lockId].value == _linkedAddressActivationDelay, "Param doesnt match request");
+        delete locks[_lockId];
+        _updateLinkedAddressActivationDelay(_linkedAddressActivationDelay);
+    }
+
+    function _updateLinkedAddressActivationDelay(uint256 _linkedAddressActivationDelay) internal {
+        linkedAddressActivationDelay = _linkedAddressActivationDelay;
+        emit LinkedAddressActivationDelayUpdated(_linkedAddressActivationDelay);
     }
 }
