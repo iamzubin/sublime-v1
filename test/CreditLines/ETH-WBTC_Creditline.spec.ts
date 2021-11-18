@@ -421,7 +421,9 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
         let BTDecimals = BigNumber.from('18');
         let amount: BigNumber = BigNumber.from('100').mul(BigNumber.from('10').pow(BTDecimals));
 
-        await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith('CreditLine: Amount exceeds borrow limit.');
+        await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
+            "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
+        );
     });
 
     it('Creditline Active: collateral ratio should not go down after borrow', async function () {

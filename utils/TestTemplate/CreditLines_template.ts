@@ -1600,9 +1600,7 @@ export async function CreditLines(
                 'Ownable: caller is not the owner'
             );
 
-            await expect(creditLine.connect(admin).updateStrategyRegistry(zeroAddress)).to.be.revertedWith(
-                'CL::I zero address'
-            );
+            await expect(creditLine.connect(admin).updateStrategyRegistry(zeroAddress)).to.be.revertedWith('CL::I zero address');
 
             await expect(creditLine.connect(admin).updateStrategyRegistry(env.strategyRegistry.address))
                 .to.emit(creditLine, 'StrategyRegistryUpdated')
@@ -1633,9 +1631,7 @@ export async function CreditLines(
                 'Ownable: caller is not the owner'
             );
 
-            await expect(creditLine.connect(admin).updateProtocolFeeCollector(zeroAddress)).to.be.revertedWith(
-                'cant be 0 address'
-            );
+            await expect(creditLine.connect(admin).updateProtocolFeeCollector(zeroAddress)).to.be.revertedWith('cant be 0 address');
 
             await expect(creditLine.connect(admin).updateProtocolFeeCollector(protocolFeeCollector.address))
                 .to.emit(creditLine, 'ProtocolFeeCollectorUpdated')
