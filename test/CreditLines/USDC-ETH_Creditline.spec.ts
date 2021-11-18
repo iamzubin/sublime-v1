@@ -495,26 +495,6 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         );
     });
 
-    it('CreditLine Active: Repayment interest calculations should be correct', async function () {
-        let { admin, borrower, lender } = env.entities;
-        const block = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
-        const interval = BigNumber.from(block.timestamp).add(10); // block time stamp
-        await blockTravel(network, parseInt(interval.toString()));
-        let interestDue = await creditLine.connect(admin).calculateInterestAccrued(values);
-        // console.log({ interestDue: interestDue.toString() });
-
-        const _creditVars = await creditLine.connect(borrower).creditLineVariables(values);
-        const _yearTime = 365 * 24 * 60 * 60;
-        const scaler = BigNumber.from('10').pow(30);
-        const _interest = _creditVars.principal.mul(_borrowRate).mul(10).div(scaler).div(_yearTime);
-        // console.log({ _interest: _interest.toString() });
-
-        assert(
-            interestDue.toString() == _interest.toString(),
-            `Calculated interest does not match actual interest. Expected ${_interest.toString()} Actual ${interestDue.toString()}`
-        );
-    });
-
     it('CreditLine Active: random address should not be able to close the loan', async function () {
         let { admin, borrower, lender } = env.entities;
         let random = env.entities.extraLenders[31];
