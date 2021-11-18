@@ -18,6 +18,25 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    struct Lock {
+        uint256 unlockTime;
+        uint256 value;
+    }
+
+    bytes32 constant CREDIT_LINE_UPDATE_LOCK_SELECTOR = keccak256("CREDIT_LINE_UPDATE");
+    bytes32 constant STRATEGY_REGISTRY_UPDATE_LOCK_SELECTOR = keccak256("STRATEGY_REGISTRY_UPDATE");
+
+    /**
+     * @notice stores the timestamp at which locks are complete
+     **/
+    mapping(bytes32 => Lock) public locks;
+
+    /**
+     * @notice stores the time in seconds for which timeLock takes effect when changing any variable
+     * @dev timelocks are used when changing any sensitive variables by owner
+     **/
+    uint256 public timeLockDelay;
+
     /**
      * @notice address of the strategy registry used to whitelist strategies
      */
@@ -67,12 +86,35 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         _updateStrategyRegistry(_strategyRegistry);
     }
 
+    function _setLock(bytes32 _lockId, uint256 _value) internal returns(uint256) {
+        require(locks[_lockId].unlockTime == 0, "request already exists");
+        uint256 _unlocksAt = block.timestamp.add(timeLockDelay);
+        locks[_lockId] = Lock(_unlocksAt, _value);
+        return _unlocksAt;
+    }
+    
+    function resetLock(bytes32 _lockId) external onlyOwner {
+        require(locks[_lockId].unlockTime != 0, "Nothing to reset");
+        emit LockReset(_lockId);
+        delete locks[_lockId];
+    }
+
+    function requestCreditLineUpdate(address _creditLine) external onlyOwner {
+        bytes32 _lockId = CREDIT_LINE_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_creditLine));
+        emit CreditLineUpdateRequested(_creditLine, _unlocksAt);
+    }
+
     /**
      * @notice used to update credit line contract address
      * @dev only owner can update
      * @param _creditLine updated address of credit lines
      */
     function updateCreditLine(address _creditLine) external onlyOwner {
+        bytes32 _lockId = CREDIT_LINE_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _creditLine, "Param doesnt match request");
+        delete locks[_lockId];
         _updateCreditLine(_creditLine);
     }
 
@@ -82,12 +124,22 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit CreditLineUpdated(_creditLine);
     }
 
+    function requestStrategyRegistryUpdate(address _strategyRegistry) external onlyOwner {
+        bytes32 _lockId = STRATEGY_REGISTRY_UPDATE_LOCK_SELECTOR;
+        uint256 _unlocksAt = _setLock(_lockId, uint256(_strategyRegistry));
+        emit StrategyRegistryUpdateRequested(_strategyRegistry, _unlocksAt);
+    }
+
     /**
      * @notice used to update strategy registry address
      * @dev only owner can update
      * @param _strategyRegistry updated address of strategy registry
      */
     function updateStrategyRegistry(address _strategyRegistry) external onlyOwner {
+        bytes32 _lockId = STRATEGY_REGISTRY_UPDATE_LOCK_SELECTOR;
+        require(locks[_lockId].unlockTime <= block.timestamp, "Timelock still running");
+        require(address(locks[_lockId].value) == _strategyRegistry, "Param doesnt match request");
+        delete locks[_lockId];
         _updateStrategyRegistry(_strategyRegistry);
     }
 

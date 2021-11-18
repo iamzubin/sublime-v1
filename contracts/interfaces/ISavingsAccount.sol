@@ -77,6 +77,12 @@ interface ISavingsAccount {
      */
     event CreditLineAllowanceRefreshed(address indexed token, address indexed from, uint256 amount);
 
+    event StrategyRegistryUpdateRequested(address strategyRegistry, uint256 unlocksAt);
+
+    event CreditLineUpdateRequested(address creditLine, uint256 unlocksAt);
+
+    event LockReset(bytes32 lockId);
+
     function deposit(
         uint256 amount,
         address token,
