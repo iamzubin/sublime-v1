@@ -432,6 +432,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_from == address(0) || _to == address(0)) {
             return;
         }
+        IPoolFactory _poolFactory = IPoolFactory(poolFactory);
+        address _lenderVerifier = poolConstants.lenderVerifier;
+        if (_lenderVerifier != address(0)) {
+            require(IVerification(_poolFactory.userRegistry()).isUser(_to, _lenderVerifier), 'TT5');
+        }
         require(getMarginCallEndTime(_from) == 0, 'TT3');
         require(getMarginCallEndTime(_to) == 0, 'TT4');
 
@@ -439,7 +444,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         _withdrawRepayment(_from);
         _withdrawRepayment(_to);
 
-        IExtension(IPoolFactory(poolFactory).extension()).removeVotes(_from, _to, _amount);
+        IExtension(_poolFactory.extension()).removeVotes(_from, _to, _amount);
 
         //transfer extra liquidity shares
         uint256 _liquidityShare = lenders[_from].extraLiquidityShares;
