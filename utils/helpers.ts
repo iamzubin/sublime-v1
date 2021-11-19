@@ -105,3 +105,9 @@ export function expectApproxEqual(a: BigNumberish, b: BigNumberish, delta: BigNu
     let _delta = _a.sub(_b);
     expect(_delta.lte(delta), errorMessage);
 }
+
+export function induceDelay(ts: number) {
+    const delay = ts || 3000;
+    console.log(`Inducing delay of ${delay} ms`);
+    return new Promise((resolve) => setTimeout(resolve, delay));
+}
