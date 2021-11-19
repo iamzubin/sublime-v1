@@ -365,7 +365,8 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
 
         let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(amountForDeposit, _collateralAsset);
         // console.log({ amountForDeposit: amountForDeposit.toString() });
-        // console.log({ liquidityShares: liquidityShares.toString() });
+        // console.log({ liquidityShares: liquidityShares.mul(100).toString() });
+        let updatedLiquidityShares = liquidityShares.mul(100).toString();
 
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
         await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
@@ -374,7 +375,7 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         await env.savingsAccount
             .connect(random)
             .deposit(liquidityShares.mul(100), _collateralAsset, env.yields.compoundYield.address, random.address, {
-                value: 2004797987900,
+                value: updatedLiquidityShares,
             });
 
         const collateralBalanceInShares = await env.savingsAccount
@@ -385,7 +386,7 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
             .connect(admin)
             .balanceInShares(random.address, _collateralAsset, env.yields.compoundYield.address);
 
-        console.log('Random address', random.address);
+        // console.log('Random address', random.address);
         await creditLine.connect(random).depositCollateral(values, amountForDeposit, env.yields.compoundYield.address, true);
 
         const collateralBalanceInSharesAfter = await env.savingsAccount
@@ -426,7 +427,9 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
         let amount: BigNumber = BigNumber.from('100').mul(BigNumber.from('10').pow(BTDecimals));
 
-        await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith('CreditLine: Amount exceeds borrow limit.');
+        await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
+            "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
+        );
     });
 
     it('Creditline Active: collateral ratio should not go down after borrow', async function () {
@@ -463,10 +466,8 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         await env.savingsAccount
             .connect(lender)
             .deposit(lenderAmount, env.mockTokenContracts[0].contract.address, env.yields.compoundYield.address, lender.address);
-        console.log('Check1');
         await env.savingsAccount.connect(lender).approve(unlimited, env.mockTokenContracts[0].contract.address, creditLine.address);
 
-        console.log('Check2');
         const BorrowerBalance = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
         await creditLine.connect(borrower).borrow(values, borrowAmount);
         const BorrowerBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(borrower.address);
@@ -495,26 +496,6 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         );
     });
 
-    it('CreditLine Active: Repayment interest calculations should be correct', async function () {
-        let { admin, borrower, lender } = env.entities;
-        const block = await ethers.provider.getBlock(await ethers.provider.getBlockNumber());
-        const interval = BigNumber.from(block.timestamp).add(10); // block time stamp
-        await blockTravel(network, parseInt(interval.toString()));
-        let interestDue = await creditLine.connect(admin).calculateInterestAccrued(values);
-        // console.log({ interestDue: interestDue.toString() });
-
-        const _creditVars = await creditLine.connect(borrower).creditLineVariables(values);
-        const _yearTime = 365 * 24 * 60 * 60;
-        const scaler = BigNumber.from('10').pow(30);
-        const _interest = _creditVars.principal.mul(_borrowRate).mul(10).div(scaler).div(_yearTime);
-        // console.log({ _interest: _interest.toString() });
-
-        assert(
-            interestDue.toString() == _interest.toString(),
-            `Calculated interest does not match actual interest. Expected ${_interest.toString()} Actual ${interestDue.toString()}`
-        );
-    });
-
     it('CreditLine Active: random address should not be able to close the loan', async function () {
         let { admin, borrower, lender } = env.entities;
         let random = env.entities.extraLenders[31];
@@ -531,7 +512,6 @@ describe('CreditLine, Borrow Token: USDC, CollateralToken: ETH', async () => {
         await expect(creditLine.connect(random1).close(valuesNew)).to.be.revertedWith('CreditLine: Credit line should be active.');
     });
 
-    // Fails
     it('CreditLine Active: Unpaid creditlines cannot be closed', async function () {
         let { admin, borrower, lender } = env.entities;
 
@@ -782,7 +762,9 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Am
         await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
         await creditLine
             .connect(borrower)
-            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {value: ethers.utils.parseEther('1')});
+            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {
+                value: ethers.utils.parseEther('1'),
+            });
 
         let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
 
@@ -831,7 +813,9 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Am
         await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
         await creditLine
             .connect(borrower)
-            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {value: ethers.utils.parseEther('1')});
+            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {
+                value: ethers.utils.parseEther('1'),
+            });
 
         await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
         await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
@@ -888,7 +872,9 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Calculate Borrowable Am
         await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
         await creditLine
             .connect(borrower)
-            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {value: ethers.utils.parseEther('1')});
+            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {
+                value: ethers.utils.parseEther('1'),
+            });
 
         await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
         await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
@@ -1134,7 +1120,9 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, as
         await CollateralAsset.connect(borrower).approve(creditLine.address, collateralAmountToDeposit);
         await creditLine
             .connect(borrower)
-            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {value: ethers.utils.parseEther('1')});
+            .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false, {
+                value: ethers.utils.parseEther('1'),
+            });
 
         await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
         await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
@@ -1217,9 +1205,7 @@ describe(`Credit Lines ${Contracts.USDC}/${zeroAddress}: Repay Credit Lines`, as
         let amountToRepay = BigNumber.from(5).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
 
         await BorrowAsset.connect(borrower).approve(env.yields.noYield.address, amountToRepay);
-        await savingsAccount
-            .connect(borrower)
-            .deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address);
+        await savingsAccount.connect(borrower).deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address);
         await savingsAccount.connect(borrower).approve(amountToRepay, BorrowAsset.address, creditLine.address);
 
         const borrowerSharesBeforeRepay = await savingsAccount

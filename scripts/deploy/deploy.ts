@@ -181,12 +181,12 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         creditLine,
         admin,
         noYield.address,
-        priceOracle.address,
-        savingsAccount.address,
-        strategyRegistry.address,
+        priceOracle,
+        savingsAccount,
+        strategyRegistry,
         {
-            _protocolFeeFraction: '100000000000',
-            _liquidatorRewardFraction: '10000000',
+            _protocolFeeFraction: '1750000000000000000000000000',
+            _liquidatorRewardFraction: '92000000000000000000000000000',
         },
         admin
     );
@@ -212,20 +212,20 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 }
 
 // {
-//     "savingsAccount": "0x3a495b65EFbB4Db0BE408C862ca8d33d9703209c",
-//     "strategyRegistry": "0x9Af5CaF81b9985cB691f7763b7bE0412bb05b3dC",
-//     "creditLines": "0xD077B6d3ed11d0aDD036D7d9b1Ac9d4FdE561fF4",
+//     "savingsAccount": "0x25DE5ca4C51279DAfC66Cee8157d610ed76093eC",
+//     "strategyRegistry": "0xF13c02E99c3af9fd2fB0A976EFb63bf8498B4b46",
+//     "creditLines": "0x5dDb5359480FF27Cb1c01f0eaa8532fc2be4Da3c",
 //     "proxyAdmin": "0x03f484190bc6889B28739Af182D996df57B02CC9",
 //     "admin": "0x4813CB98f2322CFb9fbf2f2dAFe01297FD70D19e",
-//     "noYield": "0x4EB3d11dC0ffD11fEBb379413840371b66384B4B",
-//     "aaveYield": "0xf15bB845dFDeDB72c4E7c31356f03C46b64fcE60",
+//     "noYield": "0x4fEFEfd8fF33A6090e666417B7B69219F7752Bc6",
+//     "aaveYield": "0x0e59d909c288115dC8889A62A4FE4bb31839D9d6",
 //     "yearnYield": "0x0000000000000000000000000000000000000000",
-//     "compoundYield": "0x90a17f297CC6e85CA67251e7B4A888F9de16b192",
-//     "verification": "0x19c388671f9B773fcBad80009e20eEE470F1AD26",
-//     "adminVerifier": "0x6c906de6bcb1e3bFAd75F049e6C4F6f4DAC7043E",
-//     "priceOracle": "0xeD24708d93576ca2296BE201a5e105ECAF2f6F2f",
-//     "extension": "0xe493BA7Bee4468b8FBA61256E457A098Aa7cCA17",
-//     "poolLogic": "0x0f5E1f09Ff37a4f2F68939cEb1A3a151Fa0AB418",
-//     "repaymentLogic": "0x71E925ad07dA7542855d89a52bf6d139349F9b33",
-//     "poolFactory": "0xa50E7C3444844Ef6773f3181f0a1f42B6321b677"
+//     "compoundYield": "0xD531Ce03d012e1353433e08cea0E3d7244dafcAA",
+//     "verification": "0x089aFDe07350348FA36A1ee5596fBE34C3918766",
+//     "adminVerifier": "0x89aB5f296F97fE64E5Df5E5900e8070C29EdD5F1",
+//     "priceOracle": "0xD372bf26cF529a0F0E3168C98DA067461A1eFECD",
+//     "extension": "0x297E65f2B915a64bf01C438daFe991F393A89060",
+//     "poolLogic": "0x95cCb46520535E85bCD0b556b8c4F0843dC754b4",
+//     "repaymentLogic": "0x2007DF439D29bFA4e0885D600Da9cA5b9edc7d82",
+//     "poolFactory": "0xA9793Ac0F8FEF3F55aB67F87ed6575A90b21aC4d"
 //   }

@@ -181,7 +181,7 @@ export async function CreditLines(
             let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
             let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
@@ -209,7 +209,7 @@ export async function CreditLines(
             let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
             let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
@@ -235,7 +235,7 @@ export async function CreditLines(
             let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
             let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
@@ -285,7 +285,7 @@ export async function CreditLines(
             let _liquidationThreshold: BigNumberish = BigNumber.from(100);
             let _borrowRate: BigNumberish = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             let _autoLiquidation: boolean = true;
-            let _collateralRatio: BigNumberish = BigNumber.from(200);
+            let _collateralRatio: BigNumberish = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             let _borrowAsset: string = env.mockTokenContracts[0].contract.address;
             let _collateralAsset: string = env.mockTokenContracts[1].contract.address;
 
@@ -456,7 +456,7 @@ export async function CreditLines(
             _liquidationThreshold = BigNumber.from(100);
             _borrowRate = BigNumber.from(1).mul(BigNumber.from('10').pow(28));
             _autoLiquidation = true;
-            _collateralRatio = BigNumber.from(200);
+            _collateralRatio = BigNumber.from(200).mul(BigNumber.from(10).pow(28));
             _borrowAsset = env.mockTokenContracts[0].contract.address;
             _collateralAsset = env.mockTokenContracts[1].contract.address;
 
@@ -623,7 +623,7 @@ export async function CreditLines(
             let amount: BigNumber = BigNumber.from('100').mul(BigNumber.from('10').pow(BTDecimals));
 
             await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
-                'CreditLine: Amount exceeds borrow limit.'
+                "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
             );
         });
 
@@ -736,6 +736,31 @@ export async function CreditLines(
 
             await expect(creditLine.connect(borrower).withdrawCollateral(values, withdrawAmount, false)).to.be.revertedWith(
                 'Collateral ratio cant go below ideal'
+            );
+        });
+
+        it('CreditLine Close: Close creditline with event emits and status update', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let random1 = env.entities.extraLenders[20];
+            await expect(creditLine.connect(borrower).accept(valuesNew)).to.emit(creditLine, 'CreditLineAccepted').withArgs(valuesNew);
+    
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, collateralAmout);
+    
+            await creditLine.connect(borrower).depositCollateral(valuesNew, collateralAmout, env.yields.compoundYield.address, false);
+    
+            const CreditVars = await creditLine.connect(borrower).creditLineVariables(valuesNew);
+            // console.log({ Principal: CreditVars.principal.toString() });
+            // console.log({ Interest: CreditVars.interestAccruedTillLastPrincipalUpdate.toString() });
+    
+            await expect(creditLine.connect(random1).close(valuesNew)).to.emit(creditLine, 'CreditLineClosed').withArgs(valuesNew);
+    
+            let StatusActual = (await creditLine.connect(admin).creditLineVariables(valuesNew)).status;
+            assert(
+                StatusActual.toString() == BigNumber.from('3').toString(),
+                `Creditline should be in closed Stage. Expected: ${BigNumber.from('3').toString()} 
+                Actual: ${StatusActual}`
             );
         });
     });
@@ -921,7 +946,7 @@ export async function CreditLines(
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
 
@@ -964,6 +989,7 @@ export async function CreditLines(
 
             await timeTravel(network, 86400 * 10); // 10 days
 
+            await creditLine.connect(borrower).calculateBorrowableAmount(creditLineNumber); // the call is only for triggering the console events
             let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
 
             expect(borrowableAmount).lte(borrowLimit);
@@ -977,7 +1003,7 @@ export async function CreditLines(
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
 
@@ -1094,7 +1120,7 @@ export async function CreditLines(
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
 
@@ -1218,7 +1244,7 @@ export async function CreditLines(
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+            let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
 
@@ -1485,6 +1511,176 @@ export async function CreditLines(
                 creditLineAllowanceBefore: creditLineAllowanceBefore.toString(),
                 creditLineAllowanceAfter: creditLineAllowanceAfter.toString(),
             });
+        });
+    });
+
+    describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Updating Credit Line params`, async () => {
+        let env: Environment;
+        let creditLine: CreditLine;
+        let admin: SignerWithAddress;
+        let lender: SignerWithAddress;
+        let borrower: SignerWithAddress;
+
+        let deployHelper: DeployHelper;
+
+        let creditLineNumber: BigNumber;
+
+        let BorrowAsset: ERC20Detailed;
+        let CollateralAsset: ERC20Detailed;
+        let savingsAccount: SavingsAccount;
+
+        before(async () => {
+            env = await createEnvironment(
+                hre,
+                [WhaleAccount1, WhaleAccount2],
+                [
+                    { asset: BorrowToken, liquidityToken: liquidityBorrowToken },
+                    { asset: CollateralToken, liquidityToken: liquidityCollateralToken },
+                ] as CompoundPair[],
+                [] as YearnPair[],
+                [
+                    { tokenAddress: BorrowToken, feedAggregator: chainlinkBorrow },
+                    { tokenAddress: CollateralToken, feedAggregator: ChainlinkCollateral },
+                ] as PriceOracleSource[],
+                {
+                    votingPassRatio: extensionParams.votingPassRatio,
+                } as ExtensionInitParams,
+                {
+                    gracePenalityRate: repaymentParams.gracePenalityRate,
+                    gracePeriodFraction: repaymentParams.gracePeriodFraction,
+                } as RepaymentsInitParams,
+                {
+                    admin: '',
+                    _collectionPeriod: testPoolFactoryParams._collectionPeriod,
+                    _loanWithdrawalDuration: testPoolFactoryParams._loanWithdrawalDuration,
+                    _marginCallDuration: testPoolFactoryParams._marginCallDuration,
+                    _gracePeriodPenaltyFraction: testPoolFactoryParams._gracePeriodPenaltyFraction,
+                    _poolInitFuncSelector: getPoolInitSigHash(),
+                    _liquidatorRewardFraction: testPoolFactoryParams._liquidatorRewardFraction,
+                    _poolCancelPenalityFraction: testPoolFactoryParams._poolCancelPenalityFraction,
+                    _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction,
+                    protocolFeeCollector: '',
+                    _minBorrowFraction: testPoolFactoryParams._minborrowFraction,
+                    noStrategy: '',
+                } as PoolFactoryInitParams,
+                CreditLineDefaultStrategy.NoStrategy,
+                {
+                    _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
+                    _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
+                } as CreditLineInitParams
+            );
+
+            creditLine = env.creditLine;
+            admin = env.entities.admin;
+            lender = env.entities.lender;
+            borrower = env.entities.borrower;
+            savingsAccount = env.savingsAccount;
+            deployHelper = new DeployHelper(admin);
+        });
+
+        it('Credit Line Update: Only owner can update the default strategy', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            await expect(creditLine.connect(random).updateDefaultStrategy(env.yields.compoundYield.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateDefaultStrategy(env.yields.compoundYield.address))
+                .to.emit(creditLine, 'DefaultStrategyUpdated')
+                .withArgs(env.yields.compoundYield.address);
+        });
+
+        it('Credit Line Update: Only owner can update the price oracle', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            await expect(creditLine.connect(random).updatePriceOracle(env.priceOracle.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updatePriceOracle(env.priceOracle.address))
+                .to.emit(creditLine, 'PriceOracleUpdated')
+                .withArgs(env.priceOracle.address);
+        });
+
+        it('Credit Line Update: Only owner can update the savings account', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            await expect(creditLine.connect(random).updateSavingsAccount(env.savingsAccount.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateSavingsAccount(env.savingsAccount.address))
+                .to.emit(creditLine, 'SavingsAccountUpdated')
+                .withArgs(env.savingsAccount.address);
+        });
+
+        it('Credit Line Update: Only owner can update the strategy registry', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            await expect(creditLine.connect(random).updateStrategyRegistry(env.strategyRegistry.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateStrategyRegistry(zeroAddress)).to.be.revertedWith('CL::I zero address');
+
+            await expect(creditLine.connect(admin).updateStrategyRegistry(env.strategyRegistry.address))
+                .to.emit(creditLine, 'StrategyRegistryUpdated')
+                .withArgs(env.strategyRegistry.address);
+        });
+
+        it('Credit Line Update: Only owner can update the protocol fee fraction', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            let protocolFeeFraction = BigNumber.from(10).mul(BigNumber.from(10).pow(28));
+
+            await expect(creditLine.connect(random).updateProtocolFeeFraction(protocolFeeFraction)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateProtocolFeeFraction(protocolFeeFraction))
+                .to.emit(creditLine, 'ProtocolFeeFractionUpdated')
+                .withArgs(protocolFeeFraction);
+        });
+
+        it('Credit Line Update: Only owner can update the protocol fee collector', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+            let protocolFeeCollector = env.entities.extraLenders[99];
+
+            await expect(creditLine.connect(random).updateProtocolFeeCollector(protocolFeeCollector.address)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateProtocolFeeCollector(zeroAddress)).to.be.revertedWith('cant be 0 address');
+
+            await expect(creditLine.connect(admin).updateProtocolFeeCollector(protocolFeeCollector.address))
+                .to.emit(creditLine, 'ProtocolFeeCollectorUpdated')
+                .withArgs(protocolFeeCollector.address);
+        });
+
+        it('Credit Line Update: Only owner can update the liquidator reward fraction', async function () {
+            let admin = env.entities.admin;
+            let random = env.entities.extraLenders[30];
+
+            let passLiquidatorFraction = BigNumber.from(5).mul(BigNumber.from(10).pow(28));
+            let failLiquidatorFraction = BigNumber.from(2).mul(BigNumber.from(10).pow(30));
+
+            await expect(creditLine.connect(random).updateLiquidatorRewardFraction(passLiquidatorFraction)).to.be.revertedWith(
+                'Ownable: caller is not the owner'
+            );
+
+            await expect(creditLine.connect(admin).updateLiquidatorRewardFraction(failLiquidatorFraction)).to.be.revertedWith(
+                'Fraction has to be less than 1'
+            );
+
+            await expect(creditLine.connect(admin).updateLiquidatorRewardFraction(passLiquidatorFraction))
+                .to.emit(creditLine, 'LiquidationRewardFractionUpdated')
+                .withArgs(passLiquidatorFraction);
         });
     });
 

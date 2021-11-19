@@ -207,10 +207,12 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         uint256 sharesBefore = IERC20(vault).balanceOf(address(this));
 
         //lock collateral in vault
+        IERC20(asset).approve(vault, 0);
         IERC20(asset).approve(vault, amount);
         IyVault(vault).deposit(amount);
 
         sharesReceived = IERC20(vault).balanceOf(address(this)).sub(sharesBefore);
+        IERC20(asset).approve(vault, 0);
     }
 
     function _withdrawETH(address vault, uint256 amount) internal returns (uint256 received) {

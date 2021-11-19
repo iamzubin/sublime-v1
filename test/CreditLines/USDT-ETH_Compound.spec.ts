@@ -351,7 +351,8 @@ describe.skip('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
 
         let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(amountForDeposit, _collateralAsset);
         // console.log({ amountForDeposit: amountForDeposit.toString() });
-        // console.log({ liquidityShares: liquidityShares.toString() });
+        // console.log({ liquidityShares: liquidityShares.mul(100).toString() });
+        let updatedLiquidityShares = liquidityShares.mul(100).toString();
 
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
         await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
@@ -360,7 +361,7 @@ describe.skip('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
         await env.savingsAccount
             .connect(random)
             .deposit(liquidityShares.mul(100), _collateralAsset, env.yields.compoundYield.address, random.address, {
-                value: 2004797987900,
+                value: updatedLiquidityShares,
             });
 
         const collateralBalanceInShares = await env.savingsAccount
@@ -412,7 +413,9 @@ describe.skip('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
         let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
         let amount: BigNumber = BigNumber.from('100').mul(BigNumber.from('10').pow(BTDecimals));
 
-        await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith('CreditLine: Amount exceeds borrow limit.');
+        await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith(
+            "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
+        );
     });
 
     it('Creditline Active: collateral ratio should not go down after borrow', async function () {
