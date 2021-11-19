@@ -48,8 +48,8 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
         strategyRegistry = await deployHelper.core.deployStrategyRegistry();
 
         //initialize
-        savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
-        strategyRegistry.initialize(admin.address, 1000);
+        await savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
+        await strategyRegistry.initialize(admin.address, 1000);
 
         noYield = await deployHelper.core.deployNoYield();
         await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
