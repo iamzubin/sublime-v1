@@ -34,12 +34,11 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev Mapping is linkedAddress -> (MasterAddress, activationTimestamp)
     /// @return Returns the master address and activation time for the linkedAddress
     mapping(address => LinkedAddress) public linkedAddresses;
-
-    /** 
-    @dev Message that has to be prefixed to the address when signing with master address so that specified address can be linked to it
-    e.g. If 0xabc is to be linked to 0xfed, then 0xfed has to sign ${APPROVAL_MESSAGE}0xabc with 0xfed's private key. This signed message has to be then submitted by 0xabc to linkAddress method
-    */
-    string constant APPROVAL_MESSAGE = 'APPROVING ADDRESS TO BE LINKED TO ME ON SUBLIME';
+    
+    /// @notice Maps address to link with the master addres
+    /// @dev Mapping is linkedAddress -> MasterAddress -> isPending
+    /// @return Returns if linkedAddress has a pending request from master address
+    mapping(address => mapping(address => bool)) public pendingLinkAddresses;
 
     /// @notice Prevents anyone other than a valid verifier from calling a function
     modifier onlyVerifier() {
@@ -80,12 +79,12 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _isMasterLinked boolean which specifies if the masterAddress has to be added as a linked address
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external override onlyVerifier {
         require(masterAddresses[_masterAddress][msg.sender] == 0, 'V:RMA-Already registered');
-        uint256 _masterAddressActivatesAt = block.timestamp.add(masterAddressActivationDelay);
+        uint256 _masterAddressActivatesAt = block.timestamp + masterAddressActivationDelay;
         masterAddresses[_masterAddress][msg.sender] = _masterAddressActivatesAt;
         emit UserRegistered(_masterAddress, msg.sender, _masterAddressActivatesAt);
 
         if (_isMasterLinked) {
-            _linkedAddress(_masterAddress, _masterAddress);
+            _linkAddress(_masterAddress, _masterAddress);
         }
     }
 
@@ -102,27 +101,41 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     }
 
     function _linkAddress(address _linked, address _master) internal {
-        uint256 _linkedAddressActivatesAt = block.timestamp.add(linkedAddressActivationDelay);
-        linkedAddresses[_master] = LinkedAddress(_master, _linkedAddressActivatesAt);
-        emit AddressLinked(_master, _master, _linkedAddressActivatesAt);
+        uint256 _linkedAddressActivatesAt = block.timestamp + linkedAddressActivationDelay;
+        linkedAddresses[_linked] = LinkedAddress(_master, _linkedAddressActivatesAt);
+        emit AddressLinked(_linked, _master, _linkedAddressActivatesAt);
+    }
+
+    /// @notice Used by master address to request linking another address to it
+    /// @param _linkedAddress address which is to be linked
+    function requestAddressLinking(address _linkedAddress) external {
+        require(linkedAddresses[_linkedAddress].masterAddress == address(0), 'V:LA-Address already linked');
+        pendingLinkAddresses[_linkedAddress][msg.sender] = true;
+        emit AddressLinkingRequested(_linkedAddress, msg.sender);
+    }
+
+    /// @notice Used by master address to cancel request linking another address to it
+    /// @param _linkedAddress address which is to be linked
+    function cancelAddressLinkingRequest(address _linkedAddress) external {
+        require(pendingLinkAddresses[_linkedAddress][msg.sender], 'V:CALR-No pending request');
+        delete pendingLinkAddresses[_linkedAddress][msg.sender];
+        emit AddressLinkingRequestCancelled(_linkedAddress, msg.sender);
     }
 
     /// @notice Link an address with a master address
     /// @dev Master address to which the address is being linked need not be verified
-    /// @param _approval Signature made by the master address to link the address
-    function linkAddress(bytes memory _approval) external {
+    /// @param _masterAddress master address to link to
+    function linkAddress(address _masterAddress) external {
         require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
-        bytes memory _messageToSign = abi.encodePacked(APPROVAL_MESSAGE, msg.sender);
-        bytes32 _hashedMessage = keccak256(_messageToSign);
-        address _master = ECDSA.recover(_hashedMessage, _approval);
-        _linkAddress(msg.sender, _master);
+        require(pendingLinkAddresses[msg.sender][_masterAddress], 'V:LA-No pending request');
+        _linkAddress(msg.sender, _masterAddress);
     }
 
     /// @notice Unlink address with master address
     /// @dev a single address can be linked to only one master address
     /// @param _linkedAddress Address that is being unlinked
     function unlinkAddress(address _linkedAddress) external {
-        address _linkedTo = linkedAddresses[_linkedAddress];
+        address _linkedTo = linkedAddresses[_linkedAddress].masterAddress;
         require(_linkedTo != address(0), 'V:UA-Address not linked');
         require(_linkedTo == msg.sender, 'V:UA-Not linked to sender');
         delete linkedAddresses[_linkedAddress];
@@ -135,7 +148,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _verifier verifier with which master address has to be verified
     /// @return if the user is linke dto a registered master address
     function isUser(address _user, address _verifier) external view override returns (bool) {
-        LinkedAddress _linkedAddress = linkedAddresses[_user];
+        LinkedAddress memory _linkedAddress = linkedAddresses[_user];
         uint256 _masterActivatesAt = masterAddresses[_linkedAddress.masterAddress][_verifier];
         if (
             _linkedAddress.masterAddress == address(0) || 
