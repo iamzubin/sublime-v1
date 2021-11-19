@@ -6,15 +6,13 @@ import '@openzeppelin/contracts/cryptography/ECDSA.sol';
 import '../interfaces/IVerification.sol';
 
 /// @title Contract that handles linking identity of user to address
-///
 contract Verification is Initializable, IVerification, OwnableUpgradeable {
-
     struct LinkedAddress {
         address masterAddress;
         uint256 activatesAt;
     }
 
-    /// @notice Delay in seconds after which master address is activated once registered 
+    /// @notice Delay in seconds after which master address is activated once registered
     uint256 public masterAddressActivationDelay;
 
     /// @notice Delay in seconds after which linked address is activated once registered
@@ -34,7 +32,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev Mapping is linkedAddress -> (MasterAddress, activationTimestamp)
     /// @return Returns the master address and activation time for the linkedAddress
     mapping(address => LinkedAddress) public linkedAddresses;
-    
+
     /// @notice Maps address to link with the master addres
     /// @dev Mapping is linkedAddress -> MasterAddress -> isPending
     /// @return Returns if linkedAddress has a pending request from master address
@@ -151,7 +149,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         LinkedAddress memory _linkedAddress = linkedAddresses[_user];
         uint256 _masterActivatesAt = masterAddresses[_linkedAddress.masterAddress][_verifier];
         if (
-            _linkedAddress.masterAddress == address(0) || 
+            _linkedAddress.masterAddress == address(0) ||
             _linkedAddress.activatesAt > block.timestamp ||
             _masterActivatesAt == 0 ||
             _masterActivatesAt > block.timestamp
