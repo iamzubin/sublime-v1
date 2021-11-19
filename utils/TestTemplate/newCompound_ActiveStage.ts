@@ -612,7 +612,7 @@ export async function preActivePoolChecks(
             assert(collateralBalancePoolBeforeCancel.toString() == borrowerCollateralSharesAfterCancel.toString(), "Penalty deducted");    
         });
     });
-    /*
+    
     describe('After loan starts and before loanWithdrawalDeadline or lent amount withdraw: Part3', async () => {
         let env: Environment;
         let pool: Pool;
@@ -717,7 +717,7 @@ export async function preActivePoolChecks(
 
             assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
         });
-
+        /*
         it("Protocol Fee is subtracted when borrower withdraws borrow amount, along with withdraw event emission & adjusted tokens reaching the borrower: ", async function() {
             let { admin, borrower, lender, protocolFeeCollector } = env.entities;
             let random = env.entities.extraLenders[10]; // Random address
@@ -772,6 +772,38 @@ export async function preActivePoolChecks(
             // This step is to remove the protocol fee, for other tests
             await borrowToken.connect(protocolFeeCollector).transfer(admin.address, checkProtcolFee);
         });
+        */
+
+        it("Only the borrower should be able to withdraw the loan amount", async function() {
+            let { admin, borrower, lender, protocolFeeCollector } = env.entities;
+            let random = env.entities.extraLenders[10]; // Random address
+            let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
+            let collateralToken = env.mockTokenContracts[1].contract;
+            let borrowToken = env.mockTokenContracts[0].contract;
+            let amount = BigNumber.from(10).mul(BigNumber.from(10).pow(BTDecimals)); // 10 Borrow Tokens
+            let poolStrategy = env.yields.compoundYield;
+
+            // Approving Borrow tokens to the lender
+            await borrowToken.connect(env.impersonatedAccounts[1]).transfer(admin.address, amount);
+            await borrowToken.connect(admin).transfer(lender.address, amount);
+            await borrowToken.connect(lender).approve(poolAddress, amount);
+
+            // Lender lends into the pool
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
+            await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
+
+            //block travel to escape withdraw interval
+            const { loanStartTime } = await pool.poolConstants();
+            await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
+
+            // Random entities and lenders should fail to call the borrow function
+            await expect(pool.connect(random).withdrawBorrowedAmount()).to.be.revertedWith('OB1');
+            await expect(pool.connect(lender).withdrawBorrowedAmount()).to.be.revertedWith('OB1');
+            await expect(pool.connect(admin).withdrawBorrowedAmount()).to.be.revertedWith('OB1');
+            
+            // Only borrower can withdraw borrow tokens
+            await expect(pool.connect(borrower).withdrawBorrowedAmount()).to.emit(pool, "AmountBorrowed").withArgs(amount);
+        })
     });
-    */
 }
