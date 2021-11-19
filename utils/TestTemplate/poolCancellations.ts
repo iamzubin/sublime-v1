@@ -310,7 +310,7 @@ export async function cancellationChecks(
             expectApproxEqual(collateralBalanceOfPoolInTokens.sub(collateralBalanceOfBorrowerInSharesAfterCancel) , penaltyAmountInTokens, 100, "The deducted amount and penalty varied too much");
         });
 
-        it("Pool cannot be cancelled when extensions have been granted: ", async function() {
+        it.only("Pool cannot be cancelled when extensions have been granted and terminatePool can only be called by the pool factory owner: ", async function() {
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
             let {admin, borrower, lender} = env.entities;
@@ -379,6 +379,13 @@ export async function cancellationChecks(
 
             // Cancelling the pool
             await expect(pool.connect(random).cancelPool()).to.be.revertedWith('CP1');
+
+            // Only the pool factory owner should able to call the terminatePool function
+            await expect(pool.connect(random).terminatePool()).to.be.revertedWith('OO1');
+            await expect(pool.connect(lender).terminatePool()).to.be.revertedWith('OO1');
+            await expect(pool.connect(borrower).terminatePool()).to.be.revertedWith('OO1');
+            
+            await expect(pool.connect(admin).terminatePool()).to.emit(pool, 'PoolTerminated');
         });
     });
 }
