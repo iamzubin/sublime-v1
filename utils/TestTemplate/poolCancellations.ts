@@ -256,7 +256,12 @@ export async function cancellationChecks(
             // A random entity tries to cancel the pool
             await expect(pool.connect(random).cancelPool()).to.emit(pool, "PoolCancelled");
 
-            // Checking whether the pool has been cancelled or not
+            // The withdrawLiquidity function should be only callable by the lender
+            await expect(pool.connect(random).withdrawLiquidity()).to.be.revertedWith('IL1');
+            await expect(pool.connect(borrower).withdrawLiquidity()).to.be.revertedWith('IL1');
+            await expect(pool.connect(lender).withdrawLiquidity()).to.emit(pool, "LiquidityWithdrawn");
+
+            //Checking whether the pool has been cancelled or not
             let {loanStatus} = await pool.poolVariables();
             //console.log("Loan Status: ", loanStatus);
 
