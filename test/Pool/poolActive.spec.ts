@@ -408,9 +408,7 @@ describe('Pool Active stage', async () => {
 
                     await blockTravel(network, parseInt(endOfPeriod.add(10).toString()));
 
-                    await expect(pool.liquidatePool(false, false, false)).to.be.revertedWith(
-                        'LP2'
-                    );
+                    await expect(pool.liquidatePool(false, false, false)).to.be.revertedWith('LP2');
                 });
             });
 
@@ -444,9 +442,7 @@ describe('Pool Active stage', async () => {
                         await extenstion.connect(borrower).requestExtension(pool.address);
                         await extenstion.connect(lender).voteOnExtension(pool.address);
 
-                        await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'LP2'
-                        );
+                        await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith('LP2');
                     });
 
                     it('liquidate if repay less than interest for extended period', async () => {
@@ -501,9 +497,7 @@ describe('Pool Active stage', async () => {
                             .mul(createPoolParams._repaymentInterval)
                             .div(scaler);
                         await blockTravel(network, parseInt(endOfExtension.add(gracePeriod).add(1).toString()));
-                        await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'LP2'
-                        );
+                        await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith('LP2');
                     });
 
                     it('Repay interest for period after extension', async () => {
@@ -538,9 +532,7 @@ describe('Pool Active stage', async () => {
                         await repaymentImpl.connect(random).repay(pool.address, interestForCurrentPeriod.add(1));
                         await blockTravel(network, parseInt(extensionVoteEndTime.add(1).toString()));
 
-                        await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith(
-                            'LP2'
-                        );
+                        await expect(pool.connect(random).liquidatePool(false, false, false)).to.be.revertedWith('LP2');
                     });
 
                     it('liquidate if repay is less than interest for current period', async () => {
@@ -757,9 +749,7 @@ describe('Pool Active stage', async () => {
 
                     await pool.connect(borrower).addCollateralInMarginCall(lender.address, amount, false);
 
-                    await expect(pool.liquidateForLender(lender.address, false, false, false)).to.be.revertedWith(
-                        'CLBL2'
-                    );
+                    await expect(pool.liquidateForLender(lender.address, false, false, false)).to.be.revertedWith('CLBL2');
                 });
 
                 it("Margin call can't be liquidated, if collateral ratio goes above ideal ratio", async () => {
