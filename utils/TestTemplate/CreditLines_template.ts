@@ -555,6 +555,19 @@ export async function CreditLines(
             expectApproxEqual(randomBalanceInSharesDiff, amountForDeposit, 50);
         });
 
+        it('Creditline Active: Cannot deposit collateral (from savings account), if no balance in savings account', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let random = env.entities.extraLenders[10];
+
+            await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
+            await env.mockTokenContracts[1].contract.connect(random).approve(creditLine.address, collateralAmout);
+
+            await expect(
+                creditLine.connect(random).depositCollateral(values, collateralAmout, env.yields.compoundYield.address, true)
+            ).to.be.revertedWith('CreditLine::_depositCollateralFromSavingsAccount - Insufficient balance');
+        });
+
         it('Creditline Active: Deposit Collateral from savings account', async function () {
             let { admin, borrower, lender } = env.entities;
             let random = env.entities.extraLenders[10];
@@ -656,6 +669,8 @@ export async function CreditLines(
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
             await env.mockTokenContracts[0].contract.connect(lender).approve(env.yields.compoundYield.address, amount);
 
+            await expect(creditLine.connect(borrower).borrow(values, amount)).to.be.revertedWith('insufficient balance');
+
             await env.savingsAccount.connect(lender).deposit(amount, _borrowAsset, env.yields.compoundYield.address, lender.address);
             await env.savingsAccount.connect(lender).approve(unlimited, _borrowAsset, creditLine.address);
 
@@ -719,6 +734,15 @@ export async function CreditLines(
             await creditLine.connect(borrower).withdrawCollateral(values, withdrawAmount, false);
         });
 
+        it('CreditLine Active: Collateral can be withdrawn (from savings account), if collateral ratio is maintained', async function () {
+            let { admin, borrower, lender } = env.entities;
+            let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
+            let withdrawAmount = BigNumber.from('1').mul(BigNumber.from('10').pow(CTDecimals));
+            // let withdrawAmountFail = BigNumber.from('8').mul(BigNumber.from('10').pow(CTDecimals));
+            // await creditLine.connect(borrower).withdrawCollateral(values, withdrawAmountFail, true);
+            await creditLine.connect(borrower).withdrawCollateral(values, withdrawAmount, true);
+        });
+
         it('CreditLine Active: collateral withdraw should be reverted if collateral ratio goes below ideal', async function () {
             let { admin, borrower, lender } = env.entities;
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
@@ -743,19 +767,19 @@ export async function CreditLines(
             let { admin, borrower, lender } = env.entities;
             let random1 = env.entities.extraLenders[20];
             await expect(creditLine.connect(borrower).accept(valuesNew)).to.emit(creditLine, 'CreditLineAccepted').withArgs(valuesNew);
-    
+
             await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
             await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, collateralAmout);
             await env.mockTokenContracts[1].contract.connect(borrower).approve(creditLine.address, collateralAmout);
-    
+
             await creditLine.connect(borrower).depositCollateral(valuesNew, collateralAmout, env.yields.compoundYield.address, false);
-    
+
             const CreditVars = await creditLine.connect(borrower).creditLineVariables(valuesNew);
             // console.log({ Principal: CreditVars.principal.toString() });
             // console.log({ Interest: CreditVars.interestAccruedTillLastPrincipalUpdate.toString() });
-    
+
             await expect(creditLine.connect(random1).close(valuesNew)).to.emit(creditLine, 'CreditLineClosed').withArgs(valuesNew);
-    
+
             let StatusActual = (await creditLine.connect(admin).creditLineVariables(valuesNew)).status;
             assert(
                 StatusActual.toString() == BigNumber.from('3').toString(),
@@ -1053,7 +1077,7 @@ export async function CreditLines(
         });
     });
 
-    describe.skip(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
+    describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
         let env: Environment;
         let creditLine: CreditLine;
         let admin: SignerWithAddress;
@@ -1168,7 +1192,15 @@ export async function CreditLines(
 
             expect(borrowableAmount).lte(borrowLimit);
         });
-        it.skip('Test Liquidation', async () => {});
+
+        it.skip('Test Liquidation', async () => {
+            await creditLine.connect(admin).liquidate(creditLineNumber, false);
+        });
+
+        it('Test BorrowTokensToLiquidate', async () => {
+            let value = await creditLine.connect(admin).borrowTokensToLiquidate(creditLineNumber);
+            console.log(value.value.toString());
+        });
     });
 
     describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Repay Credit Lines`, async () => {
@@ -1315,22 +1347,23 @@ export async function CreditLines(
 
         it('Should be able to Repay again from account directly', async () => {
             let borrowDecimals = await BorrowAsset.decimals();
-            let amountToRepay = BigNumber.from(5).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
+            let amountToRepay = BigNumber.from(5).mul(BigNumber.from(10).pow(borrowDecimals)); // 5 units of borrow tokens
+            let amount = BigNumber.from(500);
 
             await BorrowAsset.connect(borrower).approve(creditLine.address, amountToRepay);
             const borrowerBalanceBeforeRepay = await BorrowAsset.balanceOf(borrower.address);
             const lenderSharesBeforeRepay = await savingsAccount
                 .connect(borrower)
                 .balanceInShares(lender.address, BorrowAsset.address, env.yields.noYield.address);
-            await creditLine.connect(borrower).repay(creditLineNumber, amountToRepay, false);
+            await creditLine.connect(borrower).repay(creditLineNumber, amount, false);
 
             const borrowerBalanceAfterRepay = await BorrowAsset.balanceOf(borrower.address);
 
             const lenderSharesAfterRepay = await savingsAccount
                 .connect(borrower)
                 .balanceInShares(lender.address, BorrowAsset.address, env.yields.noYield.address);
-            expectApproxEqual(borrowerBalanceBeforeRepay.sub(borrowerBalanceAfterRepay), amountToRepay, 0);
-            expectApproxEqual(lenderSharesAfterRepay.sub(lenderSharesBeforeRepay), amountToRepay, 0);
+            expectApproxEqual(borrowerBalanceBeforeRepay.sub(borrowerBalanceAfterRepay), amount, 0);
+            expectApproxEqual(lenderSharesAfterRepay.sub(lenderSharesBeforeRepay), amount, 0);
 
             await timeTravel(network, 86400 * 10); // 10 days
 
@@ -1352,6 +1385,11 @@ export async function CreditLines(
             let amountToRepay = BigNumber.from(5).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
 
             await BorrowAsset.connect(borrower).approve(env.yields.noYield.address, amountToRepay);
+
+            await expect(creditLine.connect(borrower).repay(creditLineNumber, amountToRepay, true)).to.be.revertedWith(
+                'CreditLine::_repayFromSavingsAccount - Insufficient balance'
+            );
+
             await savingsAccount
                 .connect(borrower)
                 .deposit(amountToRepay, BorrowAsset.address, env.yields.noYield.address, borrower.address);
