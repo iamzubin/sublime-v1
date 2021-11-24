@@ -36,8 +36,8 @@ describe('Test Savings Account (with ETH)', async () => {
         strategyRegistry = await deployHelper.core.deployStrategyRegistry();
 
         //initialize
-        savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
-        strategyRegistry.initialize(admin.address, 10);
+        await savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
+        await strategyRegistry.initialize(admin.address, 10);
 
         noYield = await deployHelper.core.deployNoYield();
         await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
