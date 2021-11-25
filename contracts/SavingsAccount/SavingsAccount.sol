@@ -299,6 +299,20 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit WithdrawnAll(msg.sender, _tokenReceived, _token);
     }
 
+    function withdrawAll(address _token, address _strategy) external override nonReentrant returns (uint256 _tokenReceived) {
+        uint256 _sharesBalance = balanceInShares[msg.sender][_token][_strategy];
+
+        if(_sharesBalance == 0) return 0;
+
+        uint256 _amount = IYield(_strategy).unlockTokens(_token, _sharesBalance);
+
+        delete balanceInShares[msg.sender][_token][_strategyList[i]];
+
+        _transfer(_amount, _token, payable(msg.sender));
+
+        emit Withdrawn(msg.sender, msg.sender, _amount, _token, _strategy, false);
+    }
+
     /**
      * @notice used to approve allowance to an address
      * @dev this is prone to race condition, hence increaseAllowance is recommended
