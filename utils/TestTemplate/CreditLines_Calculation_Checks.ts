@@ -231,14 +231,19 @@ export async function CreditLines_Calculations(
             let principal = BigNumber.from(10000);
             let borrowRate = BigNumber.from(10).mul(BigNumber.from(10).pow(28));
             let timeElapsed = BigNumber.from(10).mul(86400);
+            const scaler = BigNumber.from(10).pow(30);
+
+            let expected = principal
+                .mul(borrowRate)
+                .mul(timeElapsed)
+                .div(365 * 86400)
+                .div(scaler);
+            // console.log(expected.toString());
 
             let result = await creditLine.connect(admin).calculateInterest(principal, borrowRate, timeElapsed);
-            console.log(result.toString());
+            // console.log(result.toString());
 
-            await timeTravel(network, 86400 * 10); // travelling by 10 days
-
-            let interest = await creditLine.connect(admin).calculateInterestAccrued(values);
-            console.log(interest.toString());
+            assert.equal(expected.toString(), result.toString());
         });
     });
 }

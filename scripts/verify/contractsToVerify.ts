@@ -13,11 +13,7 @@ const contractsToVerify = [
     },
     {
         contract: 'noYield',
-<<<<<<< HEAD
-        proxy: '0x4fEFEfd8fF33A6090e666417B7B69219F7752Bc6',
-=======
         proxy: '0x85858349d12946a6538353a794ab267E311856f4',
->>>>>>> 8428a89e4fa5070c08f624626b8398beaf083349
     },
     {
         contract: 'aaveYield',

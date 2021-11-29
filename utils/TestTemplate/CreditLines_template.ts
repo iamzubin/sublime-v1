@@ -1077,7 +1077,7 @@ export async function CreditLines(
         });
     });
 
-    describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
+    describe.only(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
         let env: Environment;
         let creditLine: CreditLine;
         let admin: SignerWithAddress;
@@ -1146,7 +1146,8 @@ export async function CreditLines(
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
             let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
-            let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+            // let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+            let collateralAmountToDeposit = BigNumber.from(1);
 
             await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
             // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
@@ -1193,13 +1194,21 @@ export async function CreditLines(
             expect(borrowableAmount).lte(borrowLimit);
         });
 
-        it.skip('Test Liquidation', async () => {
-            await creditLine.connect(admin).liquidate(creditLineNumber, false);
+        it('Test Withdrawable amount', async () => {
+            let AmountPossible = await creditLine.connect(borrower).withdrawableCollateral(creditLineNumber);
+            console.log('AmountPossible', AmountPossible.value.toString());
         });
 
         it('Test BorrowTokensToLiquidate', async () => {
             let value = await creditLine.connect(admin).borrowTokensToLiquidate(creditLineNumber);
             console.log(value.value.toString());
+        });
+
+        it('Test Liquidation', async () => {
+            console.log('Update PriceOracle');
+            await creditLine.connect(admin).updatePriceOracle(ChainLinkAggregators['USDT/USD']);
+            console.log('Updated PriceOracle');
+            await creditLine.connect(admin).liquidate(creditLineNumber, false);
         });
     });
 
@@ -1633,11 +1642,11 @@ export async function CreditLines(
             let admin = env.entities.admin;
             let random = env.entities.extraLenders[30];
 
-            await expect(creditLine.connect(random).updatePriceOracle(env.priceOracle.address)).to.be.revertedWith(
+            await expect(creditLine.connect(random).updatePriceOracle(ChainLinkAggregators['BTC/USD'])).to.be.revertedWith(
                 'Ownable: caller is not the owner'
             );
 
-            await expect(creditLine.connect(admin).updatePriceOracle(env.priceOracle.address))
+            await expect(creditLine.connect(admin).updatePriceOracle(ChainLinkAggregators['BTC/USD']))
                 .to.emit(creditLine, 'PriceOracleUpdated')
                 .withArgs(env.priceOracle.address);
         });

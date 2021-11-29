@@ -953,14 +953,15 @@ describe.skip(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit L
     beforeEach(async () => {
         let BorrowAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[0].contract.address);
         let CollateralAsset: ERC20Detailed = await deployHelper.mock.getMockERC20Detailed(env.mockTokenContracts[1].contract.address);
-        let borrowDecimals = await BorrowAsset.decimals();
+        let borrowDecimals = BigNumber.from(18);
         let collateralDecimals = await CollateralAsset.decimals();
 
         let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
         let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-        let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(0)); // 245%
+        let colRatio = BigNumber.from(50).mul(BigNumber.from(10).pow(0)); // 245%
 
-        let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+        // let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+        let collateralAmountToDeposit = BigNumber.from(Amount);
 
         await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
         // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
@@ -994,7 +995,9 @@ describe.skip(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit L
             .depositCollateral(creditLineNumber, collateralAmountToDeposit, env.yields.noYield.address, false);
 
         await BorrowAsset.connect(lender).approve(env.yields.noYield.address, borrowLimit);
-        await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address);
+        await env.savingsAccount.connect(lender).deposit(borrowLimit, BorrowAsset.address, env.yields.noYield.address, lender.address, {
+            value: ethers.utils.parseEther('100'),
+        });
 
         await env.savingsAccount.connect(lender).approve(borrowLimit, BorrowAsset.address, creditLine.address);
         let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
@@ -1006,7 +1009,9 @@ describe.skip(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit L
 
         expect(borrowableAmount).lte(borrowLimit);
     });
-    it.skip('Test Liquidation', async () => {});
+    it('Test Liquidation', async () => {
+        await creditLine.connect(admin).liquidate(creditLineNumber, true);
+    });
 });
 
 describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, async () => {

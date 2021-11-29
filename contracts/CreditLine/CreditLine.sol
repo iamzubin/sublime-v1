@@ -938,7 +938,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             .div(_ratioOfPrices)
             .mul(10**_decimals)
             .div(10**30);
-
         if (_collateralNeeded >= _totalCollateralTokens) {
             return 0;
         }

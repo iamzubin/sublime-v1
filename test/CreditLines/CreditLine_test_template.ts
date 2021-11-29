@@ -2,7 +2,7 @@ import { CreditLines } from '../../utils/TestTemplate/CreditLines_template';
 import { CreditLines_Calculations } from '../../utils/TestTemplate/CreditLines_Calculation_Checks';
 import { psLoanStagesTestCases as testCases } from '../../utils/TestCases/pool_simulations_loan_stages_test_cases';
 
-describe('CreditLine tests', function () {
+describe.only('CreditLine tests', function () {
     testCases.forEach((testCase) => {
         CreditLines(
             testCase.Amount,
