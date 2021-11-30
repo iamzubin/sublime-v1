@@ -1660,7 +1660,7 @@ export async function CreditLines(
 
             await expect(creditLine.connect(admin).updatePriceOracle(ChainLinkAggregators['BTC/USD']))
                 .to.emit(creditLine, 'PriceOracleUpdated')
-                .withArgs(env.priceOracle.address);
+                .withArgs(ChainLinkAggregators['BTC/USD']);
         });
 
         it('Credit Line Update: Only owner can update the savings account', async function () {
