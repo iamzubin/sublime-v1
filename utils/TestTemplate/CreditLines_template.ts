@@ -1212,10 +1212,6 @@ export async function CreditLines(
         });
 
         it('Test Liquidation: should be liquidated if collateral ratio goes below', async () => {
-            let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
-            // console.log('borrowableAmount',borrowableAmount.toString());
-            await creditLine.connect(borrower).borrow(creditLineNumber, borrowableAmount.mul(73).div(100));
-
             // move blocks to be able to liquidate due to change in collateral ratio
             await incrementChain(network, 2000, 150000000);
 
