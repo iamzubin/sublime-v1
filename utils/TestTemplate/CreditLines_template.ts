@@ -36,8 +36,8 @@ import { CompoundYield } from '@typechain/CompoundYield';
 import { getPoolInitSigHash } from '../createEnv/poolLogic';
 import { CreditLine } from '../../typechain/CreditLine';
 import { Contracts } from '../../existingContracts/compound.json';
-import { expectApproxEqual } from '../helpers';
-import { incrementChain, timeTravel, blockTravel } from '../time';
+import { expectApproxEqual, incrementChain } from '../helpers';
+import { timeTravel, blockTravel } from '../time';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ERC20Detailed } from '@typechain/ERC20Detailed';
 import { SavingsAccount } from '@typechain/SavingsAccount';
@@ -1077,7 +1077,7 @@ export async function CreditLines(
         });
     });
 
-    describe.only(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
+    describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
         let env: Environment;
         let creditLine: CreditLine;
         let admin: SignerWithAddress;
@@ -1143,11 +1143,11 @@ export async function CreditLines(
             let collateralDecimals = await CollateralAsset.decimals();
 
             let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
-            let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
+            let borrowRate = BigNumber.from(10).mul(BigNumber.from(10).pow(28)); // 10%
             let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
             // let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
-            let collateralAmountToDeposit = BigNumber.from(1);
+            let collateralAmountToDeposit = BigNumber.from(100);
 
             await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
             // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
@@ -1195,20 +1195,32 @@ export async function CreditLines(
         });
 
         it('Test Withdrawable amount', async () => {
-            let AmountPossible = await creditLine.connect(borrower).withdrawableCollateral(creditLineNumber);
-            console.log('AmountPossible', AmountPossible.value.toString());
+            let AmountPossible = await creditLine.connect(borrower).callStatic.withdrawableCollateral(creditLineNumber);
+            // console.log('AmountPossible', AmountPossible.toString());
+            await creditLine.connect(borrower).withdrawCollateral(creditLineNumber, AmountPossible.mul(2).div(3), false);
         });
 
         it('Test BorrowTokensToLiquidate', async () => {
-            let value = await creditLine.connect(admin).borrowTokensToLiquidate(creditLineNumber);
-            console.log(value.value.toString());
+            let value = await creditLine.connect(borrower).callStatic.borrowTokensToLiquidate(creditLineNumber);
+            console.log('BorrowTokensToLiquidate', value.toString());
         });
 
-        it('Test Liquidation', async () => {
-            console.log('Update PriceOracle');
-            await creditLine.connect(admin).updatePriceOracle(ChainLinkAggregators['USDT/USD']);
-            console.log('Updated PriceOracle');
-            await creditLine.connect(admin).liquidate(creditLineNumber, false);
+        it('Test Liquidation: should be reverted if the collateral ratio is maintained', async () => {
+            await expect(creditLine.connect(admin).liquidate(creditLineNumber, false)).to.be.revertedWith(
+                'CreditLine: Collateral ratio is higher than ideal value'
+            );
+        });
+
+        it('Test Liquidation: should be liquidated if collateral ratio goes below', async () => {
+            let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
+            // console.log('borrowableAmount',borrowableAmount.toString());
+            await creditLine.connect(borrower).borrow(creditLineNumber, borrowableAmount.mul(73).div(100));
+
+            // move blocks to be able to liquidate due to change in collateral ratio
+            await incrementChain(network, 2000, 150000000);
+
+            await expect(creditLine.connect(admin).liquidate(creditLineNumber, false))
+                .to.emit(creditLine, 'CreditLineLiquidated');
         });
     });
 

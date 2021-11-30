@@ -867,7 +867,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineConstants[_id].collateralAsset,
             creditLineConstants[_id].borrowAsset
         );
-
         uint256 currentDebt = calculateCurrentDebt(_id);
         uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).mul(10**30).div(
             10**_decimals
@@ -992,13 +991,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineVariables[_id].principal != 0, 'CreditLine: cannot liquidate if principal is 0');
-
         uint256 currentCollateralRatio = calculateCurrentCollateralRatio(_id);
         require(
             currentCollateralRatio < creditLineConstants[_id].idealCollateralRatio,
             'CreditLine: Collateral ratio is higher than ideal value'
         );
-
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address _lender = creditLineConstants[_id].lender;
         uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);

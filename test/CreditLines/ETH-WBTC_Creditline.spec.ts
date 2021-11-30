@@ -37,11 +37,11 @@ import { Pool } from '@typechain/Pool';
 import { CreditLine } from '../../typechain/CreditLine';
 import { zeroAddress } from '../../utils/constants';
 import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
-import { expectApproxEqual } from '../../utils/helpers';
+import { expectApproxEqual, incrementChain } from '../../utils/helpers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ERC20Detailed } from '@typechain/ERC20Detailed';
 import { SavingsAccount } from '@typechain/SavingsAccount';
-import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
+import { timeTravel, blockTravel } from '../../utils/time';
 import { isAddress } from 'ethers/lib/utils';
 
 let snapshotId: any;
@@ -889,7 +889,7 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Calculate Borrowable Am
     });
 });
 
-describe.skip(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit Lines`, async () => {
+describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit Lines`, async () => {
     let env: Environment;
     let creditLine: CreditLine;
     let admin: SignerWithAddress;
@@ -957,8 +957,8 @@ describe.skip(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit L
         let collateralDecimals = await CollateralAsset.decimals();
 
         let borrowLimit = BigNumber.from(100).mul(BigNumber.from(10).pow(borrowDecimals)); // 100 units of borrow tokens
-        let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
-        let colRatio = BigNumber.from(50).mul(BigNumber.from(10).pow(0)); // 245%
+        let borrowRate = BigNumber.from(10).mul(BigNumber.from(10).pow(28)); // 10%
+        let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
         // let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
         let collateralAmountToDeposit = BigNumber.from(Amount);
@@ -1009,8 +1009,34 @@ describe.skip(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit L
 
         expect(borrowableAmount).lte(borrowLimit);
     });
-    it('Test Liquidation', async () => {
-        await creditLine.connect(admin).liquidate(creditLineNumber, true);
+
+    it('Test Withdrawable amount', async () => {
+        let AmountPossible = await creditLine.connect(borrower).callStatic.withdrawableCollateral(creditLineNumber);
+        // console.log('AmountPossible', AmountPossible.toString());
+        await creditLine.connect(borrower).withdrawCollateral(creditLineNumber, AmountPossible.mul(2).div(3), false);
+    });
+
+    it('Test BorrowTokensToLiquidate', async () => {
+        let value = await creditLine.connect(borrower).callStatic.borrowTokensToLiquidate(creditLineNumber);
+        console.log('BorrowTokensToLiquidate', value.toString());
+    });
+
+    it('Test Liquidation: should be reverted if the collateral ratio is maintained', async () => {
+        await expect(creditLine.connect(admin).liquidate(creditLineNumber, false)).to.be.revertedWith(
+            'CreditLine: Collateral ratio is higher than ideal value'
+        );
+    });
+
+    it('Test Liquidation: should be liquidated if collateral ratio goes below', async () => {
+        let borrowableAmount = await creditLine.connect(borrower).callStatic.calculateBorrowableAmount(creditLineNumber);
+        // console.log('borrowableAmount',borrowableAmount.toString());
+        await creditLine.connect(borrower).borrow(creditLineNumber, borrowableAmount.mul(73).div(100));
+
+        // move blocks to be able to liquidate due to change in collateral ratio
+        await incrementChain(network, 2000, 150000000);
+
+        await expect(creditLine.connect(admin).liquidate(creditLineNumber, false))
+            .to.emit(creditLine, 'CreditLineLiquidated');
     });
 });
 
