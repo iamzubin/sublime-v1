@@ -8,6 +8,7 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20.sol';
 
 import './interfaces/IPriceOracle.sol';
+import 'hardhat/console.sol';
 
 contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
     using SafeMath for uint256;
@@ -93,12 +94,17 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      **/
     function getUniswapLatestPrice(address num, address den) public view returns (uint256, uint256) {
         bytes32 _poolTokensId = getUniswapPoolTokenId(num, den);
+        console.log('uniswap pool id', uint256(_poolTokensId));
         address _pool = uniswapPools[_poolTokensId];
+        console.log('uniswap pool', _pool);
         if (_pool == address(0)) {
             return (0, 0);
         }
+
         int24 _twapTick = OracleLibrary.consult(_pool, uniswapPriceAveragingPeriod);
-        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, 10**30, den, num);
+        console.log('_twapTick', uint24(_twapTick));
+        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, 10**30, num, den);
+        console.log('_numTokens', _numTokens);
         return (_numTokens, 30);
     }
 
@@ -176,6 +182,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         address token2,
         address pool
     ) external onlyOwner {
+        require(token1 != token2, 'token1 and token2 should be different addresses');
         bytes32 _poolTokensId = getUniswapPoolTokenId(token1, token2);
         uniswapPools[_poolTokensId] = pool;
         emit UniswapFeedUpdated(token1, token2, _poolTokensId, pool);
