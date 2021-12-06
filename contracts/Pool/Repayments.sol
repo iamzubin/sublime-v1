@@ -169,12 +169,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     }
 
     /**
-     * @notice returns the number of repayment intervals that have been repaid,
-     * if repayment interval = 10 secs, loan duration covered = 55 secs, repayment intervals covered = 5
+     * @notice returns the interest per second on the principal amount
      * @param _poolID address of the pool
      * @return scaled interest per second
      */
-
     function getInterestPerSecond(address _poolID) public view returns (uint256) {
         uint256 _activePrincipal = IPool(_poolID).totalSupply();
         uint256 _interestPerSecond = _activePrincipal.mul(repayConstants[_poolID].borrowRate).div(YEAR_IN_SECONDS);
