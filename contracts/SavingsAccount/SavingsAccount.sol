@@ -175,7 +175,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _ethValue = _tokensReceived;
         }
         _amount = _tokensReceived;
-        // _sharesReceived = _depositToYield(_tokensReceived, _token, _newStrategy);
+        
         uint256 _sharesReceived = IYield(_newStrategy).lockTokens{value: _ethValue}(address(this), _token, _tokensReceived);
 
         balanceInShares[msg.sender][_token][_newStrategy] = balanceInShares[msg.sender][_token][_newStrategy].add(_sharesReceived);
