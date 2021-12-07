@@ -8,6 +8,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../../../utils/types';
 import hre from 'hardhat';
@@ -22,6 +23,7 @@ import {
     createPoolParams,
     zeroAddress,
     ChainLinkAggregators,
+    verificationParams,
 } from '../../../utils/constants';
 import { testVars as testCases } from './PoolToken_testEnv';
 
@@ -142,7 +144,10 @@ export async function marginCallTests(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
