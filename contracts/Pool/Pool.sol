@@ -443,6 +443,12 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         //Withdraw repayments for user
         _withdrawRepayment(_from);
         _withdrawRepayment(_to);
+        uint256 _totalRepaidAmount = IRepayment(IPoolFactory(poolFactory).repaymentImpl()).getTotalRepaidAmount(address(this));
+        uint256 _totalSupply = totalSupply();
+        uint256 _fromBalance = balanceOf(_from);
+        uint256 _toBalance = balanceOf(_to);
+        lenders[_from].interestWithdrawn = (_fromBalance.sub(_amount)).mul(_totalRepaidAmount).div(_totalSupply);
+        lenders[_to].interestWithdrawn = (_toBalance.add(_amount)).mul(_totalRepaidAmount).div(_totalSupply);
 
         IExtension(_poolFactory.extension()).removeVotes(_from, _to, _amount);
 
@@ -451,12 +457,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_liquidityShare == 0) return;
 
         uint256 toTransfer = _liquidityShare;
-        if (_amount != balanceOf(_from)) {
-            toTransfer = (_amount.mul(_liquidityShare)).div(balanceOf(_from));
+        if (_amount != _fromBalance) {
+            toTransfer = (_amount.mul(_liquidityShare)).div(_fromBalance);
         }
 
         lenders[_from].extraLiquidityShares = lenders[_from].extraLiquidityShares.sub(toTransfer);
-
         lenders[_to].extraLiquidityShares = lenders[_to].extraLiquidityShares.add(toTransfer);
     }
 
