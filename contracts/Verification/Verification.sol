@@ -12,11 +12,8 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         uint256 activatesAt;
     }
 
-    /// @notice Delay in seconds after which master address is activated once registered
-    uint256 public masterAddressActivationDelay;
-
-    /// @notice Delay in seconds after which linked address is activated once registered
-    uint256 public linkedAddressActivationDelay;
+    /// @notice Delay in seconds after which addresses are activated once registered or linked
+    uint256 public activationDelay;
 
     /// @notice Tells whether a given verifier is valid
     /// @dev Mapping that stores valid verifiers as added by admin. verifier -> true/false
@@ -47,9 +44,22 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @notice Initializes the variables of the contract
     /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
     /// @param _admin Admin of the verification contract who can add verifiers and remove masterAddresses deemed invalid
-    function initialize(address _admin) external initializer {
+    /// @param _activationDelay Delay in seconds after which addresses are registered or linked
+    function initialize(address _admin, uint256 _activationDelay) external initializer {
         super.__Ownable_init();
         super.transferOwnership(_admin);
+        _updateActivationDelay(_activationDelay);
+    }
+
+    /// @notice owner can update activation delay
+    /// @param _activationDelay updated value of activation delay for registered/linking addresses in seconds
+    function updateActivationDelay(uint256 _activationDelay) external onlyOwner {
+        _updateActivationDelay(_activationDelay);
+    }
+
+    function _updateActivationDelay(uint256 _activationDelay) internal {
+        activationDelay = _activationDelay;
+        emit ActivationDelayUpdated(_activationDelay);
     }
 
     /// @notice owner can add new verifier
@@ -77,7 +87,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _isMasterLinked boolean which specifies if the masterAddress has to be added as a linked address
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external override onlyVerifier {
         require(masterAddresses[_masterAddress][msg.sender] == 0, 'V:RMA-Already registered');
-        uint256 _masterAddressActivatesAt = block.timestamp + masterAddressActivationDelay;
+        uint256 _masterAddressActivatesAt = block.timestamp + activationDelay;
         masterAddresses[_masterAddress][msg.sender] = _masterAddressActivatesAt;
         emit UserRegistered(_masterAddress, msg.sender, _masterAddressActivatesAt);
 
@@ -99,7 +109,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     }
 
     function _linkAddress(address _linked, address _master) internal {
-        uint256 _linkedAddressActivatesAt = block.timestamp + linkedAddressActivationDelay;
+        uint256 _linkedAddressActivatesAt = block.timestamp + activationDelay;
         linkedAddresses[_linked] = LinkedAddress(_master, _linkedAddressActivatesAt);
         emit AddressLinked(_linked, _master, _linkedAddressActivatesAt);
     }

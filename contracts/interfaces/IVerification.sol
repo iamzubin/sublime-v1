@@ -43,6 +43,10 @@ interface IVerification {
     /// @param masterAddress The masterAddress to which address is to be linked
     event AddressLinkingRequestCancelled(address indexed linkedAddress, address indexed masterAddress);
 
+    /// @notice Event emitted when activation delay is updated
+    /// @param activationDelay updated value of activationDelay in seconds
+    event ActivationDelayUpdated(uint256 activationDelay);
+
     function isUser(address _user, address _verifier) external view returns (bool);
 
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external;
