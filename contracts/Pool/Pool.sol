@@ -378,17 +378,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         emit CollateralWithdrawn(_receiver, _sharesReceived);
     }
 
-    /**
-     * @notice used by lender to supply liquidity to a borrow pool
-     * @param _lender address of the lender
-     * @param _amount amount of liquidity supplied by the _lender
-     * @param _fromSavingsAccount if true, collateral is transferred from _lender's savings account, if false, it is transferred from _lender's wallet
-     */
-    function lend(
-        address _lender,
-        uint256 _amount,
-        bool _fromSavingsAccount
-    ) external payable nonReentrant {
+    function _lend(address _lender, uint256 _amount) internal returns(uint256) {
         address _lenderVerifier = poolConstants.lenderVerifier;
         address _borrower = poolConstants.borrower;
         require(_lender != _borrower && _borrower != msg.sender, 'L1');
@@ -401,17 +391,54 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_amount.add(_lentAmount) > _borrowAmountNeeded) {
             _amount = _borrowAmountNeeded.sub(_lentAmount);
         }
+        return _amount;
+    }
+
+    /**
+     * @notice used by lender to supply liquidity to a borrow pool
+     * @param _lender address of the lender
+     * @param _amount amount of liquidity supplied by the _lender
+     */
+    function lend(
+        address _lender,
+        uint256 _amount
+    ) external payable nonReentrant {
+        _amount = _lend(_lender, _amount);
 
         address _borrowToken = poolConstants.borrowAsset;
-        _deposit(
-            _fromSavingsAccount,
-            false,
-            _borrowToken,
-            _amount,
-            IPoolFactory(poolFactory).noStrategyAddress(),
-            msg.sender,
-            address(this)
+        SavingsAccountUtil.transferTokens(_borrowToken, _amount, msg.sender, address(this));
+
+        _mint(_lender, _amount);
+        emit LiquiditySupplied(_amount, _lender);
+    }
+
+    /**
+     * @notice used by lender to supply liquidity to a borrow pool from savings account
+     * @param _lender address of the lender
+     * @param _amount amount of liquidity supplied by the _lender
+     * @param _strategy address of strategy from which tokens are to be lent
+     */
+    function lend(
+        address _lender,
+        uint256 _amount,
+        address _strategy
+    ) external payable nonReentrant {
+        _amount = _lend(_lender, _amount);
+
+        address _borrowToken = poolConstants.borrowAsset;
+
+        ISavingsAccount _savingsAccount = ISavingsAccount(IPoolFactory(poolFactory).savingsAccount());
+        SavingsAccountUtil.depositFromSavingsAccount(
+            _savingsAccount, 
+            _lender, 
+            address(this), 
+            _amount, 
+            _borrowToken, 
+            _strategy,
+            false, 
+            false
         );
+        
         _mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);
     }
