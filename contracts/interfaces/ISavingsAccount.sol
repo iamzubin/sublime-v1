@@ -124,7 +124,9 @@ interface ISavingsAccount {
         bool withdrawShares
     ) external returns (uint256);
 
-    function withdrawAll(address _token) external returns (uint256 tokenReceived);
+    function withdrawAll(address token) external returns (uint256 tokenReceived);
+
+    function withdrawAll(address token, address strategy) external returns (uint256 tokenReceived);
 
     function approve(
         uint256 amount,

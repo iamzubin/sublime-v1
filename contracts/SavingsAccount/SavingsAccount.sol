@@ -306,7 +306,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
         uint256 _amount = IYield(_strategy).unlockTokens(_token, _sharesBalance);
 
-        delete balanceInShares[msg.sender][_token][_strategyList[i]];
+        delete balanceInShares[msg.sender][_token][_strategy];
 
         _transfer(_amount, _token, payable(msg.sender));
 
