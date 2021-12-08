@@ -20,6 +20,7 @@ import {
     OperationalAmounts,
     extensionParams,
     repaymentParams,
+    verificationParams,
 } from '../../utils/constants';
 import DeployHelper from '../../utils/deploys';
 
@@ -225,7 +226,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
         adminVerifierLogic = await deployHelper.helper.deployAdminVerifier();
         let adminVerificationProxy = await deployHelper.helper.deploySublimeProxy(adminVerifierLogic.address, proxyAdmin.address);
         adminVerifier = await deployHelper.helper.getAdminVerifier(adminVerificationProxy.address);
-        await verification.connect(admin).initialize(admin.address);
+        await verification.connect(admin).initialize(admin.address, verificationParams.activationDelay);
         await adminVerifier.connect(admin).initialize(admin.address, verification.address);
         await verification.connect(admin).addVerifier(adminVerifier.address);
         await adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);

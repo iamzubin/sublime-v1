@@ -16,6 +16,7 @@ import {
     OperationalAmounts,
     repaymentParams,
     extensionParams,
+    verificationParams,
 } from '../utils/constants';
 import DeployHelper from '../utils/deploys';
 
@@ -137,7 +138,7 @@ describe.skip('Template For Test cases', async () => {
         await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
-        await verification.connect(admin).initialize(admin.address);
+        await verification.connect(admin).initialize(admin.address, verificationParams.activationDelay);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
         await verification.connect(admin).addVerifier(adminVerifier.address);
         await adminVerifier.connect(admin).initialize(admin.address, verification.address);
