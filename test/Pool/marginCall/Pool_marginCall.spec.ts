@@ -40,7 +40,8 @@ import { blockTravel } from '../../../utils/time';
 import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
 
 describe.skip('Pool Margin calls cases', function () {
-    testCases.forEach((testCase) => {
+    for(let i=0; i < testCases.length; i++) {
+        const testCase = testCases[i];
         marginCallTests(
             testCase.Amount,
             testCase.Whale1,
@@ -52,7 +53,7 @@ describe.skip('Pool Margin calls cases', function () {
             testCase.chainlinkBorrow,
             testCase.chainlinkCollateral
         );
-    });
+    }
 });
 
 export async function marginCallTests(
