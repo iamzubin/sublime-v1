@@ -40,9 +40,10 @@ import { blockTravel } from '../../../utils/time';
 import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
 import { extendEnvironment } from 'hardhat/config';
 
-describe('Pool Repayment cases', function () {
-    testCases.forEach((testCase) => {
-        marginCallTests(
+describe('Pool Repayment cases', async function () {
+    for (let index = 0; index < testCases.length; index++) {
+        const testCase = testCases[index];
+        await marginCallTests(
             testCase.Amount,
             testCase.Whale1,
             testCase.Whale2,
@@ -53,7 +54,7 @@ describe('Pool Repayment cases', function () {
             testCase.chainlinkBorrow,
             testCase.chainlinkCollateral
         );
-    });
+    }
 });
 
 export async function marginCallTests(
@@ -68,22 +69,9 @@ export async function marginCallTests(
     chainlinkCollateral: Address
 ): Promise<any> {
     let snapshotId: any;
+    // amount = BigNumber.from(amount).div(2).toNumber(); // reduce number by 2 for tests to pass
 
-    before(async () => {
-        snapshotId = await network.provider.request({
-            method: 'evm_snapshot',
-            params: [],
-        });
-    });
-
-    after(async () => {
-        await network.provider.request({
-            method: 'evm_revert',
-            params: [snapshotId],
-        });
-    });
-
-    describe('Pool Repayment', async () => {
+    return describe('Pool Repayment', async () => {
         let env: Environment;
         let pool: Pool;
         let poolAddress: Address;
@@ -105,6 +93,20 @@ export async function marginCallTests(
             repaymentInterval: 1000,
         };
         const SCALER = BigNumber.from(10).pow(30);
+
+        before(async () => {
+            snapshotId = await network.provider.request({
+                method: 'evm_snapshot',
+                params: [],
+            });
+        });
+
+        after(async () => {
+            await network.provider.request({
+                method: 'evm_revert',
+                params: [snapshotId],
+            });
+        });
 
         before(async () => {
             env = await createEnvironment(

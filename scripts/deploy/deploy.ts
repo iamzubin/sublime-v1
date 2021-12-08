@@ -46,6 +46,8 @@ import { zeroAddress } from '../../utils/constants';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
 import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
 
+import { induceDelay } from '../../utils/helpers';
+
 export async function deployer(signers: SignerWithAddress[], config: DeploymentParams) {
     const {
         strategyRegistryParams,
@@ -153,6 +155,8 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     console.log('Set implementations in Pool Factory');
 
+    await induceDelay(123);
+
     await setImplementations(
         poolFactory,
         admin,
@@ -213,20 +217,20 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 }
 
 // {
-//     "savingsAccount": "0x3a495b65EFbB4Db0BE408C862ca8d33d9703209c",
-//     "strategyRegistry": "0x9Af5CaF81b9985cB691f7763b7bE0412bb05b3dC",
-//     "creditLines": "0xD077B6d3ed11d0aDD036D7d9b1Ac9d4FdE561fF4",
-//     "proxyAdmin": "0x03f484190bc6889B28739Af182D996df57B02CC9",
-//     "admin": "0x4813CB98f2322CFb9fbf2f2dAFe01297FD70D19e",
-//     "noYield": "0x4EB3d11dC0ffD11fEBb379413840371b66384B4B",
-//     "aaveYield": "0xf15bB845dFDeDB72c4E7c31356f03C46b64fcE60",
-//     "yearnYield": "0x0000000000000000000000000000000000000000",
-//     "compoundYield": "0x90a17f297CC6e85CA67251e7B4A888F9de16b192",
-//     "verification": "0x19c388671f9B773fcBad80009e20eEE470F1AD26",
-//     "adminVerifier": "0x6c906de6bcb1e3bFAd75F049e6C4F6f4DAC7043E",
-//     "priceOracle": "0xeD24708d93576ca2296BE201a5e105ECAF2f6F2f",
-//     "extension": "0xe493BA7Bee4468b8FBA61256E457A098Aa7cCA17",
-//     "poolLogic": "0x0f5E1f09Ff37a4f2F68939cEb1A3a151Fa0AB418",
-//     "repaymentLogic": "0x71E925ad07dA7542855d89a52bf6d139349F9b33",
-//     "poolFactory": "0xa50E7C3444844Ef6773f3181f0a1f42B6321b677"
-//   }
+//   "savingsAccount": "0x69A634cE54588ba06b7813dA31C26832aa2ffa8c",
+//   "strategyRegistry": "0xA4366F7376A5425F9Bc0226ced35ad8f4536FD56",
+//   "creditLines": "0xA102E6f5Bda8d1222520345a759D298B68938e5C",
+//   "proxyAdmin": "0x03f484190bc6889B28739Af182D996df57B02CC9",
+//   "admin": "0x4813CB98f2322CFb9fbf2f2dAFe01297FD70D19e",
+//   "noYield": "0x85858349d12946a6538353a794ab267E311856f4",
+//   "aaveYield": "0x34Db1C4a5CF324Dc2231C1C725A869eaF205b2Ee",
+//   "yearnYield": "0x0000000000000000000000000000000000000000",
+//   "compoundYield": "0xBc2e7Bcf4fe46d14a19ccfE2e2D72146c579A06a",
+//   "verification": "0x4256a2722d60c90c39515E0Adb3E731b91480996",
+//   "adminVerifier": "0x24E444Bb965769E962e52B21612699612AE33F8a",
+//   "priceOracle": "0x66C876639d1C48dB02A3687BE6Cf089Ac5118742",
+//   "extension": "0xb931beE03892cA2f8d26f52E78945F0c643cEb4b",
+//   "poolLogic": "0x4329912bFb77D109F7647197390f42291E5571A5",
+//   "repaymentLogic": "0x8F990286B3B3A4a73161723a0B4E5fc80B539DD5",
+//   "poolFactory": "0xfbd30d70Da78901b36F263D7bca0b4099B3D4680"
+// }

@@ -321,7 +321,7 @@ describe('Credit Lines', async () => {
                 await savingsAccount.connect(lender).approve(amountToBorrow, DaiTokenContract.address, creditLine.address);
 
                 await expect(creditLine.connect(borrower).borrow(borrowerCreditLine, amountToBorrow.mul(100))).to.be.revertedWith(
-                    'CreditLine: Amount exceeds borrow limit.'
+                    "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
                 );
             });
         });
