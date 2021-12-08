@@ -381,10 +381,8 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
-        {
-            uint256 _loanStatus = _pool.getLoanStatus();
-            require(_loanStatus == 1, 'Repayments:repayInterest Pool should be active.');
-        }
+        uint256 _loanStatus = _pool.getLoanStatus();
+        require(_loanStatus == uint(LoanStatus.ACTIVE) , 'Repayments:repayInterest Pool should be active.');
 
         uint256 _initialAmount = _amount;
 

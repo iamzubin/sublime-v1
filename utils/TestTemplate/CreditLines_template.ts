@@ -9,6 +9,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../types';
 
@@ -23,6 +24,7 @@ import {
     WhaleAccount,
     zeroAddress,
     ChainLinkAggregators,
+    verificationParams,
 } from '../constants';
 
 import DeployHelper from '../deploys';
@@ -116,7 +118,10 @@ export async function CreditLines(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -424,7 +429,10 @@ export async function CreditLines(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -734,7 +742,10 @@ export async function CreditLines(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             creditLine = env.creditLine;
@@ -1024,7 +1035,10 @@ export async function CreditLines(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             creditLine = env.creditLine;
@@ -1146,7 +1160,10 @@ export async function CreditLines(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             creditLine = env.creditLine;

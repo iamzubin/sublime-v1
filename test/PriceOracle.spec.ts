@@ -12,6 +12,7 @@ import {
     CreditLineDefaultStrategy,
     PoolFactoryInitParams,
     CreditLineInitParams,
+    VerificationParams,
 } from '../utils/types';
 import DeployHelper from '../utils/deploys';
 import { createEnvironment } from '../utils/createEnv';
@@ -71,7 +72,10 @@ describe('Checking Uniswap Price Oracle', async () => {
             {
                 _protocolFeeFraction: '378934786347863478',
                 _liquidatorRewardFraction: '378945786347868735',
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: 0
+            } as VerificationParams,
         );
         priceOracle = env.priceOracle;
         user = env.entities.borrower;
