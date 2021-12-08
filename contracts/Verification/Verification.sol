@@ -102,7 +102,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _verifier verifier address from which master address is unregistered
     function unregisterMasterAddress(address _masterAddress, address _verifier) external override {
         if (msg.sender != super.owner()) {
-            require(masterAddresses[_masterAddress][msg.sender] != 0 || msg.sender == _verifier, 'V:UMA-Invalid verifier');
+            require(masterAddresses[_masterAddress][msg.sender] != 0 && msg.sender == _verifier, 'V:UMA-Invalid verifier');
         }
         delete masterAddresses[_masterAddress][_verifier];
         emit UserUnregistered(_masterAddress, _verifier, msg.sender);
