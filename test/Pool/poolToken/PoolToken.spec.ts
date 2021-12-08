@@ -41,7 +41,8 @@ import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
 import { extendEnvironment } from 'hardhat/config';
 
 describe('Pool Repayment cases', function () {
-    testCases.forEach((testCase: any) => {
+    for(let i=0; i < testCases.length; i++) {
+        const testCase = testCases[i];
         marginCallTests(
             testCase.Amount,
             testCase.Whale1,
@@ -53,7 +54,7 @@ describe('Pool Repayment cases', function () {
             testCase.chainlinkBorrow,
             testCase.chainlinkCollateral
         );
-    });
+    }
 });
 
 export async function marginCallTests(
