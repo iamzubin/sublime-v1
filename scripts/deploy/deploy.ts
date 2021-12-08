@@ -58,7 +58,8 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         extensionInitParams,
         repaymentsInitParams,
         poolFactoryInitParams,
-        // creditLineInitParams
+        // creditLineInitParams,
+        verificationParams
     } = config;
     let [proxyAdmin, admin, deployer]: SignerWithAddress[] = signers;
 
@@ -119,7 +120,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     console.log('Deploying verification');
 
-    const verification: Verification = await createVerificationWithInit(proxyAdmin, admin);
+    const verification: Verification = await createVerificationWithInit(proxyAdmin, admin, verificationParams);
     const adminVerifier: AdminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, verification);
     await (await verification.connect(admin).addVerifier(adminVerifier.address)).wait();
 
