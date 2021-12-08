@@ -43,7 +43,7 @@ import { extendEnvironment } from 'hardhat/config';
 describe('Pool Repayment cases', async function () {
     for (let index = 0; index < testCases.length; index++) {
         const testCase = testCases[index];
-        await marginCallTests(
+        await repaymentTests(
             testCase.Amount,
             testCase.Whale1,
             testCase.Whale2,
@@ -57,7 +57,7 @@ describe('Pool Repayment cases', async function () {
     }
 });
 
-export async function marginCallTests(
+export async function repaymentTests(
     amount: Number,
     whaleAccount1: Address,
     whaleAccount2: Address,
