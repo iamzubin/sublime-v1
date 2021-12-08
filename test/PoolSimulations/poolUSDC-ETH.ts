@@ -9,6 +9,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../../utils/types';
 import hre from 'hardhat';
@@ -30,7 +31,7 @@ import { ERC20 } from '../../typechain/ERC20';
 import { sha256 } from '@ethersproject/sha2';
 import { BigNumber } from 'ethers';
 import { IYield } from '../../typechain/IYield';
-import { zeroAddress } from '../../utils/constants';
+import { verificationParams, zeroAddress } from '../../utils/constants';
 import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
 describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', async () => {
@@ -73,7 +74,10 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: verificationParams.activationDelay
+            } as VerificationParams,
         );
     });
 
