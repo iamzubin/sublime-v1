@@ -68,7 +68,6 @@ export async function marginCallTests(
     chainlinkBorrow: Address,
     chainlinkCollateral: Address
 ): Promise<any> {
-    let snapshotId: any;
     // amount = BigNumber.from(amount).div(2).toNumber(); // reduce number by 2 for tests to pass
 
     return describe('Pool Repayment', async () => {
@@ -93,6 +92,8 @@ export async function marginCallTests(
             repaymentInterval: 1000,
         };
         const SCALER = BigNumber.from(10).pow(30);
+
+        let snapshotId: any;
 
         before(async () => {
             snapshotId = await network.provider.request({

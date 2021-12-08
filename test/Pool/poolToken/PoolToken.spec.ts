@@ -40,10 +40,10 @@ import { blockTravel } from '../../../utils/time';
 import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
 import { extendEnvironment } from 'hardhat/config';
 
-describe('Pool Repayment cases', function () {
+describe('Pool Repayment cases', async function () {
     for(let i=0; i < testCases.length; i++) {
         const testCase = testCases[i];
-        marginCallTests(
+        await marginCallTests(
             testCase.Amount,
             testCase.Whale1,
             testCase.Whale2,

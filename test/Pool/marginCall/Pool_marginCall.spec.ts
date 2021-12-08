@@ -39,10 +39,10 @@ import { expectApproxEqual } from '../../../utils/helpers';
 import { blockTravel } from '../../../utils/time';
 import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
 
-describe.skip('Pool Margin calls cases', function () {
+describe.skip('Pool Margin calls cases', async function () {
     for(let i=0; i < testCases.length; i++) {
         const testCase = testCases[i];
-        marginCallTests(
+        await marginCallTests(
             testCase.Amount,
             testCase.Whale1,
             testCase.Whale2,
