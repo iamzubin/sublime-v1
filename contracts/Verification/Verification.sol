@@ -85,6 +85,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev Multiple accounts can be linked to master address to act on behalf. Master address can be registered by multiple verifiers
     /// @param _masterAddress address which is registered as verified
     /// @param _isMasterLinked boolean which specifies if the masterAddress has to be added as a linked address
+    ///                         _isMasterLinked is used to support users who want to keep the master address as a cold wallet for security
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external override onlyVerifier {
         require(masterAddresses[_masterAddress][msg.sender] == 0, 'V:RMA-Already registered');
         uint256 _masterAddressActivatesAt = block.timestamp + activationDelay;
@@ -115,6 +116,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     }
 
     /// @notice Used by master address to request linking another address to it
+    /// @dev only master address can initiate linking of another address
     /// @param _linkedAddress address which is to be linked
     function requestAddressLinking(address _linkedAddress) external {
         require(linkedAddresses[_linkedAddress].masterAddress == address(0), 'V:LA-Address already linked');
@@ -132,6 +134,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
 
     /// @notice Link an address with a master address
     /// @dev Master address to which the address is being linked need not be verified
+    ///     link address can only accept the request made by a master address, but can't initiate a linking request
     /// @param _masterAddress master address to link to
     function linkAddress(address _masterAddress) external {
         require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
