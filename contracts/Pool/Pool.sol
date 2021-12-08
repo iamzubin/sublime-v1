@@ -499,11 +499,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _cancelPenaltyMultiple = _poolFactory.poolCancelPenaltyMultiple();
         uint256 penalty = _cancelPenaltyMultiple
             .mul(poolConstants.borrowRate)
+            .div(10**30)
             .mul(_collateralLiquidityShare)
             .div(10**30)
             .mul(_penaltyTime)
-            .div(365 days)
-            .div(10**30);
+            .div(365 days);
         _cancelPool(penalty);
     }
 
