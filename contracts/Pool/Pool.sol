@@ -162,6 +162,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         poolConstants.loanStartTime = block.timestamp.add(_collectionPeriod);
         poolConstants.loanWithdrawalDeadline = block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration);
         __ERC20_init('Pool Tokens', 'PT');
+        try ERC20Upgradeable(_borrowAsset).decimals() returns(uint8 _decimals) {
+            _setupDecimals(_decimals);
+        } catch(bytes memory) {}
     }
 
     /**
@@ -381,12 +384,13 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @notice used by lender to supply liquidity to a borrow pool
      * @param _lender address of the lender
      * @param _amount amount of liquidity supplied by the _lender
-     * @param _fromSavingsAccount if true, collateral is transferred from _lender's savings account, if false, it is transferred from _lender's wallet
+     * @param _strategy address of strategy from which tokens are lent if done from savings account, 
+     *                  in case of direct deposits, zeroAddress should be used
      */
     function lend(
         address _lender,
         uint256 _amount,
-        bool _fromSavingsAccount
+        address _strategy
     ) external payable nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
         address _borrower = poolConstants.borrower;
@@ -402,12 +406,16 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         }
 
         address _borrowToken = poolConstants.borrowAsset;
+        bool _fromSavingsAccount;
+        if(_strategy != address(0)) {
+            _fromSavingsAccount = true;
+        }
         _deposit(
             _fromSavingsAccount,
             false,
             _borrowToken,
             _amount,
-            IPoolFactory(poolFactory).noStrategyAddress(),
+            _strategy,
             msg.sender,
             address(this)
         );

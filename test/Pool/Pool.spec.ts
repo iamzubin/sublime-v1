@@ -531,7 +531,7 @@ describe('Pool', async () => {
                 await DaiTokenContract.transfer(lender.address, OperationalAmounts._amountLent);
                 await DaiTokenContract.connect(lender).approve(pool.address, OperationalAmounts._amountLent);
 
-                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false))
+                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, zeroAddress))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(OperationalAmounts._amountLent, lender.address);
             });

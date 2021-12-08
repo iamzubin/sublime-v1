@@ -260,7 +260,7 @@ export async function compoundPoolCollectionStage(
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -297,7 +297,7 @@ export async function compoundPoolCollectionStage(
                 .deposit(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender.address);
             await env.savingsAccount.connect(lender).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, env.yields.noYield.address));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -335,7 +335,7 @@ export async function compoundPoolCollectionStage(
                 .deposit(amount, env.mockTokenContracts[0].contract.address, env.yields.noYield.address, lender1.address);
             await env.savingsAccount.connect(lender1).approve(amount, env.mockTokenContracts[0].contract.address, pool.address);
 
-            const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
+            const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, env.yields.noYield.address));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -364,7 +364,7 @@ export async function compoundPoolCollectionStage(
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amountLend);
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amountLend);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amountLend, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amountLend, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amountLend, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amountLend);
 
@@ -503,7 +503,7 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(lender).approve(poolAddress, amount);
 
             // Lender lends into the pool
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -513,7 +513,7 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(lender1).approve(poolAddress, amount1);
 
             // Lender1 lends into the pool
-            const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, false));
+            const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, zeroAddress));
             await lendExpect1.to.emit(pool, 'LiquiditySupplied').withArgs(amount1, lender1.address);
             await lendExpect1.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender1.address, amount1);
         });
@@ -797,7 +797,7 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(lender).approve(poolAddress, amount);
 
             // Lender lends into the pool
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             // await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -1286,7 +1286,7 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(lender).approve(poolAddress, amount);
 
             // Lender lends into the pool
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -1296,7 +1296,7 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(lender1).approve(poolAddress, amount1);
 
             // Lender1 lends into the pool
-            const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, false));
+            const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, zeroAddress));
             await lendExpect1.to.emit(pool, 'LiquiditySupplied').withArgs(amount1, lender1.address);
             await lendExpect1.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender1.address, amount1);
 
@@ -1402,7 +1402,7 @@ export async function compoundPoolCollectionStage(
             await borrowToken.connect(lender).approve(poolAddress, amount);
 
             // Lender lends into the pool
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -1630,7 +1630,7 @@ export async function compoundPoolCollectionStage(
             const borrowTokenBalancebefore = await Borrow.balanceOf(lender.address);
             const borrowTokenBalancePool = await Borrow.balanceOf(pool.address);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -1802,7 +1802,7 @@ export async function compoundPoolCollectionStage(
             await env.mockTokenContracts[0].contract.connect(admin).transfer(lender.address, amount);
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
