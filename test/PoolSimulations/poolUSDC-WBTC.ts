@@ -9,6 +9,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../../utils/types';
 import hre from 'hardhat';
@@ -24,6 +25,8 @@ import {
     testPoolFactoryParams,
     creditLineFactoryParams,
 } from '../../utils/constants-rahul';
+
+import { verificationParams } from "../../utils/constants";
 
 import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -72,7 +75,10 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', 
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: verificationParams.activationDelay
+            } as VerificationParams,
         );
     });
 

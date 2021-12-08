@@ -9,6 +9,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../types';
 import hre from 'hardhat';
@@ -24,6 +25,8 @@ import {
     repaymentParams,
     testPoolFactoryParams,
 } from '../constants-Additions';
+
+import {} from "../constants";
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -86,7 +89,10 @@ export async function TestCase(
                     protocolFeeCollector: '',
                 } as PoolFactoryInitParams,
                 CreditLineDefaultStrategy.Compound,
-                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams
+                { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
