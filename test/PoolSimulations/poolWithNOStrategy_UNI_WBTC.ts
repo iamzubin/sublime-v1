@@ -372,10 +372,10 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
     }
 
     describe('Check ratios', async () => {
-        async function lenderLendsTokens(amount: BigNumberish, fromSavingsAccount = false): Promise<void> {
+        async function lenderLendsTokens(amount: BigNumberish, strategy = zeroAddress): Promise<void> {
             await UNITokenContract.connect(admin).transfer(lender.address, amount);
             await UNITokenContract.connect(lender).approve(pool.address, amount);
-            await pool.connect(lender).lend(lender.address, amount, fromSavingsAccount);
+            await pool.connect(lender).lend(lender.address, amount, strategy);
             return;
         }
 
@@ -443,7 +443,7 @@ describe('Pool using NO Strategy with UNI as borrow token and WBTC as collateral
             await createPool();
             await UNITokenContract.connect(admin).transfer(lender.address, _minborrowAmount);
             await UNITokenContract.connect(lender).approve(pool.address, _minborrowAmount);
-            await pool.connect(lender).lend(lender.address, _minborrowAmount, false);
+            await pool.connect(lender).lend(lender.address, _minborrowAmount, zeroAddress);
         });
 
         it('Increase time by one day and check interest and total Debt', async () => {

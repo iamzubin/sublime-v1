@@ -33,6 +33,7 @@ import { IYield } from '@typechain/IYield';
 import { Context } from 'mocha';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
+import { zeroAddress } from '../constants';
 
 export async function TestCase(
     BorrowToken: Address,
@@ -201,7 +202,7 @@ export async function TestCase(
                 .connect(lender)
                 .approve(poolAddress, BigNumber.from(10).mul(BigNumber.from(10).pow(CTDecimals)));
 
-            await expect(pool.connect(lender).lend(lender.address, BigNumber.from(10).mul(BigNumber.from(10).pow(CTDecimals)), false))
+            await expect(pool.connect(lender).lend(lender.address, BigNumber.from(10).mul(BigNumber.from(10).pow(CTDecimals)), zeroAddress))
                 .to.emit(pool, 'LiquiditySupplied')
                 .withArgs(BigNumber.from(10).mul(BigNumber.from(10).pow(CTDecimals)), lender.address);
         });

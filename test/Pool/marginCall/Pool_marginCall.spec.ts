@@ -199,7 +199,7 @@ export async function marginCallTests(
                 const minBorrowFraction = await env.poolFactory.minBorrowFraction();
                 const minPoolSize = poolParams.poolSize.mul(minBorrowFraction).div(SCALER);
                 const lentAmount = minPoolSize.mul(4).div(3);
-                await pool.connect(env.entities.lender).lend(env.entities.lender.address, lentAmount, false);
+                await pool.connect(env.entities.lender).lend(env.entities.lender.address, lentAmount, zeroAddress);
 
                 const { loanStartTime } = await pool.poolConstants();
                 await blockTravel(network, parseInt(loanStartTime.add(1).toString()));
