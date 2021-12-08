@@ -515,7 +515,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function _cancelPool(uint256 _penalty) internal {
         poolVariables.loanStatus = LoanStatus.CANCELLED;
-        IExtension(IPoolFactory(poolFactory).extension()).closePoolExtension();
         _withdrawAllCollateral(poolConstants.borrower, _penalty);
         _pause();
         emit PoolCancelled();
