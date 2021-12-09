@@ -99,6 +99,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         address _oldStrategy,
         address _newStrategy
     ) external override onlyOwner {
+        require(_strategyIndex < strategies.length, 'StrategyRegistry:: _strategy index cannot be more than array length');
         require(
             strategies[_strategyIndex] == _oldStrategy,
             "StrategyRegistry::updateStrategy - index to update and strategy address don't match"

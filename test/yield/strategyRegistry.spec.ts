@@ -35,6 +35,27 @@ describe('Test Strategy Registry', async () => {
         it('Get Strategies', async () => {
             expect(await strategyRegistry.getStrategies()).to.include(randomStrategy.address);
         });
+
+        it('Update Max Strategies', async () => {
+            await expect(strategyRegistry.connect(admin).updateMaxStrategies(100))
+                .to.emit(strategyRegistry, 'MaxStrategiesUpdated')
+                .withArgs(100);
+        });
+    });
+
+    describe('Update Strategy', async () => {
+        it('Should revert if wrong strategy index is provided', async () => {
+            await expect(strategyRegistry.connect(admin).updateStrategy(1, randomStrategy.address, admin.address)).to.be.revertedWith(
+                'StrategyRegistry:: _strategy index cannot be more than array length'
+            );
+        });
+
+        it('Update', async () => {
+            await expect(strategyRegistry.connect(admin).updateStrategy(0, randomStrategy.address, admin.address)).to.emit(
+                strategyRegistry,
+                'StrategyAdded'
+            );
+        });
     });
 
     describe('Failed cases', async () => {
@@ -45,9 +66,21 @@ describe('Test Strategy Registry', async () => {
         });
 
         it('Should fail adding the same stragegy twice or more', async () => {
+            await strategyRegistry.connect(admin).updateStrategy(0, admin.address, randomStrategy.address);
+
             await expect(strategyRegistry.connect(admin).addStrategy(randomStrategy.address)).to.be.revertedWith(
                 'StrategyRegistry::addStrategy - Strategy already exists'
             );
+        });
+    });
+
+    describe('Remove Strategy', async () => {
+        it('Shouold throw error if non-admin tried to remove strategy', async () => {
+            await expect(strategyRegistry.connect(mockCreditLinesAddress).removeStrategy(0)).to.be.revertedWith('as');
+        });
+
+        it('Should remove strategy by admin', async () => {
+            await expect(strategyRegistry.connect(admin).removeStrategy(0)).to.emit(strategyRegistry, 'StrategyRemoved');
         });
     });
 });

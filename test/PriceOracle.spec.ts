@@ -22,6 +22,7 @@ import { isAddress } from 'ethers/lib/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { IUniswapV3Factory } from '../typechain/IUniswapV3Factory';
 
+import { Contracts } from '../existingContracts/compound.json';
 // kovan contracts
 // const Token1 = '0xa36085F69e2889c224210F603D836748e7dC0088';
 // const Token2 = '0x4F96Fe3b7A6Cf9725f59d353F723c1bDb64CA6Aa';
@@ -112,5 +113,23 @@ describe('Checking Uniswap Price Oracle', async () => {
         expect(decimals).to.eq(30);
         console.log({ price: price.toString() });
         console.log({ decimals: decimals.toString() });
+    });
+
+    it('Check if uniswap fallback is working', async () => {
+        let uniswapPoolAddress = await uniswapV3Factory.getPool(Contracts.DAI, Contracts.USDT, 3000);
+        await priceOracle.connect(env.entities.admin).setUniswapFeedAddress(Contracts.DAI, Contracts.USDT, uniswapPoolAddress);
+        const [price, decimals] = await priceOracle.connect(user).getLatestPrice(Contracts.DAI, Contracts.USDT);
+        expect(price).gt(0);
+        expect(decimals).gt(0);
+    });
+
+    it('Check if feed exists after adding', async () => {
+        expect(await priceOracle.connect(user).doesFeedExist(Contracts.USDT, Contracts.DAI)).to.eq(true);
+    });
+
+    it("Should Revert if no uniswap price oracle also doesn't exists", async () => {
+        await expect(priceOracle.connect(user).getLatestPrice(Contracts.DAI, Contracts.BAT)).to.be.revertedWith(
+            "PriceOracle::getLatestPrice - Price Feed doesn't exist"
+        );
     });
 });
