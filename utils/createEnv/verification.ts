@@ -8,7 +8,11 @@ import { AdminVerifier } from '@typechain/AdminVerifier';
 import { BigNumberish } from '@ethersproject/providers/node_modules/@ethersproject/bignumber';
 import { VerificationParams } from '@utils/types';
 
-export async function createVerificationWithInit(proxyAdmin: SignerWithAddress, admin: SignerWithAddress, verificationParams: VerificationParams): Promise<Verification> {
+export async function createVerificationWithInit(
+    proxyAdmin: SignerWithAddress,
+    admin: SignerWithAddress,
+    verificationParams: VerificationParams
+): Promise<Verification> {
     const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
     let verificationLogic: Verification = await deployHelper.helper.deployVerification();
     let verificationProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(verificationLogic.address, proxyAdmin.address);
