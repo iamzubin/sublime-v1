@@ -9,6 +9,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../../utils/types';
 import hre from 'hardhat';
@@ -35,7 +36,7 @@ import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { CreditLine } from '../../typechain/CreditLine';
-import { zeroAddress } from '../../utils/constants';
+import { verificationParams, zeroAddress } from '../../utils/constants';
 import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 import { expectApproxEqual } from '../../utils/helpers';
 import { incrementChain, timeTravel, blockTravel } from '../../utils/time';
@@ -101,7 +102,10 @@ describe.skip('CreditLine, Borrow Token: USDT, CollateralToken: ETH', async () =
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: verificationParams.activationDelay
+            } as VerificationParams,
         );
     });
 

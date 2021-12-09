@@ -1639,7 +1639,10 @@ export async function CreditLines(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             creditLine = env.creditLine;
