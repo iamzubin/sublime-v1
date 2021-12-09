@@ -279,8 +279,10 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
 
         uint256 aTokensBefore = IERC20(aToken).balanceOf(address(this));
 
+        address lendingPool = ILendingPoolAddressesProvider(lendingPoolAddressesProvider).getLendingPool();
+
         //lock collateral
-        IWETHGateway(wethGateway).depositETH{value: amount}(address(this), referralCode);
+        IWETHGateway(wethGateway).depositETH{value: amount}(lendingPool, address(this), referralCode);
 
         sharesReceived = IERC20(aToken).balanceOf(address(this)).sub(aTokensBefore);
     }

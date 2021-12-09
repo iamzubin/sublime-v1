@@ -18,6 +18,7 @@ import {
     Entities,
     MockTokenContract,
     PoolCreateParams,
+    VerificationParams,
 } from '../types';
 
 import { createSavingsAccount, initSavingsAccount } from './savingsAccount';
@@ -51,7 +52,8 @@ export async function createEnvironment(
     repaymentsInitParams: RepaymentsInitParams,
     poolFactoryInitParams: PoolFactoryInitParams,
     creditLineDefaultStrategy: CreditLineDefaultStrategy,
-    creditLineInitParams: CreditLineInitParams
+    creditLineInitParams: CreditLineInitParams,
+    verificationInitParams: VerificationParams,
 ): Promise<Environment> {
     const env = {} as Environment;
     const yields = {} as Yields;
@@ -111,7 +113,7 @@ export async function createEnvironment(
     await env.strategyRegistry.connect(admin).addStrategy(yields.compoundYield.address);
     await env.strategyRegistry.connect(admin).addStrategy(yields.noYield.address);
 
-    env.verification = await createVerificationWithInit(proxyAdmin, admin);
+    env.verification = await createVerificationWithInit(proxyAdmin, admin, verificationInitParams);
     env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification);
 
     await env.verification.connect(admin).addVerifier(env.adminVerifier.address);

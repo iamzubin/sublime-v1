@@ -10,6 +10,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../types';
 
@@ -23,6 +24,8 @@ import {
     zeroAddress,
     creditLineFactoryParams,
 } from '../constants-rahul';
+
+import { verificationParams } from '../constants';
 
 import hre from 'hardhat';
 const { ethers, network } = hre;
@@ -99,7 +102,10 @@ export async function poolCreationTest(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             console.log('createEnvironment() executed successfully.');

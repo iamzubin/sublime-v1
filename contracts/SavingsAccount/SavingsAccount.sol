@@ -156,6 +156,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _newStrategy
     ) external override nonReentrant {
         require(_currentStrategy != _newStrategy, 'SavingsAccount::switchStrategy Same strategy');
+        require(IStrategyRegistry(strategyRegistry).registry(_newStrategy), 'SavingsAccount::_newStrategy do not exist');
         require(_amount != 0, 'SavingsAccount::switchStrategy Amount must be greater than zero');
 
         _amount = IYield(_currentStrategy).getSharesForTokens(_amount, _token);
@@ -167,15 +168,17 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
         uint256 _tokensReceived = IYield(_currentStrategy).unlockTokens(_token, _amount);
 
-        uint256 _sharesReceived = _tokensReceived;
+        uint256 _ethValue;
         if (_token != address(0)) {
             IERC20(_token).safeApprove(_newStrategy, _tokensReceived);
+        } else {
+            _ethValue = _tokensReceived;
         }
-
-        _sharesReceived = _depositToYield(_tokensReceived, _token, _newStrategy);
+        _amount = _tokensReceived;
+        
+        uint256 _sharesReceived = IYield(_newStrategy).lockTokens{value: _ethValue}(address(this), _token, _tokensReceived);
 
         balanceInShares[msg.sender][_token][_newStrategy] = balanceInShares[msg.sender][_token][_newStrategy].add(_sharesReceived);
-
         emit StrategySwitched(msg.sender, _token, _amount, _sharesReceived, _currentStrategy, _newStrategy);
     }
 
@@ -205,7 +208,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
         (address _receivedToken, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
 
-        emit Withdrawn(msg.sender, _to, _amount, _receivedToken, _strategy);
+        emit Withdrawn(msg.sender, _to, _amount, _token, _strategy, _withdrawShares);
         return _amountReceived;
     }
 
@@ -240,7 +243,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             'SavingsAccount::withdrawFrom insufficient balance'
         );
         (address _receivedToken, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
-        emit Withdrawn(_from, msg.sender, _amount, _receivedToken, _strategy);
+        emit Withdrawn(_from, msg.sender, _amount, _token, _strategy, _withdrawShares);
         return _amountReceived;
     }
 
@@ -296,6 +299,20 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         _transfer(_tokenReceived, _token, payable(msg.sender));
 
         emit WithdrawnAll(msg.sender, _tokenReceived, _token);
+    }
+
+    function withdrawAll(address _token, address _strategy) external override nonReentrant returns (uint256 _tokenReceived) {
+        uint256 _sharesBalance = balanceInShares[msg.sender][_token][_strategy];
+
+        if(_sharesBalance == 0) return 0;
+
+        uint256 _amount = IYield(_strategy).unlockTokens(_token, _sharesBalance);
+
+        delete balanceInShares[msg.sender][_token][_strategy];
+
+        _transfer(_amount, _token, payable(msg.sender));
+
+        emit Withdrawn(msg.sender, msg.sender, _amount, _token, _strategy, false);
     }
 
     /**

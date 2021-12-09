@@ -36,8 +36,9 @@ interface ISavingsAccount {
      * @param sharesWithdrawn amount of shares withdrawn
      * @param token address of token that is withdrawn
      * @param strategy strategy into which tokens are withdrawn
+     * @param withdrawShares flag to represent if shares are directly wirthdrawn
      */
-    event Withdrawn(address indexed from, address indexed to, uint256 sharesWithdrawn, address indexed token, address strategy);
+    event Withdrawn(address indexed from, address indexed to, uint256 sharesWithdrawn, address indexed token, address strategy, bool withdrawShares);
 
     /**
      * @notice emitted when all tokens are withdrawn
@@ -123,7 +124,9 @@ interface ISavingsAccount {
         bool withdrawShares
     ) external returns (uint256);
 
-    function withdrawAll(address _token) external returns (uint256 tokenReceived);
+    function withdrawAll(address token) external returns (uint256 tokenReceived);
+
+    function withdrawAll(address token, address strategy) external returns (uint256 tokenReceived);
 
     function approve(
         uint256 amount,

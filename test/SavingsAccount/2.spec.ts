@@ -48,8 +48,8 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
         strategyRegistry = await deployHelper.core.deployStrategyRegistry();
 
         //initialize
-        savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
-        strategyRegistry.initialize(admin.address, 1000);
+        await savingsAccount.initialize(admin.address, strategyRegistry.address, mockCreditLinesAddress.address);
+        await strategyRegistry.initialize(admin.address, 1000);
 
         noYield = await deployHelper.core.deployNoYield();
         await noYield.connect(admin).initialize(admin.address, savingsAccount.address);
@@ -185,7 +185,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                     .withdraw(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address, false)
             )
                 .to.emit(savingsAccount, 'Withdrawn')
-                .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address);
+                .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address, false);
 
             // const balanceLockedAfterTransaction: BigNumber = await BatTokenContract.balanceOf(randomAccount.address);
 
@@ -329,7 +329,8 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                     randomAccount.address,
                     depositValueToTest,
                     ethers.utils.getAddress(Contracts.LINK),
-                    aaveYield.address
+                    aaveYield.address,
+                    false
                 );
 
             const balanceLockedAfterTransaction: BigNumber = await LinkTokenContract.balanceOf(randomAccount.address);
@@ -360,7 +361,8 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                     randomAccount.address,
                     depositValueToTest,
                     ethers.utils.getAddress(linkLiquidityToken),
-                    aaveYield.address
+                    aaveYield.address,
+                    true
                 );
             let liquidityTokenBalanceAfter = await liquidityToken.balanceOf(randomAccount.address);
             expect(liquidityTokenBalanceAfter.sub(liquidityTokenBalanceBefore)).eq(depositValueToTest);

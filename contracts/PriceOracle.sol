@@ -53,8 +53,36 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
         int256 price1;
         int256 price2;
-        (, price1, , , ) = AggregatorV3Interface(_feedData1.oracle).latestRoundData();
-        (, price2, , , ) = AggregatorV3Interface(_feedData2.oracle).latestRoundData();
+        {
+            uint80 roundID1;
+            uint256 timeStamp1;
+            uint80 answeredInRound1;
+            (
+                roundID1,
+                price1,
+                ,
+                timeStamp1,
+                answeredInRound1
+            ) = AggregatorV3Interface(_feedData1.oracle).latestRoundData();
+            if(timeStamp1 == 0 || answeredInRound1 < roundID1) {
+                return (0, 0);
+            }
+        }
+        {
+            uint80 roundID2;
+            uint256 timeStamp2;
+            uint80 answeredInRound2;
+            (
+                roundID2,
+                price2,
+                ,
+                timeStamp2,
+                answeredInRound2
+            ) = AggregatorV3Interface(_feedData2.oracle).latestRoundData();
+            if(timeStamp2 == 0 || answeredInRound2 < roundID2) {
+                return (0, 0);
+            }
+        }
         uint256 price = uint256(price1)
             .mul(10**_feedData2.decimals)
             .mul(10**30)
@@ -97,8 +125,9 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         if (_pool == address(0)) {
             return (0, 0);
         }
+
         int24 _twapTick = OracleLibrary.consult(_pool, uniswapPriceAveragingPeriod);
-        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, 10**30, den, num);
+        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, 10**30, num, den);
         return (_numTokens, 30);
     }
 
@@ -176,6 +205,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         address token2,
         address pool
     ) external onlyOwner {
+        require(token1 != token2, 'token1 and token2 should be different addresses');
         bytes32 _poolTokensId = getUniswapPoolTokenId(token1, token2);
         uniswapPools[_poolTokensId] = pool;
         emit UniswapFeedUpdated(token1, token2, _poolTokensId, pool);

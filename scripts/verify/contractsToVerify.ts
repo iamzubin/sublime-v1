@@ -1,55 +1,55 @@
 const contractsToVerify = [
     {
         contract: 'savingsAccount',
-        proxy: '0x25DE5ca4C51279DAfC66Cee8157d610ed76093eC',
+        proxy: '0x69A634cE54588ba06b7813dA31C26832aa2ffa8c',
     },
     {
         contract: 'strategyRegistry',
-        proxy: '0xF13c02E99c3af9fd2fB0A976EFb63bf8498B4b46',
+        proxy: '0xA4366F7376A5425F9Bc0226ced35ad8f4536FD56',
     },
     {
         contract: 'creditLines',
-        proxy: '0x5dDb5359480FF27Cb1c01f0eaa8532fc2be4Da3c',
+        proxy: '0xA102E6f5Bda8d1222520345a759D298B68938e5C',
     },
     {
         contract: 'noYield',
-        proxy: '0x4fEFEfd8fF33A6090e666417B7B69219F7752Bc6',
+        proxy: '0x85858349d12946a6538353a794ab267E311856f4',
     },
     {
         contract: 'aaveYield',
-        proxy: '0x0e59d909c288115dC8889A62A4FE4bb31839D9d6',
+        proxy: '0x34Db1C4a5CF324Dc2231C1C725A869eaF205b2Ee',
     },
     {
         contract: 'compoundYield',
-        proxy: '0xD531Ce03d012e1353433e08cea0E3d7244dafcAA',
+        proxy: '0xBc2e7Bcf4fe46d14a19ccfE2e2D72146c579A06a',
     },
     {
         contract: 'verification',
-        proxy: '0x089aFDe07350348FA36A1ee5596fBE34C3918766',
+        proxy: '0x4256a2722d60c90c39515E0Adb3E731b91480996',
     },
     {
         contract: 'adminVerifier',
-        proxy: '0x89aB5f296F97fE64E5Df5E5900e8070C29EdD5F1',
+        proxy: '0x24E444Bb965769E962e52B21612699612AE33F8a',
     },
     {
         contract: 'priceOracle',
-        proxy: '0xD372bf26cF529a0F0E3168C98DA067461A1eFECD',
+        proxy: '0x66C876639d1C48dB02A3687BE6Cf089Ac5118742',
     },
     {
         contract: 'extension',
-        proxy: '0x297E65f2B915a64bf01C438daFe991F393A89060',
+        proxy: '0xb931beE03892cA2f8d26f52E78945F0c643cEb4b',
     },
     {
         contract: 'pool',
-        proxy: '0x95cCb46520535E85bCD0b556b8c4F0843dC754b4',
+        proxy: '0x4329912bFb77D109F7647197390f42291E5571A5',
     },
     {
         contract: 'repayments',
-        proxy: '0x2007DF439D29bFA4e0885D600Da9cA5b9edc7d82',
+        proxy: '0x8F990286B3B3A4a73161723a0B4E5fc80B539DD5',
     },
     {
         contract: 'poolFactory',
-        proxy: '0xA9793Ac0F8FEF3F55aB67F87ed6575A90b21aC4d',
+        proxy: '0xfbd30d70Da78901b36F263D7bca0b4099B3D4680',
     },
 ];
 
