@@ -9,6 +9,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../../utils/types';
 import hre from 'hardhat';
@@ -35,7 +36,7 @@ import { IYield } from '@typechain/IYield';
 import { Address } from 'hardhat-deploy/dist/types';
 import { Pool } from '@typechain/Pool';
 import { CreditLine } from '../../typechain/CreditLine';
-import { zeroAddress } from '../../utils/constants';
+import { verificationParams, zeroAddress } from '../../utils/constants';
 import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 import { expectApproxEqual } from '../../utils/helpers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -115,7 +116,10 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: verificationParams.activationDelay
+            } as VerificationParams,
         );
     });
 
@@ -638,7 +642,10 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Calculate Borrowable Am
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: verificationParams.activationDelay
+            } as VerificationParams,
         );
 
         creditLine = env.creditLine;
@@ -939,7 +946,10 @@ describe.skip(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit L
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: verificationParams.activationDelay
+            } as VerificationParams,
         );
 
         creditLine = env.creditLine;
@@ -1063,7 +1073,10 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Repay Credit Lines`, as
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: verificationParams.activationDelay
+            } as VerificationParams,
         );
 
         creditLine = env.creditLine;

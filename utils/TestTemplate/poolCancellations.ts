@@ -9,6 +9,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../types';
 import hre from 'hardhat';
@@ -23,6 +24,7 @@ import {
     createPoolParams,
     zeroAddress,
     ChainLinkAggregators,
+    verificationParams,
 } from '../constants';
 
 import DeployHelper from '../deploys';
@@ -99,7 +101,10 @@ export async function cancellationChecks(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -168,7 +173,7 @@ export async function cancellationChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -207,7 +212,7 @@ export async function cancellationChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -310,7 +315,7 @@ export async function cancellationChecks(
             expectApproxEqual(collateralBalanceOfPoolInTokens.sub(collateralBalanceOfBorrowerInSharesAfterCancel) , penaltyAmountInTokens, 100, "The deducted amount and penalty varied too much");
         });
 
-        it.only("Pool cannot be cancelled when extensions have been granted and terminatePool can only be called by the pool factory owner: ", async function() {
+        it("Pool cannot be cancelled when extensions have been granted and terminatePool can only be called by the pool factory owner: ", async function() {
             let BTDecimals = await env.mockTokenContracts[0].contract.decimals();
             let CTDecimals = await env.mockTokenContracts[1].contract.decimals();
             let {admin, borrower, lender} = env.entities;
@@ -330,7 +335,7 @@ export async function cancellationChecks(
             await borrowToken.connect(lender).approve(poolAddress, amount);
 
             // Lender lends into the pool
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -340,7 +345,7 @@ export async function cancellationChecks(
             await borrowToken.connect(lender1).approve(poolAddress, amount1);
 
             // Lender1 lends into the pool
-            const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, false));
+            const lendExpect1 = expect(pool.connect(lender1).lend(lender1.address, amount1, zeroAddress));
             await lendExpect1.to.emit(pool, 'LiquiditySupplied').withArgs(amount1, lender1.address);
             await lendExpect1.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender1.address, amount1);
 

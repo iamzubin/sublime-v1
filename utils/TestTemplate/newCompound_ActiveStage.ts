@@ -9,6 +9,7 @@ import {
     PoolFactoryInitParams,
     PriceOracleSource,
     RepaymentsInitParams,
+    VerificationParams,
     YearnPair,
 } from '../types';
 import hre from 'hardhat';
@@ -23,6 +24,7 @@ import {
     createPoolParams,
     zeroAddress,
     ChainLinkAggregators,
+    verificationParams,
 } from '../constants';
 
 import DeployHelper from '../deploys';
@@ -99,7 +101,10 @@ export async function preActivePoolChecks(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -168,7 +173,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -205,7 +210,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -232,7 +237,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -258,7 +263,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -288,7 +293,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -318,7 +323,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -349,7 +354,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -372,7 +377,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -409,7 +414,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -491,7 +496,10 @@ export async function preActivePoolChecks(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -562,7 +570,7 @@ export async function preActivePoolChecks(
             await env.mockTokenContracts[0].contract.connect(lender).approve(poolAddress, amount);
 
             // Lender actually lends his Borrow Tokens
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
@@ -663,7 +671,10 @@ export async function preActivePoolChecks(
                 {
                     _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-                } as CreditLineInitParams
+                } as CreditLineInitParams,
+                {
+                    activationDelay: verificationParams.activationDelay
+                } as VerificationParams,
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -789,7 +800,7 @@ export async function preActivePoolChecks(
             await borrowToken.connect(lender).approve(poolAddress, amount);
 
             // Lender lends into the pool
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
             await lendExpect.to.emit(pool, 'Transfer').withArgs(zeroAddress, lender.address, amount);
 
