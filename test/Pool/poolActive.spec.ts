@@ -15,6 +15,7 @@ import {
     ChainLinkAggregators,
     repaymentParams,
     extensionParams,
+    verificationParams,
 } from '../../utils/constants';
 import DeployHelper from '../../utils/deploys';
 
@@ -143,7 +144,7 @@ describe('Pool Active stage', async () => {
         await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
-        await verification.connect(admin).initialize(admin.address);
+        await verification.connect(admin).initialize(admin.address, verificationParams.activationDelay);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
         await verification.connect(admin).addVerifier(adminVerifier.address);
         await adminVerifier.connect(admin).initialize(admin.address, verification.address);
@@ -267,11 +268,11 @@ describe('Pool Active stage', async () => {
                 // console.log({amount: amount.toString(), amount1: amount1.toString()});
                 await borrowToken.connect(admin).transfer(lender.address, amount);
                 await borrowToken.connect(lender).approve(pool.address, amount);
-                await pool.connect(lender).lend(lender.address, amount, false);
+                await pool.connect(lender).lend(lender.address, amount, zeroAddress);
 
                 await borrowToken.connect(admin).transfer(lender1.address, amount1);
                 await borrowToken.connect(lender1).approve(pool.address, amount1);
-                await pool.connect(lender1).lend(lender1.address, amount1, false);
+                await pool.connect(lender1).lend(lender1.address, amount1, zeroAddress);
 
                 const { loanStartTime } = await pool.poolConstants();
                 await blockTravel(network, parseInt(loanStartTime.add(1).toString()));

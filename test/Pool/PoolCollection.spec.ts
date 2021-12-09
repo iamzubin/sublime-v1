@@ -16,6 +16,7 @@ import {
     OperationalAmounts,
     repaymentParams,
     extensionParams,
+    verificationParams,
 } from '../../utils/constants';
 import DeployHelper from '../../utils/deploys';
 
@@ -142,7 +143,7 @@ describe('Pool Collection stage', async () => {
         await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
-        await verification.connect(admin).initialize(admin.address);
+        await verification.connect(admin).initialize(admin.address, verificationParams.activationDelay);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
         await verification.connect(admin).addVerifier(adminVerifier.address);
         await adminVerifier.connect(admin).initialize(admin.address, verification.address);
@@ -266,7 +267,7 @@ describe('Pool Collection stage', async () => {
             await borrowToken.connect(admin).transfer(lender.address, amount);
             await borrowToken.connect(lender).approve(pool.address, amount);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, false));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, zeroAddress));
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
@@ -298,7 +299,7 @@ describe('Pool Collection stage', async () => {
             const poolTokenTotalSupplyBefore = await pool.totalSupply();
             await savingsAccount.connect(lender).approve(amount, borrowToken.address, pool.address);
 
-            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, true));
+            const lendExpect = expect(pool.connect(lender).lend(lender.address, amount, noYield.address));
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
@@ -330,7 +331,7 @@ describe('Pool Collection stage', async () => {
             const poolTokenTotalSupplyBefore = await pool.totalSupply();
             await savingsAccount.connect(lender1).approve(amount, borrowToken.address, pool.address);
 
-            const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, true));
+            const lendExpect = expect(pool.connect(lender1).lend(lender.address, amount, noYield.address));
 
             await lendExpect.to.emit(pool, 'LiquiditySupplied').withArgs(amount, lender.address);
 
