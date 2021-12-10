@@ -123,47 +123,6 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
         );
     });
 
-    it('Sample pool', async function () {
-        let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`)); // one pool factory - one salt => 1 unique pool
-        let { admin, borrower, lender } = env.entities;
-        let deployHelper: DeployHelper = new DeployHelper(admin);
-        let WBTC: ERC20 = await deployHelper.mock.getMockERC20(Contracts.WBTC);
-        let ETH: ERC20 = await deployHelper.mock.getMockERC20(zeroAddress); // this is made into type only for matching the signature
-        let iyield: IYield = await deployHelper.mock.getYield(env.yields.compoundYield.address);
-
-        let poolAddress = await calculateNewPoolAddress(env, ETH, WBTC, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in pool
-            _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
-            _collateralAmount: BigNumber.from(100).mul(BigNumber.from(10).pow(8)), // 100 btc
-            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
-            _collectionPeriod: 10000,
-            _loanWithdrawalDuration: 200,
-            _noOfRepaymentIntervals: 100,
-            _repaymentInterval: 1000,
-        });
-
-        console.log({ calculatedPoolAddress: poolAddress });
-
-        console.log(env.mockTokenContracts[1].name);
-        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, '10000000000');
-        await env.mockTokenContracts[1].contract.connect(admin).transfer(borrower.address, '10000000000');
-        await env.mockTokenContracts[1].contract.connect(borrower).approve(poolAddress, '10000000000');
-
-        let pool = await createNewPool(env, ETH, WBTC, iyield, salt, false, {
-            _poolSize: BigNumber.from(100).mul(BigNumber.from(10).pow(18)), // max possible borrow tokens in pool
-            _borrowRate: BigNumber.from(5).mul(BigNumber.from(10).pow(28)), // 100 * 10^28 in contract means 100% to outside
-            _collateralAmount: BigNumber.from(100).mul(BigNumber.from(10).pow(8)), // 100 btc
-            _collateralRatio: BigNumber.from(250).mul(BigNumber.from(10).pow(28)), //250 * 10**28
-            _collectionPeriod: 10000,
-            _loanWithdrawalDuration: 200,
-            _noOfRepaymentIntervals: 100,
-            _repaymentInterval: 1000,
-        });
-
-        console.log({ actualPoolAddress: pool.address });
-        assert.equal(poolAddress, pool.address, 'Generated and Actual pool address should match');
-    });
-
     it('CreditLine Request: Borrower and Lender cannot be same', async function () {
         let { admin, borrower, lender } = env.entities;
         creditLine = env.creditLine;
@@ -326,13 +285,17 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
 
         // await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
-        let liquidityShares = await env.yields.compoundYield.callStatic.getSharesForTokens(amountForDeposit, _collateralAsset);
-        // console.log({ amountForDeposit: amountForDeposit.toString() });
-        // console.log({ liquidityShares: liquidityShares.toString() });
-
-        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, amountForDeposit);
-        await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, amountForDeposit);
+        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, amountForDeposit.add(10000));
+        await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, amountForDeposit.add(10000));
         await env.mockTokenContracts[1].contract.connect(random).approve(creditLine.address, amountForDeposit);
+        await env.mockTokenContracts[1].contract.connect(random).approve(env.yields.compoundYield.address, 10000);
+
+        // To avoid div by 0 when getSharesForTokens
+        await env.savingsAccount
+            .connect(random)
+            .deposit(10000, _collateralAsset, env.yields.compoundYield.address, random.address);
+
+        let liquidityShares = await env.yields.compoundYield.callStatic.getSharesForTokens(amountForDeposit, _collateralAsset);
 
         const collateralBalanceInShares = await env.savingsAccount
             .connect(admin)
