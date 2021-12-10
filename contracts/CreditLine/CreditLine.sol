@@ -1018,6 +1018,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                     (bool success, ) = msg.sender.call{value: _returnETH}('');
                     require(success, 'Transfer fail');
                 }
+                (bool success, ) = _lender.call{value: msg.value.sub(_returnETH)}('');
+                require(success, 'Transfer fail');
             } else {
                 IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowTokens);
             }
