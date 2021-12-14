@@ -11,6 +11,8 @@ import '../interfaces/ISavingsAccount.sol';
 import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IStrategyRegistry.sol';
 
+import 'hardhat/console.sol';
+
 /**
  * @title Credit Line contract with Methods related to credit Line
  * @notice Implements the functions related to Credit Line
@@ -1012,12 +1014,16 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         if (creditLineConstants[_id].autoLiquidation && _lender != msg.sender) {
             uint256 _borrowTokens = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
+            console.log('Contract borrow tokens',_borrowTokens);
             if (_borrowAsset == address(0)) {
                 uint256 _returnETH = msg.value.sub(_borrowTokens, 'Insufficient ETH to liquidate');
+                console.log('_returnETH',_returnETH);
                 if (_returnETH != 0) {
                     (bool success, ) = msg.sender.call{value: _returnETH}('');
                     require(success, 'Transfer fail');
                 }
+                console.log('msg.value',msg.value);
+                console.log('Value left', msg.value.sub(_returnETH));
                 (bool success, ) = _lender.call{value: msg.value.sub(_returnETH)}('');
                 require(success, 'Transfer fail');
             } else {
@@ -1049,7 +1055,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset,
         uint256 _totalCollateralTokens
     ) internal view returns (uint256) {
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
+        // (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
+        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_collateralAsset, _borrowAsset);
         uint256 _borrowTokens = (
             _totalCollateralTokens.mul(uint256(10**30).sub(liquidatorRewardFraction)).div(10**30).mul(_ratioOfPrices).div(10**_decimals)
         );

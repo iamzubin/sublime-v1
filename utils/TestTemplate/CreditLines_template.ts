@@ -986,7 +986,7 @@ export async function CreditLines(
         });
     });
 
-    describe.skip(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
+    describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Liquidate Credit Lines`, async () => {
         let env: Environment;
         let creditLine: CreditLine;
         let admin: SignerWithAddress;
@@ -1058,7 +1058,8 @@ export async function CreditLines(
             let borrowRate = BigNumber.from(1).mul(BigNumber.from(10).pow(28)); // 1%
             let colRatio = BigNumber.from(245).mul(BigNumber.from(10).pow(28)); // 245%
 
-            let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+            // let collateralAmountToDeposit = BigNumber.from(Amount).mul(BigNumber.from(10).pow(collateralDecimals));
+            let collateralAmountToDeposit = BigNumber.from(100);
 
             await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(lender.address, borrowLimit);
             // console.log({ whale1Balane: await BorrowAsset.balanceOf(WhaleAccount1) });
@@ -1104,7 +1105,72 @@ export async function CreditLines(
 
             expect(borrowableAmount).lte(borrowLimit);
         });
-        it.skip('Test Liquidation', async () => {});
+
+        it('Test Liquidation: Liquidator should be able to liquidate the creditline', async () => {
+            let random = env.entities.extraLenders[10];
+            let BorrowAsset = env.mockTokenContracts[0].contract;
+            // move blocks to be able to liquidate due to change in collateral ratio
+            await incrementChain(network, 2000, 150000000);
+
+            let value = await creditLine.connect(lender).callStatic.borrowTokensToLiquidate(creditLineNumber);
+            // console.log({ value: value.toString() });
+
+            // Check balance before the liquidate
+            let lenderBalance = await env.mockTokenContracts[0].contract.balanceOf(lender.address);
+            // console.log({ lenderBalance: lenderBalance.toString() });
+            let randomBalance = await env.mockTokenContracts[0].contract.balanceOf(random.address);
+            console.log({ randomBalance: randomBalance.toString() });
+
+            await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(admin.address, value.mul(100));
+            await BorrowAsset.connect(admin).transfer(random.address, value.mul(100));
+            await BorrowAsset.connect(random).approve(creditLine.address,value.mul(100));
+
+            await expect(creditLine.connect(random).liquidate(creditLineNumber, false)).to.emit(creditLine, 'CreditLineLiquidated');
+
+            // Check balance after the liquidate
+            let lenderBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(lender.address);
+            // console.log({ lenderBalanceAfter: lenderBalanceAfter.toString() });
+            let randomBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(random.address);
+            console.log({ randomBalanceAfter: randomBalanceAfter.toString() });
+
+            let borrowDiff = lenderBalanceAfter.sub(lenderBalance);
+            // console.log({ borrowDiff: borrowDiff.toString() });
+
+            // TODO: Check for liquidator reward
+            let randomDiff = randomBalance.sub(randomBalanceAfter);
+            console.log({ randomDiff: randomDiff.toString() });
+
+            expectApproxEqual(borrowDiff,value,50);
+        });
+
+        it('Test Liquidation: Lender should be able to liquidate the creditline', async () => {
+            let random = env.entities.extraLenders[10];
+            let BorrowAsset = await env.mockTokenContracts[0].contract;
+            // move blocks to be able to liquidate due to change in collateral ratio
+            await incrementChain(network, 2000, 150000000);
+
+            let value = await creditLine.connect(lender).callStatic.borrowTokensToLiquidate(creditLineNumber);
+            // console.log({ value: value.toString() });
+
+            // Check balance before the liquidate
+            let lenderBalance = await env.mockTokenContracts[0].contract.balanceOf(lender.address);
+            // console.log({ lenderBalance: lenderBalance.toString() });
+
+            await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(admin.address, value.mul(100));
+            await BorrowAsset.connect(admin).transfer(lender.address, value.mul(100));
+            await BorrowAsset.connect(lender).approve(creditLine.address,value.mul(100));
+
+            await expect(creditLine.connect(lender).liquidate(creditLineNumber, false)).to.emit(creditLine, 'CreditLineLiquidated');
+
+            // Check balance after the liquidate
+            let lenderBalanceAfter = await env.mockTokenContracts[0].contract.balanceOf(lender.address);
+            // console.log({ lenderBalanceAfter: lenderBalanceAfter.toString() });
+
+            let borrowDiff = lenderBalanceAfter.sub(lenderBalance);
+            // console.log({ borrowDiff: borrowDiff.toString() });
+
+            expectApproxEqual(borrowDiff,value,50);
+        });
     });
 
     describe(`Credit Lines ${BorrowToken}/${CollateralToken}: Repay Credit Lines`, async () => {
