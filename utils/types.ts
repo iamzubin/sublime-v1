@@ -73,7 +73,7 @@ export interface DeploymentParams {
 }
 
 export interface VerificationParams {
-    activationDelay: BigNumberish
+    activationDelay: BigNumberish;
 }
 
 export interface InputParams {

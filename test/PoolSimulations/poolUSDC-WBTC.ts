@@ -26,7 +26,7 @@ import {
     creditLineFactoryParams,
 } from '../../utils/constants-rahul';
 
-import { verificationParams } from "../../utils/constants";
+import { verificationParams } from '../../utils/constants';
 
 import DeployHelper from '../../utils/deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -77,8 +77,8 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: WBTC', 
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
             } as CreditLineInitParams,
             {
-                activationDelay: verificationParams.activationDelay
-            } as VerificationParams,
+                activationDelay: verificationParams.activationDelay,
+            } as VerificationParams
         );
     });
 

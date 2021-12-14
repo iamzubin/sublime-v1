@@ -76,8 +76,8 @@ describe('Pool, Strategy: Compound, Borrow Token: USDT, CollateralToken: ETH', a
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
             } as CreditLineInitParams,
             {
-                activationDelay: verificationParams.activationDelay
-            } as VerificationParams,
+                activationDelay: verificationParams.activationDelay,
+            } as VerificationParams
         );
     });
 

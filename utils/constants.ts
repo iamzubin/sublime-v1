@@ -93,8 +93,8 @@ export const extensionParams = {
 };
 
 export const verificationParams = {
-    activationDelay: 0
-}
+    activationDelay: 0,
+};
 
 // Pool inputs to be manullay added
 // address _borrower,

@@ -74,8 +74,8 @@ describe('Checking Uniswap Price Oracle', async () => {
                 _liquidatorRewardFraction: '378945786347868735',
             } as CreditLineInitParams,
             {
-                activationDelay: 0
-            } as VerificationParams,
+                activationDelay: 0,
+            } as VerificationParams
         );
         priceOracle = env.priceOracle;
         user = env.entities.borrower;

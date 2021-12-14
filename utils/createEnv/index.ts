@@ -53,7 +53,7 @@ export async function createEnvironment(
     poolFactoryInitParams: PoolFactoryInitParams,
     creditLineDefaultStrategy: CreditLineDefaultStrategy,
     creditLineInitParams: CreditLineInitParams,
-    verificationInitParams: VerificationParams,
+    verificationInitParams: VerificationParams
 ): Promise<Environment> {
     const env = {} as Environment;
     const yields = {} as Yields;

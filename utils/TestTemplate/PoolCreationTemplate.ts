@@ -104,8 +104,8 @@ export async function poolCreationTest(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             console.log('createEnvironment() executed successfully.');

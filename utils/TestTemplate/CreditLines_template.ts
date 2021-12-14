@@ -120,8 +120,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -431,8 +431,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -744,8 +744,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             creditLine = env.creditLine;
@@ -1037,8 +1037,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             creditLine = env.creditLine;
@@ -1123,7 +1123,7 @@ export async function CreditLines(
 
             await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(admin.address, value.mul(100));
             await BorrowAsset.connect(admin).transfer(random.address, value.mul(100));
-            await BorrowAsset.connect(random).approve(creditLine.address,value.mul(100));
+            await BorrowAsset.connect(random).approve(creditLine.address, value.mul(100));
 
             await expect(creditLine.connect(random).liquidate(creditLineNumber, false)).to.emit(creditLine, 'CreditLineLiquidated');
 
@@ -1140,7 +1140,7 @@ export async function CreditLines(
             let randomDiff = randomBalance.sub(randomBalanceAfter);
             console.log({ randomDiff: randomDiff.toString() });
 
-            expectApproxEqual(borrowDiff,value,50);
+            expectApproxEqual(borrowDiff, value, 50);
         });
 
         it('Test Liquidation: Lender should be able to liquidate the creditline', async () => {
@@ -1158,7 +1158,7 @@ export async function CreditLines(
 
             await BorrowAsset.connect(env.impersonatedAccounts[0]).transfer(admin.address, value.mul(100));
             await BorrowAsset.connect(admin).transfer(lender.address, value.mul(100));
-            await BorrowAsset.connect(lender).approve(creditLine.address,value.mul(100));
+            await BorrowAsset.connect(lender).approve(creditLine.address, value.mul(100));
 
             await expect(creditLine.connect(lender).liquidate(creditLineNumber, false)).to.emit(creditLine, 'CreditLineLiquidated');
 
@@ -1169,7 +1169,7 @@ export async function CreditLines(
             let borrowDiff = lenderBalanceAfter.sub(lenderBalance);
             // console.log({ borrowDiff: borrowDiff.toString() });
 
-            expectApproxEqual(borrowDiff,value,50);
+            expectApproxEqual(borrowDiff, value, 50);
         });
     });
 
@@ -1228,8 +1228,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             creditLine = env.creditLine;

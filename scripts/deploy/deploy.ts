@@ -59,7 +59,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         repaymentsInitParams,
         poolFactoryInitParams,
         // creditLineInitParams,
-        verificationParams
+        verificationParams,
     } = config;
     let [proxyAdmin, admin, deployer]: SignerWithAddress[] = signers;
 

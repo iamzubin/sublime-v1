@@ -38,7 +38,14 @@ interface ISavingsAccount {
      * @param strategy strategy into which tokens are withdrawn
      * @param withdrawShares flag to represent if shares are directly wirthdrawn
      */
-    event Withdrawn(address indexed from, address indexed to, uint256 sharesWithdrawn, address indexed token, address strategy, bool withdrawShares);
+    event Withdrawn(
+        address indexed from,
+        address indexed to,
+        uint256 sharesWithdrawn,
+        address indexed token,
+        address strategy,
+        bool withdrawShares
+    );
 
     /**
      * @notice emitted when all tokens are withdrawn

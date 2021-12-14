@@ -102,8 +102,8 @@ export async function yearnPoolCollectionStage(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -425,8 +425,8 @@ export async function yearnPoolCollectionStage(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from('borrower' + Math.random() * 10000000));
@@ -726,8 +726,8 @@ export async function yearnPoolCollectionStage(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from('borrower' + Math.random() * 10000000));
@@ -1207,8 +1207,8 @@ export async function yearnPoolCollectionStage(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from('borrower' + Math.random() * 10000000));
@@ -1551,8 +1551,8 @@ export async function yearnPoolCollectionStage(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -1729,8 +1729,8 @@ export async function yearnPoolCollectionStage(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));

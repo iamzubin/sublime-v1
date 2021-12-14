@@ -285,7 +285,6 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
 
         // await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
-
         let liquidityShares = await env.yields.compoundYield.callStatic.getSharesForTokens(amountForDeposit, _collateralAsset);
         const collateralBalanceInShares = await env.savingsAccount
             .connect(admin)
@@ -1001,9 +1000,11 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit Lines`
         let randomBalance = await ethers.provider.getBalance(random.address);
         // console.log({ randomBalance: randomBalance.toString() });
 
-        await expect(creditLine.connect(random).liquidate(creditLineNumber, false, {
-            value: value.add(10),
-        })).to.emit(creditLine, 'CreditLineLiquidated');
+        await expect(
+            creditLine.connect(random).liquidate(creditLineNumber, false, {
+                value: value.add(10),
+            })
+        ).to.emit(creditLine, 'CreditLineLiquidated');
 
         // Check balance after the liquidate
         let lenderBalanceAfter = await ethers.provider.getBalance(lender.address);
@@ -1014,7 +1015,7 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit Lines`
         let borrowDiff = lenderBalanceAfter.sub(lenderBalance);
         // console.log({ borrowDiff: borrowDiff.toString() });
 
-        expectApproxEqual(borrowDiff,value,50);
+        expectApproxEqual(borrowDiff, value, 50);
 
         let randomDiff = randomBalance.sub(randomBalanceAfter);
         // console.log({ randomDiff: randomDiff.toString() });
@@ -1034,9 +1035,11 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit Lines`
         let randomBalance = await ethers.provider.getBalance(random.address);
         // console.log({ randomBalance: randomBalance.toString() });
 
-        await expect(creditLine.connect(random).liquidate(creditLineNumber, false, {
-            value: value.add(10),
-        })).to.emit(creditLine, 'CreditLineLiquidated');
+        await expect(
+            creditLine.connect(random).liquidate(creditLineNumber, false, {
+                value: value.add(10),
+            })
+        ).to.emit(creditLine, 'CreditLineLiquidated');
 
         // Check balance after the liquidate
         let lenderBalanceAfter = await ethers.provider.getBalance(lender.address);
@@ -1047,7 +1050,7 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit Lines`
         let borrowDiff = lenderBalanceAfter.sub(lenderBalance);
         // console.log({ borrowDiff: borrowDiff.toString() });
 
-        expectApproxEqual(borrowDiff,value,50);
+        expectApproxEqual(borrowDiff, value, 50);
 
         // TODO: Check for liquidator reward
         let randomDiff = randomBalance.sub(randomBalanceAfter);
@@ -1065,9 +1068,11 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit Lines`
         let lenderBalance = await ethers.provider.getBalance(lender.address);
         // console.log({ lenderBalance: lenderBalance.toString() });
 
-        await expect(creditLine.connect(lender).liquidate(creditLineNumber, false, {
-            value: value.add(10),
-        })).to.emit(creditLine, 'CreditLineLiquidated');
+        await expect(
+            creditLine.connect(lender).liquidate(creditLineNumber, false, {
+                value: value.add(10),
+            })
+        ).to.emit(creditLine, 'CreditLineLiquidated');
 
         // Check balance after the liquidate
         let lenderBalanceAfter = await ethers.provider.getBalance(lender.address);
@@ -1076,7 +1081,7 @@ describe(`Credit Lines ${zeroAddress}/${Contracts.WBTC}: Liquidate Credit Lines`
         let borrowDiff = lenderBalance.sub(lenderBalanceAfter);
         // console.log({ borrowDiff: borrowDiff.toString() });
 
-        expectApproxEqual(borrowDiff,value,50);
+        expectApproxEqual(borrowDiff, value, 50);
     });
 });
 

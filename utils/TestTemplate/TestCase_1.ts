@@ -26,7 +26,7 @@ import {
     testPoolFactoryParams,
 } from '../constants-Additions';
 
-import {} from "../constants";
+import {} from '../constants';
 
 import DeployHelper from '../deploys';
 import { ERC20 } from '../../typechain/ERC20';
@@ -92,8 +92,8 @@ export async function TestCase(
                 CreditLineDefaultStrategy.Compound,
                 { _protocolFeeFraction: testPoolFactoryParams._protocolFeeFraction } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
