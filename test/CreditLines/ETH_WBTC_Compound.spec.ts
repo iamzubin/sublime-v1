@@ -285,6 +285,16 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
 
         // await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
+        await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, amountForDeposit.add(10000));
+        await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, amountForDeposit.add(10000));
+        await env.mockTokenContracts[1].contract.connect(random).approve(creditLine.address, amountForDeposit);
+        await env.mockTokenContracts[1].contract.connect(random).approve(env.yields.compoundYield.address, 10000);
+
+        // To avoid div by 0 when getSharesForTokens
+        await env.savingsAccount
+            .connect(random)
+            .deposit(10000, _collateralAsset, env.yields.compoundYield.address, random.address);
+
         let liquidityShares = await env.yields.compoundYield.callStatic.getSharesForTokens(amountForDeposit, _collateralAsset);
         const collateralBalanceInShares = await env.savingsAccount
             .connect(admin)
@@ -317,10 +327,9 @@ describe('CreditLine, Borrow Token: ETH, CollateralToken: WBTC', async () => {
 
         // await expect(creditLine.connect(borrower).accept(values)).to.emit(creditLine, 'CreditLineAccepted').withArgs(values);
 
-        console.log('Shares');
         let liquidityShares = await env.yields.compoundYield.callStatic.getTokensForShares(amountForDeposit, _collateralAsset);
-        console.log({ amountForDeposit: amountForDeposit.toString() });
-        console.log({ liquidityShares: liquidityShares.toString() });
+        // console.log({ amountForDeposit: amountForDeposit.toString() });
+        // console.log({ liquidityShares: liquidityShares.toString() });
 
         await env.mockTokenContracts[1].contract.connect(env.impersonatedAccounts[0]).transfer(admin.address, collateralAmout);
         await env.mockTokenContracts[1].contract.connect(admin).transfer(random.address, collateralAmout);
