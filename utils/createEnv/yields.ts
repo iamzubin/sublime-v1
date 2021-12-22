@@ -15,8 +15,6 @@ import { AaveYieldParams, CompoundPair, YearnPair } from '../../utils/types';
 import { IYield } from '@typechain/IYield';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
 
-import { induceDelay } from '../helpers';
-
 export async function createAaveYieldWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
@@ -99,10 +97,7 @@ export async function createNoYieldWithInit(
     savingsAccount: SavingsAccount
 ): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    console.log('Deploying NoYield');
     let noYieldLogic: NoYield = await deployHelper.core.deployNoYield();
-    console.log('deploying sublime proxy');
-    await induceDelay(200);
     let noYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
     let noYield: NoYield = await deployHelper.core.getNoYield(noYieldProxy.address);
     console.log('init no yield');

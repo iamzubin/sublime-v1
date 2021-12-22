@@ -21,7 +21,6 @@ export async function createPriceOracle(proxyAdmin: SignerWithAddress, admin: Si
 export async function setPriceOracleFeeds(priceOracle: PriceOracle, admin: SignerWithAddress, pricePairs: PriceOracleSource[]) {
     for (let index = 0; index < pricePairs.length; index++) {
         const pair = pricePairs[index];
-        await induceDelay(200);
         await priceOracle.connect(admin).setChainlinkFeedAddress(pair.tokenAddress, pair.feedAggregator);
     }
 }

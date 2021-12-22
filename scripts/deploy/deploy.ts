@@ -155,8 +155,6 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     console.log('Set implementations in Pool Factory');
 
-    await induceDelay(123);
-
     await setImplementations(
         poolFactory,
         admin,
