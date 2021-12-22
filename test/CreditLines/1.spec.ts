@@ -45,7 +45,7 @@ import { getContractAddress } from '@ethersproject/address';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
 
-describe('Credit Lines', async () => {
+describe('Credit Lines spec 1', async () => {
     let savingsAccount: SavingsAccount;
     let strategyRegistry: StrategyRegistry;
 

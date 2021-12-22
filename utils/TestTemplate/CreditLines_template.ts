@@ -120,8 +120,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -431,8 +431,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             let salt = sha256(Buffer.from(`borrower-${new Date().valueOf()}`));
@@ -744,8 +744,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             creditLine = env.creditLine;
@@ -1037,8 +1037,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             creditLine = env.creditLine;
@@ -1162,8 +1162,8 @@ export async function CreditLines(
                     _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
                 } as CreditLineInitParams,
                 {
-                    activationDelay: verificationParams.activationDelay
-                } as VerificationParams,
+                    activationDelay: verificationParams.activationDelay,
+                } as VerificationParams
             );
 
             creditLine = env.creditLine;

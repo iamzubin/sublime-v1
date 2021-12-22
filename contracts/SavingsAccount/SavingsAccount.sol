@@ -175,7 +175,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _ethValue = _tokensReceived;
         }
         _amount = _tokensReceived;
-        
+
         uint256 _sharesReceived = IYield(_newStrategy).lockTokens{value: _ethValue}(address(this), _token, _tokensReceived);
 
         balanceInShares[msg.sender][_token][_newStrategy] = balanceInShares[msg.sender][_token][_newStrategy].add(_sharesReceived);
@@ -305,7 +305,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     function withdrawAll(address _token, address _strategy) external override nonReentrant returns (uint256 _tokenReceived) {
         uint256 _sharesBalance = balanceInShares[msg.sender][_token][_strategy];
 
-        if(_sharesBalance == 0) return 0;
+        if (_sharesBalance == 0) return 0;
 
         uint256 _amount = IYield(_strategy).unlockTokens(_token, _sharesBalance);
 

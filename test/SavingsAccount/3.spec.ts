@@ -16,7 +16,7 @@ import DeployHelper from '../../utils/deploys';
 
 import { SavingsAccount } from '../../typechain/SavingsAccount';
 import { StrategyRegistry } from '../../typechain/StrategyRegistry';
-import { getRandomFromArray, incrementChain } from '../../utils/helpers';
+import { expectApproxEqual, getRandomFromArray, incrementChain } from '../../utils/helpers';
 import { Address } from 'hardhat-deploy/dist/types';
 import { AaveYield } from '../../typechain/AaveYield';
 import { YearnYield } from '../../typechain/YearnYield';
@@ -127,18 +127,57 @@ describe('Switch Strategy', async () => {
 
     describe('When Tokens is ETH', async () => {
         let userAccount: SignerWithAddress;
+        let some_dai = '1000000100000000';
+
         before(async () => {
             // deposit ETH to no yield
             [, , , , , userAccount] = await ethers.getSigners();
             await savingsAccount.connect(userAccount).deposit(depositValueToTest, zeroAddress, noYield.address, userAccount.address, {
                 value: depositValueToTest,
             });
+
+            await DaiTokenContract.connect(admin).transfer(userAccount.address, some_dai); // some dai
+            await DaiTokenContract.connect(userAccount).approve(noYield.address, some_dai);
+            await savingsAccount.connect(userAccount).deposit(some_dai, DaiTokenContract.address, noYield.address, userAccount.address);
         });
 
         it('Switch from no yield to compound yield', async () => {
             await expect(
                 savingsAccount.connect(userAccount).switchStrategy(depositValueToTest, zeroAddress, noYield.address, compoundYield.address)
             ).to.emit(savingsAccount, 'StrategySwitched');
+        });
+
+        it('get total tokens should be approximately same before and after', async () => {
+            let totalDaiTokensBefore = await savingsAccount
+                .connect(userAccount)
+                .callStatic.getTotalTokens(userAccount.address, DaiTokenContract.address);
+            await savingsAccount
+                .connect(userAccount)
+                .switchStrategy(some_dai, DaiTokenContract.address, noYield.address, compoundYield.address);
+            let totalDaiTokensAfter = await savingsAccount
+                .connect(userAccount)
+                .callStatic.getTotalTokens(userAccount.address, DaiTokenContract.address);
+            // console.log({totalDaiTokensAfter: totalDaiTokensAfter.toString(), totalDaiTokensBefore: totalDaiTokensBefore.toString()});
+            expectApproxEqual(totalDaiTokensBefore, totalDaiTokensAfter, 1000000000000);
+        });
+
+        it('Decrease Allowance and check', async () => {
+            await savingsAccount
+                .connect(userAccount)
+                .increaseAllowance('128796238567823684621827', DaiTokenContract.address, admin.address);
+            const allowanceBefore = await savingsAccount.allowance(userAccount.address, DaiTokenContract.address, admin.address);
+            const toDecrease = '238972';
+            await expect(
+                savingsAccount.connect(userAccount).decreaseAllowance(toDecrease, DaiTokenContract.address, admin.address)
+            ).to.emit(savingsAccount, 'Approved');
+            const allowanceAfter = await savingsAccount.allowance(userAccount.address, DaiTokenContract.address, admin.address);
+            expect(allowanceAfter).eq(allowanceBefore.sub(toDecrease));
+        });
+
+        it('Withdraw All Tokens', async () => {
+            await expect(
+                savingsAccount.connect(userAccount)['withdrawAll(address,address)'](DaiTokenContract.address, compoundYield.address)
+            ).to.emit(savingsAccount, 'Withdrawn');
         });
     });
 });

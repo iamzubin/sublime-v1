@@ -59,7 +59,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         repaymentsInitParams,
         poolFactoryInitParams,
         // creditLineInitParams,
-        verificationParams
+        verificationParams,
     } = config;
     let [proxyAdmin, admin, deployer]: SignerWithAddress[] = signers;
 
@@ -215,22 +215,3 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         poolFactory: poolFactory.address,
     };
 }
-
-// {
-//   "savingsAccount": "0x69A634cE54588ba06b7813dA31C26832aa2ffa8c",
-//   "strategyRegistry": "0xA4366F7376A5425F9Bc0226ced35ad8f4536FD56",
-//   "creditLines": "0xA102E6f5Bda8d1222520345a759D298B68938e5C",
-//   "proxyAdmin": "0x03f484190bc6889B28739Af182D996df57B02CC9",
-//   "admin": "0x4813CB98f2322CFb9fbf2f2dAFe01297FD70D19e",
-//   "noYield": "0x85858349d12946a6538353a794ab267E311856f4",
-//   "aaveYield": "0x34Db1C4a5CF324Dc2231C1C725A869eaF205b2Ee",
-//   "yearnYield": "0x0000000000000000000000000000000000000000",
-//   "compoundYield": "0xBc2e7Bcf4fe46d14a19ccfE2e2D72146c579A06a",
-//   "verification": "0x4256a2722d60c90c39515E0Adb3E731b91480996",
-//   "adminVerifier": "0x24E444Bb965769E962e52B21612699612AE33F8a",
-//   "priceOracle": "0x66C876639d1C48dB02A3687BE6Cf089Ac5118742",
-//   "extension": "0xb931beE03892cA2f8d26f52E78945F0c643cEb4b",
-//   "poolLogic": "0x4329912bFb77D109F7647197390f42291E5571A5",
-//   "repaymentLogic": "0x8F990286B3B3A4a73161723a0B4E5fc80B539DD5",
-//   "poolFactory": "0xfbd30d70Da78901b36F263D7bca0b4099B3D4680"
-// }

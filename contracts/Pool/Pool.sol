@@ -162,9 +162,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         poolConstants.loanStartTime = block.timestamp.add(_collectionPeriod);
         poolConstants.loanWithdrawalDeadline = block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration);
         __ERC20_init('Pool Tokens', 'PT');
-        try ERC20Upgradeable(_borrowAsset).decimals() returns(uint8 _decimals) {
+        try ERC20Upgradeable(_borrowAsset).decimals() returns (uint8 _decimals) {
             _setupDecimals(_decimals);
-        } catch(bytes memory) {}
+        } catch (bytes memory) {}
     }
 
     /**
@@ -384,7 +384,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @notice used by lender to supply liquidity to a borrow pool
      * @param _lender address of the lender
      * @param _amount amount of liquidity supplied by the _lender
-     * @param _strategy address of strategy from which tokens are lent if done from savings account, 
+     * @param _strategy address of strategy from which tokens are lent if done from savings account,
      *                  in case of direct deposits, zeroAddress should be used
      */
     function lend(
@@ -407,18 +407,10 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         address _borrowToken = poolConstants.borrowAsset;
         bool _fromSavingsAccount;
-        if(_strategy != address(0)) {
+        if (_strategy != address(0)) {
             _fromSavingsAccount = true;
         }
-        _deposit(
-            _fromSavingsAccount,
-            false,
-            _borrowToken,
-            _amount,
-            _strategy,
-            msg.sender,
-            address(this)
-        );
+        _deposit(_fromSavingsAccount, false, _borrowToken, _amount, _strategy, msg.sender, address(this));
         _mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);
     }
@@ -453,9 +445,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         //Withdraw repayments for user
 
         //We enforce pending interest withdrawals before the transfers
-        
+
         //effectiveInterestWithdrawn stores the interest we assume addresses have withdrawn to simplify future interest withdrawals.
-        // For eg, if _from has 100 pool tokens, _to has 50 pool tokens, and _amount is 50, the effectiveInterestWithdrawn for 
+        // For eg, if _from has 100 pool tokens, _to has 50 pool tokens, and _amount is 50, the effectiveInterestWithdrawn for
         // _from is done using 50 pool tokens, since future interest repayment withdrawals are done with respect to 50 tokens for _from
         // Similarly, we use 100 for _to's effectiveInterestWithdrawn calculation since their future interest withdrawals are calculated
         // based on 100 pool tokens. Refer calculateRepaymentWithdrawable()

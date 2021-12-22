@@ -46,7 +46,7 @@ import { AdminVerifier } from '@typechain/AdminVerifier';
 import { NoYield } from '@typechain/NoYield';
 import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 
-describe('Credit Lines', async () => {
+describe('Credit Lines spec 2', async () => {
     let savingsAccount: SavingsAccount;
     let strategyRegistry: StrategyRegistry;
 
