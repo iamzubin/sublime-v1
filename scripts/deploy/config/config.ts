@@ -43,6 +43,9 @@ function createConfig(rawConfig: any): DeploymentParams {
         protocolFeeCollector: rawConfig.poolFactory.protocolFeeCollector,
         noStrategy: ethers.constants.AddressZero,
     };
+    config.verificationParams = {
+        activationDelay: rawConfig.verificationParams.activationDelay
+    }
     return config;
 }
 

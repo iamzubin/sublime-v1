@@ -85,7 +85,7 @@ export async function setImplementations(
     savingsAccount: SavingsAccount,
     extension: Extension
 ) {
-    await poolFactory
+    await (await poolFactory
         .connect(admin)
         .setImplementations(
             poolLogic.address,
@@ -95,5 +95,5 @@ export async function setImplementations(
             priceOracle.address,
             savingsAccount.address,
             extension.address
-        );
+        )).wait();
 }
