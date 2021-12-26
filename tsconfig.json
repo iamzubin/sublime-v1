@@ -12,9 +12,9 @@
         "baseUrl": ".",
         "moduleResolution": "node",
         "paths": {
-            "@utils": ["utils"],
-            "@utils/*": ["utils/*"],
-            "@typechain/*": ["typechain/*"]
+            "@utils": ["./utils"],
+            "@utils/*": ["./utils/*"],
+            "@typechain/*": ["./typechain/*"]
         }
     },
     "include": [

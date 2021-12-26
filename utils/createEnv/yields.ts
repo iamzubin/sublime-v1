@@ -100,7 +100,6 @@ export async function createNoYieldWithInit(
     let noYieldLogic: NoYield = await deployHelper.core.deployNoYield();
     let noYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
     let noYield: NoYield = await deployHelper.core.getNoYield(noYieldProxy.address);
-    console.log('init no yield');
     await (await noYield.connect(admin).initialize(admin.address, savingsAccount.address)).wait();
 
     return IYield__factory.connect(noYield.address, admin);

@@ -85,15 +85,17 @@ export async function setImplementations(
     savingsAccount: SavingsAccount,
     extension: Extension
 ) {
-    await (await poolFactory
-        .connect(admin)
-        .setImplementations(
-            poolLogic.address,
-            repayments.address,
-            verification.address,
-            strategyRegistry.address,
-            priceOracle.address,
-            savingsAccount.address,
-            extension.address
-        )).wait();
+    await (
+        await poolFactory
+            .connect(admin)
+            .setImplementations(
+                poolLogic.address,
+                repayments.address,
+                verification.address,
+                strategyRegistry.address,
+                priceOracle.address,
+                savingsAccount.address,
+                extension.address
+            )
+    ).wait();
 }
