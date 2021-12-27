@@ -149,7 +149,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param asset the address of token locked
      * @return amount amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) external pure override returns (uint256 amount) {
+    function getTokensForShares(uint256 shares) external pure override returns (uint256 amount) {
         amount = shares;
     }
 
@@ -159,7 +159,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param asset the address of token
      * @return shares amount of shares for given tokens
      **/
-    function getSharesForTokens(uint256 amount, address asset) external pure override returns (uint256 shares) {
+    function getSharesForTokens(uint256 amount) external pure override returns (uint256 shares) {
         shares = amount;
     }
 }
