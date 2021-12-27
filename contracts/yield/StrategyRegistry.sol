@@ -44,11 +44,11 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _maxStrategies updated number of max strategies allowed
      **/
     function updateMaxStrategies(uint256 _maxStrategies) external onlyOwner {
+        require(_maxStrategies != 0, 'StrategyRegistry::updateMaxStrategies should be more than zero');
         _updateMaxStrategies(_maxStrategies);
     }
 
     function _updateMaxStrategies(uint256 _maxStrategies) internal {
-        require(_maxStrategies != 0, 'StrategyRegistry::updateMaxStrategies should be more than zero');
         maxStrategies = _maxStrategies;
         emit MaxStrategiesUpdated(_maxStrategies);
     }
