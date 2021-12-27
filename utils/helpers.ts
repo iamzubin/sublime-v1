@@ -26,7 +26,7 @@ export async function incrementChain(network: Network, blocks: number, blockTime
 import poolContractMeta from '../artifacts/contracts/Pool/Pool.sol/Pool.json';
 import proxyMeta from '../artifacts/contracts/Proxy.sol/SublimeProxy.json';
 
-import { createPoolParams, testPoolFactoryParams, zeroAddress } from './constants';
+import { createPoolParams, testPoolFactoryParams, zeroAddress } from '../config/constants';
 
 const _interface = new ethers.utils.Interface(poolContractMeta.abi);
 const initializeFragement = _interface.getFunction('initialize');
