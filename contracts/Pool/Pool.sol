@@ -310,13 +310,13 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function withdrawBorrowedAmount() external override onlyBorrower(msg.sender) nonReentrant {
         LoanStatus _poolStatus = poolVariables.loanStatus;
-        uint256 _tokensLent = totalSupply();
         require(
             _poolStatus == LoanStatus.COLLECTION &&
                 poolConstants.loanStartTime < block.timestamp &&
                 block.timestamp < poolConstants.loanWithdrawalDeadline,
             'WBA1'
         );
+        uint256 _tokensLent = totalSupply();
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         require(_tokensLent >= _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30), 'WBA2');
 
