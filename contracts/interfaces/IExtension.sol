@@ -34,6 +34,13 @@ interface IExtension {
      */
     event LenderVoted(address indexed lender, uint256 totalExtensionSupport, uint256 lastVoteTime);
 
+    /**
+     * @notice emited when votes are rebalanced of from and to addresses when pool tokens are transferred
+     * @param oldLender address of user from whom pool tokens are transferred
+     * @param newLender address of user to whom pool tokens are transferred
+     */
+    event RebalaneVotes(address indexed oldLender, address indexed newLender);
+
     function initializePoolExtension(uint256 _repaymentInterval) external;
 
     function closePoolExtension() external;
