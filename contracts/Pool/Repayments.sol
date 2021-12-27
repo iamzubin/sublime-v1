@@ -158,14 +158,15 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 loanStartTime,
         address lentAsset
     ) external override onlyValidPool {
-        repayConstants[msg.sender].gracePenaltyRate = gracePenaltyRate;
-        repayConstants[msg.sender].gracePeriodFraction = gracePeriodFraction;
-        repayConstants[msg.sender].numberOfTotalRepayments = numberOfTotalRepayments;
-        repayConstants[msg.sender].loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**30);
-        repayConstants[msg.sender].repaymentInterval = repaymentInterval.mul(10**30);
-        repayConstants[msg.sender].borrowRate = borrowRate;
-        repayConstants[msg.sender].loanStartTime = loanStartTime.mul(10**30);
-        repayConstants[msg.sender].repayAsset = lentAsset;
+        RepaymentConstants storage _repaymentConstants = repayConstants[msg.sender];
+        _repaymentConstants.gracePenaltyRate = gracePenaltyRate;
+        _repaymentConstants.gracePeriodFraction = gracePeriodFraction;
+        _repaymentConstants.numberOfTotalRepayments = numberOfTotalRepayments;
+        _repaymentConstants.loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**30);
+        _repaymentConstants.repaymentInterval = repaymentInterval.mul(10**30);
+        _repaymentConstants.borrowRate = borrowRate;
+        _repaymentConstants.loanStartTime = loanStartTime.mul(10**30);
+        _repaymentConstants.repayAsset = lentAsset;
     }
 
     /**
