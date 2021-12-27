@@ -9,7 +9,7 @@ import DeployHelper from '../deploys';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { Address } from 'hardhat-deploy/dist/types';
 
-import { aaveYieldParams as defaultAaveYieldParams } from '../../utils/constants';
+import { aaveYieldParams as defaultAaveYieldParams } from '../../config/constants';
 import { SavingsAccount } from '@typechain/SavingsAccount';
 import { AaveYieldParams, CompoundPair, YearnPair } from '../../utils/types';
 import { IYield } from '@typechain/IYield';
@@ -100,7 +100,6 @@ export async function createNoYieldWithInit(
     let noYieldLogic: NoYield = await deployHelper.core.deployNoYield();
     let noYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(noYieldLogic.address, proxyAdmin.address);
     let noYield: NoYield = await deployHelper.core.getNoYield(noYieldProxy.address);
-    console.log('init no yield');
     await (await noYield.connect(admin).initialize(admin.address, savingsAccount.address)).wait();
 
     return IYield__factory.connect(noYield.address, admin);
