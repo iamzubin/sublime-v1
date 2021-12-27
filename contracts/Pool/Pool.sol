@@ -35,6 +35,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     }
 
     address poolFactory;
+    uint256 constant SCALING_FACTOR = 30;
 
     struct LendingDetails {
         uint256 effectiveInterestWithdrawn;
@@ -194,7 +195,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             poolConstants.collateralAsset,
             poolConstants.borrowAmountRequested
         );
-        require(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(1e30), 'ID1');
+        require(_amount >= poolConstants.idealCollateralRatio.mul(_equivalentCollateral).div(10**SCALING_FACTOR), 'ID1');
         _depositCollateral(_borrower, _amount, _transferFromSavingsAccount);
     }
 
@@ -317,7 +318,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             'WBA1'
         );
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
-        require(_tokensLent >= _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30), 'WBA2');
+        require(_tokensLent >= _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**SCALING_FACTOR), 'WBA2');
 
         poolVariables.loanStatus = LoanStatus.ACTIVE;
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
@@ -336,7 +337,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         address _borrowAsset = poolConstants.borrowAsset;
         (uint256 _protocolFeeFraction, address _collector) = _poolFactory.getProtocolFeeData();
-        uint256 _protocolFee = _tokensLent.mul(_protocolFeeFraction).div(10**30);
+        uint256 _protocolFee = _tokensLent.mul(_protocolFeeFraction).div(10**SCALING_FACTOR);
         delete poolConstants.loanWithdrawalDeadline;
 
         uint256 _feeAdjustedWithdrawalAmount = _tokensLent.sub(_protocolFee);
@@ -498,7 +499,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         if (
             _loanStartTime < block.timestamp &&
-            totalSupply() < _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**30)
+            totalSupply() < _poolFactory.minBorrowFraction().mul(poolConstants.borrowAmountRequested).div(10**SCALING_FACTOR)
         ) {
             return _cancelPool(0);
         }
@@ -514,9 +515,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _cancelPenaltyMultiple = _poolFactory.poolCancelPenaltyMultiple();
         uint256 penalty = _cancelPenaltyMultiple
             .mul(poolConstants.borrowRate)
-            .div(10**30)
+            .div(10**SCALING_FACTOR)
             .mul(_collateralLiquidityShare)
-            .div(10**30)
+            .div(10**SCALING_FACTOR)
             .mul(_penaltyTime)
             .div(365 days);
         _cancelPool(penalty);
@@ -666,8 +667,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         (uint256 _loanDurationCovered, uint256 _interestPerSecond) = IRepayment(_poolFactory.repaymentImpl()).getInterestCalculationVars(
             address(this)
         );
-        uint256 _currentBlockTime = block.timestamp.mul(10**30);
-        uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(10**30));
+        uint256 _currentBlockTime = block.timestamp.mul(10**SCALING_FACTOR);
+        uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(10**SCALING_FACTOR));
         if (_loanDurationTillNow <= _loanDurationCovered) {
             return 0;
         }
@@ -690,7 +691,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _currentCollateralTokens = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
 
         uint256 _equivalentCollateral = getEquivalentTokens(_collateralAsset, poolConstants.borrowAsset, _currentCollateralTokens);
-        _ratio = _equivalentCollateral.mul(10**30).div(_balance.add(_interest));
+        _ratio = _equivalentCollateral.mul(10**SCALING_FACTOR).div(_balance.add(_interest));
     }
 
     /**
@@ -897,7 +898,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             poolConstants.collateralAsset,
             poolConstants.borrowAsset
         );
-        return _totalCollateralTokens.mul(_ratioOfPrices).div(10**_decimals).mul(uint256(10**30).sub(_fraction)).div(10**30);
+        return _totalCollateralTokens.mul(_ratioOfPrices).div(10**_decimals).mul(uint256(10**SCALING_FACTOR).sub(_fraction)).div(10**SCALING_FACTOR);
     }
 
     /**
