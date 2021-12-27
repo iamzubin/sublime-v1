@@ -24,7 +24,7 @@ import {
 import { createSavingsAccount, initSavingsAccount } from './savingsAccount';
 import { createStrategyRegistry, initStrategyRegistry } from './strategyRegistry';
 import { impersonateAccount, getImpersonatedAccounts } from './impersonationsAndTransfers';
-import { randomAddress, zeroAddress } from '../../utils/constants';
+import { zeroAddress } from '../../config/constants';
 import { createAaveYieldWithInit, createCompoundYieldWithInit, createNoYieldWithInit, createYearnYieldWithInit } from './yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from './verification';
 import { createPriceOracle, setPriceOracleFeeds } from './priceOracle';

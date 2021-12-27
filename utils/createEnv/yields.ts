@@ -9,7 +9,7 @@ import DeployHelper from '../deploys';
 import { SublimeProxy } from '@typechain/SublimeProxy';
 import { Address } from 'hardhat-deploy/dist/types';
 
-import { aaveYieldParams as defaultAaveYieldParams } from '../../utils/constants';
+import { aaveYieldParams as defaultAaveYieldParams } from '../../config/constants';
 import { SavingsAccount } from '@typechain/SavingsAccount';
 import { AaveYieldParams, CompoundPair, YearnPair } from '../../utils/types';
 import { IYield } from '@typechain/IYield';

@@ -9,7 +9,7 @@ const { loadFixture } = waffle;
 
 import { CompoundPair } from '../../utils/types';
 import { Contracts } from '../../existingContracts/compound.json';
-import { zeroAddress } from '../../utils/constants';
+import { zeroAddress } from '../../config/constants';
 
 describe('Credit Lines with Compound Yield', async () => {
     let env: Environment;

@@ -8,7 +8,7 @@ import { ChainlinkPriceOracleData, UniswapPoolData } from '../../utils/types';
 
 const { loadFixture } = waffle;
 import { Contracts } from '../../existingContracts/compound.json';
-import { ChainLinkAggregators } from '../../utils/constants';
+import { ChainLinkAggregators } from '../../config/constants';
 
 const uniswapV3FactoryContract = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 
