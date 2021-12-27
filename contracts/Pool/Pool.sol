@@ -355,7 +355,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     function _withdrawAllCollateral(address _receiver, uint256 _penalty) internal {
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
         address _collateralAsset = poolConstants.collateralAsset;
-        uint256 _collateralShares = 0;
+        uint256 _collateralShares;
         if (poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares) > _penalty) {
             _collateralShares = poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares).sub(_penalty);
         }
