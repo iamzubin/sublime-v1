@@ -439,7 +439,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _status == CreditLineStatus.ACTIVE || _status == CreditLineStatus.REQUESTED,
             'CreditLine: Cannot only if credit line ACTIVE or REQUESTED'
         );
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
+        (uint256 _ratioOfPrices, uint8 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
             creditLineConstants[_id].borrowAsset
         );
@@ -866,7 +866,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @return collateral ratio multiplied by 10**30 to retain precision
      */
     function calculateCurrentCollateralRatio(uint256 _id) public ifCreditLineExists(_id) returns (uint256) {
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
+        (uint256 _ratioOfPrices, uint8 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
             creditLineConstants[_id].borrowAsset
         );
@@ -928,7 +928,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @return total collateral withdrawable by borrower
      */
     function withdrawableCollateral(uint256 _id) public returns (uint256) {
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
+        (uint256 _ratioOfPrices, uint8 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
             creditLineConstants[_id].borrowAsset
         );
@@ -1047,7 +1047,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset,
         uint256 _totalCollateralTokens
     ) internal view returns (uint256) {
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
+        (uint256 _ratioOfPrices, uint8 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
         uint256 _borrowTokens = (
             _totalCollateralTokens.mul(uint256(10**30).sub(liquidatorRewardFraction)).div(10**30).mul(_ratioOfPrices).div(10**_decimals)
         );

@@ -893,7 +893,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _priceOracle,
         uint256 _fraction
     ) public view returns (uint256) {
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(_priceOracle).getLatestPrice(
+        (uint256 _ratioOfPrices, uint8 _decimals) = IPriceOracle(_priceOracle).getLatestPrice(
             poolConstants.collateralAsset,
             poolConstants.borrowAsset
         );
@@ -1015,7 +1015,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _target,
         uint256 _amount
     ) public view returns (uint256) {
-        (uint256 _price, uint256 _decimals) = IPriceOracle(IPoolFactory(poolFactory).priceOracle()).getLatestPrice(_source, _target);
+        (uint256 _price, uint8 _decimals) = IPriceOracle(IPoolFactory(poolFactory).priceOracle()).getLatestPrice(_source, _target);
         return _amount.mul(_price).div(10**_decimals);
     }
 

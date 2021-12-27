@@ -21,7 +21,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      * @notice stores the price oracle and its decimals for chainlink feeds
      **/
     mapping(address => PriceData) public chainlinkFeedAddresses;
-    mapping(address => uint256) decimals;
+    mapping(address => uint8) decimals;
 
     /**
      * @notice stores the addresses of price feeds for uniswap token pairs
@@ -45,7 +45,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      * @return price of the num in terms of den
      * @return no of decimals for the price
      **/
-    function getChainlinkLatestPrice(address num, address den) public view returns (uint256, uint256) {
+    function getChainlinkLatestPrice(address num, address den) public view returns (uint256, uint8) {
         PriceData memory _feedData1 = chainlinkFeedAddresses[num];
         PriceData memory _feedData2 = chainlinkFeedAddresses[den];
         if (_feedData1.oracle == address(0) || _feedData2.oracle == address(0)) {
@@ -107,7 +107,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      * @return price of the num in terms of den
      * @return no of decimals for the price
      **/
-    function getUniswapLatestPrice(address num, address den) public view returns (uint256, uint256) {
+    function getUniswapLatestPrice(address num, address den) public view returns (uint256, uint8) {
         bytes32 _poolTokensId = getUniswapPoolTokenId(num, den);
         address _pool = uniswapPools[_poolTokensId];
         if (_pool == address(0)) {
@@ -134,9 +134,9 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      * @return price of the num in terms of den
      * @return no of decimals for the price
      **/
-    function getLatestPrice(address num, address den) external view override returns (uint256, uint256) {
+    function getLatestPrice(address num, address den) external view override returns (uint256, uint8) {
         uint256 _price;
-        uint256 _decimals;
+        uint8 _decimals;
         (_price, _decimals) = getChainlinkLatestPrice(num, den);
         if (_decimals != 0) {
             return (_price, _decimals);
