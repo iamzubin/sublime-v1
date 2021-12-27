@@ -22,6 +22,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     uint256 constant MAX_INT = 2**256 - 1;
     uint256 constant YEAR_IN_SECONDS = 365 days;
+    uint constant SCALING_FACTOR = 30;
 
     IPoolFactory poolFactory;
 
@@ -161,10 +162,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         repayConstants[msg.sender].gracePenaltyRate = gracePenaltyRate;
         repayConstants[msg.sender].gracePeriodFraction = gracePeriodFraction;
         repayConstants[msg.sender].numberOfTotalRepayments = numberOfTotalRepayments;
-        repayConstants[msg.sender].loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**30);
-        repayConstants[msg.sender].repaymentInterval = repaymentInterval.mul(10**30);
+        repayConstants[msg.sender].loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**SCALING_FACTOR);
+        repayConstants[msg.sender].repaymentInterval = repaymentInterval.mul(10**SCALING_FACTOR);
         repayConstants[msg.sender].borrowRate = borrowRate;
-        repayConstants[msg.sender].loanStartTime = loanStartTime.mul(10**30);
+        repayConstants[msg.sender].loanStartTime = loanStartTime.mul(10**SCALING_FACTOR);
         repayConstants[msg.sender].repayAsset = lentAsset;
     }
 
@@ -187,7 +188,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getInstalmentsCompleted(address _poolID) public view returns (uint256) {
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
         uint256 _loanDurationCovered = repayVariables[_poolID].loanDurationCovered;
-        uint256 _instalmentsCompleted = _loanDurationCovered.div(_repaymentInterval).mul(10**30); // dividing exponents, returns whole number rounded down
+        uint256 _instalmentsCompleted = _loanDurationCovered.div(_repaymentInterval).mul(10**SCALING_FACTOR); // dividing exponents, returns whole number rounded down
 
         return _instalmentsCompleted;
     }
@@ -201,7 +202,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _loanDurationCovered = repayVariables[_poolID].loanDurationCovered;
         uint256 _interestDueTillInstalmentDeadline = (
             _nextInstalmentDeadline.sub(repayConstants[_poolID].loanStartTime).sub(_loanDurationCovered)
-        ).mul(_interestPerSecond).div(10**30);
+        ).mul(_interestPerSecond).div(10**SCALING_FACTOR);
         return _interestDueTillInstalmentDeadline;
     }
 
@@ -210,7 +211,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return timestamp before which next instalment ends
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-        if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(10**30)) {
+        if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(10**SCALING_FACTOR)) {
             revert('Pool completely repaid');
         }
         uint256 _loanExtensionPeriod = repayVariables[_poolID].loanExtensionPeriod;
@@ -219,11 +220,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _nextInstalmentDeadline;
 
         if (_loanExtensionPeriod > _instalmentsCompleted) {
-            _nextInstalmentDeadline = ((_instalmentsCompleted.add(10**30).add(10**30)).mul(_repaymentInterval).div(10**30)).add(
+            _nextInstalmentDeadline = ((_instalmentsCompleted.add(10**SCALING_FACTOR).add(10**SCALING_FACTOR)).mul(_repaymentInterval).div(10**SCALING_FACTOR)).add(
                 _loanStartTime
             );
         } else {
-            _nextInstalmentDeadline = ((_instalmentsCompleted.add(10**30)).mul(_repaymentInterval).div(10**30)).add(_loanStartTime);
+            _nextInstalmentDeadline = ((_instalmentsCompleted.add(10**SCALING_FACTOR)).mul(_repaymentInterval).div(10**SCALING_FACTOR)).add(_loanStartTime);
         }
         return _nextInstalmentDeadline;
     }
@@ -233,7 +234,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return scaled instalment interval
     function getCurrentInstalmentInterval(address _poolID) public view returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-        return _instalmentsCompleted.add(10**30);
+        return _instalmentsCompleted.add(10**SCALING_FACTOR);
     }
 
     /// @notice This function determines the current (loan) interval
@@ -242,9 +243,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return scaled current loan interval
     function getCurrentLoanInterval(address _poolID) external view override returns (uint256) {
         uint256 _loanStartTime = repayConstants[_poolID].loanStartTime;
-        uint256 _currentTime = block.timestamp.mul(10**30);
+        uint256 _currentTime = block.timestamp.mul(10**SCALING_FACTOR);
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
-        uint256 _currentInterval = ((_currentTime.sub(_loanStartTime)).mul(10**30).div(_repaymentInterval)).add(10**30);
+        uint256 _currentInterval = ((_currentTime.sub(_loanStartTime)).mul(10**SCALING_FACTOR).div(_repaymentInterval)).add(10**SCALING_FACTOR);
 
         return _currentInterval;
     }
@@ -255,10 +256,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return boolean value indicating if applicable or not
     function isGracePenaltyApplicable(address _poolID) public view returns (bool) {
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
-        uint256 _currentTime = block.timestamp.mul(10**30);
+        uint256 _currentTime = block.timestamp.mul(10**SCALING_FACTOR);
         uint256 _gracePeriodFraction = repayConstants[_poolID].gracePeriodFraction;
         uint256 _nextInstalmentDeadline = getNextInstalmentDeadline(_poolID);
-        uint256 _gracePeriodDeadline = _nextInstalmentDeadline.add(_gracePeriodFraction.mul(_repaymentInterval).div(10**30));
+        uint256 _gracePeriodDeadline = _nextInstalmentDeadline.add(_gracePeriodFraction.mul(_repaymentInterval).div(10**SCALING_FACTOR));
 
         require(_currentTime <= _gracePeriodDeadline, 'Borrower has defaulted');
 
@@ -272,10 +273,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return bool indicating whether the borrower has defaulted
     function didBorrowerDefault(address _poolID) external view override returns (bool) {
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
-        uint256 _currentTime = block.timestamp.mul(10**30);
+        uint256 _currentTime = block.timestamp.mul(10**SCALING_FACTOR);
         uint256 _gracePeriodFraction = repayConstants[_poolID].gracePeriodFraction;
         uint256 _nextInstalmentDeadline = getNextInstalmentDeadline(_poolID);
-        uint256 _gracePeriodDeadline = _nextInstalmentDeadline.add(_gracePeriodFraction.mul(_repaymentInterval).div(10**30));
+        uint256 _gracePeriodDeadline = _nextInstalmentDeadline.add(_gracePeriodFraction.mul(_repaymentInterval).div(10**SCALING_FACTOR));
         if (_currentTime > _gracePeriodDeadline) return true;
         else return false;
     }
@@ -287,7 +288,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getInterestLeft(address _poolID) public view returns (uint256) {
         uint256 _interestPerSecond = getInterestPerSecond((_poolID));
         uint256 _loanDurationLeft = repayConstants[_poolID].loanDuration.sub(repayVariables[_poolID].loanDurationCovered);
-        uint256 _interestLeft = _interestPerSecond.mul(_loanDurationLeft).div(10**30); // multiplying exponents
+        uint256 _interestLeft = _interestPerSecond.mul(_loanDurationLeft).div(10**SCALING_FACTOR); // multiplying exponents
 
         return _interestLeft;
     }
@@ -302,11 +303,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _interestPerSecond = getInterestPerSecond(_poolID);
         uint256 _interestOverdue = (
             (
-                (_instalmentsCompleted.add(10**30)).mul(repayConstants[_poolID].repaymentInterval).div(10**30).sub(
+                (_instalmentsCompleted.add(10**SCALING_FACTOR)).mul(repayConstants[_poolID].repaymentInterval).div(10**SCALING_FACTOR).sub(
                     repayVariables[_poolID].loanDurationCovered
                 )
             )
-        ).mul(_interestPerSecond).div(10**30);
+        ).mul(_interestPerSecond).div(10**SCALING_FACTOR);
         return _interestOverdue;
     }
 
@@ -325,9 +326,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         if (repayVariables[_poolID].isLoanExtensionActive) {
             uint256 _interestOverdue = getInterestOverdue(_poolID);
             repayVariables[_poolID].isLoanExtensionActive = false; // deactivate loan extension flag
-            repayVariables[_poolID].loanDurationCovered = (getInstalmentsCompleted(_poolID).add(10**30))
+            repayVariables[_poolID].loanDurationCovered = (getInstalmentsCompleted(_poolID).add(10**SCALING_FACTOR))
                 .mul(repayConstants[_poolID].repaymentInterval)
-                .div(10**30);
+                .div(10**SCALING_FACTOR);
             emit ExtensionRepaid(_poolID, _interestOverdue);
             return _interestOverdue;
         } else {
@@ -339,7 +340,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
 
         if (_isBorrowerLate) {
-            uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
+            uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**SCALING_FACTOR);
             emit GracePenaltyRepaid(_poolID, _penalty);
             return _penalty;
         } else {
@@ -357,7 +358,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
         if (_amount < _interestLeft) {
             uint256 _interestPerSecond = getInterestPerSecond(_poolID);
-            uint256 _newDurationRepaid = _amount.mul(10**30).div(_interestPerSecond); // dividing exponents
+            uint256 _newDurationRepaid = _amount.mul(10**SCALING_FACTOR).div(_interestPerSecond); // dividing exponents
             repayVariables[_poolID].loanDurationCovered = repayVariables[_poolID].loanDurationCovered.add(_newDurationRepaid);
             emit InterestRepaid(_poolID, _amount);
             return _amount;
@@ -369,7 +370,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     }
 
     function _updateRepaidAmount(address _poolID, uint256 _scaledRepaidAmount) internal returns (uint256) {
-        uint256 _toPay = _scaledRepaidAmount.div(10**30);
+        uint256 _toPay = _scaledRepaidAmount.div(10**SCALING_FACTOR);
         repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_toPay);
         return _toPay;
     }
@@ -380,7 +381,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         bool _isLastRepayment
     ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
-        _amount = _amount * 10**30;
+        _amount = _amount * 10**SCALING_FACTOR;
         uint256 _loanStatus = _pool.getLoanStatus();
         require(_loanStatus == uint256(LoanStatus.ACTIVE), 'Repayments:repayInterest Pool should be active.');
 
