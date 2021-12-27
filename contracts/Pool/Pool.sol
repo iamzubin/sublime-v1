@@ -715,7 +715,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             lenders[_lender].extraLiquidityShares
         );
 
-        return (calculateCollateralRatio(_balanceOfLender, _liquidityShares));
+        _ratio = calculateCollateralRatio(_balanceOfLender, _liquidityShares);
     }
 
     /**
