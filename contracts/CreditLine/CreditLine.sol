@@ -647,7 +647,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _amount);
                 IERC20(_collateralAsset).approve(_strategy, _amount);
             }
-            uint256 _sharesReceived = _savingsAccount.deposit{value: msg.value}(_amount, _collateralAsset, _strategy, address(this));
+            uint256 _sharesReceived = _savingsAccount.deposit{value: msg.value}(_collateralAsset, _strategy, address(this), _amount);
             collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_sharesReceived);
         }
     }
@@ -774,7 +774,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         if (!_fromSavingsAccount) {
             if (_borrowAsset == address(0)) {
                 require(msg.value == _amount, 'creditLine::repay - Ether sent not equal to repay amount');
-                _savingsAccount.deposit{value: _amount}(_amount, _borrowAsset, _defaultStrategy, _lender);
+                _savingsAccount.deposit{value: _amount}(_borrowAsset, _defaultStrategy, _lender, _amount);
             } else {
                 IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
                 IERC20(_borrowAsset).approve(_defaultStrategy, _amount);

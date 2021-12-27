@@ -60,7 +60,7 @@ library SavingsAccountUtil {
             }
             IERC20(_token).safeApprove(_approveTo, _amount);
         }
-        _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_amount, _token, _strategy, _to);
+        _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_token, _strategy, _to, _amount);
     }
 
     function savingsAccountTransfer(
@@ -72,7 +72,7 @@ library SavingsAccountUtil {
         address _strategy
     ) internal returns (uint256) {
         if (_from == address(this)) {
-            _savingsAccount.transfer(_amount, _token, _strategy, _to);
+            _savingsAccount.transfer(_token, _strategy, _to, _amount);
         } else {
             _savingsAccount.transferFrom(_token, _strategy, _from, _to, _amount);
         }
