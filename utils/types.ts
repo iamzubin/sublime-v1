@@ -150,3 +150,14 @@ export interface AaveYieldParams {
     protocolDataProvider: Address;
     lendingPoolAddressesProvider: Address;
 }
+
+export interface ChainlinkPriceOracleData {
+    token: Address;
+    priceOracle: Address;
+}
+
+export interface UniswapPoolData {
+    token1: Address;
+    token2: Address;
+    fee: BigNumberish;
+}
