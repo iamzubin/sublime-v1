@@ -24,6 +24,7 @@ import '../interfaces/IVerification.sol';
 contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
+    using SafeMath for uint64;
 
     enum LoanStatus {
         COLLECTION, //denotes collection period
@@ -44,16 +45,16 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     // Pool constants
     struct PoolConstants {
-        address borrower;
         uint256 borrowAmountRequested;
-        uint256 loanStartTime;
+        uint64 loanStartTime;
+        address borrower;
         uint256 loanWithdrawalDeadline;
-        address borrowAsset;
         uint256 idealCollateralRatio;
         uint256 borrowRate;
         uint256 noOfRepaymentIntervals;
         uint256 repaymentInterval;
         address collateralAsset;
+        address borrowAsset;
         address poolSavingsStrategy; // invest contract
         address lenderVerifier;
     }
@@ -159,7 +160,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         poolConstants.repaymentInterval = _repaymentInterval;
         poolConstants.lenderVerifier = _lenderVerifier;
 
-        poolConstants.loanStartTime = block.timestamp.add(_collectionPeriod);
+        poolConstants.loanStartTime = uint64(block.timestamp.add(_collectionPeriod));
         poolConstants.loanWithdrawalDeadline = block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration);
         __ERC20_init('Pool Tokens', 'PT');
         try ERC20Upgradeable(_borrowAsset).decimals() returns (uint8 _decimals) {
