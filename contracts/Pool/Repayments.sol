@@ -22,7 +22,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     uint256 constant MAX_INT = 2**256 - 1;
     uint256 constant YEAR_IN_SECONDS = 365 days;
-    uint constant SCALING_FACTOR = 30;
+    uint256 constant SCALING_FACTOR = 30;
 
     IPoolFactory poolFactory;
 
