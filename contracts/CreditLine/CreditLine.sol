@@ -809,7 +809,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         uint256 _interestToPay = _totalInterestAccrued.sub(creditLineVariables[_id].totalInterestRepaid);
         uint256 _totalCurrentDebt = _interestToPay.add(creditLineVariables[_id].principal);
-        uint256 _principalPaid = 0;
+        uint256 _principalPaid;
 
         if (_amount >= _totalCurrentDebt) {
             _amount = _totalCurrentDebt;
