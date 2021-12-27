@@ -496,7 +496,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 _tokensToTransfer = (_amount.sub(_activeAmount));
             }
             _activeAmount = _activeAmount.add(_tokensToTransfer);
-            _savingsAccount.transferFrom(_tokensToTransfer, _collateralAsset, _strategy, _sender, address(this));
+            _savingsAccount.transferFrom(_collateralAsset, _strategy, _sender, address(this), _tokensToTransfer);
 
             collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(
                 _liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy)
@@ -673,7 +673,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                     _tokensToTransfer = (_amountInTokens.sub(_activeAmount));
                 }
                 _activeAmount = _activeAmount.add(_tokensToTransfer);
-                _savingsAccount.withdrawFrom(_tokensToTransfer, _asset, _strategyList[_index], _lender, address(this), false);
+                _savingsAccount.withdrawFrom(_asset, _strategyList[_index], _lender, address(this), _tokensToTransfer, false);
                 if (_activeAmount == _amountInTokens) {
                     return;
                 }
@@ -752,7 +752,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 _tokensToTransfer = (_amount.sub(_activeAmount));
             }
             _activeAmount = _activeAmount.add(_tokensToTransfer);
-            _savingsAccount.transferFrom(_tokensToTransfer, _asset, _strategyList[_index], msg.sender, _lender);
+            _savingsAccount.transferFrom(_asset, _strategyList[_index], msg.sender, _lender, _tokensToTransfer);
 
             if (_amount == _activeAmount) {
                 return;
@@ -778,13 +778,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             } else {
                 IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
                 IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
-                _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
+                _savingsAccount.deposit( _borrowAsset, _defaultStrategy, _lender, _amount);
             }
         } else {
             _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
         }
         if (_principalPaid != 0) {
-            _savingsAccount.increaseAllowanceToCreditLine(_principalPaid, _borrowAsset, _lender);
+            _savingsAccount.increaseAllowanceToCreditLine(_borrowAsset, _lender, _principalPaid);
         }
     }
 
@@ -973,9 +973,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 liquidityShares
             );
             if (_toSavingsAccount) {
-                ISavingsAccount(savingsAccount).transfer(_tokensToTransfer, _asset, _strategyList[index], msg.sender);
+                ISavingsAccount(savingsAccount).transfer(_asset, _strategyList[index], msg.sender, _tokensToTransfer);
             } else {
-                ISavingsAccount(savingsAccount).withdraw(_tokensToTransfer, _asset, _strategyList[index], msg.sender, false);
+                ISavingsAccount(savingsAccount).withdraw(_asset, _strategyList[index], msg.sender, _tokensToTransfer, false);
             }
 
             if (_activeAmount == _amountInTokens) {

@@ -74,7 +74,7 @@ library SavingsAccountUtil {
         if (_from == address(this)) {
             _savingsAccount.transfer(_amount, _token, _strategy, _to);
         } else {
-            _savingsAccount.transferFrom(_amount, _token, _strategy, _from, _to);
+            _savingsAccount.transferFrom(_token, _strategy, _from, _to, _amount);
         }
         return _amount;
     }
@@ -89,9 +89,9 @@ library SavingsAccountUtil {
         bool _withdrawShares
     ) internal returns (uint256 _amountReceived) {
         if (_from == address(this)) {
-            _amountReceived = _savingsAccount.withdraw(_amount, _token, _strategy, payable(_to), _withdrawShares);
+            _amountReceived = _savingsAccount.withdraw(_token, _strategy, payable(_to), _amount, _withdrawShares);
         } else {
-            _amountReceived = _savingsAccount.withdrawFrom(_amount, _token, _strategy, _from, payable(_to), _withdrawShares);
+            _amountReceived = _savingsAccount.withdrawFrom(_token, _strategy, _from, payable(_to), _amount, _withdrawShares);
         }
     }
 
