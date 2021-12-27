@@ -42,7 +42,9 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         __Ownable_init();
         super.transferOwnership(_owner);
 
-        _updateSavingsAccount(_savingsAccount);
+        require(_savingsAccount != address(0), 'Invest: zero address');
+        savingsAccount = _savingsAccount;
+        emit SavingsAccountUpdated(_savingsAccount);
     }
 
     /**
@@ -52,21 +54,6 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      **/
     function liquidityToken(address _asset) external pure override returns (address _tokenAddress) {
         _tokenAddress = _asset;
-    }
-
-    /**
-     * @notice used to update savings account contract address
-     * @dev can only be called by owner
-     * @param _savingsAccount address of updated savings account contract
-     **/
-    function updateSavingsAccount(address payable _savingsAccount) external onlyOwner {
-        _updateSavingsAccount(_savingsAccount);
-    }
-
-    function _updateSavingsAccount(address payable _savingsAccount) internal {
-        require(_savingsAccount != address(0), 'Invest: zero address');
-        savingsAccount = _savingsAccount;
-        emit SavingsAccountUpdated(_savingsAccount);
     }
 
     /**

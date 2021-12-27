@@ -22,13 +22,19 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
      */
     event VerificationUpdated(address indexed verification);
 
-    /// @notice Initializes the variables of the contract
-    /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
-    /// @param _admin Admin of the verification contract who can add verifiers and remove masterAddresses deemed invalid
+    /**
+    * @notice Initializes the variables of the contract
+    * @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
+    * @param _admin Admin of the verification contract who can add verifiers and remove masterAddresses deemed invalid
+    * @param _verification Address of the updated verification contract
+     */
     function initialize(address _admin, address _verification) external initializer {
         super.__Ownable_init();
         super.transferOwnership(_admin);
-        _updateVerification(_verification);
+        // _updateVerification(_verification);
+        require(_verification != address(0), 'adminVerifier: zero address');
+        verification = IVerification(_verification);
+        emit VerificationUpdated(_verification);
     }
 
     /**
@@ -61,17 +67,17 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
         emit UserUnregistered(_user);
     }
 
-    /**
-     * @notice used to update verification contract address
-     * @dev ohly owner can update
-     * @param _verification address of the verification contract
-     */
-    function updateVerification(address _verification) external onlyOwner {
-        _updateVerification(_verification);
-    }
+    // /**
+    //  * @notice used to update verification contract address
+    //  * @dev ohly owner can update
+    //  * @param _verification address of the verification contract
+    //  */
+    // function updateVerification(address _verification) external onlyOwner {
+    //     _updateVerification(_verification);
+    // }
 
-    function _updateVerification(address _verification) internal {
-        verification = IVerification(_verification);
-        emit VerificationUpdated(_verification);
-    }
+    // function _updateVerification(address _verification) internal {
+    //     verification = IVerification(_verification);
+    //     emit VerificationUpdated(_verification);
+    // }
 }

@@ -91,7 +91,10 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         __Ownable_init();
         super.transferOwnership(_owner);
 
-        _updateSavingsAccount(_savingsAccount);
+        require(_savingsAccount != address(0), 'Invest: zero address');
+        savingsAccount = _savingsAccount;
+        emit SavingsAccountUpdated(_savingsAccount);
+
         _updateAaveAddresses(_wethGateway, _protocolDataProvider, _lendingPoolAddressesProvider);
     }
 
@@ -106,21 +109,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         } else {
             (aToken, , ) = IProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(asset);
         }
-    }
-
-    /**
-     * @notice used to update savings account address
-     * @dev only owner can update
-     * @param _savingsAccount address of the updated savings account
-     */
-    function updateSavingsAccount(address payable _savingsAccount) external onlyOwner {
-        _updateSavingsAccount(_savingsAccount);
-    }
-
-    function _updateSavingsAccount(address payable _savingsAccount) internal {
-        require(_savingsAccount != address(0), 'Invest: zero address');
-        savingsAccount = _savingsAccount;
-        emit SavingsAccountUpdated(_savingsAccount);
     }
 
     /**
