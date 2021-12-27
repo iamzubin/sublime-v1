@@ -43,6 +43,7 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
         string memory _metadata,
         bool _isMasterLinked
     ) external onlyOwner {
+        require(_user != address(0), "adminVerifier::address can't be zero");
         require(bytes(userData[_user]).length == 0, 'User already exists');
         verification.registerMasterAddress(_user, _isMasterLinked);
         userData[_user] = _metadata;

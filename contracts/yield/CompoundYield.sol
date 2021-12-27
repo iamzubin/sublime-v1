@@ -79,6 +79,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @param _liquidityToken address of the liquidityToken for the given token
      **/
     function updateProtocolAddresses(address _asset, address _liquidityToken) external onlyOwner {
+        require(_liquidityToken != address(0), "Liquidity token of asset can't be zero");
         liquidityToken[_asset] = _liquidityToken;
         emit ProtocolAddressesUpdated(_asset, _liquidityToken);
     }

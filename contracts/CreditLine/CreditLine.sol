@@ -272,10 +272,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_owner);
 
-        _updateDefaultStrategy(_defaultStrategy);
-        _updatePriceOracle(_priceOracle);
-        _updateSavingsAccount(_savingsAccount);
         _updateStrategyRegistry(_strategyRegistry);
+        _updateSavingsAccount(_savingsAccount);
+        _updatePriceOracle(_priceOracle);
+        _updateDefaultStrategy(_defaultStrategy);
         _updateProtocolFeeFraction(_protocolFeeFraction);
         _updateProtocolFeeCollector(_protocolFeeCollector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
@@ -291,6 +291,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _updateDefaultStrategy(address _defaultStrategy) internal {
+        require(IStrategyRegistry(strategyRegistry).registry(_defaultStrategy), 'Invalid Strategy');
         defaultStrategy = _defaultStrategy;
         emit DefaultStrategyUpdated(_defaultStrategy);
     }
