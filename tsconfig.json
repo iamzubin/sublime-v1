@@ -26,7 +26,7 @@
         "test/Pool/Pool.spec.js",
         "./scripts/*.ts",
         "scripts/verify/contractsToVerify.ts",
-        "scripts/verify/verify.ts",
+        "scripts/verify/verify.ts"
     ],
     "exclude": ["./existingContracts/*"],
     "files": ["hardhat.config.ts"]
