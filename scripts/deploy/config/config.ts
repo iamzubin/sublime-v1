@@ -44,8 +44,8 @@ function createConfig(rawConfig: any): DeploymentParams {
         noStrategy: ethers.constants.AddressZero,
     };
     config.verificationParams = {
-        activationDelay: rawConfig.verificationParams.activationDelay
-    }
+        activationDelay: rawConfig.verificationParams.activationDelay,
+    };
     return config;
 }
 
