@@ -28,7 +28,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @notice checks if contract is invoked by savings account
      **/
     modifier onlySavingsAccount() {
-        require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
+        require(msg.sender == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
