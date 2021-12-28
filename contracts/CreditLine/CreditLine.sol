@@ -596,16 +596,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineVariables[_id].status == CreditLineStatus.REQUESTED,
             'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
         );
-        bool _requestByLender = creditLineConstants[_id].requestByLender;
         require(
-            (msg.sender == creditLineConstants[_id].borrower && _requestByLender) ||
-                (msg.sender == creditLineConstants[_id].lender && !_requestByLender),
+            msg.sender == (creditLineConstants[_id].requestByLender ? creditLineConstants[_id].borrower : creditLineConstants[_id].lender),
             "Only Borrower or Lender who hasn't requested can accept"
         );
         creditLineVariables[_id].status = CreditLineStatus.ACTIVE;
         emit CreditLineAccepted(_id);
     }
-
     /**
      * @notice used to deposit collateral into the credit line
      * @dev collateral tokens have to be approved in savingsAccount or token contract(unless ether).
