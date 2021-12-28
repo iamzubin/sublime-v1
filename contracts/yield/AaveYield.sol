@@ -304,12 +304,13 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     function _withdrawETH(uint256 amount) internal returns (uint256 received) {
-        IERC20(IWETHGateway(wethGateway).getAWETHAddress()).approve(wethGateway, amount);
+        IWETHGateway gateway = IWETHGateway(wethGateway);
+        IERC20(gateway.getAWETHAddress()).approve(wethGateway, amount);
 
         uint256 ethBalance = address(this).balance;
 
         //lock collateral
-        IWETHGateway(wethGateway).withdrawETH(amount, address(this));
+        gateway.withdrawETH(amount, address(this));
 
         received = address(this).balance.sub(ethBalance);
     }
