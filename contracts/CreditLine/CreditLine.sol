@@ -47,15 +47,15 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     struct CreditLineConstants {
-        address lender;
-        address borrower;
-        uint256 borrowLimit;
-        uint256 idealCollateralRatio;
-        uint256 borrowRate;
-        address borrowAsset;
-        address collateralAsset;
         bool autoLiquidation;
         bool requestByLender;
+        uint128 borrowLimit;
+        uint128 borrowRate;
+        uint256 idealCollateralRatio;
+        address lender;
+        address borrower;
+        address borrowAsset;
+        address collateralAsset;
     }
     /**
      * @notice stores the collateral shares in a credit line per strategy
@@ -525,8 +525,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     function request(
         address _requestTo,
-        uint256 _borrowLimit,
-        uint256 _borrowRate,
+        uint128 _borrowLimit,
+        uint128 _borrowRate,
         bool _autoLiquidation,
         uint256 _collateralRatio,
         address _borrowAsset,
@@ -562,8 +562,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function _createRequest(
         address _lender,
         address _borrower,
-        uint256 _borrowLimit,
-        uint256 _borrowRate,
+        uint128 _borrowLimit,
+        uint128 _borrowRate,
         bool _autoLiquidation,
         uint256 _collateralRatio,
         address _borrowAsset,
