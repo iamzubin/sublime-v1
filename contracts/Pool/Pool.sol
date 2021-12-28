@@ -176,6 +176,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable override {
         require(_amount != 0, 'DC1');
         require(balanceOf(msg.sender) == 0, 'DC2');
+        if(Address(poolConstants.collateralAsset) != Address(0)) {
+            require(msg.value == 0, 'DepositCollateral: ETH is not required for this operation');
+        }
         _depositCollateral(msg.sender, _amount, _transferFromSavingsAccount);
     }
 
