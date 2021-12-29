@@ -25,6 +25,11 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     address payable public savingsAccount;
 
     /**
+     * @notice the max amount that can be deposited for every token to the yield contract
+     */
+    mapping(address => uint256) public depositLimit;
+
+    /**
      * @notice stores the address of liquidity token for a given base token
      */
     mapping(address => address) public override liquidityToken;
@@ -203,11 +208,12 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
 
     function _depositETH(address cToken, uint256 amount) internal returns (uint256 sharesReceived) {
         uint256 initialCTokenBalance = IERC20(cToken).balanceOf(address(this));
-
         //mint cToken
         ICEther(cToken).mint{value: amount}();
 
-        sharesReceived = IERC20(cToken).balanceOf(address(this)).sub(initialCTokenBalance);
+        uint256 latterCTokenBalance = IERC20(cToken).balanceOf(address(this));
+        require(depositLimit[cToken] > latterCTokenBalance, "Can't deposit more than permissible limit");
+        sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
     }
 
     function _depositERC20(
@@ -220,7 +226,10 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         IERC20(asset).approve(cToken, 0);
         IERC20(asset).approve(cToken, amount);
         require(ICToken(cToken).mint(amount) == 0, 'Error in minting tokens');
-        sharesReceived = IERC20(cToken).balanceOf(address(this)).sub(initialCTokenBalance);
+
+        uint256 latterCTokenBalance = IERC20(cToken).balanceOf(address(this));
+        require(depositLimit[cToken] > latterCTokenBalance, "Can't deposit more than permissible limit");
+        sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
     }
 
     function _withdrawETH(address cToken, uint256 amount) internal returns (uint256 received) {
@@ -239,6 +248,10 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         uint256 initialAssetBalance = IERC20(asset).balanceOf(address(this));
         require(ICToken(cToken).redeem(amount) == 0, 'Error in unwrapping');
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
+    }
+
+    function setDepositLimit(address asset, uint256 limit) external onlyOwner {
+        depositLimit[asset] = limit;
     }
 
     //to apply check
