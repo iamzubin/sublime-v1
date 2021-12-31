@@ -159,14 +159,15 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         require(IStrategyRegistry(strategyRegistry).registry(_newStrategy), 'SavingsAccount::_newStrategy do not exist');
         require(_amount != 0, 'SavingsAccount::switchStrategy Amount must be greater than zero');
 
-        _amount = IYield(_currentStrategy).getSharesForTokens(_amount, _token);
+        IYield currentStrategy = IYield(_currentStrategy);
+        _amount = currentStrategy.getSharesForTokens(_amount, _token);
 
         balanceInShares[msg.sender][_token][_currentStrategy] = balanceInShares[msg.sender][_token][_currentStrategy].sub(
             _amount,
             'SavingsAccount::switchStrategy Insufficient balance'
         );
 
-        uint256 _tokensReceived = IYield(_currentStrategy).unlockTokens(_token, _amount);
+        uint256 _tokensReceived = currentStrategy.unlockTokens(_token, _amount);
 
         uint256 _ethValue;
         if (_token != address(0)) {
@@ -256,9 +257,10 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) internal returns (address _tokenReceived, uint256 _amountReceived) {
         if (_withdrawShares) {
-            _tokenReceived = IYield(_strategy).liquidityToken(_token);
+            IYield strategy = IYield(_strategy);
+            _tokenReceived = strategy.liquidityToken(_token);
             require(_tokenReceived != address(0), 'Liquidity Tokens address cannot be address(0)');
-            _amountReceived = IYield(_strategy).unlockShares(_tokenReceived, _amount);
+            _amountReceived = strategy.unlockShares(_tokenReceived, _amount);
         } else {
             _tokenReceived = _token;
             _amountReceived = IYield(_strategy).unlockTokens(_token, _amount);
