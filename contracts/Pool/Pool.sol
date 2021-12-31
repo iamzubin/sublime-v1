@@ -457,7 +457,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         // based on 100 pool tokens. Refer calculateRepaymentWithdrawable()
         _withdrawRepayment(_from);
         _withdrawRepayment(_to);
-        uint256 _totalRepaidAmount = IRepayment(IPoolFactory(poolFactory).repaymentImpl()).getTotalRepaidAmount(address(this));
+        uint256 _totalRepaidAmount = IRepayment(_poolFactory.repaymentImpl()).getTotalRepaidAmount(address(this));
         uint256 _totalSupply = totalSupply();
         uint256 _fromBalance = balanceOf(_from);
         uint256 _toBalance = balanceOf(_to);
