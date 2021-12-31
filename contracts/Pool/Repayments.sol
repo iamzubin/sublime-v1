@@ -19,6 +19,7 @@ import '../interfaces/IRepayment.sol';
 contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
+    using SafeMath for uint128;
 
     uint256 constant MAX_INT = 2**256 - 1;
     uint256 constant YEAR_IN_SECONDS = 365 days;
@@ -34,25 +35,25 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         TERMINATED // Pool terminated by admin
     }
 
-    uint256 gracePenaltyRate;
-    uint256 gracePeriodFraction; // fraction of the repayment interval
+    uint128 gracePenaltyRate;
+    uint128 gracePeriodFraction; // fraction of the repayment interval
 
     struct RepaymentVariables {
-        uint256 repaidAmount;
         bool isLoanExtensionActive;
+        uint256 repaidAmount;
         uint256 loanDurationCovered;
         uint256 loanExtensionPeriod; // period for which the extension was granted, ie, if loanExtensionPeriod is 7 * 10**30, 7th instalment can be repaid by 8th instalment deadline
     }
 
     struct RepaymentConstants {
+        uint128 gracePenaltyRate;
+        uint128 gracePeriodFraction;
+        uint128 borrowRate;
+        address repayAsset;
         uint256 numberOfTotalRepayments; // using it to check if RepaymentDetails Exists as repayment Interval!=0 in any case
-        uint256 gracePenaltyRate;
-        uint256 gracePeriodFraction;
         uint256 loanDuration;
         uint256 repaymentInterval;
-        uint256 borrowRate;
         uint256 loanStartTime;
-        address repayAsset;
     }
 
     /**
@@ -96,8 +97,8 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _gracePeriodFraction The fraction of repayment interval that will be allowed as grace period
     function initialize(
         address _poolFactory,
-        uint256 _gracePenaltyRate,
-        uint256 _gracePeriodFraction
+        uint128 _gracePenaltyRate,
+        uint128 _gracePeriodFraction
     ) external initializer {
         _updatePoolFactory(_poolFactory);
         _updateGracePenaltyRate(_gracePenaltyRate);
@@ -122,11 +123,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
      * @notice used to update grace period as a fraction of repayment interval
      * @param _gracePeriodFraction updated value of gracePeriodFraction multiplied by 10**30
      */
-    function updateGracePeriodFraction(uint256 _gracePeriodFraction) external onlyOwner {
+    function updateGracePeriodFraction(uint128 _gracePeriodFraction) external onlyOwner {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
-    function _updateGracePeriodFraction(uint256 _gracePeriodFraction) internal {
+    function _updateGracePeriodFraction(uint128 _gracePeriodFraction) internal {
         gracePeriodFraction = _gracePeriodFraction;
         emit GracePeriodFractionUpdated(_gracePeriodFraction);
     }
@@ -135,11 +136,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
      * @notice used to update grace penality rate
      * @param _gracePenaltyRate value of grace penality rate multiplied by 10**30
      */
-    function updateGracePenaltyRate(uint256 _gracePenaltyRate) external onlyOwner {
+    function updateGracePenaltyRate(uint128 _gracePenaltyRate) external onlyOwner {
         _updateGracePenaltyRate(_gracePenaltyRate);
     }
 
-    function _updateGracePenaltyRate(uint256 _gracePenaltyRate) internal {
+    function _updateGracePenaltyRate(uint128 _gracePenaltyRate) internal {
         gracePenaltyRate = _gracePenaltyRate;
         emit GracePenaltyRateUpdated(_gracePenaltyRate);
     }
@@ -163,7 +164,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         repayConstants[msg.sender].numberOfTotalRepayments = numberOfTotalRepayments;
         repayConstants[msg.sender].loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**30);
         repayConstants[msg.sender].repaymentInterval = repaymentInterval.mul(10**30);
-        repayConstants[msg.sender].borrowRate = borrowRate;
+        repayConstants[msg.sender].borrowRate = uint128(borrowRate);
         repayConstants[msg.sender].loanStartTime = loanStartTime.mul(10**30);
         repayConstants[msg.sender].repayAsset = lentAsset;
     }
