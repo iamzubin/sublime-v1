@@ -10,46 +10,46 @@ library SavingsAccountUtil {
 
     function depositFromSavingsAccount(
         ISavingsAccount _savingsAccount,
+        address _token,
+        address _strategy,
         address _from,
         address _to,
         uint256 _amount,
-        address _token,
-        address _strategy,
         bool _withdrawShares,
         bool _toSavingsAccount
     ) internal returns (uint256) {
         if (_toSavingsAccount) {
-            return savingsAccountTransfer(_savingsAccount, _from, _to, _amount, _token, _strategy);
+            return savingsAccountTransfer(_savingsAccount, _token, _strategy, _from, _to, _amount);
         } else {
-            return withdrawFromSavingsAccount(_savingsAccount, _from, _to, _amount, _token, _strategy, _withdrawShares);
+            return withdrawFromSavingsAccount(_savingsAccount, _token, _strategy, _from, _to, _amount, _withdrawShares);
         }
     }
 
     function directDeposit(
         ISavingsAccount _savingsAccount,
+        address _token,
+        address _strategy,
         address _from,
         address _to,
         uint256 _amount,
-        address _token,
-        bool _toSavingsAccount,
-        address _strategy
+        bool _toSavingsAccount
     ) internal returns (uint256) {
         if (_toSavingsAccount) {
-            return directSavingsAccountDeposit(_savingsAccount, _from, _to, _amount, _token, _strategy);
+            return directSavingsAccountDeposit(_savingsAccount, _token, _strategy, _from, _to, _amount);
         } else {
-            return transferTokens(_token, _amount, _from, _to);
+            return transferTokens(_token, _from, _to, _amount);
         }
     }
 
     function directSavingsAccountDeposit(
         ISavingsAccount _savingsAccount,
+        address _token,
+        address _strategy,
         address _from,
         address _to,
-        uint256 _amount,
-        address _token,
-        address _strategy
+        uint256 _amount
     ) internal returns (uint256 _sharesReceived) {
-        transferTokens(_token, _amount, _from, address(this));
+        transferTokens(_token, _from, address(this), _amount);
         uint256 _ethValue;
         if (_token == address(0)) {
             _ethValue = _amount;
@@ -65,11 +65,11 @@ library SavingsAccountUtil {
 
     function savingsAccountTransfer(
         ISavingsAccount _savingsAccount,
+        address _token,
+        address _strategy,
         address _from,
         address _to,
-        uint256 _amount,
-        address _token,
-        address _strategy
+        uint256 _amount
     ) internal returns (uint256) {
         if (_from == address(this)) {
             _savingsAccount.transfer(_token, _strategy, _to, _amount);
@@ -81,11 +81,11 @@ library SavingsAccountUtil {
 
     function withdrawFromSavingsAccount(
         ISavingsAccount _savingsAccount,
+        address _token,
+        address _strategy,
         address _from,
         address _to,
         uint256 _amount,
-        address _token,
-        address _strategy,
         bool _withdrawShares
     ) internal returns (uint256 _amountReceived) {
         if (_from == address(this)) {
@@ -97,9 +97,9 @@ library SavingsAccountUtil {
 
     function transferTokens(
         address _token,
-        uint256 _amount,
         address _from,
-        address _to
+        address _to,
+        uint256 _amount
     ) internal returns (uint256) {
         if (_amount == 0) {
             return 0;

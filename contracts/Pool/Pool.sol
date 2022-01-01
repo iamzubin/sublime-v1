@@ -245,22 +245,22 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_fromSavingsAccount) {
             _sharesReceived = SavingsAccountUtil.depositFromSavingsAccount(
                 ISavingsAccount(IPoolFactory(poolFactory).savingsAccount()),
+                _asset,
+                _poolSavingsStrategy,
                 _depositFrom,
                 _depositTo,
                 _amount,
-                _asset,
-                _poolSavingsStrategy,
                 true,
                 _toSavingsAccount
             );
         } else {
             _sharesReceived = SavingsAccountUtil.directDeposit(
                 ISavingsAccount(IPoolFactory(poolFactory).savingsAccount()),
+                _asset,
+                _toSavingsAccount,
                 _depositFrom,
                 _depositTo,
                 _amount,
-                _asset,
-                _toSavingsAccount,
                 _poolSavingsStrategy
             );
         }
@@ -341,8 +341,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         uint256 _feeAdjustedWithdrawalAmount = _tokensLent.sub(_protocolFee);
 
-        SavingsAccountUtil.transferTokens(_borrowAsset, _protocolFee, address(this), _collector);
-        SavingsAccountUtil.transferTokens(_borrowAsset, _feeAdjustedWithdrawalAmount, address(this), msg.sender);
+        SavingsAccountUtil.transferTokens(_borrowAsset, address(this), _collector, _protocolFee);
+        SavingsAccountUtil.transferTokens(_borrowAsset, address(this), msg.sender, _feeAdjustedWithdrawalAmount);
 
         emit AmountBorrowed(_feeAdjustedWithdrawalAmount, _protocolFee);
     }
@@ -370,11 +370,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             ISavingsAccount _savingsAccount = ISavingsAccount(IPoolFactory(poolFactory).savingsAccount());
             _sharesReceived = SavingsAccountUtil.savingsAccountTransfer(
                 _savingsAccount,
+                _collateralAsset,
+                _poolSavingsStrategy,
                 address(this),
                 _receiver,
-                _collateralTokens,
-                _collateralAsset,
-                _poolSavingsStrategy
+                _collateralTokens
             );
         }
         emit CollateralWithdrawn(_receiver, _sharesReceived);
@@ -555,7 +555,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             _poolFactory.liquidatorRewardFraction()
         );
         poolVariables.penaltyLiquidityAmount = _liquidationTokens;
-        SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _liquidationTokens, msg.sender, address(this));
+        SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, msg.sender, address(this), _liquidationTokens);
         _withdraw(
             poolConstants.collateralAsset,
             poolConstants.poolSavingsStrategy,
@@ -634,7 +634,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         _burn(msg.sender, _actualBalance);
 
         //transfer liquidity provided
-        SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _toTransfer, address(this), msg.sender);
+        SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, address(this), msg.sender, _toTransfer);
 
         emit LiquidityWithdrawn(_toTransfer, msg.sender);
     }
@@ -776,11 +776,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         return
             SavingsAccountUtil.depositFromSavingsAccount(
                 _savingsAccount,
+                _asset,
+                _poolSavingsStrategy,
                 address(this),
                 msg.sender,
                 _amountInTokens,
-                _asset,
-                _poolSavingsStrategy,
                 _recieveLiquidityShare,
                 _toSavingsAccount
             );
@@ -962,7 +962,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         }
         lenders[_lender].effectiveInterestWithdrawn = lenders[_lender].effectiveInterestWithdrawn.add(_amountToWithdraw);
 
-        SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _amountToWithdraw, address(this), _lender);
+        SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, address(this), _lender, _amountToWithdraw);
     }
 
     /**
