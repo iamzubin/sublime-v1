@@ -257,11 +257,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             _sharesReceived = SavingsAccountUtil.directDeposit(
                 ISavingsAccount(IPoolFactory(poolFactory).savingsAccount()),
                 _asset,
-                _toSavingsAccount,
+                _poolSavingsStrategy,
                 _depositFrom,
                 _depositTo,
                 _amount,
-                _poolSavingsStrategy
+                _toSavingsAccount
             );
         }
     }
@@ -729,9 +729,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _toSavingsAccount,
         bool _recieveLiquidityShare
     ) external payable nonReentrant {
-        LoanStatus _currentPoolStatus = poolVariables.loanStatus;
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
-        require(_currentPoolStatus == LoanStatus.ACTIVE, 'LP1');
+        require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'LP1');
         require(IRepayment(_poolFactory.repaymentImpl()).didBorrowerDefault(address(this)), 'LP2');
         poolVariables.loanStatus = LoanStatus.DEFAULTED;
 
@@ -740,8 +739,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _collateralLiquidityShare = poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares);
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
 
-        uint256 _collateralTokens = _collateralLiquidityShare;
-        _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralLiquidityShare, _collateralAsset);
+        uint256 _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralLiquidityShare, _collateralAsset);
 
         uint256 _poolBorrowTokens = correspondingBorrowTokens(
             _collateralTokens,
@@ -770,7 +768,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _poolSavingsStrategy,
         uint256 _amountInTokens,
         bool _toSavingsAccount,
-        bool _recieveLiquidityShare,
+        bool _recieveLiquidityShare
     ) internal returns (uint256) {
         ISavingsAccount _savingsAccount = ISavingsAccount(IPoolFactory(poolFactory).savingsAccount());
         return
