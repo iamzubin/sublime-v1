@@ -625,6 +625,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) external payable nonReentrant ifCreditLineExists(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
+        if(Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
+            require(msg.value == 0, 'DepositCollateral: ETH is not required for this operation');
+        }
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
         emit CollateralDeposited(_id, _amount, _strategy);
     }
@@ -691,6 +694,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     function borrow(uint256 _id, uint256 _amount) external payable nonReentrant onlyCreditLineBorrower(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
+        // Checks to ensure no ETH is consumed by the contract
+        require(msg.value == 0, 'ETH transfer is not required for this operation');
         uint256 _borrowableAmount = calculateBorrowableAmount(_id);
         require(_amount <= _borrowableAmount, "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount");
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
