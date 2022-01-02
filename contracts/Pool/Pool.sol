@@ -282,6 +282,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _transferFromSavingsAccount
     ) external payable override nonReentrant {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'ACMC1');
+        if(Address(poolConstants.collateralAsset) != Address(0)) {
+            require(msg.value == 0, 'AddCollateralInMarginCall: ETH is not required for this operation');
+        }
         require(balanceOf(msg.sender) == 0, 'ACMC2');
         require(getMarginCallEndTime(_lender) >= block.timestamp, 'ACMC3');
 
@@ -399,6 +402,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _lenderVerifier = poolConstants.lenderVerifier;
         address _borrower = poolConstants.borrower;
         require(_lender != _borrower && _borrower != msg.sender, 'L1');
+        if(Address(poolConstants.borrowAsset) != Address(0)) {
+            require(msg.value == 0, 'Lend: ETH is not required for this operation');
+        }
         if (_lenderVerifier != address(0)) {
             require(IVerification(IPoolFactory(poolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'L2');
         }
