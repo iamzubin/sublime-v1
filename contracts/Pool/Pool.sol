@@ -622,12 +622,10 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
             //assuming their will be no tokens in pool in any case except liquidation (to be checked) or we should store the amount in liquidate()
             _toTransfer = _toTransfer.mul(_totalAsset).div(totalSupply());
         }
-
-        if (_loanStatus == LoanStatus.CANCELLED) {
+        else if (_loanStatus == LoanStatus.CANCELLED) {
             _toTransfer = _toTransfer.add(_toTransfer.mul(poolVariables.penaltyLiquidityAmount).div(totalSupply()));
         }
-
-        if (_loanStatus == LoanStatus.CLOSED) {
+        else if (_loanStatus == LoanStatus.CLOSED) {
             //transfer repayment
             _withdrawRepayment(msg.sender);
         }
