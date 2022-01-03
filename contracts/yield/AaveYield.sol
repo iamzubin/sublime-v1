@@ -102,7 +102,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      **/
     function liquidityToken(address asset) public view override returns (address aToken) {
         if (asset == address(0)) {
-            aToken = IWETHGateway(wethGateway).getAWETHAddress();
+            aToken = IWETHGateway(wethGateway).getWETHAddress();
         } else {
             (aToken, , ) = IProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(asset);
         }
@@ -275,7 +275,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     function _depositETH(uint256 amount) internal returns (address aToken, uint256 sharesReceived) {
-        aToken = IWETHGateway(wethGateway).getAWETHAddress();
+        aToken = IWETHGateway(wethGateway).getWETHAddress();
 
         uint256 aTokensBefore = IERC20(aToken).balanceOf(address(this));
 
@@ -304,7 +304,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     }
 
     function _withdrawETH(uint256 amount) internal returns (uint256 received) {
-        IERC20(IWETHGateway(wethGateway).getAWETHAddress()).approve(wethGateway, amount);
+        IERC20(IWETHGateway(wethGateway).getWETHAddress()).approve(wethGateway, amount);
 
         uint256 ethBalance = address(this).balance;
 
