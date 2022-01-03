@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20PausableUpgradeable.sol';
 import '../interfaces/IPoolFactory.sol';
@@ -21,7 +21,7 @@ import '../interfaces/IVerification.sol';
  * @notice Implements the functions related to Pool
  * @author Sublime
  */
-contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard {
+contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgradeable, IPool {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -161,12 +161,13 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         poolConstants.loanStartTime = block.timestamp.add(_collectionPeriod);
         poolConstants.loanWithdrawalDeadline = block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration);
+        __ReentrancyGuard_init();
         __ERC20_init('Pool Tokens', 'PT');
         try ERC20Upgradeable(_borrowAsset).decimals() returns (uint8 _decimals) {
             _setupDecimals(_decimals);
         } catch (bytes memory) {}
     }
-
+    
     /**
      * @notice add collateral to a pool
      * @param _amount amount of collateral to be deposited denominated in collateral asset
