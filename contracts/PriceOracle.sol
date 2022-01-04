@@ -29,13 +29,19 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
     mapping(bytes32 => address) public uniswapPools;
 
     /**
+     * @notice wrapped ETH address
+     */
+    address public weth;
+
+    /**
      * @notice Used to initialize the price oracle contract
      * @dev can only be invoked once
      * @param _admin owner of the price oracle
      **/
-    function initialize(address _admin) external initializer {
+    function initialize(address _admin, address _weth) external initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_admin);
+        weth = _weth;
     }
 
     /**
@@ -119,7 +125,10 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         return (_numTokens, 30);
     }
 
-    function getUniswapPoolTokenId(address num, address den) internal pure returns (bytes32) {
+    function getUniswapPoolTokenId(address num, address den) internal view returns (bytes32) {
+        if (num == address(0)) num = weth;
+        if (den == address(0)) den = weth;
+
         if (uint256(num) < uint256(den)) {
             return keccak256(abi.encodePacked(num, den));
         } else {

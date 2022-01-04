@@ -5,6 +5,8 @@ import { CreditLineDefaultStrategy, Environment } from '../../utils/types';
 
 import hre from 'hardhat';
 import { CreditLine } from '../../typechain/CreditLine';
+import { Contracts } from '../../existingContracts/compound.json';
+
 const { waffle } = hre;
 const { loadFixture } = waffle;
 
@@ -46,7 +48,8 @@ describe('Credit Lines with No Yield', async () => {
             },
             {
                 activationDelay: 1000000000,
-            }
+            },
+            Contracts.WETH
         );
         return {
             env,

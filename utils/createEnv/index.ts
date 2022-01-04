@@ -53,7 +53,8 @@ export async function createEnvironment(
     poolFactoryInitParams: PoolFactoryInitParams,
     creditLineDefaultStrategy: CreditLineDefaultStrategy,
     creditLineInitParams: CreditLineInitParams,
-    verificationInitParams: VerificationParams
+    verificationInitParams: VerificationParams,
+    wethTokenAddress: string
 ): Promise<Environment> {
     const env = {} as Environment;
     const yields = {} as Yields;
@@ -118,7 +119,7 @@ export async function createEnvironment(
 
     await env.verification.connect(admin).addVerifier(env.adminVerifier.address);
     await env.adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
-    env.priceOracle = await createPriceOracle(proxyAdmin, admin);
+    env.priceOracle = await createPriceOracle(proxyAdmin, admin, wethTokenAddress);
     await setPriceOracleFeeds(env.priceOracle, admin, priceFeeds);
 
     env.poolFactory = await createPoolFactory(proxyAdmin);
