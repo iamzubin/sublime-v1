@@ -598,8 +598,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         bool _requestByLender = creditLineConstants[_id].requestByLender;
         require(
-            (msg.sender == creditLineConstants[_id].borrower && _requestByLender) ||
-                (msg.sender == creditLineConstants[_id].lender && !_requestByLender),
+            _requestByLender ?
+            (msg.sender == creditLineConstants[_id].borrower) :
+            (msg.sender == creditLineConstants[_id].lender),
             "Only Borrower or Lender who hasn't requested can accept"
         );
         creditLineVariables[_id].status = CreditLineStatus.ACTIVE;
