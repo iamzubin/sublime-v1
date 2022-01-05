@@ -10,6 +10,8 @@ interface IyVault {
 
     function depositETH() external payable;
 
+    function decimals() external view returns (uint256);
+
     function withdrawAll() external;
 
     function withdrawAllETH() external;

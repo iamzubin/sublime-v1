@@ -177,7 +177,9 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      **/
     function getTokensForShares(uint256 shares, address asset) public view override returns (uint256 amount) {
         if (shares == 0) return 0;
-        amount = IyVault(liquidityToken[asset]).getPricePerFullShare().mul(shares).div(1e18);
+        IyVault vault = IyVault(liquidityToken[asset]);
+        // uint256 precision = vault.decimals();
+        amount = vault.getPricePerFullShare().mul(shares).div(10 ** vault.decimals());
     }
 
     /**
@@ -187,7 +189,8 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @return shares amount of shares for given tokens
      **/
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
-        shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
+        IyVault vault = IyVault(liquidityToken[asset]);
+        shares = (amount.mul(10 ** vault.decimals())).div(getTokensForShares(10 ** vault.decimals(), asset));
     }
 
     function _depositETH(address vault, uint256 amount) internal returns (uint256 sharesReceived) {
