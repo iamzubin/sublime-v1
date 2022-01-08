@@ -8,7 +8,11 @@ import '../interfaces/IVerification.sol';
 import '../interfaces/IStrategyRegistry.sol';
 import '../interfaces/IRepayment.sol';
 import '../interfaces/IPriceOracle.sol';
+import '../interfaces/ISavingsAccount.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts/proxy/Clones.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../SavingsAccount/SavingsAccountUtil.sol';
 
 /**
  * @title Pool Factory contract with methods for handling different pools
@@ -316,6 +320,21 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         );
     }
 
+    function preComputeAddress(bytes32 salt) public view returns (address predicted) {
+        address deployer = address(this);
+        address master = poolImpl;
+        assembly {
+            let ptr := mload(0x40)
+            mstore(ptr, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000)
+            mstore(add(ptr, 0x14), shl(0x60, master))
+            mstore(add(ptr, 0x28), 0x5af43d82803e903d91602b57fd5bf3ff00000000000000000000000000000000)
+            mstore(add(ptr, 0x38), shl(0x60, deployer))
+            mstore(add(ptr, 0x4c), salt)
+            mstore(add(ptr, 0x6c), keccak256(ptr, 0x37))
+            predicted := keccak256(add(ptr, 0x37), 0x55)
+        }
+    }
+
     // @dev These functions are used to avoid stack too deep
     function _createPool(
         uint256 _poolSize,
@@ -331,7 +350,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt,
         address _lenderVerifier
     ) internal {
-        bytes memory data = _encodePoolInitCall(
+        address _pool = Clones.cloneDeterministic(poolImpl, _salt);
+        _initPool(
+            _pool,
             _poolSize,
             _borrowRate,
             _borrowToken,
@@ -344,18 +365,12 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _transferFromSavingsAccount,
             _lenderVerifier
         );
-        bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
-        bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
-        uint256 amount = _collateralToken == address(0) ? _collateralAmount : 0;
-
-        address pool = _deploy(amount, salt, bytecode);
-
-        poolRegistry[pool] = true;
-        emit PoolCreated(pool, msg.sender);
+        poolRegistry[_pool] = true;
+        emit PoolCreated(_pool, msg.sender);
     }
 
-    // @dev These functions are used to avoid stack too deep
-    function _encodePoolInitCall(
+    function _initPool(
+        address _pool,
         uint256 _poolSize,
         uint256 _borrowRate,
         address _borrowToken,
@@ -367,9 +382,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
         address _lenderVerifier
-    ) internal view returns (bytes memory data) {
-        data = abi.encodeWithSelector(
-            poolInitFuncSelector,
+    ) internal {
+        IPool pool = IPool(_pool);
+        pool.initialize(
             _poolSize,
             _borrowRate,
             msg.sender,
@@ -385,33 +400,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             loanWithdrawalDuration,
             collectionPeriod
         );
-    }
-
-    /**
-     * @dev Deploys a contract using `CREATE2`. The address where the contract
-     * will be deployed can be known in advance via {computeAddress}.
-     *
-     * The bytecode for a contract can be obtained from Solidity with
-     * `type(contractName).creationCode`.
-     *
-     * Requirements:
-     *
-     * - `bytecode` must not be empty.
-     * - `salt` must have not been used for `bytecode` already.
-     * - the factory must have a balance of at least `amount`.
-     * - if `amount` is non-zero, `bytecode` must have a `payable` constructor.
-     */
-    function _deploy(
-        uint256 amount,
-        bytes32 salt,
-        bytes memory bytecode
-    ) internal returns (address addr) {
-        require(bytecode.length != 0, 'Create2: bytecode length is zero');
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            addr := create2(amount, add(bytecode, 0x20), mload(bytecode), salt)
-        }
-        require(addr != address(0), 'Create2: Failed on deploy');
     }
 
     /**
