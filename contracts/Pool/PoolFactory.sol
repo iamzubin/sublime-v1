@@ -3,10 +3,8 @@ pragma solidity 0.7.6;
 
 import '../Proxy.sol';
 import '../interfaces/IPoolFactory.sol';
-import '../interfaces/IPool.sol';
 import '../interfaces/IVerification.sol';
 import '../interfaces/IStrategyRegistry.sol';
-import '../interfaces/IRepayment.sol';
 import '../interfaces/IPriceOracle.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
