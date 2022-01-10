@@ -153,12 +153,12 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     /**
-     * @notice functions affected by this modifier can only be invoked by the borrow of the Pool
+     * @notice functions affected by this modifier can only be invoked by the borrow(verified users) of the Pool
      */
-    modifier onlyBorrower(address _verifier) {
+    modifier onlyVerified(address _verifier) {
         require(
             IVerification(userRegistry).isUser(msg.sender, _verifier),
-            'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool'
+            'PoolFactory::onlyVerified - Only a valid Borrower can create Pool'
         );
         _;
     }
@@ -271,7 +271,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt,
         address _verifier,
         address _lenderVerifier
-    ) external payable onlyBorrower(_verifier) {
+    ) external payable onlyVerified(_verifier) {
         if (_collateralToken == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
