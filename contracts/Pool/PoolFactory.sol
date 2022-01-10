@@ -486,6 +486,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updatePoolLogic(address _poolLogic) internal {
+        require(_poolLogic != address(0), "PoolFactory:_updatePoolLogic _poolLogic address should be a non-zero address");
         poolImpl = _poolLogic;
         emit PoolLogicUpdated(_poolLogic);
     }
@@ -590,6 +591,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateCollectionPeriod(uint256 _collectionPeriod) internal {
+        require(_collectionPeriod > 0, "PoolFactory:_updateCollectionPeriod _collectionPeriod should be greater than zero");
         collectionPeriod = _collectionPeriod;
         emit CollectionPeriodUpdated(_collectionPeriod);
     }
@@ -603,6 +605,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateLoanWithdrawalDuration(uint256 _loanWithdrawalDuration) internal {
+        require(_loanWithdrawalDuration > 0, "PoolFactory:_updateLoanWithdrawalDeadline _loanWithdrawalDuration should be greater than zero");
         loanWithdrawalDuration = _loanWithdrawalDuration;
         emit LoanWithdrawalDurationUpdated(_loanWithdrawalDuration);
     }
@@ -616,6 +619,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateMarginCallDuration(uint256 _marginCallDuration) internal {
+        require(_marginCallDuration > 0, "PoolFactory:updateMarginCallDuration _marginCallDuration should be greater than 0");
         marginCallDuration = _marginCallDuration;
         emit MarginCallDurationUpdated(_marginCallDuration);
     }
