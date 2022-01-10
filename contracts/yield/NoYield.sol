@@ -7,8 +7,6 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 
 import '../interfaces/IYield.sol';
-import '../interfaces/Invest/ICEther.sol';
-import '../interfaces/Invest/ICToken.sol';
 
 /**
  * @title Yield contract
