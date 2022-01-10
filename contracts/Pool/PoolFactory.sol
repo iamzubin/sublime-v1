@@ -9,6 +9,7 @@ import '../interfaces/IStrategyRegistry.sol';
 import '../interfaces/IRepayment.sol';
 import '../interfaces/IPriceOracle.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
 
 /**
  * @title Pool Factory contract with methods for handling different pools
@@ -16,6 +17,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
  * @author Sublime
  */
 contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
+    using SafeMath for uint256;
     /*
      * @notice Used to define limits for the Pool parameters
      * @param min the minimum threshold for the parameter
@@ -283,7 +285,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             "PoolFactory::createPool - Price feed doesn't support token pair"
         );
         require(IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy), 'PoolFactory::createPool - Invalid strategy');
-        require(isWithinLimits(_poolSize, poolSizeLimit.min, poolSizeLimit.max), 'PoolFactory::createPool - PoolSize not within limits');
+        _limitPoolSizeInUSD(_borrowToken,_poolSize);
+        // require(isWithinLimits(_poolSize, poolSizeLimit.min, poolSizeLimit.max), 'PoolFactory::createPool - PoolSize not within limits');
         require(
             isWithinLimits(_idealCollateralRatio, idealCollateralRatioLimit.min, idealCollateralRatioLimit.max),
             'PoolFactory::createPool - Collateral Ratio not within limits'
@@ -314,6 +317,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _salt,
             _lenderVerifier
         );
+    }
+
+    function _limitPoolSizeInUSD(address _borrowToken, uint256 _poolsize) internal {
+        address usdcAsset = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //USDC
+        (uint256 RatioOfPrices, uint256 decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowToken, usdcAsset);
+        uint256 _poolsizeInUSD = _poolsize.mul(RatioOfPrices).div(10 ** decimals);
+        require(isWithinLimits(_poolsizeInUSD, poolSizeLimit.min, poolSizeLimit.max), 'PoolFactory::createPool - PoolSize not within limits');
     }
 
     // @dev These functions are used to avoid stack too deep
