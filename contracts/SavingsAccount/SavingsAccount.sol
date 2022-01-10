@@ -112,6 +112,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to
     ) external payable override nonReentrant returns (uint256) {
         require(_to != address(0), 'SavingsAccount::deposit receiver address should not be zero address');
+        require(_amount != 0, 'SavingsAccount::deposit Amount must be greater than zero');
+        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
+        
         uint256 _sharesReceived = _deposit(_amount, _token, _strategy);
         balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_sharesReceived);
         emit Deposited(_to, _sharesReceived, _token, _strategy);
@@ -123,7 +126,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
-        require(_amount != 0, 'SavingsAccount::_deposit Amount must be greater than zero');
         _sharesReceived = _depositToYield(_amount, _token, _strategy);
     }
 
@@ -132,7 +134,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
-        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
         uint256 _ethValue;
 
         if (_token == address(0)) {
