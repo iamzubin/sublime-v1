@@ -2,7 +2,6 @@
 pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IPoolFactory.sol';
 import '../interfaces/IExtension.sol';
