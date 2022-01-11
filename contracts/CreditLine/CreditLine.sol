@@ -1042,7 +1042,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset,
         uint256 _totalCollateralTokens
     ) internal view returns (uint256) {
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
+        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_collateralAsset, _borrowAsset);
         uint256 _borrowTokens = (
             _totalCollateralTokens.mul(uint256(10**30).sub(liquidatorRewardFraction)).div(10**30).mul(_ratioOfPrices).div(10**_decimals)
         );
