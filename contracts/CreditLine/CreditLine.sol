@@ -636,6 +636,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) internal {
         require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
+        if(Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
+            require(msg.value == 0, '_depositCollateral: ETH is not required for this operation');
+        }
         if (_fromSavingsAccount) {
             _depositCollateralFromSavingsAccount(_id, _amount, msg.sender);
         } else {
