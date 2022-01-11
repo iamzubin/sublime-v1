@@ -118,7 +118,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
 
         int24 _twapTick = OracleLibrary.consult(_pool, uniswapPriceAveragingPeriod);
-        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, SCALING_FACTOR, num, den);
+        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, uint128(SCALING_FACTOR), num, den);
         return (_numTokens, SCALING_NUMBER);
     }
 
