@@ -116,8 +116,6 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         address asset,
         uint256 amount
     ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
-        require(amount != 0, 'Invest: amount');
-
         address investedTo = liquidityToken[asset];
         if (asset == address(0)) {
             require(msg.value == amount, 'Invest: ETH amount');
@@ -137,7 +135,6 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @return received amount of tokens received
      **/
     function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
-        require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
 
         if (asset == address(0)) {
