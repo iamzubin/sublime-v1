@@ -534,7 +534,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     }
 
     /**
-     * @notice used to liquidate the penalty amount when pool is calcelled
+     * @notice used to liquidate the penalty amount when pool is cancelled
      * @dev _receiveLiquidityShares doesn't matter when _toSavingsAccount is true
      * @param _toSavingsAccount if true, liquidity transfered to lender's savings account. If false, liquidity transfered to lender's wallet
      * @param _receiveLiquidityShare if true, equivalent liquidity tokens are withdrawn. If false, assets are withdrawn
