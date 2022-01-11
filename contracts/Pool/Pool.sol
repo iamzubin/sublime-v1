@@ -25,15 +25,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    enum LoanStatus {
-        COLLECTION, //denotes collection period
-        ACTIVE, // denotes the active loan
-        CLOSED, // Loan is repaid and closed
-        CANCELLED, // Cancelled by borrower
-        DEFAULTED, // Repayment defaulted by  borrower
-        TERMINATED // Pool terminated by admin
-    }
-
     address poolFactory;
 
     struct LendingDetails {
