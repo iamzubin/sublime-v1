@@ -35,7 +35,7 @@ contract Extension is Initializable, IExtension {
     uint256 public votingPassRatio;
 
     /**
-     * @notice checks if the msg.sender is pool's valid owner
+     * @notice checks if the msg.sender is pool factory's valid owner
      */
     modifier onlyOwner() {
         require(msg.sender == poolFactory.owner(), 'Not owner');
