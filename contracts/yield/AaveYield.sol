@@ -231,7 +231,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
 
     /**
      * @notice Used to unlock shares
-     * @param asset the address of underlying token
+     * @param asset the address of underlying token, which in this would always be Aave tokens
      * @param amount the amount of shares to unlock
      * @return received amount of shares received
      **/
@@ -307,7 +307,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
 
         uint256 ethBalance = address(this).balance;
 
-        //lock collateral
         IWETHGateway(wethGateway).withdrawETH(amount, address(this));
 
         received = address(this).balance.sub(ethBalance);
