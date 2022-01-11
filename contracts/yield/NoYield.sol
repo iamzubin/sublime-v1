@@ -75,9 +75,15 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
-        uint256 amount = IERC20(_asset).balanceOf(address(this));
-        IERC20(_asset).safeTransfer(_wallet, received);
-        received = amount;
+        if(_asset == address(0)) {
+            received = address(this).balance;
+            (bool success, ) = _wallet.call{value: received}('');
+            require(success, 'Transfer fail');
+        }
+        else {
+            received = IERC20(_asset).balanceOf(address(this));
+            IERC20(_asset).safeTransfer(_wallet, received);
+        }
     }
 
     /**
