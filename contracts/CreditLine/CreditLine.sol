@@ -879,7 +879,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
 
         uint256 currentDebt = calculateCurrentDebt(_id);
-        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).div(10**_decimals);
+        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).mul(10**30).div(currentDebt).div(10**_decimals);
         return currentCollateralRatio;
     }
 
