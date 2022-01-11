@@ -882,15 +882,16 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @return collateral ratio multiplied by 10**30 to retain precision
      */
-    function calculateCurrentCollateralRatio(uint256 _id) public ifCreditLineExists(_id) returns (uint256) {
+    function calculateCurrentCollateralRatio(uint256 _id) public ifCreditLineExists(_id) returns (uint256, uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
             creditLineConstants[_id].borrowAsset
         );
 
         uint256 currentDebt = calculateCurrentDebt(_id);
-        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).div(10**_decimals);
-        return currentCollateralRatio;
+        uint256 totalCollateralTokens = calculateTotalCollateralTokens(_id);
+        uint256 currentCollateralRatio = totalCollateralTokens.mul(_ratioOfPrices).div(currentDebt).mul(10**30).div(10**_decimals);
+        return (currentCollateralRatio,totalCollateralTokens);
     }
 
     /**
@@ -1010,7 +1011,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
 
-        uint256 currentCollateralRatio = calculateCurrentCollateralRatio(_id);
+        (uint256 currentCollateralRatio, uint256 _totalCollateralTokens) = calculateCurrentCollateralRatio(_id);
         require(
             currentCollateralRatio < creditLineConstants[_id].idealCollateralRatio,
             'CreditLine: Collateral ratio is higher than ideal value'
@@ -1018,7 +1019,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address _lender = creditLineConstants[_id].lender;
-        uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
 
         creditLineVariables[_id].status = CreditLineStatus.LIQUIDATED;
