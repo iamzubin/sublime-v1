@@ -292,7 +292,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     function _updateDefaultStrategy(address _defaultStrategy) internal {
         require(_defaultStrategy != address(0), "CreditLine:_updateDefaultStrategy The default strategy cannot have zero address");
-        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'CreditLine::_updateDefaultStrategy strategy do not exist');
+        require(IStrategyRegistry(strategyRegistry).registry(_defaultStrategy), 'CreditLine::_updateDefaultStrategy strategy do not exist');
         defaultStrategy = _defaultStrategy;
         emit DefaultStrategyUpdated(_defaultStrategy);
     }
