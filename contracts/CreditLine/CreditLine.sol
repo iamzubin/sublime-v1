@@ -872,6 +872,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineVariables[_id].principal == 0, 'CreditLine: Cannot be closed since not repaid.');
         require(creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate == 0, 'CreditLine: Cannot be closed since not repaid.');
         creditLineVariables[_id].status = CreditLineStatus.CLOSED;
+        delete creditLineConstants[_id];
+        delete creditLineVariables[_id];
         emit CreditLineClosed(_id);
     }
 
