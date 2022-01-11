@@ -536,7 +536,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) external returns (uint256) {
         require(_borrowAsset != _collateralAsset, 'R: cant borrow lent token');
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'R: No price feed');
-        require(_lender != _borrower, 'Lender and Borrower cannot be same addresses');
 
         address _lender = _requestTo;
         address _borrower = msg.sender;
@@ -544,6 +543,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _lender = msg.sender;
             _borrower = _requestTo;
         }
+
+        require(_lender != _borrower, 'Lender and Borrower cannot be same addresses');
 
         uint256 _id = _createRequest(
             _lender,
