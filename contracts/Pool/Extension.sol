@@ -19,9 +19,9 @@ contract Extension is Initializable, IExtension {
     struct ExtensionVariables {
         bool hasExtensionPassed;
         uint64 extensionVoteEndTime;
-        mapping(address => uint64) lastVotedExtension;
+        uint128 repaymentInterval;
+        mapping(address => uint256) lastVotedExtension;
         uint256 totalExtensionSupport;
-        uint256 repaymentInterval;
     }
 
     /**
@@ -65,7 +65,7 @@ contract Extension is Initializable, IExtension {
      * @notice initializing the pool extension for the Pool
      * @param _repaymentInterval value of the repayment interval
      */
-    function initializePoolExtension(uint256 _repaymentInterval) external override {
+    function initializePoolExtension(uint128 _repaymentInterval) external override {
         IPoolFactory _poolFactory = poolFactory;
         require(extensions[msg.sender].repaymentInterval == 0, 'Extension::initializePoolExtension - already initialized');
         require(_poolFactory.poolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
@@ -110,7 +110,7 @@ contract Extension is Initializable, IExtension {
             return;
         }
 
-        uint64 _extensionVoteEndTime = extensions[_pool].extensionVoteEndTime;
+        uint256 _extensionVoteEndTime = extensions[_pool].extensionVoteEndTime;
 
         if (_extensionVoteEndTime != 0 && _extensionVoteEndTime <= block.timestamp) {
             if (extensions[_pool].lastVotedExtension[_from] == _extensionVoteEndTime) {
@@ -136,7 +136,7 @@ contract Extension is Initializable, IExtension {
 
         uint256 _votingPassRatio = votingPassRatio;
 
-        uint64 _lastVotedExtension = extensions[_pool].lastVotedExtension[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
+        uint256 _lastVotedExtension = extensions[_pool].lastVotedExtension[msg.sender]; //Lender last vote time need to store it as it checks that a lender only votes once
         require(_lastVotedExtension != _extensionVoteEndTime, 'Pool::voteOnExtension - you have already voted');
 
         uint256 _extensionSupport = extensions[_pool].totalExtensionSupport;
