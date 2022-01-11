@@ -534,7 +534,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     }
 
     /**
-     * @notice used to liquidate the penalty amount when pool is calcelled
+     * @notice used to liquidate the penalty amount when pool is cancelled
      * @dev _receiveLiquidityShares doesn't matter when _toSavingsAccount is true
      * @param _toSavingsAccount if true, liquidity transfered to lender's savings account. If false, liquidity transfered to lender's wallet
      * @param _receiveLiquidityShare if true, equivalent liquidity tokens are withdrawn. If false, assets are withdrawn
@@ -789,7 +789,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _lender address of the lender to be liquidated
      */
     function _canLenderBeLiquidated(address _lender) internal {
-        require((poolVariables.loanStatus == LoanStatus.ACTIVE) && (block.timestamp > poolConstants.loanWithdrawalDeadline), 'CLBL1');
+        require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'CLBL1');
         uint256 _marginCallEndTime = lenders[_lender].marginCallEndTime;
         require(getMarginCallEndTime(_lender) != 0, 'CLBL2');
         require(_marginCallEndTime < block.timestamp, 'CLBL3');
