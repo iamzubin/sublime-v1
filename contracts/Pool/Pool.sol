@@ -791,7 +791,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _lender address of the lender to be liquidated
      */
     function _canLenderBeLiquidated(address _lender) internal {
-        require((poolVariables.loanStatus == LoanStatus.ACTIVE) && (block.timestamp > poolConstants.loanWithdrawalDeadline), 'CLBL1');
+        require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'CLBL1');
         uint256 _marginCallEndTime = lenders[_lender].marginCallEndTime;
         require(getMarginCallEndTime(_lender) != 0, 'CLBL2');
         require(_marginCallEndTime < block.timestamp, 'CLBL3');
