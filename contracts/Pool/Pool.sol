@@ -354,7 +354,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares) > _penalty) {
             _collateralShares = poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares).sub(_penalty);
         }
-        // uint256 _collateralTokens = _collateralShares;
         uint256 _collateralTokens = IYield(_poolSavingsStrategy).getTokensForShares(_collateralShares, _collateralAsset);
 
         poolVariables.baseLiquidityShares = _penalty;
