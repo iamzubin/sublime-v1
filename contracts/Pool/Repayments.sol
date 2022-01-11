@@ -292,7 +292,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         return _interestLeft;
     }
 
-    /// @notice Given there is no loan extension, find the overdue interest after missing the repayment deadline
+    /// @notice Given there is a loan extension, find the overdue interest after missing the repayment deadline
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
     /// @return interest amount that is overdue
