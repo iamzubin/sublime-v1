@@ -384,6 +384,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to
     ) external override returns (uint256) {
         require(_amount != 0, 'SavingsAccount::transfer zero amount');
+        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::transfer strategy do not exist');
+        require(_to != address(0), "SavingsAccount:transfer _to should be a non-zero address");
 
         if (_strategy != address(0)) {
             _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
@@ -418,6 +420,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to
     ) external override returns (uint256) {
         require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
+        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
+        require(_to != address(0), "SavingsAccount:transferFrom _to should be a non-zero address");
         //update allowance
         allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
             _amount,
