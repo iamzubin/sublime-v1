@@ -88,6 +88,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @return received amount of tokens received
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
@@ -102,6 +103,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
             received = _withdrawERC(_asset, investedTo, amount);
             IERC20(_asset).safeTransfer(_wallet, received);
         }
+        emit EmergencyWithdraw(_asset,_wallet,received);
     }
 
     /**

@@ -2,6 +2,15 @@
 pragma solidity 0.7.0;
 
 interface IYield {
+
+    /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+    
     /**
      * @dev emitted when tokens are locked
      * @param user the address of user, tokens locked for
