@@ -446,7 +446,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateSupportedBorrowTokens(address _borrowToken, bool _isSupported) internal {
-        require(_borrowToken != address(0), "PoolFactory:_updateSupportedBorrowToken _borrowToken should be a non-zero address");
         isBorrowToken[_borrowToken] = _isSupported;
         emit BorrowTokenUpdated(_borrowToken, _isSupported);
     }
@@ -461,7 +460,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateSupportedCollateralTokens(address _collateralToken, bool _isSupported) internal {
-        require(_collateralToken != address(0), "PoolFactory:_updateSupportedCollateralTokens _collateralToken should be a non-zero address");
         isCollateralToken[_collateralToken] = _isSupported;
         emit CollateralTokenUpdated(_collateralToken, _isSupported);
     }
