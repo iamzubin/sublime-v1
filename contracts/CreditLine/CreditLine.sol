@@ -690,7 +690,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
 
-        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
+        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).mul(10**30).div(
             (_currentDebt.add(_amount)).mul(10**_decimals)
         );
         require(
