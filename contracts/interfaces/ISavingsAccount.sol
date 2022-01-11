@@ -75,6 +75,16 @@ interface ISavingsAccount {
     event Transfer(address indexed token, address strategy, address indexed from, address indexed to, uint256 amount);
 
     /**
+     * @notice emitted when tokens are transferred
+     * @param token address of token transferred
+     * @param strategy address of strategy from which tokens are transferred
+     * @param from address of user from whom tokens are transferred
+     * @param to address of user to whom tokens are transferred
+     * @param shares amount of tokens transferred
+     */
+    event TransferShares(address indexed token, address strategy, address indexed from, address indexed to, uint256 shares);
+
+    /**
      * @notice emitted when credit line address is updated
      * @param updatedCreditLine updated credit line contract address
      */
@@ -153,17 +163,32 @@ interface ISavingsAccount {
         address to
     ) external;
 
+    function transferShares(
+        uint256 _shares,
+        address _token,
+        address _strategy,
+        address _to
+    ) external returns (uint256);
+
     function transfer(
         uint256 amount,
         address token,
-        address poolSavingsStrategy,
+        address strategy,
+        address to
+    ) external returns (uint256);
+
+    function transferSharesFrom(
+        uint256 amount,
+        address token,
+        address strategy,
+        address from,
         address to
     ) external returns (uint256);
 
     function transferFrom(
         uint256 amount,
         address token,
-        address poolSavingsStrategy,
+        address strategy,
         address from,
         address to
     ) external returns (uint256);

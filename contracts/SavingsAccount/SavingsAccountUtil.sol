@@ -63,6 +63,22 @@ library SavingsAccountUtil {
         _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_amount, _token, _strategy, _to);
     }
 
+    function savingsAccountTransferShares(
+        ISavingsAccount _savingsAccount,
+        address _from,
+        address _to,
+        uint256 _shares,
+        address _token,
+        address _strategy
+    ) internal returns (uint256) {
+        if (_from == address(this)) {
+            _savingsAccount.transferShares(_shares, _token, _strategy, _to);
+        } else {
+            _savingsAccount.transferSharesFrom(_shares, _token, _strategy, _from, _to);
+        }
+        return _shares;
+    }
+
     function savingsAccountTransfer(
         ISavingsAccount _savingsAccount,
         address _from,

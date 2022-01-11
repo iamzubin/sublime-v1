@@ -368,7 +368,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _sharesReceived;
         if (_collateralShares != 0) {
             ISavingsAccount _savingsAccount = ISavingsAccount(IPoolFactory(poolFactory).savingsAccount());
-            _sharesReceived = SavingsAccountUtil.savingsAccountTransfer(
+            _sharesReceived = SavingsAccountUtil.savingsAccountTransferShares(
                 _savingsAccount,
                 address(this),
                 _receiver,
