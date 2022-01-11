@@ -22,7 +22,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
     /**
      * @notice registry which maps whitelisted strategies to true
      **/
-    mapping(address => uint) public override registry;
+    mapping(address => uint256) public override registry;
 
     /**
      * @notice used to initialize the paramters of strategy registry

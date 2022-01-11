@@ -107,17 +107,17 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /*
      * @notice Used to mark assets supported for borrowing
      */
-    mapping(address => uint) isBorrowToken;
+    mapping(address => uint256) isBorrowToken;
 
     /*
      * @notice Used to mark supported collateral assets
      */
-    mapping(address => uint) isCollateralToken;
+    mapping(address => uint256) isCollateralToken;
 
     /**
      * @notice Used to keep track of valid pool addresses
      */
-    mapping(address => uint) public override poolRegistry;
+    mapping(address => uint256) public override poolRegistry;
 
     /*
      * @notice Used to set the min/max borrow amount for Pools

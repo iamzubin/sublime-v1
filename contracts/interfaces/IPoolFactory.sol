@@ -137,7 +137,7 @@ interface IPoolFactory {
 
     function owner() external view returns (address);
 
-    function poolRegistry(address pool) external view returns (uint);
+    function poolRegistry(address pool) external view returns (uint256);
 
     function priceOracle() external view returns (address);
 

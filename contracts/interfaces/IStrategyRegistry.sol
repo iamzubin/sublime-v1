@@ -14,7 +14,7 @@ interface IStrategyRegistry {
      */
     event StrategyRemoved(address indexed strategy);
 
-    function registry(address _strategy) external view returns (uint);
+    function registry(address _strategy) external view returns (uint256);
 
     function getStrategies() external view returns (address[] memory);
 
