@@ -76,7 +76,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice modifier used to determine whether the current pool is valid or not
     /// @dev poolRegistry from IPoolFactory interface returns a bool
     modifier onlyValidPool() {
-        require(poolFactory.poolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
+        require(poolFactory.poolRegistry(msg.sender) != 0, 'Repayments::onlyValidPool - Invalid Pool');
         _;
     }
 

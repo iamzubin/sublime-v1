@@ -22,7 +22,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
     /**
      * @notice registry which maps whitelisted strategies to true
      **/
-    mapping(address => bool) public override registry;
+    mapping(address => uint) public override registry;
 
     /**
      * @notice used to initialize the paramters of strategy registry
@@ -62,9 +62,9 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      **/
     function addStrategy(address _strategy) external override onlyOwner {
         require(strategies.length.add(1) <= maxStrategies, "StrategyRegistry::addStrategy - Can't add more strategies");
-        require(!registry[_strategy], 'StrategyRegistry::addStrategy - Strategy already exists');
+        require(registry[_strategy] == 0, 'StrategyRegistry::addStrategy - Strategy already exists');
         require(_strategy != address(0), 'StrategyRegistry::addStrategy - _strategy cannot be address(0)');
-        registry[_strategy] = true;
+        registry[_strategy] = 1;
         strategies.push(_strategy);
 
         emit StrategyAdded(_strategy);
@@ -78,7 +78,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         address _strategy = strategies[_strategyIndex];
         strategies[_strategyIndex] = strategies[strategies.length.sub(1, 'StrategyRegistry::removeStrategy - No strategies exist')];
         strategies.pop();
-        registry[_strategy] = false;
+        delete registry[_strategy];
 
         emit StrategyRemoved(_strategy);
     }
@@ -98,10 +98,10 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
             strategies[_strategyIndex] == _oldStrategy,
             "StrategyRegistry::updateStrategy - index to update and strategy address don't match"
         );
-        require(!registry[_newStrategy], 'StrategyRegistry::updateStrategy - New strategy already exists');
+        require(registry[_newStrategy] == 0, 'StrategyRegistry::updateStrategy - New strategy already exists');
         strategies[_strategyIndex] = _newStrategy;
 
-        registry[_oldStrategy] = false;
-        registry[_newStrategy] = true;
+        delete registry[_oldStrategy];
+        registry[_newStrategy] = 1;
     }
 }

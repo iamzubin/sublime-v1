@@ -107,17 +107,17 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /*
      * @notice Used to mark assets supported for borrowing
      */
-    mapping(address => bool) isBorrowToken;
+    mapping(address => uint) isBorrowToken;
 
     /*
      * @notice Used to mark supported collateral assets
      */
-    mapping(address => bool) isCollateralToken;
+    mapping(address => uint) isCollateralToken;
 
     /**
      * @notice Used to keep track of valid pool addresses
      */
-    mapping(address => bool) public override poolRegistry;
+    mapping(address => uint) public override poolRegistry;
 
     /*
      * @notice Used to set the min/max borrow amount for Pools
@@ -148,7 +148,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @notice functions affected by this modifier can only be invoked by the Pool
      */
     modifier onlyPool() {
-        require(poolRegistry[msg.sender], 'PoolFactory::onlyPool - Only pool can destroy itself');
+        require(poolRegistry[msg.sender] != 0, 'PoolFactory::onlyPool - Only pool can destroy itself');
         _;
     }
 
@@ -276,13 +276,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }
         require(_borrowToken != _collateralToken, 'PoolFactory::createPool - cant borrow the asset put in as collateralToken');
-        require(isBorrowToken[_borrowToken], 'PoolFactory::createPool - Invalid borrow token type');
-        require(isCollateralToken[_collateralToken], 'PoolFactory::createPool - Invalid collateral token type');
+        require(isBorrowToken[_borrowToken] != 0, 'PoolFactory::createPool - Invalid borrow token type');
+        require(isCollateralToken[_collateralToken] != 0, 'PoolFactory::createPool - Invalid collateral token type');
         require(
             IPriceOracle(priceOracle).doesFeedExist(_collateralToken, _borrowToken),
             "PoolFactory::createPool - Price feed doesn't support token pair"
         );
-        require(IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy), 'PoolFactory::createPool - Invalid strategy');
+        require(IStrategyRegistry(strategyRegistry).registry(_poolSavingsStrategy) != 0, 'PoolFactory::createPool - Invalid strategy');
         require(isWithinLimits(_poolSize, poolSizeLimit.min, poolSizeLimit.max), 'PoolFactory::createPool - PoolSize not within limits');
         require(
             isWithinLimits(_idealCollateralRatio, idealCollateralRatioLimit.min, idealCollateralRatioLimit.max),
@@ -350,7 +350,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
         address pool = _deploy(amount, salt, bytecode);
 
-        poolRegistry[pool] = true;
+        poolRegistry[pool] = 1;
         emit PoolCreated(pool, msg.sender);
     }
 
@@ -446,7 +446,12 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateSupportedBorrowTokens(address _borrowToken, bool _isSupported) internal {
-        isBorrowToken[_borrowToken] = _isSupported;
+        if(_isSupported) {
+            isBorrowToken[_borrowToken] = 1;
+        }
+        else {
+            delete isBorrowToken[_borrowToken];
+        }
         emit BorrowTokenUpdated(_borrowToken, _isSupported);
     }
 
@@ -460,7 +465,12 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateSupportedCollateralTokens(address _collateralToken, bool _isSupported) internal {
-        isCollateralToken[_collateralToken] = _isSupported;
+        if(_isSupported) {
+            isCollateralToken[_collateralToken] = 1;
+        }
+        else {
+            delete isCollateralToken[_collateralToken];
+        }
         emit CollateralTokenUpdated(_collateralToken, _isSupported);
     }
 

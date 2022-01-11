@@ -132,7 +132,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
-        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
+        require(IStrategyRegistry(strategyRegistry).registry(_strategy) != 0, 'SavingsAccount::deposit strategy do not exist');
         uint256 _ethValue;
 
         if (_token == address(0)) {
@@ -156,6 +156,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _newStrategy
     ) external override nonReentrant {
         require(_currentStrategy != _newStrategy, 'SavingsAccount::switchStrategy Same strategy');
+        require(IStrategyRegistry(strategyRegistry).registry(_newStrategy) != 0, 'SavingsAccount::_newStrategy do not exist');
         require(_amount != 0, 'SavingsAccount::switchStrategy Amount must be greater than zero');
 
         _amount = IYield(_currentStrategy).getSharesForTokens(_amount, _token);
