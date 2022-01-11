@@ -26,7 +26,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         REQUESTED,
         ACTIVE,
         CLOSED,
-        CANCELLED,
         LIQUIDATED
     }
 
