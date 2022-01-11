@@ -485,7 +485,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {
             address _strategy = _strategyList[_index];
             uint256 _liquidityShares = _savingsAccount.balanceInShares(_sender, _collateralAsset, _strategy);
-            if (_liquidityShares == 0 || _strategyList[_index] == address(0)) {
+            if (_liquidityShares == 0) {
                 continue;
             }
             uint256 _tokenInStrategy = _liquidityShares;
@@ -623,7 +623,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _amount,
         address _strategy,
         bool _fromSavingsAccount
-    ) external payable nonReentrant ifCreditLineExists(_id) {
+    ) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
         emit CollateralDeposited(_id, _amount, _strategy);
@@ -661,9 +661,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {
-            if (_strategyList[_index] == address(0)) {
-                continue;
-            }
             uint256 _liquidityShares = _savingsAccount.balanceInShares(_lender, _asset, _strategyList[_index]);
             if (_liquidityShares != 0) {
                 uint256 tokenInStrategy = _liquidityShares;
@@ -751,9 +748,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _activeAmount;
 
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {
-            if (_strategyList[_index] == address(0)) {
-                continue;
-            }
             uint256 _liquidityShares = _savingsAccount.balanceInShares(msg.sender, _asset, _strategyList[_index]);
             if (_liquidityShares == 0) {
                 continue;
@@ -863,7 +857,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev used to close credit line by borrower or lender
      * @param _id identifier for the credit line
      */
-    function close(uint256 _id) external ifCreditLineExists(_id) {
+    function close(uint256 _id) external {
         require(
             msg.sender == creditLineConstants[_id].borrower || msg.sender == creditLineConstants[_id].lender,
             'CreditLine: Permission denied while closing Line of credit'

@@ -456,9 +456,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
             if (_liquidityShares != 0) {
                 uint256 _tokenInStrategy = _liquidityShares;
-                if (_strategyList[i] != address(0)) {
-                    _tokenInStrategy = IYield(_strategyList[i]).getTokensForShares(_liquidityShares, _token);
-                }
+                _tokenInStrategy = IYield(_strategyList[i]).getTokensForShares(_liquidityShares, _token);
 
                 _totalTokens = _totalTokens.add(_tokenInStrategy);
             }
