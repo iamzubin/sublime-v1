@@ -895,8 +895,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 continue;
             }
             _liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            uint256 _tokenInStrategy = _liquidityShares;
-            _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
+            uint256 _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
 
             _amount = _amount.add(_tokenInStrategy);
         }
