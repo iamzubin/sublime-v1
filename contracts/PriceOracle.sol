@@ -14,6 +14,8 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
 
     uint32 uniswapPriceAveragingPeriod;
     uint256 constant SCALING_FACTOR = 1e30;
+    uint256 constant SCALING_NUMBER = 30;
+
     struct PriceData {
         address oracle;
         uint256 decimals;
@@ -79,7 +81,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
             .div(10**_feedData1.decimals)
             .mul(10**decimals[den])
             .div(10**decimals[num]);
-        return (price, SCALING_FACTOR);
+        return (price, SCALING_NUMBER);
     }
 
     /**
@@ -116,8 +118,8 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
 
         int24 _twapTick = OracleLibrary.consult(_pool, uniswapPriceAveragingPeriod);
-        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, 1e30, num, den);
-        return (_numTokens, SCALING_FACTOR);
+        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, SCALING_FACTOR, num, den);
+        return (_numTokens, SCALING_NUMBER);
     }
 
     function getUniswapPoolTokenId(address num, address den) internal pure returns (bytes32) {
