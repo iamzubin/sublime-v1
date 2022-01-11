@@ -488,18 +488,16 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             if (_liquidityShares == 0 || _strategyList[_index] == address(0)) {
                 continue;
             }
-            uint256 _tokenInStrategy = _liquidityShares;
-            _tokenInStrategy = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
+            uint256 _tokenInStrategy = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
 
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) >= _amount) {
                 _tokensToTransfer = (_amount.sub(_activeAmount));
             }
             _activeAmount = _activeAmount.add(_tokensToTransfer);
-            _savingsAccount.transferFrom(_tokensToTransfer, _collateralAsset, _strategy, _sender, address(this));
 
             collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(
-                _liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy)
+                _savingsAccount.transferFrom(_tokensToTransfer, _collateralAsset, _strategy, _sender, address(this))
             );
 
             if (_amount == _activeAmount) {
