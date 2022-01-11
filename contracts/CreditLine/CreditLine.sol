@@ -129,15 +129,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
-     * @dev checks if called by credit Line Lender
-     * @param _id creditLine identifier
-     **/
-    modifier onlyCreditLineLender(uint256 _id) {
-        require(creditLineConstants[_id].lender == msg.sender, 'Only credit line Lender can access');
-        _;
-    }
-
-    /**
      * @notice emitted when a collateral is deposited into credit line
      * @param id id of the credit line
      * @param amount amount of collateral deposited
