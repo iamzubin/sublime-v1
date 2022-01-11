@@ -416,7 +416,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _strategy,
         address _from,
         address _to
-    ) external override returns (uint256) {
+    ) external override {
         require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
         //update allowance
         allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
@@ -438,8 +438,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         balanceInShares[_to][_token][_strategy] = (balanceInShares[_to][_token][_strategy]).add(_amount);
 
         emit Transfer(_token, _strategy, _from, _to, _amount);
-
-        return _amount;
     }
 
     /**
