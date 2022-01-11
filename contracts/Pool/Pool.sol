@@ -934,7 +934,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @notice internal function used to withdraw borrow asset from the pool by _lender
      * @param _lender address of the _lender
      */
-    function _withdrawRepayment(address _lender) internal {
+    function _withdrawRepayment(address _lender) internal nonReentrant {
         uint256 _amountToWithdraw = calculateRepaymentWithdrawable(_lender);
 
         if (_amountToWithdraw == 0) {
