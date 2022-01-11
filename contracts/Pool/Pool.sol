@@ -309,8 +309,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _tokensLent = totalSupply();
         require(
             _poolStatus == LoanStatus.COLLECTION &&
-                poolConstants.loanStartTime < block.timestamp &&
-                block.timestamp < poolConstants.loanWithdrawalDeadline,
+                poolConstants.loanStartTime <= block.timestamp &&
+                block.timestamp <= poolConstants.loanWithdrawalDeadline,
             'WBA1'
         );
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
