@@ -459,7 +459,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _maxPossible = _borrowLimit;
         }
         if (_maxPossible > _currentDebt) {
-            return _maxPossible.sub(_currentDebt);
+            return _maxPossible - _currentDebt;
         }
         return 0;
     }
