@@ -291,6 +291,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _updateDefaultStrategy(address _defaultStrategy) internal {
+        require(_defaultStrategy != address(0), "CreditLine:_updateDefaultStrategy The default strategy cannot have zero address");
+        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'CreditLine::_updateDefaultStrategy strategy do not exist');
         defaultStrategy = _defaultStrategy;
         emit DefaultStrategyUpdated(_defaultStrategy);
     }
@@ -305,6 +307,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _updatePriceOracle(address _priceOracle) internal {
+        require(_priceOracle != address(0), "CreditLine:_updatePriceOracle The _priceOracle should have a non-zero address");
         priceOracle = _priceOracle;
         emit PriceOracleUpdated(_priceOracle);
     }
@@ -319,6 +322,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _updateSavingsAccount(address _savingsAccount) internal {
+        require(_savingsAccount != address(0), "CreditLine:_savingsAccount The _savingsAccount should have a non-zero address");
         savingsAccount = _savingsAccount;
         emit SavingsAccountUpdated(_savingsAccount);
     }
@@ -333,6 +337,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _updateProtocolFeeFraction(uint256 _protocolFee) internal {
+        require(_protocolFee >= 0, "CreditLine:_updateProtocolFeeFraction The _protocolFee should be non-negative");
+        require(_protocolFee <= 10**30, "CreditLine:_updateProtocolFeeFraction The _protocolFee should be less than 1");
         protocolFeeFraction = _protocolFee;
         emit ProtocolFeeFractionUpdated(_protocolFee);
     }
