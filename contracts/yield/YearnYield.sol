@@ -23,6 +23,16 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      **/
     address payable public savingsAccount;
 
+
+    /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+    
+
     /**
      * @notice stores the address of liquidity token for a given base token
      */

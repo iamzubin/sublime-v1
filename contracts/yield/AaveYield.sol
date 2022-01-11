@@ -46,6 +46,16 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      */
     uint16 public referralCode;
 
+
+    /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+    
+
     /**
      * @notice emitted when aave protocol related addresses are updated
      * @param wethGateway address of wethGateway

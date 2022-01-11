@@ -29,6 +29,16 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      */
     mapping(address => address) public override liquidityToken;
 
+
+    /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+    
+
     /**
      * @notice emitted when liquidity token address of an asset is updated
      * @param asset the address of asset
