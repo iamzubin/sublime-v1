@@ -439,7 +439,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _currentDebt = calculateCurrentDebt(_id);
 
-        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).div(
+        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).mul(10**30).div(
             10**_decimals
         );
 
