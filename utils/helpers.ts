@@ -24,7 +24,7 @@ export async function incrementChain(network: Network, blocks: number, blockTime
 }
 
 import poolContractMeta from '../artifacts/contracts/Pool/Pool.sol/Pool.json';
-import proxyMeta from '../artifacts/contracts/Proxy.sol/SublimeProxy.json';
+import proxyMeta from '../artifacts/contracts/SublimeProxy.sol/SublimeProxy.json';
 
 import { createPoolParams, testPoolFactoryParams, zeroAddress } from '../config/constants';
 
