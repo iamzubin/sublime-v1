@@ -707,15 +707,15 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice used to get the current collateral ratio of a lender
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
-     * @return _ratio the current collateral ratio of the lender
+     * @return the current collateral ratio of the lender
      */
-    function getCurrentCollateralRatio(address _lender) public returns (uint256 _ratio) {
+    function getCurrentCollateralRatio(address _lender) public returns (uint256) {
         uint256 _balanceOfLender = balanceOf(_lender);
         uint256 _liquidityShares = (poolVariables.baseLiquidityShares.mul(_balanceOfLender).div(totalSupply())).add(
             lenders[_lender].extraLiquidityShares
         );
 
-        _ratio = calculateCollateralRatio(_balanceOfLender, _liquidityShares);
+        return (calculateCollateralRatio(_balanceOfLender, _liquidityShares));
     }
 
     /**
