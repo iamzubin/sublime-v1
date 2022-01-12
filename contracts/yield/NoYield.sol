@@ -94,13 +94,9 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
-        if (asset != address(0)) {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
-        } else {
-            require(msg.value == amount, 'Invest: ETH amount');
-        }
+        IERC20(asset).safeTransferFrom(user, address(this), amount);
         sharesReceived = amount;
         emit LockedTokens(user, asset, sharesReceived);
     }
@@ -134,22 +130,16 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     function _unlockTokens(address asset, uint256 amount) internal returns (uint256 received) {
         require(amount != 0, 'Invest: amount');
         received = amount;
-        if (asset == address(0)) {
-            (bool success, ) = savingsAccount.call{value: received}('');
-            require(success, 'Transfer failed');
-        } else {
-            IERC20(asset).safeTransfer(savingsAccount, received);
-        }
+        IERC20(asset).safeTransfer(savingsAccount, received);
         emit UnlockedTokens(asset, received);
     }
 
     /**
      * @dev Used to get amount of underlying tokens for given number of shares
      * @param shares the amount of shares
-     * @param asset the address of token locked
      * @return amount amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) external pure override returns (uint256 amount) {
+    function getTokensForShares(uint256 shares, address) external pure override returns (uint256 amount) {
         amount = shares;
     }
 

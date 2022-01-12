@@ -460,15 +460,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         address _asset,
         uint256 _amount
     ) internal {
-        if (_asset == address(0)) {
-            (bool transferSuccess, ) = _to.call{value: _amount}('');
-            require(transferSuccess, '_transferTokens: Transfer failed');
-            if (msg.value != _amount) {
-                (bool refundSuccess, ) = payable(_from).call{value: msg.value.sub(_amount)}('');
-                require(refundSuccess, '_transferTokens: Refund failed');
-            }
-        } else {
-            IERC20(_asset).safeTransferFrom(_from, _to, _amount);
-        }
+        IERC20(_asset).safeTransferFrom(_from, _to, _amount);
     }
 }

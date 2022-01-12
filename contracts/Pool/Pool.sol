@@ -613,11 +613,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         if (_loanStatus == LoanStatus.DEFAULTED || _loanStatus == LoanStatus.TERMINATED) {
             uint256 _totalAsset;
-            if (poolConstants.borrowAsset != address(0)) {
-                _totalAsset = IERC20(poolConstants.borrowAsset).balanceOf(address(this));
-            } else {
-                _totalAsset = address(this).balance;
-            }
+            _totalAsset = IERC20(poolConstants.borrowAsset).balanceOf(address(this));
             //assuming their will be no tokens in pool in any case except liquidation (to be checked) or we should store the amount in liquidate()
             _toTransfer = _toTransfer.mul(_totalAsset).div(totalSupply());
         }
