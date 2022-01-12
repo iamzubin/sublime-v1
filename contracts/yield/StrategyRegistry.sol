@@ -31,7 +31,6 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _maxStrategies maximum number of strategies allowed
      **/
     function initialize(address _owner, uint256 _maxStrategies) external initializer {
-        require(_maxStrategies != 0, 'StrategyRegistry::initialize maxStrategies cannot be zero');
         __Ownable_init();
         super.transferOwnership(_owner);
 
@@ -44,11 +43,11 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _maxStrategies updated number of max strategies allowed
      **/
     function updateMaxStrategies(uint256 _maxStrategies) external onlyOwner {
-        require(_maxStrategies != 0, 'StrategyRegistry::updateMaxStrategies should be more than zero');
         _updateMaxStrategies(_maxStrategies);
     }
 
     function _updateMaxStrategies(uint256 _maxStrategies) internal {
+        require(_maxStrategies != 0, 'StrategyRegistry::updateMaxStrategies should be more than zero');
         maxStrategies = _maxStrategies;
         emit MaxStrategiesUpdated(_maxStrategies);
     }
