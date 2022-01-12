@@ -481,7 +481,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
 
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+        for (uint256 _index; _index < _strategyList.length; _index++) {
             address _strategy = _strategyList[_index];
             uint256 _liquidityShares = _savingsAccount.balanceInShares(_sender, _collateralAsset, _strategy);
             if (_liquidityShares == 0 || _strategyList[_index] == address(0)) {
@@ -659,7 +659,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+        for (uint256 _index; _index < _strategyList.length; _index++) {
             if (_strategyList[_index] == address(0)) {
                 continue;
             }
@@ -735,7 +735,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
 
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+        for (uint256 _index; _index < _strategyList.length; _index++) {
             if (_strategyList[_index] == address(0)) {
                 continue;
             }
@@ -889,7 +889,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _liquidityShares;
-        for (uint256 index = 0; index < _strategyList.length; index++) {
+        for (uint256 index; index < _strategyList.length; index++) {
             if (_strategyList[index] == address(0)) {
                 continue;
             }
@@ -956,7 +956,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _activeAmount;
-        for (uint256 index = 0; index < _strategyList.length; index++) {
+        for (uint256 index; index < _strategyList.length; index++) {
             uint256 liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
             if (liquidityShares == 0 || _strategyList[index] == address(0)) {
                 continue;
