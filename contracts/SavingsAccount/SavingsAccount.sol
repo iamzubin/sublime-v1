@@ -410,8 +410,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @param _from address from whose allowance tokens are transferred
      * @param _to address of the user tokens are transferred to
      * @return the amount of tokens in terms of LP tokens of _token in _strategy strategy of 
-     *         savingsAccount that will be transferred from the _from address to the _to address  
-     *          
+     *         savingsAccount that will be transferred from the _from address to the _to address          
      */
     function transferFrom(
         uint256 _amount,
