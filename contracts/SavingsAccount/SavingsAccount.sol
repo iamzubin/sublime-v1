@@ -168,8 +168,11 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
         uint256 _tokensReceived = IYield(_currentStrategy).unlockTokens(_token, _amount);
 
+        uint256 _ethValue;
         if (_token != address(0)) {
             IERC20(_token).safeApprove(_newStrategy, _tokensReceived);
+        } else {
+            _ethValue = _tokensReceived;
         }
 
         uint256 _sharesReceived = IYield(_newStrategy).lockTokens{value: _ethValue}(address(this), _token, _tokensReceived);
