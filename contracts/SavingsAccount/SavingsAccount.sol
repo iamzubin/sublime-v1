@@ -158,6 +158,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     ) external override nonReentrant {
         require(_currentStrategy != _newStrategy, 'SavingsAccount::switchStrategy Same strategy');
         require(_amount != 0, 'SavingsAccount::switchStrategy Amount must be greater than zero');
+        require(IStrategyRegistry(strategyRegistry).registry(_newStrategy), 'SavingsAccount::deposit strategy do not exist');
 
         _amount = IYield(_currentStrategy).getSharesForTokens(_amount, _token);
 
