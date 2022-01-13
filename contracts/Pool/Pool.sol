@@ -321,7 +321,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         require(_currentCollateralRatio >= poolConstants.idealCollateralRatio, 'WBA3');
 
         uint256 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
-        uint256 _repaymentInterval = poolConstants.repaymentInterval;
+        uint128 _repaymentInterval = uint128(poolConstants.repaymentInterval);
         IRepayment(_poolFactory.repaymentImpl()).initializeRepayment(
             _noOfRepaymentIntervals,
             _repaymentInterval,
