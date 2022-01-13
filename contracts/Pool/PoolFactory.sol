@@ -153,7 +153,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     /**
-     * @notice functions affected by this modifier can only be invoked by the borrower (verified user) of the Pool
+     * @notice functions affected by this modifier can only be invoked by a verified user of Sublime
      */
     modifier onlyVerified(address _verifier) {
         require(
