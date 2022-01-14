@@ -15,6 +15,7 @@ import {
     ChainLinkAggregators,
     OperationalAmounts,
     extensionParams,
+    verificationParams,
 } from '../../utils/constants';
 import DeployHelper from '../../utils/deploys';
 
@@ -133,7 +134,7 @@ describe('Pool', async () => {
         await strategyRegistry.connect(admin).addStrategy(noYield.address);
 
         verification = await deployHelper.helper.deployVerification();
-        await verification.connect(admin).initialize(admin.address);
+        await verification.connect(admin).initialize(admin.address, verificationParams.activationDelay);
         adminVerifier = await deployHelper.helper.deployAdminVerifier();
         await verification.connect(admin).addVerifier(adminVerifier.address);
         await adminVerifier.connect(admin).initialize(admin.address, verification.address);
@@ -270,7 +271,7 @@ describe('Pool', async () => {
                 await DaiTokenContract.transfer(lender.address, OperationalAmounts._amountLent);
                 await DaiTokenContract.connect(lender).approve(pool.address, OperationalAmounts._amountLent);
 
-                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false))
+                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, zeroAddress))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(OperationalAmounts._amountLent, lender.address);
             });
