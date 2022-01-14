@@ -4,11 +4,17 @@ import { Verification } from '../../typechain/Verification';
 import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { PriceOracle } from '../../typechain/PriceOracle';
 import { SublimeProxy } from '../../typechain/SublimeProxy';
+import { IWETH9 } from '../../typechain/IWETH9';
+import { CreditLineUtils } from '../../typechain/CreditLineUtils';
+import { SavingsAccountEthUtils } from '../../typechain/SavingsAccountEthUtils';
 
 import { Verification__factory } from '../../typechain/factories/Verification__factory';
 import { AdminVerifier__factory } from '../../typechain/factories/AdminVerifier__factory';
 import { PriceOracle__factory } from '../../typechain/factories/PriceOracle__factory';
 import { SublimeProxy__factory } from '../../typechain/factories/SublimeProxy__factory';
+import { IWETH9__factory } from '../../typechain/factories/IWETH9__factory';
+import { CreditLineUtils__factory } from '../../typechain/factories/CreditLineUtils__factory';
+import { SavingsAccountEthUtils__factory } from '../../typechain/factories/SavingsAccountEthUtils__factory';
 
 import { Address } from 'hardhat-deploy/dist/types';
 
@@ -17,6 +23,26 @@ export default class DeployHelperContracts {
 
     constructor(deployerSigner: Signer) {
         this._deployerSigner = deployerSigner;
+    }
+
+    public async deploySavingsAccountEthUtils(weth: Address, savingsAccount: Address): Promise<SavingsAccountEthUtils> {
+        return await new SavingsAccountEthUtils__factory(this._deployerSigner).deploy(weth, savingsAccount);
+    }
+
+    public async getSavingsAccountEthUtils(contractAddress: Address): Promise<SavingsAccountEthUtils> {
+        return await new SavingsAccountEthUtils__factory(this._deployerSigner).attach(contractAddress);
+    }
+
+    public async deployCreditLinesUtils(weth: Address, creditlines: Address): Promise<CreditLineUtils> {
+        return await new CreditLineUtils__factory(this._deployerSigner).deploy(weth, creditlines);
+    }
+
+    public async getCreditlinesUtils(contractAddress: Address): Promise<CreditLineUtils> {
+        return await new CreditLineUtils__factory(this._deployerSigner).attach(contractAddress);
+    }
+
+    public async getIWETH9(contractAddress: Address): Promise<IWETH9> {
+        return await IWETH9__factory.connect(contractAddress, this._deployerSigner);
     }
 
     public async deployVerification(): Promise<Verification> {

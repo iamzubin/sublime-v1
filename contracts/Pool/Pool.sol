@@ -385,13 +385,14 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _lender address of the lender
      * @param _amount amount of liquidity supplied by the _lender
      * @param _strategy address of strategy from which tokens are lent if done from savings account,
-     *                  in case of direct deposits, zeroAddress should be used
+     * @param _fromSavingsAccount in case of direct deposits it is false
      */
     function lend(
         address _lender,
         uint256 _amount,
-        address _strategy
-    ) external payable nonReentrant {
+        address _strategy,
+        bool _fromSavingsAccount
+    ) external override nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
         address _borrower = poolConstants.borrower;
         require(_lender != _borrower && _borrower != msg.sender, 'L1');
@@ -406,10 +407,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         }
 
         address _borrowToken = poolConstants.borrowAsset;
-        bool _fromSavingsAccount;
-        if (_strategy != address(0)) {
-            _fromSavingsAccount = true;
-        }
+
         _deposit(_fromSavingsAccount, false, _borrowToken, _amount, _strategy, msg.sender, address(this));
         _mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);

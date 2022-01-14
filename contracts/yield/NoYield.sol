@@ -146,10 +146,9 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     /**
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
-     * @param asset the address of token
      * @return shares amount of shares for given tokens
      **/
-    function getSharesForTokens(uint256 amount, address asset) external pure override returns (uint256 shares) {
+    function getSharesForTokens(uint256 amount, address) external pure override returns (uint256 shares) {
         shares = amount;
     }
 }

@@ -103,4 +103,11 @@ interface IPool {
     function totalSupply() external view returns (uint256);
 
     function closeLoan() external payable;
+
+    function lend(
+        address _lender,
+        uint256 _amount,
+        address _strategy,
+        bool _fromSavingsAccount
+    ) external;
 }
