@@ -614,7 +614,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _amount,
         address _strategy,
         bool _fromSavingsAccount
-    ) external payable nonReentrant ifCreditLineExists(_id) {
+    ) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
         require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
@@ -854,7 +854,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev used to close credit line by borrower or lender
      * @param _id identifier for the credit line
      */
-    function close(uint256 _id) external ifCreditLineExists(_id) {
+    function close(uint256 _id) external {
         require(
             msg.sender == creditLineConstants[_id].borrower || msg.sender == creditLineConstants[_id].lender,
             'CreditLine: Permission denied while closing Line of credit'
