@@ -534,6 +534,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _borrower = _requestTo;
         }
 
+        require(_lender != _borrower, 'Lender and Borrower cannot be same addresses');
+
         uint256 _id = _createRequest(
             _lender,
             _borrower,
@@ -561,7 +563,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset,
         bool _requestByLender
     ) internal returns (uint256) {
-        require(_lender != _borrower, 'Lender and Borrower cannot be same addresses');
         uint256 _id = creditLineCounter + 1;
         creditLineCounter = _id;
         creditLineVariables[_id].status = CreditLineStatus.REQUESTED;
@@ -615,6 +616,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) external payable nonReentrant ifCreditLineExists(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
+        require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
         emit CollateralDeposited(_id, _amount, _strategy);
     }
@@ -624,8 +626,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _amount,
         address _strategy,
         bool _fromSavingsAccount
-    ) internal {
-        require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
+    ) internal {        
         if (_fromSavingsAccount) {
             _depositCollateralFromSavingsAccount(_id, _amount, msg.sender);
         } else {
