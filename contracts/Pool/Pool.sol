@@ -37,7 +37,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     address poolFactory;
 
     struct LendingDetails {
-        uint256 interestWithdrawn;
+        uint256 effectiveInterestWithdrawn;
         uint256 marginCallEndTime;
         uint256 extraLiquidityShares;
     }
@@ -431,12 +431,32 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_from == address(0) || _to == address(0)) {
             return;
         }
+        IPoolFactory _poolFactory = IPoolFactory(poolFactory);
+        address _lenderVerifier = poolConstants.lenderVerifier;
+        if (_lenderVerifier != address(0)) {
+            require(IVerification(_poolFactory.userRegistry()).isUser(_to, _lenderVerifier), 'TT5');
+        }
         require(getMarginCallEndTime(_from) == 0, 'TT3');
         require(getMarginCallEndTime(_to) == 0, 'TT4');
 
         //Withdraw repayments for user
+
+        //We enforce pending interest withdrawals before the transfers
+
+        //effectiveInterestWithdrawn stores the interest we assume addresses have withdrawn to simplify future interest withdrawals.
+        // For eg, if _from has 100 pool tokens, _to has 50 pool tokens, and _amount is 50, the effectiveInterestWithdrawn for 
+        // _from is done using 50 pool tokens, since future interest repayment withdrawals are done with respect to 50 tokens for _from
+        // Similarly, we use 100 for _to's effectiveInterestWithdrawn calculation since their future interest withdrawals are calculated
+        // based on 100 pool tokens. Refer calculateRepaymentWithdrawable()
         _withdrawRepayment(_from);
         _withdrawRepayment(_to);
+
+        uint256 _totalRepaidAmount = IRepayment(IPoolFactory(poolFactory).repaymentImpl()).getTotalRepaidAmount(address(this));
+        uint256 _totalSupply = totalSupply();
+        uint256 _fromBalance = balanceOf(_from);
+        uint256 _toBalance = balanceOf(_to);
+        lenders[_from].effectiveInterestWithdrawn = (_fromBalance.sub(_amount)).mul(_totalRepaidAmount).div(_totalSupply);
+        lenders[_to].effectiveInterestWithdrawn = (_toBalance.add(_amount)).mul(_totalRepaidAmount).div(_totalSupply);
 
         IExtension(IPoolFactory(poolFactory).extension()).removeVotes(_from, _to, _amount);
 
@@ -445,12 +465,11 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_liquidityShare == 0) return;
 
         uint256 toTransfer = _liquidityShare;
-        if (_amount != balanceOf(_from)) {
-            toTransfer = (_amount.mul(_liquidityShare)).div(balanceOf(_from));
+        if (_amount != _fromBalance) {
+            toTransfer = (_amount.mul(_liquidityShare)).div(_fromBalance);
         }
 
         lenders[_from].extraLiquidityShares = lenders[_from].extraLiquidityShares.sub(toTransfer);
-
         lenders[_to].extraLiquidityShares = lenders[_to].extraLiquidityShares.add(toTransfer);
     }
 
@@ -917,7 +936,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _totalRepaidAmount = IRepayment(IPoolFactory(poolFactory).repaymentImpl()).getTotalRepaidAmount(address(this));
 
         uint256 _amountWithdrawable = (balanceOf(_lender).mul(_totalRepaidAmount).div(totalSupply())).sub(
-            lenders[_lender].interestWithdrawn
+            lenders[_lender].effectiveInterestWithdrawn
         );
 
         return _amountWithdrawable;
@@ -940,7 +959,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_amountToWithdraw == 0) {
             return;
         }
-        lenders[_lender].interestWithdrawn = lenders[_lender].interestWithdrawn.add(_amountToWithdraw);
+        lenders[_lender].effectiveInterestWithdrawn = lenders[_lender].effectiveInterestWithdrawn.add(_amountToWithdraw);
 
         SavingsAccountUtil.transferTokens(poolConstants.borrowAsset, _amountToWithdraw, address(this), _lender);
     }
