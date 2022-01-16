@@ -29,6 +29,16 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      */
     mapping(address => address) public override liquidityToken;
 
+
+    /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+    
+
     /**
      * @notice emitted when liquidity token address of an asset is updated
      * @param asset the address of asset
@@ -88,6 +98,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @return received amount of tokens received
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
@@ -102,6 +113,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
             received = _withdrawERC(_asset, investedTo, amount);
             IERC20(_asset).safeTransfer(_wallet, received);
         }
+        emit EmergencyWithdraw(_asset,_wallet,received);
     }
 
     /**
