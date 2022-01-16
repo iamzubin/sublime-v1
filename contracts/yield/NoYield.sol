@@ -22,6 +22,16 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      **/
     address payable public savingsAccount;
 
+
+    /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+    
+
     /**
      * @notice checks if contract is invoked by savings account
      **/
@@ -72,6 +82,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @return received amount of tokens received
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
@@ -84,6 +95,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
             received = IERC20(_asset).balanceOf(address(this));
             IERC20(_asset).safeTransfer(_wallet, received);
         }
+        emit EmergencyWithdraw(_asset,_wallet,received);
     }
 
     /**
@@ -99,7 +111,6 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         address asset,
         uint256 amount
     ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
-        require(amount != 0, 'Invest: amount');
         if (asset != address(0)) {
             IERC20(asset).safeTransferFrom(user, address(this), amount);
         } else {
@@ -136,7 +147,6 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     }
 
     function _unlockTokens(address asset, uint256 amount) internal returns (uint256 received) {
-        require(amount != 0, 'Invest: amount');
         received = amount;
         if (asset == address(0)) {
             (bool success, ) = savingsAccount.call{value: received}('');
