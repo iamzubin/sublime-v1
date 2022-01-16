@@ -206,8 +206,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         address asset,
         uint256 amount
     ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
-        require(amount != 0, 'Invest: amount');
-
         address investedTo;
         if (asset == address(0)) {
             require(msg.value == amount, 'Invest: ETH amount');
@@ -227,8 +225,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @return received amount of tokens received
      **/
     function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
-        require(amount != 0, 'Invest: amount');
-
         if (asset == address(0)) {
             received = _withdrawETH(amount);
             (bool success, ) = savingsAccount.call{value: received}('');
