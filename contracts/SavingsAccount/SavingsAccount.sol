@@ -285,7 +285,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     function withdrawAll(address _token) external override nonReentrant returns (uint256 _tokenReceived) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
-        for (uint256 i = 0; i < _strategyList.length; ++i) {
+        for (uint256 i; i < _strategyList.length; ++i) {
             if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0 && _strategyList[i] != address(0)) {
                 uint256 _amount = balanceInShares[msg.sender][_token][_strategyList[i]];
                 _amount = IYield(_strategyList[i]).unlockTokens(_token, balanceInShares[msg.sender][_token][_strategyList[i]]);
@@ -463,7 +463,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     function getTotalTokens(address _user, address _token) external override returns (uint256 _totalTokens) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
-        for (uint256 i = 0; i < _strategyList.length; ++i) {
+        for (uint256 i; i < _strategyList.length; ++i) {
             uint256 _liquidityShares = balanceInShares[_user][_token][_strategyList[i]];
 
             if (_liquidityShares != 0) {
