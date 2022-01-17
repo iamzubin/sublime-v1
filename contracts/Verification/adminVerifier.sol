@@ -27,7 +27,11 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
     /// @notice Initializes the variables of the contract
     /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
     /// @param _admin Admin of the verification contract who can add verifiers and remove masterAddresses deemed invalid
-    function initialize(address _admin, address _verification,address _signerAddress) external initializer {
+    function initialize(
+        address _admin,
+        address _verification,
+        address _signerAddress
+    ) external initializer {
         super.__Ownable_init();
         super.transferOwnership(_admin);
         _updateVerification(_verification);

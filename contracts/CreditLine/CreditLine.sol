@@ -1004,7 +1004,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
 
         address _lender = creditLineConstants[_id].lender;
-        require(creditLineConstants[_id].autoLiquidation || msg.sender == _lender, 'CreditLine: Only Lender can liquidate if autoLiquidation is false');
+        require(
+            creditLineConstants[_id].autoLiquidation || msg.sender == _lender,
+            'CreditLine: Only Lender can liquidate if autoLiquidation is false'
+        );
 
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
