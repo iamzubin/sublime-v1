@@ -210,7 +210,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
 
     /**
      * @notice Used to unlock tokens from available protocol
-     * @param asset the address of underlying token
+     * @param asset the address of share token
      * @param amount the amount of asset
      * @return received amount of tokens received
      **/

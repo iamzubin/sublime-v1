@@ -121,6 +121,7 @@ contract Extension is Initializable, IExtension {
                 extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.add(_amount);
             }
         }
+        emit RebalaneVotes(_from, _to, _amount);
     }
 
     /**
