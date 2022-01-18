@@ -50,7 +50,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param _asset address of the asset
      * @return _tokenAddress address of the lqiudity token for the asset
      **/
-    function liquidityToken(address _asset) external view override returns (address _tokenAddress) {
+    function liquidityToken(address _asset) external pure override returns (address _tokenAddress) {
         _tokenAddress = _asset;
     }
 
@@ -107,7 +107,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
 
     /**
      * @notice Used to unlock tokens from the protocol
-     * @param asset the address of underlying token
+     * @param asset the address of share token
      * @param amount the amount of asset
      * @return tokensReceived received amount of tokens received
      **/
