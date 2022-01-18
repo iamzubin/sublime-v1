@@ -10,6 +10,7 @@ import {
     PriceOracleSource,
     RepaymentsInitParams,
     YearnPair,
+    VerificationParams,
 } from '../../utils/types';
 import hre from 'hardhat';
 import { Contracts } from '../../existingContracts/compound.json';
@@ -23,6 +24,7 @@ import {
     repaymentParams,
     testPoolFactoryParams,
     creditLineFactoryParams,
+    verificationParams,
 } from '../../utils/constants';
 
 import DeployHelper from '../../utils/deploys';
@@ -72,7 +74,10 @@ describe('Pool With Compound Strategy 2', async () => {
             {
                 _protocolFeeFraction: creditLineFactoryParams._protocolFeeFraction,
                 _liquidatorRewardFraction: creditLineFactoryParams._liquidatorRewardFraction,
-            } as CreditLineInitParams
+            } as CreditLineInitParams,
+            {
+                activationDelay: verificationParams.activationDelay
+            } as VerificationParams,
         );
     });
 

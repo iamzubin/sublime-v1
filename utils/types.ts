@@ -69,8 +69,12 @@ export interface DeploymentParams {
     extensionInitParams: ExtensionInitParams;
     repaymentsInitParams: RepaymentsInitParams;
     poolFactoryInitParams: PoolFactoryInitParams;
+    verificationParams: VerificationParams;
 }
 
+export interface VerificationParams {
+    activationDelay: BigNumberish
+}
 export interface InputParams {
     extenstionInitParams: ExtensionInitParams;
     creditLineInitParams: CreditLineInitParams;

@@ -200,7 +200,7 @@ describe('Test Savings Account (with ETH)', async () => {
                         .withdraw(sharesToWithdraw, zeroAddress, aaveYield.address, withdrawAccount.address, false, {})
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
-                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address);
+                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, aaveYield.address, false);
 
                 const balanceAfterWithdraw = await withdrawAccount.getBalance();
 
@@ -240,7 +240,7 @@ describe('Test Savings Account (with ETH)', async () => {
                         .withdraw(sharesToWithdraw, zeroAddress, aaveYield.address, withdrawAccount.address, true, {})
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
-                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, aaveEthLiquidityToken, aaveYield.address);
+                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, aaveEthLiquidityToken, aaveYield.address, true);
 
                 let sharesAfter = await liquidityToken.balanceOf(withdrawAccount.address);
 
@@ -326,7 +326,7 @@ describe('Test Savings Account (with ETH)', async () => {
                         .withdraw(sharesToWithdraw, zeroAddress, yearnYield.address, withdrawAccount.address, false)
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
-                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, yearnYield.address);
+                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, yearnYield.address, false);
 
                 const balanceAfterWithdraw = await withdrawAccount.getBalance();
 

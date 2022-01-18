@@ -92,6 +92,9 @@ export const extensionParams = {
     votingPassRatio: BigNumber.from(10).pow(28).mul(50),
 };
 
+export const verificationParams = {
+    activationDelay: 0
+}
 // Pool inputs to be manullay added
 // address _borrower,
 // address _borrowAsset,
