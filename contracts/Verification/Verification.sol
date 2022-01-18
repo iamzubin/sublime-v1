@@ -13,10 +13,10 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @return boolean that represents if the specified verifier is valid
     mapping(address => bool) public verifiers;
 
-    /// @notice Maps masterAddress with the verifier that was used to verify it
-    /// @dev Mapping is from masterAddress -> verifier -> bool(isVerified)
+    /// @notice Maps masterAddress with the verifier that was used to verify it and the time when master address is active
+    /// @dev Mapping is from masterAddress -> verifier -> activationTime
     /// @return Verifier used to verify the given master address
-    mapping(address => mapping(address => bool)) public masterAddresses;
+    mapping(address => mapping(address => uint256)) public masterAddress;
 
     /// @notice Maps linkedAddresses with the master address
     /// @dev Mapping is linkedAddress -> MasterAddress
@@ -79,12 +79,12 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev unregistering master address doesn't affect linked addreses mapping to master address, though they would not be verified by this verifier anymore
     /// @param _masterAddress address which is being unregistered
     /// @param _verifier verifier address from which master address is unregistered
-    function unregisterMasterAddress(address _masterAddress) external override {
+    function unregisterMasterAddress(address _masterAddress, address _verifier) external override {
         if (msg.sender != super.owner()) {
-            require(masterAddresses[_masterAddress][msg.sender] != 0, 'V:UMA-Invalid verifier');
+            require(masterAddresses[_masterAddress][msg.sender] != 0 && msg.sender == _verifier, 'V:UMA-Invalid verifier');
         }
-        delete masterAddresses[_masterAddress][msg.sender];
-        emit UserUnregistered(_masterAddress, msg.sender, msg.sender);
+        delete masterAddresses[_masterAddress][_verifier];
+        emit UserUnregistered(_masterAddress, _verifier, msg.sender);
     }
 
     /// @notice Link an address with a master address
