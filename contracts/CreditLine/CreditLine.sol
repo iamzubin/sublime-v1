@@ -386,6 +386,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev Used to Calculate Interest Per second on given principal and Interest rate
      * @param _principal principal Amount for which interest has to be calculated.
      * @param _borrowRate It is the Interest Rate at which Credit Line is approved
+     * @param _timeElapsed time in seconds to calculate interest for
      * @return interest per second for the given parameters
      */
     function calculateInterest(
@@ -458,7 +459,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _maxPossible = _borrowLimit;
         }
         if (_maxPossible > _currentDebt) {
-            return _maxPossible.sub(_currentDebt);
+            return _maxPossible - _currentDebt;
         }
         return 0;
     }
@@ -481,7 +482,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
 
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+        for (uint256 _index; _index < _strategyList.length; ++_index) {
             address _strategy = _strategyList[_index];
             uint256 _liquidityShares = _savingsAccount.balanceInShares(_sender, _collateralAsset, _strategy);
             if (_liquidityShares == 0 || _strategyList[_index] == address(0)) {
@@ -659,7 +660,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+
+        for (uint256 _index; _index < _strategyList.length; ++_index) {
             if (_strategyList[_index] == address(0)) {
                 continue;
             }
@@ -734,8 +736,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
-
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+        
+        for (uint256 _index; _index < _strategyList.length; ++_index) {
             if (_strategyList[_index] == address(0)) {
                 continue;
             }
@@ -809,7 +811,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         uint256 _interestToPay = _totalInterestAccrued.sub(creditLineVariables[_id].totalInterestRepaid);
         uint256 _totalCurrentDebt = _interestToPay.add(creditLineVariables[_id].principal);
-        uint256 _principalPaid = 0;
+        uint256 _principalPaid;
 
         if (_amount >= _totalCurrentDebt) {
             _amount = _totalCurrentDebt;
@@ -889,13 +891,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _liquidityShares;
-        for (uint256 index = 0; index < _strategyList.length; index++) {
+        
+        for (uint256 index; index < _strategyList.length; ++index) {
             if (_strategyList[index] == address(0)) {
                 continue;
             }
             _liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            uint256 _tokenInStrategy = _liquidityShares;
-            _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
+            uint256 _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
 
             _amount = _amount.add(_tokenInStrategy);
         }
@@ -956,7 +958,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _activeAmount;
-        for (uint256 index = 0; index < _strategyList.length; index++) {
+        
+        for (uint256 index; index < _strategyList.length; ++index) {
             uint256 liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
             if (liquidityShares == 0 || _strategyList[index] == address(0)) {
                 continue;
@@ -1003,8 +1006,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             'CreditLine: Collateral ratio is higher than ideal value'
         );
 
-        address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address _lender = creditLineConstants[_id].lender;
+        require(creditLineConstants[_id].autoLiquidation || msg.sender == _lender, 'CreditLine: Only Lender can liquidate if autoLiquidation is false');
+
+        address _collateralAsset = creditLineConstants[_id].collateralAsset;
         uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
 
@@ -1047,7 +1052,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset,
         uint256 _totalCollateralTokens
     ) internal view returns (uint256) {
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowAsset, _collateralAsset);
+        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_collateralAsset, _borrowAsset);
         uint256 _borrowTokens = (
             _totalCollateralTokens.mul(uint256(10**30).sub(liquidatorRewardFraction)).div(10**30).mul(_ratioOfPrices).div(10**_decimals)
         );
