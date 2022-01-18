@@ -7,26 +7,33 @@ import '../interfaces/IVerification.sol';
 
 /// @title Contract that handles linking identity of user to address
 contract Verification is Initializable, IVerification, OwnableUpgradeable {
+    struct LinkedAddress {
+        address masterAddress;
+        uint256 activatesAt;
+    }
+
+    /// @notice Delay in seconds after which addresses are activated once registered or linked
+    uint256 public activationDelay;
+
     /// @notice Tells whether a given verifier is valid
     /// @dev Mapping that stores valid verifiers as added by admin. verifier -> true/false
     /// @return boolean that represents if the specified verifier is valid
     mapping(address => bool) public verifiers;
 
-    /// @notice Maps masterAddress with the verifier that was used to verify it
-    /// @dev Mapping is from masterAddress -> verifier -> bool(isVerified)
+    /// @notice Maps masterAddress with the verifier that was used to verify it and the time when master address is active
+    /// @dev Mapping is from masterAddress -> verifier -> activationTime
     /// @return Verifier used to verify the given master address
-    mapping(address => mapping(address => bool)) public masterAddress;
+    mapping(address => mapping(address => uint256)) public masterAddresses;
 
-    /// @notice Maps linkedAddresses with the master address
-    /// @dev Mapping is linkedAddress -> MasterAddress
-    /// @return Returns the master address for the linkedAddress
-    mapping(address => address) public linkedAddresses;
+    /// @notice Maps linkedAddresses with the master address and activation time
+    /// @dev Mapping is linkedAddress -> (MasterAddress, activationTimestamp)
+    /// @return Returns the master address and activation time for the linkedAddress
+    mapping(address => LinkedAddress) public linkedAddresses;
 
-    /** 
-    @dev Message that has to be prefixed to the address when signing with master address so that specified address can be linked to it
-    e.g. If 0xabc is to be linked to 0xfed, then 0xfed has to sign ${APPROVAL_MESSAGE}0xabc with 0xfed's private key. This signed message has to be then submitted by 0xabc to linkAddress method
-    */
-    string constant APPROVAL_MESSAGE = 'APPROVING ADDRESS TO BE LINKED TO ME ON SUBLIME';
+    /// @notice Maps address to link with the master address
+    /// @dev Mapping is linkedAddress -> MasterAddress -> isPending(bool)
+    /// @return Returns if linkedAddress has a pending request from master address
+    mapping(address => mapping(address => bool)) public pendingLinkAddresses;
 
     /// @notice Prevents anyone other than a valid verifier from calling a function
     modifier onlyVerifier() {
@@ -37,9 +44,22 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @notice Initializes the variables of the contract
     /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
     /// @param _admin Admin of the verification contract who can add verifiers and remove masterAddresses deemed invalid
-    function initialize(address _admin) external initializer {
+    /// @param _activationDelay Delay in seconds after which addresses are registered or linked
+    function initialize(address _admin, uint256 _activationDelay) external initializer {
         super.__Ownable_init();
         super.transferOwnership(_admin);
+        _updateActivationDelay(_activationDelay);
+    }
+
+    /// @notice owner can update activation delay
+    /// @param _activationDelay updated value of activation delay for registered/linking addresses in seconds
+    function updateActivationDelay(uint256 _activationDelay) external onlyOwner {
+        _updateActivationDelay(_activationDelay);
+    }
+
+    function _updateActivationDelay(uint256 _activationDelay) internal {
+        activationDelay = _activationDelay;
+        emit ActivationDelayUpdated(_activationDelay);
     }
 
     /// @notice owner can add new verifier
@@ -65,13 +85,16 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev Multiple accounts can be linked to master address to act on behalf. Master address can be registered by multiple verifiers
     /// @param _masterAddress address which is registered as verified
     /// @param _isMasterLinked boolean which specifies if the masterAddress has to be added as a linked address
+    /// _isMasterLinked is used to support users who want to keep the master address as a cold wallet for security
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external override onlyVerifier {
-        require(!masterAddresses[_masterAddress][msg.sender], 'V:RMA-Already registered');
-        masterAddresses[_masterAddress][msg.sender] = true;
+        require(masterAddresses[_masterAddress][msg.sender] == 0, "V:RMA-Already Registered");
+        uint256 _masterAddressActivatesAt = block.timestamp + activationDelay;
+        masterAddresses[_masterAddress][msg.sender] = _masterAddressActivatesAt;
+        emit UserRegistered(_masterAddress, msg.sender, _masterAddressActivatesAt);
+
         if (_isMasterLinked) {
-            linkedAddresses[_masterAddress] = _masterAddress;
+            _linkAddress(_masterAddress, _masterAddress);
         }
-        emit UserRegistered(_masterAddress, msg.sender, _isMasterLinked);
     }
 
     /// @notice Master address can be unregistered by registered verifier or owner
@@ -80,29 +103,51 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _verifier verifier address from which master address is unregistered
     function unregisterMasterAddress(address _masterAddress, address _verifier) external override {
         if (msg.sender != super.owner()) {
-            require(masterAddresses[_masterAddress][_verifier] && msg.sender == _verifier, 'V:UMA-Invalid verifier');
+            require(masterAddresses[_masterAddress][msg.sender] != 0, 'V:UMA-Invalid verifier');
         }
         delete masterAddresses[_masterAddress][_verifier];
         emit UserUnregistered(_masterAddress, _verifier, msg.sender);
     }
 
+    function _linkAddress(address _linked, address _master) internal {
+        uint256 _linkedAddressActivatesAt = block.timestamp + activationDelay;
+        linkedAddresses[_linked] = LinkedAddress(_master, _linkedAddressActivatesAt);
+        emit AddressLinked(_linked, _master, _linkedAddressActivatesAt);
+    }
+
+    /// @notice Used by master address to request linking another address to it
+    /// @dev only master address can initiate linking of another address
+    /// @param _linkedAddress address which is to be linked
+    function requestAddressLinking(address _linkedAddress) external {
+        require(linkedAddresses[_linkedAddress].masterAddress == address(0), 'V:RAL-Address already linked');
+        pendingLinkAddresses[_linkedAddress][msg.sender] = true;
+        emit AddressLinkingRequested(_linkedAddress, msg.sender);
+    }
+
+    /// @notice Used by master address to cancel request linking another address to it
+    /// @param  _linkedAddress address which is to be linked
+    function cancelAddressLinkingRequest(address _linkedAddress) external {
+        require(pendingLinkAddresses[_linkedAddress][msg.sender], 'V:CALR-No pending request');
+        delete pendingLinkAddresses[_linkedAddress][msg.sender];
+        emit AddressLinkingRequestCancelled(_linkedAddress, msg.sender);
+    }
+
     /// @notice Link an address with a master address
     /// @dev Master address to which the address is being linked need not be verified
-    /// @param _approval Signature made by the master address to link the address
-    function linkAddress(bytes memory _approval) external {
-        require(linkedAddresses[msg.sender] == address(0), 'V:LA-Address already linked');
-        bytes memory _messageToSign = abi.encodePacked(APPROVAL_MESSAGE, msg.sender);
-        bytes32 _hashedMessage = keccak256(_messageToSign);
-        address _signer = ECDSA.recover(_hashedMessage, _approval);
-        linkedAddresses[msg.sender] = _signer;
-        emit AddressLinked(msg.sender, _signer);
+    /// linkAddress can only accept the request made by a master address, but can't initiate a linking request
+    /// @param _masterAddress master address to link to
+    function linkAddress(address _masterAddress) external {
+        require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
+        require(pendingLinkAddresses[msg.sender][_masterAddress], 'V:LA-No pending request');
+        _linkAddress(msg.sender, _masterAddress);
     }
+    
 
     /// @notice Unlink address with master address
     /// @dev a single address can be linked to only one master address
     /// @param _linkedAddress Address that is being unlinked
     function unlinkAddress(address _linkedAddress) external {
-        address _linkedTo = linkedAddresses[_linkedAddress];
+        address _linkedTo = linkedAddresses[_linkedAddress].masterAddress;
         require(_linkedTo != address(0), 'V:UA-Address not linked');
         require(_linkedTo == msg.sender, 'V:UA-Not linked to sender');
         delete linkedAddresses[_linkedAddress];
@@ -115,8 +160,14 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _verifier verifier with which master address has to be verified
     /// @return if the user is linke dto a registered master address
     function isUser(address _user, address _verifier) external view override returns (bool) {
-        address _masterAddress = linkedAddresses[_user];
-        if (_masterAddress == address(0) || !masterAddresses[_masterAddress][_verifier]) {
+        LinkedAddress memory _linkedAddress = linkedAddresses[_user];
+        uint256 _masterActivatesAt = masterAddresses[_linkedAddress.masterAddress][_verifier];
+        if(
+            _linkedAddress.masterAddress == address(0) || 
+            _linkedAddress.activatesAt > block.timestamp ||
+            _masterActivatesAt > block.timestamp ||
+            _masterActivatesAt == 0 
+        ) {
             return false;
         }
         return true;
