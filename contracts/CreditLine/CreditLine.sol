@@ -888,7 +888,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function cancel(uint256 _id) external ifCreditLineExists(_id) {
         require(
             msg.sender == creditLineConstants[_id].borrower || msg.sender == creditLineConstants[_id].lender,
-            'CreditLine: Permission denied while closing Line of credit'
+            'CreditLine: Permission denied while cancelling CreditLine'
         );
         require(creditLineVariables[_id].status == CreditLineStatus.REQUESTED, 'CreditLine:cancle Credit Line should be in requested state');
         delete creditLineVariables[_id];
