@@ -16,7 +16,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @notice Maps masterAddress with the verifier that was used to verify it and the time when master address is active
     /// @dev Mapping is from masterAddress -> verifier -> activationTime
     /// @return Verifier used to verify the given master address
-    mapping(address => mapping(address => uint256)) public masterAddress;
+    mapping(address => mapping(address => uint256)) public masterAddresses;
 
     /// @notice Maps linkedAddresses with the master address
     /// @dev Mapping is linkedAddress -> MasterAddress
