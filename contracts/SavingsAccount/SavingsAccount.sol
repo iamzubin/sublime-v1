@@ -176,7 +176,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         } else {
             _ethValue = _tokensReceived;
         }
-        _amount = _tokensReceived;
 
         uint256 _sharesReceived = IYield(_newStrategy).lockTokens{value: _ethValue}(address(this), _token, _tokensReceived);
 
@@ -208,7 +207,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             'SavingsAccount::withdraw Insufficient amount'
         );
 
-        (address _receivedToken, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
+        (, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
 
         emit Withdrawn(msg.sender, _to, _amount, _token, _strategy, _withdrawShares);
         return _amountReceived;
@@ -245,7 +244,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _amount,
             'SavingsAccount::withdrawFrom insufficient balance'
         );
-        (address _receivedToken, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
+        (, uint256 _amountReceived) = _withdraw(_amount, _token, _strategy, _to, _withdrawShares);
         emit Withdrawn(_from, msg.sender, _amount, _token, _strategy, _withdrawShares);
         return _amountReceived;
     }
@@ -292,7 +291,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256  _tokenReceived;
 
-        for (uint256 i = 0; i < _strategyList.length; i++) {
+        for (uint256 i; i < _strategyList.length; ++i) {
             if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0 && _strategyList[i] != address(0)) {
                 uint256 _amount = balanceInShares[msg.sender][_token][_strategyList[i]];
                 _amount = IYield(_strategyList[i]).unlockTokens(_token, balanceInShares[msg.sender][_token][_strategyList[i]]);
@@ -473,7 +472,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _totalTokens;
 
-        for (uint256 i = 0; i < _strategyList.length; i++) {
+        for (uint256 i; i < _strategyList.length; ++i) {
             uint256 _liquidityShares = balanceInShares[_user][_token][_strategyList[i]];
 
             if (_liquidityShares != 0) {
