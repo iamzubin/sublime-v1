@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 
-import '../Proxy.sol';
+import '../SublimeProxy.sol';
 import '../interfaces/IPoolFactory.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IVerification.sol';
