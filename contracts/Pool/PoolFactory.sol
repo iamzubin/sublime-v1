@@ -737,7 +737,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
     /**
      * @notice used to query protocol fee fraction and address of the collector
-     * @return protocolFee Fraction multiplied by SCALING_FACTOR(SCALING_FACTOR(10**30))
+     * @return protocolFee Fraction multiplied by SCALING_FACTOR(10**30)
      * @return address of protocol fee collector
      */
     function getProtocolFeeData() external view override returns (uint256, address) {

@@ -672,7 +672,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_loanDurationTillNow <= _loanDurationCovered) {
             return 0;
         }
-        uint256 _interestAccrued = _interestPerSecond.mul(_loanDurationTillNow.sub(_loanDurationCovered)).div(10**60);
+        uint256 _interestAccrued = _interestPerSecond.mul(_loanDurationTillNow.sub(_loanDurationCovered)).div(SCALING_FACTOR**2);
 
         return _interestAccrued;
     }
