@@ -2,6 +2,15 @@
 pragma solidity 0.7.0;
 
 interface IPool {
+    
+    enum LoanStatus {
+        COLLECTION, //denotes collection period
+        ACTIVE, // denotes the active loan
+        CLOSED, // Loan is repaid and closed
+        CANCELLED, // Cancelled by borrower
+        DEFAULTED, // Repaymennt defaulted by  borrower
+        TERMINATED // Pool terminated by admin
+    }
     /**
      * @notice Emitted when pool is cancelled either on borrower request or insufficient funds collected
      */

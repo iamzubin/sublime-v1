@@ -46,6 +46,16 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      */
     uint16 public referralCode;
 
+
+    /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+    
+
     /**
      * @notice emitted when aave protocol related addresses are updated
      * @param wethGateway address of wethGateway
@@ -167,6 +177,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @return received amount of tokens received
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
@@ -180,6 +191,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
             received = _withdrawERC(_asset, amount);
             IERC20(_asset).safeTransfer(_wallet, received);
         }
+        emit EmergencyWithdraw(_asset,_wallet,received);
     }
 
     /**
@@ -194,8 +206,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         address asset,
         uint256 amount
     ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
-        require(amount != 0, 'Invest: amount');
-
         address investedTo;
         if (asset == address(0)) {
             require(msg.value == amount, 'Invest: ETH amount');
@@ -215,8 +225,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @return received amount of tokens received
      **/
     function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
-        require(amount != 0, 'Invest: amount');
-
         if (asset == address(0)) {
             received = _withdrawETH(amount);
             (bool success, ) = savingsAccount.call{value: received}('');
