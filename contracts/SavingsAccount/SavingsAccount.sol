@@ -122,16 +122,17 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 _amount,
         address _token,
         address _strategy
-    ) internal returns (uint256 _sharesReceived) {
+    ) internal returns (uint256) {
         require(_amount != 0, 'SavingsAccount::_deposit Amount must be greater than zero');
-        _sharesReceived = _depositToYield(_amount, _token, _strategy);
+        uint256 _sharesReceived = _depositToYield(_amount, _token, _strategy);
+        return _sharesReceived;
     }
 
     function _depositToYield(
         uint256 _amount,
         address _token,
         address _strategy
-    ) internal returns (uint256 _sharesReceived) {
+    ) internal returns (uint256) {
         require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
         uint256 _ethValue;
 
@@ -139,7 +140,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _ethValue = _amount;
             require(msg.value == _amount, 'SavingsAccount::deposit ETH sent must be equal to amount');
         }
-        _sharesReceived = IYield(_strategy).lockTokens{value: _ethValue}(msg.sender, _token, _amount);
+        uint256 _sharesReceived = IYield(_strategy).lockTokens{value: _ethValue}(msg.sender, _token, _amount);
+        return _sharesReceived;
     }
 
     /**
@@ -254,7 +256,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _strategy,
         address payable _to,
         bool _withdrawShares
-    ) internal returns (address _tokenReceived, uint256 _amountReceived) {
+    ) internal returns (address, uint256) {
+        address _tokenReceived;
+        uint256 _amountReceived;
         if (_withdrawShares) {
             _tokenReceived = IYield(_strategy).liquidityToken(_token);
             require(_tokenReceived != address(0), 'Liquidity Tokens address cannot be address(0)');
@@ -264,6 +268,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             _amountReceived = IYield(_strategy).unlockTokens(_token, _amount);
         }
         _transfer(_amountReceived, _tokenReceived, _to);
+        return (_tokenReceived, _amountReceived);
     }
 
     function _transfer(
@@ -283,8 +288,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @notice used to withdraw a token from all strategies
      * @param _token address of token which is to be withdrawn
      */
-    function withdrawAll(address _token) external override nonReentrant returns (uint256 _tokenReceived) {
+    function withdrawAll(address _token) external override nonReentrant returns (uint256) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
+        uint256  _tokenReceived;
 
         for (uint256 i = 0; i < _strategyList.length; i++) {
             if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0 && _strategyList[i] != address(0)) {
@@ -300,6 +306,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         _transfer(_tokenReceived, _token, payable(msg.sender));
 
         emit WithdrawnAll(msg.sender, _tokenReceived, _token);
+
+        return _tokenReceived;
     }
 
     function withdrawAll(address _token, address _strategy) external override nonReentrant returns (uint256 _tokenReceived) {
@@ -461,8 +469,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @param _token address of token
      * @return _totalTokens total number of tokens of the token with the user
      */
-    function getTotalTokens(address _user, address _token) external override returns (uint256 _totalTokens) {
+    function getTotalTokens(address _user, address _token) external override returns (uint256) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
+        uint256 _totalTokens;
 
         for (uint256 i = 0; i < _strategyList.length; i++) {
             uint256 _liquidityShares = balanceInShares[_user][_token][_strategyList[i]];
@@ -476,6 +485,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
                 _totalTokens = _totalTokens.add(_tokenInStrategy);
             }
         }
+        return _totalTokens;
     }
 
     receive() external payable {}
