@@ -883,12 +883,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @notice used to calculate the total collateral tokens
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @param _id identifier for the credit line
-     * @return _amount total collateral tokens deposited into the credit line
+     * @return total collateral tokens deposited into the credit line
      */
-    function calculateTotalCollateralTokens(uint256 _id) public returns (uint256 _amount) {
+    function calculateTotalCollateralTokens(uint256 _id) public returns (uint256) {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _liquidityShares;
+        uint256 _amount;
         for (uint256 index = 0; index < _strategyList.length; index++) {
             if (_strategyList[index] == address(0)) {
                 continue;
@@ -899,6 +900,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
             _amount = _amount.add(_tokenInStrategy);
         }
+        return _amount;
     }
 
     /**
