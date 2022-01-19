@@ -100,12 +100,14 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param asset the address of underlying token
      * @return aToken address of liquidity token
      **/
-    function liquidityToken(address asset) public view override returns (address aToken) {
+    function liquidityToken(address asset) public view override returns (address) {
+        address aToken;
         if (asset == address(0)) {
             aToken = IWETHGateway(wethGateway).getAWETHAddress();
         } else {
             (aToken, , ) = IProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(asset);
         }
+        return aToken;
     }
 
     /**
@@ -168,9 +170,10 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
      */
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256) {
         require(_wallet != address(0), 'cant burn');
         uint256 amount = IERC20(liquidityToken(_asset)).balanceOf(address(this));
+        uint256 received;
 
         if (_asset == address(0)) {
             received = _withdrawETH(amount);
@@ -180,6 +183,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
             received = _withdrawERC(_asset, amount);
             IERC20(_asset).safeTransfer(_wallet, received);
         }
+        return received;
     }
 
     /**
@@ -193,9 +197,9 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external payable override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
-
+        uint256 sharesReceived;
         address investedTo;
         if (asset == address(0)) {
             require(msg.value == amount, 'Invest: ETH amount');
@@ -206,6 +210,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         }
 
         emit LockedTokens(user, investedTo, sharesReceived);
+        return sharesReceived;
     }
 
     /**
@@ -214,9 +219,9 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param amount the amount of asset
      * @return received amount of tokens received
      **/
-    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
+    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
-
+        uint256 received;
         if (asset == address(0)) {
             received = _withdrawETH(amount);
             (bool success, ) = savingsAccount.call{value: received}('');
@@ -227,6 +232,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         }
 
         emit UnlockedTokens(asset, received);
+        return received;
     }
 
     /**
@@ -253,29 +259,30 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param asset the address of token locked
      * @return amount amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) public view override returns (uint256 amount) {
+    function getTokensForShares(uint256 shares, address asset) public view override returns (uint256) {
         if (shares == 0) return 0;
         address aToken = liquidityToken(asset);
 
         (, , , , , , , uint256 liquidityIndex, , ) = IProtocolDataProvider(protocolDataProvider).getReserveData(asset);
 
-        amount = IScaledBalanceToken(aToken).scaledBalanceOf(address(this)).mul(liquidityIndex).mul(shares).div(
+        uint256 amount = IScaledBalanceToken(aToken).scaledBalanceOf(address(this)).mul(liquidityIndex).mul(shares).div(
             IERC20(aToken).balanceOf(address(this))
         );
+        return amount;
     }
 
     /**
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
      * @param asset the address of token
-     * @return shares amount of shares for given tokens
+     * @return amount of shares for given tokens
      **/
-    function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
-        shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
+    function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256) {
+        return (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
     }
 
-    function _depositETH(uint256 amount) internal returns (address aToken, uint256 sharesReceived) {
-        aToken = IWETHGateway(wethGateway).getAWETHAddress();
+    function _depositETH(uint256 amount) internal returns (address, uint256) {
+        address aToken = IWETHGateway(wethGateway).getAWETHAddress();
 
         uint256 aTokensBefore = IERC20(aToken).balanceOf(address(this));
 
@@ -284,11 +291,13 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         //lock collateral
         IWETHGateway(wethGateway).depositETH{value: amount}(lendingPool, address(this), referralCode);
 
-        sharesReceived = IERC20(aToken).balanceOf(address(this)).sub(aTokensBefore);
+        uint256 sharesReceived = IERC20(aToken).balanceOf(address(this)).sub(aTokensBefore);
+
+        return (aToken, sharesReceived);
     }
 
-    function _depositERC20(address asset, uint256 amount) internal returns (address aToken, uint256 sharesReceived) {
-        aToken = liquidityToken(asset);
+    function _depositERC20(address asset, uint256 amount) internal returns (address, uint256) {
+        address aToken = liquidityToken(asset);
         uint256 aTokensBefore = IERC20(aToken).balanceOf(address(this));
 
         address lendingPool = ILendingPoolAddressesProvider(lendingPoolAddressesProvider).getLendingPool();
@@ -300,10 +309,12 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         //lock collateral in vault
         AaveLendingPool(lendingPool).deposit(asset, amount, address(this), referralCode);
 
-        sharesReceived = IERC20(aToken).balanceOf(address(this)).sub(aTokensBefore);
+        uint256 sharesReceived = IERC20(aToken).balanceOf(address(this)).sub(aTokensBefore);
+
+        return (aToken, sharesReceived);
     }
 
-    function _withdrawETH(uint256 amount) internal returns (uint256 received) {
+    function _withdrawETH(uint256 amount) internal returns (uint256) {
         IERC20(IWETHGateway(wethGateway).getAWETHAddress()).approve(wethGateway, amount);
 
         uint256 ethBalance = address(this).balance;
@@ -311,10 +322,10 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         //lock collateral
         IWETHGateway(wethGateway).withdrawETH(amount, address(this));
 
-        received = address(this).balance.sub(ethBalance);
+        return (address(this).balance.sub(ethBalance));
     }
 
-    function _withdrawERC(address asset, uint256 amount) internal returns (uint256 tokensReceived) {
+    function _withdrawERC(address asset, uint256 amount) internal returns (uint256) {
         address aToken = liquidityToken(asset);
 
         address lendingPool = ILendingPoolAddressesProvider(lendingPoolAddressesProvider).getLendingPool();
@@ -326,7 +337,8 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         //withdraw collateral from vault
         AaveLendingPool(lendingPool).withdraw(asset, amount, address(this));
 
-        tokensReceived = IERC20(asset).balanceOf(address(this)).sub(tokensBefore);
+        uint256 tokensReceived = IERC20(asset).balanceOf(address(this)).sub(tokensBefore);
+        return tokensReceived;
     }
 
     receive() external payable {}
