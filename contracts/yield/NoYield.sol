@@ -48,10 +48,10 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     /**
      * @notice used to query liquidity token for a given asset
      * @param _asset address of the asset
-     * @return _tokenAddress address of the lqiudity token for the asset
+     * @return address of the lqiudity token for the asset
      **/
-    function liquidityToken(address _asset) external pure override returns (address _tokenAddress) {
-        _tokenAddress = _asset;
+    function liquidityToken(address _asset) external pure override returns (address) {
+        return _asset;
     }
 
     /**
@@ -88,21 +88,21 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param user the address of user
      * @param asset the address of token to invest
      * @param amount the amount of asset
-     * @return sharesReceived amount of shares received
+     * @return amount of shares received
      **/
     function lockTokens(
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external payable override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
         if (asset != address(0)) {
             IERC20(asset).safeTransferFrom(user, address(this), amount);
         } else {
             require(msg.value == amount, 'Invest: ETH amount');
         }
-        sharesReceived = amount;
-        emit LockedTokens(user, asset, sharesReceived);
+        emit LockedTokens(user, asset, amount);
+        return amount;
     }
 
     /**
@@ -116,9 +116,9 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         override
         onlySavingsAccount
         nonReentrant
-        returns (uint256 tokensReceived)
+        returns (uint256)
     {
-        tokensReceived = _unlockTokens(asset, amount);
+        return (_unlockTokens(asset, amount));
     }
 
     /**
@@ -127,39 +127,39 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param amount the amount of shares to unlock
      * @return received amount of shares received
      **/
-    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
-        received = _unlockTokens(asset, amount);
+    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
+        return (_unlockTokens(asset, amount));
     }
 
-    function _unlockTokens(address asset, uint256 amount) internal returns (uint256 received) {
+    function _unlockTokens(address asset, uint256 amount) internal returns (uint256) {
         require(amount != 0, 'Invest: amount');
-        received = amount;
         if (asset == address(0)) {
-            (bool success, ) = savingsAccount.call{value: received}('');
+            (bool success, ) = savingsAccount.call{value: amount}('');
             require(success, 'Transfer failed');
         } else {
-            IERC20(asset).safeTransfer(savingsAccount, received);
+            IERC20(asset).safeTransfer(savingsAccount, amount);
         }
-        emit UnlockedTokens(asset, received);
+        emit UnlockedTokens(asset, amount);
+        return amount;
     }
 
     /**
      * @dev Used to get amount of underlying tokens for given number of shares
      * @param shares the amount of shares
      * @param asset the address of token locked
-     * @return amount amount of underlying tokens
+     * @return amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) external pure override returns (uint256 amount) {
-        amount = shares;
+    function getTokensForShares(uint256 shares, address asset) external pure override returns (uint256) {
+        return shares;
     }
 
     /**
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
      * @param asset the address of token
-     * @return shares amount of shares for given tokens
+     * @return amount of shares for given tokens
      **/
-    function getSharesForTokens(uint256 amount, address asset) external pure override returns (uint256 shares) {
-        shares = amount;
+    function getSharesForTokens(uint256 amount, address asset) external pure override returns (uint256) {
+        return amount;
     }
 }
