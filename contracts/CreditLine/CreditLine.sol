@@ -24,7 +24,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         NOT_CREATED,
         REQUESTED,
         ACTIVE,
-        CLOSED,
         CANCELLED,
         LIQUIDATED
     }
@@ -189,6 +188,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param repayAmount amount repaid
      */
     event CompleteCreditLineRepaid(uint256 indexed id, uint256 repayAmount);
+
+    /**
+     * @notice emitted when credit line is cancelled
+     * @param id id of the credit line that was cancelled
+     */
+    event CreditLineCancelled(uint256 indexed id);
 
     /**
      * @notice emitted when the credit line is closed by one of the parties of credit line
@@ -856,8 +861,24 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineVariables[_id].principal == 0, 'CreditLine: Cannot be closed since not repaid.');
         require(creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate == 0, 'CreditLine: Cannot be closed since not repaid.');
-        creditLineVariables[_id].status = CreditLineStatus.CLOSED;
+        delete creditLineConstants[_id];
+        delete creditLineVariables[_id];
         emit CreditLineClosed(_id);
+    }
+
+    /**
+     * @dev used to cancel credit line by borrower or lender
+     * @param _id identifier for the credit line
+    */
+    function cancel(uint256 _id) external ifCreditLineExists(_id) {
+        require(
+            msg.sender == creditLineConstants[_id].borrower || msg.sender == creditLineConstants[_id].lender,
+            'CreditLine: Permission denied while cancelling CreditLine'
+        );
+        require(creditLineVariables[_id].status == CreditLineStatus.REQUESTED, 'CreditLine:cancle Credit Line should be in requested state');
+        delete creditLineVariables[_id];
+        delete creditLineConstants[_id];
+        emit CreditLineCancelled(_id);
     }
 
     /**
