@@ -882,7 +882,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @notice used to calculate the total collateral tokens
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @param _id identifier for the credit line
-     * @return total collateral tokens deposited into the credit line
+     * @return _amount total collateral tokens deposited into the credit line
      */
     function calculateTotalCollateralTokens(uint256 _id) public returns (uint256) {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;

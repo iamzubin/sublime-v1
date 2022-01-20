@@ -169,6 +169,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @return received the amount recieved by the owner on calling this function
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256) {
         require(_wallet != address(0), 'cant burn');
@@ -275,7 +276,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
      * @param asset the address of token
-     * @return amount of shares for given tokens
+     * @return shares: amount of shares for given tokens
      **/
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256) {
         return (amount.mul(1e18)).div(getTokensForShares(1e18, asset));

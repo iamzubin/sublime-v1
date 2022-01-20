@@ -176,7 +176,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     /**
      * @dev Used to get amount of underlying tokens for current number of shares
      * @param shares the amount of shares
-     * @return amount of underlying tokens
+     * @return amount: amount of underlying tokens
      **/
     function getTokensForShares(uint256 shares, address asset) public view override returns (uint256) {
         if (shares == 0) return 0;
@@ -188,7 +188,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
      * @param asset the address of token
-     * @return amount of shares for given tokens
+     * @return shares: amount of shares for given tokens
      **/
     function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256) {
         uint256 shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));

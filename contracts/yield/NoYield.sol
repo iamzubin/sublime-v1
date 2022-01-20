@@ -48,7 +48,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     /**
      * @notice used to query liquidity token for a given asset
      * @param _asset address of the asset
-     * @return address of the lqiudity token for the asset
+     * @return _tokenAddress: address of the lqiudity token for the asset
      **/
     function liquidityToken(address _asset) external pure override returns (address) {
         return _asset;
@@ -88,7 +88,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param user the address of user
      * @param asset the address of token to invest
      * @param amount the amount of asset
-     * @return amount of shares received
+     * @return sharesReceived amount of shares received
      **/
     function lockTokens(
         address user,
@@ -147,7 +147,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @dev Used to get amount of underlying tokens for given number of shares
      * @param shares the amount of shares
      * @param asset the address of token locked
-     * @return amount of underlying tokens
+     * @return amount: amount of underlying tokens
      **/
     function getTokensForShares(uint256 shares, address asset) external pure override returns (uint256) {
         return shares;
@@ -157,7 +157,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
      * @param asset the address of token
-     * @return amount of shares for given tokens
+     * @return shares: amount of shares for given tokens
      **/
     function getSharesForTokens(uint256 amount, address asset) external pure override returns (uint256) {
         return amount;

@@ -231,7 +231,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _poolSavingsStrategy address of the saving strategy used for collateral deposit
      * @param _depositFrom address which makes the deposit
      * @param _depositTo address to which the tokens are deposited
-     * @return number of equivalent shares for given _asset
+     * @return _sharesReceived number of equivalent shares for given _asset
      */
     function _deposit(
         bool _fromSavingsAccount,
@@ -683,7 +683,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @param _balance the principal amount lent
      * @param _liquidityShares amount of collateral tokens available
-     * @return the collateral ratio
+     * @return _ratio: the collateral ratio
      */
     function calculateCollateralRatio(uint256 _balance, uint256 _liquidityShares) public returns (uint256) {
         uint256 _interest = interestToPay().mul(_balance).div(totalSupply());
@@ -698,7 +698,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice used to get the current collateral ratio of the borrow pool
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
-     * @return the current collateral ratio of the borrow pool
+     * @return _ratio: the current collateral ratio of the borrow pool
      */
     function getCurrentCollateralRatio() public returns (uint256) {
         uint256 _liquidityShares = poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares);
@@ -709,7 +709,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice used to get the current collateral ratio of a lender
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
-     * @return the current collateral ratio of the lender
+     * @return _ratio: the current collateral ratio of the lender
      */
     function getCurrentCollateralRatio(address _lender) public returns (uint256) {
         uint256 _balanceOfLender = balanceOf(_lender);
