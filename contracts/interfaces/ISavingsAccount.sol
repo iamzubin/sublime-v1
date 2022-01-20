@@ -58,6 +58,15 @@ interface ISavingsAccount {
     event Transfer(address indexed token, address strategy, address indexed from, address indexed to, uint256 amount);
 
     /**
+    * @notice emitted when tokens' shares are burnt by the owner
+    * @param token address of the token whose shares were burnt
+    * @param strategy address of the strategy from which shares were burnt
+    * @param from address of the user that burnt their token shares
+    * @param amount amount of token shares burnt
+    */
+    event Burned(address indexed token, address strategy, address indexed from, uint256 amount);
+
+    /**
      * @notice emitted when credit line address is updated
      * @param updatedCreditLine updated credit line contract address
      */
@@ -147,6 +156,12 @@ interface ISavingsAccount {
         address poolSavingsStrategy,
         address from,
         address to
+    ) external returns (uint256);
+
+    function burn(
+        uint256 amount,
+        uint256 token,
+        uint256 poolSavingsStrategy
     ) external returns (uint256);
 
     function balanceInShares(

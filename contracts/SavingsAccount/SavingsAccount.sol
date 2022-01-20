@@ -196,6 +196,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) external override nonReentrant returns (uint256) {
         require(_amount != 0, 'SavingsAccount::withdraw Amount must be greater than zero');
+        require(_to != address(0), "SavingsAccount::withdraw _to address should be nonz-zero");
 
         if (_strategy != address(0)) {
             _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
@@ -230,6 +231,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) external override nonReentrant returns (uint256) {
         require(_amount != 0, 'SavingsAccount::withdrawFrom Amount must be greater than zero');
+        require(_from != address(0), "SavingsAccount::withdrawFrom _from address should be non-zero");
+        require(_to != address(0), "SavingsAccount::withdrawFrom _to address should be non-zero");
 
         allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
             _amount,
@@ -270,7 +273,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address payable _to
     ) internal {
-        require(_to != address(0), 'SavingsAccount:_transfer The _to address should be a valid address');
+        require(_to != address(0), "SavingsAccounts::_transfer _to address should be non-zero");
         if (_token == address(0)) {
             (bool _success, ) = _to.call{value: _amount}('');
             require(_success, 'Transfer failed');
@@ -387,6 +390,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to
     ) external override returns (uint256) {
         require(_amount != 0, 'SavingsAccount::transfer zero amount');
+        require(_to != address(0), "SavingsAccount::transfer _to address should be non-zero");
 
         if (_strategy != address(0)) {
             _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
@@ -421,6 +425,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to
     ) external override returns (uint256) {
         require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
+        require(_from != address(0), "SavingsAccount::transferFrom _from address should be non-zero");
+        require(_to != address(0), "SavingsAccount::transferFrom _to address should be non-zero");
         //update allowance
         allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
             _amount,
@@ -441,6 +447,36 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         balanceInShares[_to][_token][_strategy] = (balanceInShares[_to][_token][_strategy]).add(_amount);
 
         emit Transfer(_token, _strategy, _from, _to, _amount);
+
+        return _amount;
+    }
+
+    /**
+    @notice used to burn token shares
+    @dev _amount in function parameter is in terms of _token and _amount returned is in terms of tokenShares from _strategy strategy
+    @param _amount The amount of tokens that will be burnt
+    @param _token The address of the token whose shares will be burnt
+    @param _strategy The address of the strategy from which the _token's shares will be burnt
+    @return _amount The amount of _token shares that were burnt
+    */
+    function burn(
+        uint256 _amount, 
+        address _token, 
+        address _strategy
+    ) external override returns(uint256) {
+        require(_amount != 0, "SavingsAccount::burn _amount cannot be zero");
+        require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::burn strategy do not exist');
+
+        if(_strategy != 0) {
+            _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
+        }
+
+        balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
+            _amount, 
+            "SavingsAccount::burn Burn _amount should should be less than or equal to your balance"
+        );
+
+        emit Burned(_token, _strategy, msg.sender, _amount);
 
         return _amount;
     }
