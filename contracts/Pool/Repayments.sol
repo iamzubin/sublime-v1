@@ -8,6 +8,7 @@ import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IPoolFactory.sol';
 import '../interfaces/IRepayment.sol';
+import 'hardhat/console.sol';
 
 /**
  * @title Repayments contract
@@ -169,8 +170,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     }
 
     /**
-     * @notice returns the number of repayment intervals that have been repaid,
-     * if repayment interval = 10 secs, loan duration covered = 55 secs, repayment intervals covered = 5
+     * @notice returns interest per second for the specific pool
      * @param _poolID address of the pool
      * @return scaled interest per second
      */
@@ -287,8 +287,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getInterestLeft(address _poolID) public view returns (uint256) {
         uint256 _interestPerSecond = getInterestPerSecond((_poolID));
         uint256 _loanDurationLeft = repayConstants[_poolID].loanDuration.sub(repayVariables[_poolID].loanDurationCovered);
-        uint256 _interestLeft = _interestPerSecond.mul(_loanDurationLeft).div(10**30); // multiplying exponents
-
+        uint256 _interestLeft = _interestPerSecond.mul(_loanDurationLeft.div(10**30)); // multiplying exponents
         return _interestLeft;
     }
 
@@ -356,12 +355,22 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         require((_amount < _interestLeft) != _isLastRepayment, 'Repayments::repay complete interest must be repaid along with principal');
 
         if (_amount < _interestLeft) {
+            if (_isLastRepayment) {
+                console.log('in last repayment, in if condition, _amount < _interestLeft', _amount < _interestLeft);
+                console.log('_amount', _amount);
+                console.log('_interestLeft', _interestLeft);
+            }
             uint256 _interestPerSecond = getInterestPerSecond(_poolID);
-            uint256 _newDurationRepaid = _amount.mul(10**30).div(_interestPerSecond); // dividing exponents
+            uint256 _newDurationRepaid = _amount.div(_interestPerSecond).mul(10**30); // dividing exponents
             repayVariables[_poolID].loanDurationCovered = repayVariables[_poolID].loanDurationCovered.add(_newDurationRepaid);
             emit InterestRepaid(_poolID, _amount);
             return _amount;
         } else {
+            if (_isLastRepayment) {
+                console.log('in last repayment, in if condition, _amount < _interestLeft', _amount < _interestLeft);
+                console.log('_amount', _amount);
+                console.log('_interestLeft', _interestLeft);
+            }
             repayVariables[_poolID].loanDurationCovered = repayConstants[_poolID].loanDuration; // full interest repaid
             emit InterestRepaymentComplete(_poolID, _interestLeft);
             return _interestLeft;
@@ -380,7 +389,19 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         bool _isLastRepayment
     ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
-        _amount = _amount * 10**30;
+        if (_isLastRepayment) {
+            console.log('check overflow in _repay when amount is max int');
+            console.log('_amount', _amount);
+        }
+
+        if (!_isLastRepayment) {
+            _amount = _amount.mul(10**30);
+        }
+
+        if (_isLastRepayment) {
+            console.log('check overflow in _repay when amount is max int');
+            console.log('_amount', _amount);
+        }
         uint256 _loanStatus = _pool.getLoanStatus();
         require(_loanStatus == uint256(LoanStatus.ACTIVE), 'Repayments:repayInterest Pool should be active.');
 

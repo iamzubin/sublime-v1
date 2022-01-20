@@ -357,7 +357,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         uint256 _feeAdjustedWithdrawalAmount = _tokensLent.sub(_protocolFee);
 
-        SavingsAccountUtil.transferTokens(_borrowAsset, _protocolFee, address(this), _collector);
+        if (_protocolFee != 0) {
+            SavingsAccountUtil.transferTokens(_borrowAsset, _protocolFee, address(this), _collector);
+        }
         SavingsAccountUtil.transferTokens(_borrowAsset, _feeAdjustedWithdrawalAmount, address(this), msg.sender);
 
         emit AmountBorrowed(_feeAdjustedWithdrawalAmount, _protocolFee);

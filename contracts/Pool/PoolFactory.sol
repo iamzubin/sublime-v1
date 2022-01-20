@@ -320,7 +320,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         );
     }
 
-    function preComputeAddress(bytes32 salt) public view returns (address predicted) {
+    function preComputeAddress(bytes32 salt, address sender) public view returns (address predicted) {
+        salt = keccak256(abi.encode(sender, salt));
         address deployer = address(this);
         address master = poolImpl;
         assembly {
@@ -350,6 +351,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt,
         address _lenderVerifier
     ) internal {
+        _salt = keccak256(abi.encode(msg.sender, _salt));
         address _pool = Clones.cloneDeterministic(poolImpl, _salt);
         _initPool(
             _pool,
