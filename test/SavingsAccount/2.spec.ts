@@ -183,7 +183,7 @@ describe('Test Savings Account (with ERC20 Token)', async () => {
                     .withdraw(depositValueToTest, Contracts.BAT, noYield.address, randomAccount.address, false)
             )
                 .to.emit(savingsAccount, 'Withdrawn')
-                .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address, false);
+                .withArgs(randomAccount.address, randomAccount.address, depositValueToTest, Contracts.BAT, noYield.address);
 
             // const balanceLockedAfterTransaction: BigNumber = await BatTokenContract.balanceOf(randomAccount.address);
 

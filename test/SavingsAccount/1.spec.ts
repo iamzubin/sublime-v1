@@ -326,7 +326,7 @@ describe('Test Savings Account (with ETH)', async () => {
                         .withdraw(sharesToWithdraw, zeroAddress, yearnYield.address, withdrawAccount.address, false)
                 )
                     .to.emit(savingsAccount, 'Withdrawn')
-                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, yearnYield.address, false);
+                    .withArgs(randomAccount.address, withdrawAccount.address, sharesToWithdraw, zeroAddress, yearnYield.address);
 
                 const balanceAfterWithdraw = await withdrawAccount.getBalance();
 
