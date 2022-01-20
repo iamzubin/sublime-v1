@@ -34,7 +34,7 @@ interface IExtension {
      */
     event LenderVoted(address indexed lender, uint256 totalExtensionSupport, uint256 lastVoteTime);
 
-    function initializePoolExtension(uint256 _repaymentInterval) external;
+    function initializePoolExtension(uint128 _repaymentInterval) external;
 
     function closePoolExtension() external;
 
