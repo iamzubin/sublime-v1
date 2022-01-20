@@ -160,8 +160,8 @@ interface ISavingsAccount {
 
     function burn(
         uint256 amount,
-        uint256 token,
-        uint256 poolSavingsStrategy
+        address token,
+        address poolSavingsStrategy
     ) external returns (uint256);
 
     function balanceInShares(
