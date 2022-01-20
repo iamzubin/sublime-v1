@@ -598,7 +598,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateCollectionPeriod(uint256 _collectionPeriod) internal {
-        require(_collectionPeriod > 0, "PoolFactory:_updateCollectionPeriod _collectionPeriod should be greater than zero");
+        require(_collectionPeriod != 0, "PoolFactory:_updateCollectionPeriod _collectionPeriod should be non-zero");
         collectionPeriod = _collectionPeriod;
         emit CollectionPeriodUpdated(_collectionPeriod);
     }
@@ -612,7 +612,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateLoanWithdrawalDuration(uint256 _loanWithdrawalDuration) internal {
-        require(_loanWithdrawalDuration > 0, "PoolFactory:_updateLoanWithdrawalDeadline _loanWithdrawalDuration should be greater than zero");
+        require(_loanWithdrawalDuration != 0, "PoolFactory:_updateLoanWithdrawalDeadline _loanWithdrawalDuration should be non-zero");
         loanWithdrawalDuration = _loanWithdrawalDuration;
         emit LoanWithdrawalDurationUpdated(_loanWithdrawalDuration);
     }
@@ -626,7 +626,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateMarginCallDuration(uint256 _marginCallDuration) internal {
-        require(_marginCallDuration > 0, "PoolFactory:updateMarginCallDuration _marginCallDuration should be greater than 0");
+        require(_marginCallDuration != 0, "PoolFactory:updateMarginCallDuration _marginCallDuration should be non-zero");
         marginCallDuration = _marginCallDuration;
         emit MarginCallDurationUpdated(_marginCallDuration);
     }
@@ -668,7 +668,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updatePoolCancelPenaltyMultiple(uint256 _poolCancelPenaltyMultiple) internal {
-        require(_poolCancelPenaltyMultiple <= 10**30,"PoolFactory:_updatePoolCancelPenaltyMultiple _poolCancelPenaltyMultiple cannot be more than 100%");
         poolCancelPenaltyMultiple = _poolCancelPenaltyMultiple;
         emit PoolCancelPenaltyMultipleUpdated(_poolCancelPenaltyMultiple);
     }
@@ -707,7 +706,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the pool size
      */
     function updatePoolSizeLimit(uint256 _min, uint256 _max) external onlyOwner {
-        require(_min > 0, 'PoolFactory:updatePoolSizeLimit _min should be greater than zero');
+        require(_min != 0, 'PoolFactory:updatePoolSizeLimit _min should be non-zero');
         poolSizeLimit = Limits(_min, _max);
         emit LimitsUpdated('PoolSize', _min, _max);
     }
@@ -718,7 +717,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the collateral ratio
      */
     function updateidealCollateralRatioLimit(uint256 _min, uint256 _max) external onlyOwner {
-        require(_min >= 0, "PoolFactory:updateidealCollateralRatioLimit _min should atleast be zero");
+        require(_min != 0, "PoolFactory:updateidealCollateralRatioLimit _min should be non-zero");
         idealCollateralRatioLimit = Limits(_min, _max);
         emit LimitsUpdated('CollateralRatio', _min, _max);
     }
@@ -729,7 +728,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the borrow rate
      */
     function updateBorrowRateLimit(uint256 _min, uint256 _max) external onlyOwner {
-        require(_min > 0, "PoolFactory:updateBorrowRateLimit _min should be greater than zero");
+        require(_min != 0, "PoolFactory:updateBorrowRateLimit _min should be non-zero");
         borrowRateLimit = Limits(_min, _max);
         emit LimitsUpdated('BorrowRate', _min, _max);
     }
@@ -740,7 +739,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the repayment interval
      */
     function updateRepaymentIntervalLimit(uint256 _min, uint256 _max) external onlyOwner {
-        require(_min > 0, "PoolFactory:updateRepaymentIntervalLimit _min should be greater than zero");
+        require(_min != 0, "PoolFactory:updateRepaymentIntervalLimit _min should be non-zero");
         repaymentIntervalLimit = Limits(_min, _max);
         emit LimitsUpdated('RepaymentInterval', _min, _max);
     }
@@ -751,7 +750,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the number of repayment intervals
      */
     function updateNoOfRepaymentIntervalsLimit(uint256 _min, uint256 _max) external onlyOwner {
-        require(_min > 0,"PoolFactory:updateNoOfRepaymentIntervalsLimit _min should be greater than zero");
+        require(_min != 0,"PoolFactory:updateNoOfRepaymentIntervalsLimit _min should be non-zero");
         noOfRepaymentIntervalsLimit = Limits(_min, _max);
         emit LimitsUpdated('NoOfRepaymentIntervals', _min, _max);
     }
