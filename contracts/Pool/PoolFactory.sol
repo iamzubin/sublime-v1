@@ -3,10 +3,8 @@ pragma solidity 0.7.0;
 
 import '../Proxy.sol';
 import '../interfaces/IPoolFactory.sol';
-import '../interfaces/IPool.sol';
 import '../interfaces/IVerification.sol';
 import '../interfaces/IStrategyRegistry.sol';
-import '../interfaces/IRepayment.sol';
 import '../interfaces/IPriceOracle.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 
@@ -153,12 +151,12 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     /**
-     * @notice functions affected by this modifier can only be invoked by the borrow of the Pool
+     * @notice functions affected by this modifier can only be invoked by a verified user of Sublime
      */
-    modifier onlyBorrower(address _verifier) {
+    modifier onlyVerified(address _verifier) {
         require(
             IVerification(userRegistry).isUser(msg.sender, _verifier),
-            'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool'
+            'PoolFactory::onlyVerified - Only a valid Borrower can create Pool'
         );
         _;
     }
@@ -271,7 +269,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt,
         address _verifier,
         address _lenderVerifier
-    ) external payable onlyBorrower(_verifier) {
+    ) external payable onlyVerified(_verifier) {
         if (_collateralToken == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
         }

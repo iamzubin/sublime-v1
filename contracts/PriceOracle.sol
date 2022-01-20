@@ -14,8 +14,8 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
 
     uint32 uniswapPriceAveragingPeriod;
     struct PriceData {
+        uint64 decimals;
         address oracle;
-        uint256 decimals;
     }
     /**
      * @notice stores the price oracle and its decimals for chainlink feeds
@@ -158,8 +158,8 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      * @param priceOracle addrewss of the price feed for the token
      **/
     function setChainlinkFeedAddress(address token, address priceOracle) external onlyOwner {
-        uint256 priceOracleDecimals = AggregatorV3Interface(priceOracle).decimals();
-        chainlinkFeedAddresses[token] = PriceData(priceOracle, priceOracleDecimals);
+        uint64 priceOracleDecimals = uint64(AggregatorV3Interface(priceOracle).decimals());
+        chainlinkFeedAddresses[token] = PriceData(priceOracleDecimals, priceOracle);
         decimals[token] = getDecimals(token);
         emit ChainlinkFeedUpdated(token, priceOracle);
     }
