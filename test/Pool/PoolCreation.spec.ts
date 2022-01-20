@@ -167,7 +167,7 @@ describe('Create Pools (Compound Strategy)', async () => {
 
         beforeEach(async () => {
             // salt = sha256(Buffer.from(new Date().valueOf().toString()));
-            salt =  sha256(Buffer.from("salt2"));
+            salt = sha256(Buffer.from('salt2'));
             admin = env.entities.admin;
             borrower = env.entities.borrower;
             lender = env.entities.lender;
@@ -250,7 +250,7 @@ describe('Create Pools (Compound Strategy)', async () => {
 
         beforeEach(async () => {
             // salt = sha256(Buffer.from(new Date().valueOf().toString()));
-            salt =  sha256(Buffer.from("salt3"));
+            salt = sha256(Buffer.from('salt3'));
             admin = env.entities.admin;
             borrower = env.entities.borrower;
             lender = env.entities.lender;
