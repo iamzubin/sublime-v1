@@ -37,6 +37,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     uint256 public creditLineCounter;
 
     uint256 constant YEAR_IN_SECONDS = 365 days;
+    uint256 constant SCALING_FACTOR = 1e30;
 
     struct CreditLineVariables {
         CreditLineStatus status;
@@ -95,7 +96,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice stores the fraction of borrowed amount charged as fee by protocol
-     * @dev it is multiplied by 10**30
+     * @dev it is multiplied by SCALING_FACTOR
      **/
     uint256 public protocolFeeFraction;
 
@@ -106,7 +107,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice stores the fraction of amount liquidated given as reward to liquidator
-     * @dev it is multiplied by 10**30
+     * @dev it is multiplied by SCALING_FACTOR
      **/
     uint256 public liquidatorRewardFraction;
     /**
@@ -377,7 +378,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _updateLiquidatorRewardFraction(uint256 _rewardFraction) internal {
-        require(_rewardFraction <= 10**30, 'Fraction has to be less than 1');
+        require(_rewardFraction <= SCALING_FACTOR, 'Fraction has to be less than 1');
         liquidatorRewardFraction = _rewardFraction;
         emit LiquidationRewardFractionUpdated(_rewardFraction);
     }
@@ -394,7 +395,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _borrowRate,
         uint256 _timeElapsed
     ) public pure returns (uint256) {
-        return (_principal.mul(_borrowRate).mul(_timeElapsed).div(10**30).div(YEAR_IN_SECONDS));
+        return (_principal.mul(_borrowRate).mul(_timeElapsed).div(SCALING_FACTOR).div(YEAR_IN_SECONDS));
     }
 
     /**
@@ -447,7 +448,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _currentDebt = calculateCurrentDebt(_id);
 
-        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).mul(10**30).div(
+        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).mul(SCALING_FACTOR).div(
             10**_decimals
         );
 
@@ -710,7 +711,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             uint256 _balanceAfter = address(this).balance;
             _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         }
-        uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
+        uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(SCALING_FACTOR);
         _tokenDiffBalance = _tokenDiffBalance.sub(_protocolFee);
 
         if (_borrowAsset == address(0)) {
@@ -862,7 +863,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view.
             Interest is also considered while calculating debt
      * @param _id identifier for the credit line
-     * @return collateral ratio multiplied by 10**30 to retain precision
+     * @return collateral ratio multiplied by SCALING_FACTOR to retain precision
      */
     function calculateCurrentCollateralRatio(uint256 _id) public ifCreditLineExists(_id) returns (uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
@@ -871,7 +872,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
 
         uint256 currentDebt = calculateCurrentDebt(_id);
-        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).mul(10**30).div(
+        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).mul(SCALING_FACTOR).div(
             10**_decimals
         );
 
@@ -941,7 +942,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             .mul(creditLineConstants[_id].idealCollateralRatio)
             .div(_ratioOfPrices)
             .mul(10**_decimals)
-            .div(10**30);
+            .div(SCALING_FACTOR);
 
         if (_collateralNeeded >= _totalCollateralTokens) {
             return 0;
@@ -1018,6 +1019,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             uint256 _borrowTokens = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
             if (_borrowAsset == address(0)) {
                 uint256 _returnETH = msg.value.sub(_borrowTokens, 'Insufficient ETH to liquidate');
+
+                (bool success, ) = _lender.call{value: _borrowTokens}('');
+		        
+                require(success, 'liquidate: Transfer failed');
+                
                 if (_returnETH != 0) {
                     (bool success, ) = msg.sender.call{value: _returnETH}('');
                     require(success, 'Transfer fail');
@@ -1053,7 +1059,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal view returns (uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_collateralAsset, _borrowAsset);
         uint256 _borrowTokens = (
-            _totalCollateralTokens.mul(uint256(10**30).sub(liquidatorRewardFraction)).div(10**30).mul(_ratioOfPrices).div(10**_decimals)
+            _totalCollateralTokens.mul(uint256(SCALING_FACTOR).sub(liquidatorRewardFraction)).div(SCALING_FACTOR).mul(_ratioOfPrices).div(10**_decimals)
         );
 
         return _borrowTokens;
