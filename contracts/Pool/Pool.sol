@@ -678,7 +678,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @return ineterest accrued till current time
      */
     function interestToPay() public view returns (uint256) {
-        IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         (uint256 _loanDurationCovered, uint256 _interestPerSecond) = IRepayment(repaymentImpl).getInterestCalculationVars(address(this));
         uint256 _currentBlockTime = block.timestamp.mul(10**30);
         uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(10**30));
