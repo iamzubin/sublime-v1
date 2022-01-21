@@ -15,8 +15,10 @@ import {
     ChainLinkAggregators,
     OperationalAmounts,
     extensionParams,
-    verificationParams,
 } from '../../utils/constants';
+
+import { verificationParams } from '../../utils/constants';
+
 import DeployHelper from '../../utils/deploys';
 
 import { SavingsAccount } from '../../typechain/SavingsAccount';
@@ -448,92 +450,6 @@ describe('Pool', async () => {
                 // console.log({allowance1: await savingsAccount.allowance(borrower.address, Contracts.LINK, pool.address)})
 
                 await pool.connect(borrower).depositCollateral(amountUsedForDeposit, true);
-            });
-        });
-
-        describe('Lend', async () => {
-            let pool: Pool;
-            beforeEach(async () => {
-                await poolFactory.connect(admin).updateSupportedBorrowTokens(Contracts.DAI, true);
-
-                await poolFactory.connect(admin).updateSupportedCollateralTokens(Contracts.LINK, true);
-
-                await poolFactory
-                    .connect(admin)
-                    .setImplementations(
-                        poolImpl.address,
-                        repaymentImpl.address,
-                        verification.address,
-                        strategyRegistry.address,
-                        priceOracle.address,
-                        savingsAccount.address,
-                        extenstion.address
-                    );
-
-                let deployHelper: DeployHelper = new DeployHelper(borrower);
-                let collateralToken: ERC20 = await deployHelper.mock.getMockERC20(Contracts.LINK);
-
-                let generatedPoolAddress: Address = await getPoolAddress(
-                    borrower.address,
-                    Contracts.DAI,
-                    Contracts.LINK,
-                    aaveYield.address,
-                    poolFactory.address,
-                    sha256(Buffer.from('borrower')),
-                    poolImpl.address,
-                    false,
-                    {}
-                );
-
-                // console.log({
-                //   generatedPoolAddress,
-                //   msgSender: borrower.address,
-                //   savingsAccountFromPoolFactory: await poolFactory.savingsAccount(),
-                //   savingsAccount: savingsAccount.address
-                // });
-
-                let { _poolSize, _collateralRatio, _borrowRate, _repaymentInterval, _noOfRepaymentIntervals, _collateralAmount } =
-                    createPoolParams;
-
-                await collateralToken.connect(admin).transfer(borrower.address, _collateralAmount.mul(2)); // Transfer quantity to borrower
-
-                await collateralToken.approve(generatedPoolAddress, _collateralAmount.mul(2));
-
-                await expect(
-                    poolFactory
-                        .connect(borrower)
-                        .createPool(
-                            _poolSize,
-                            _borrowRate,
-                            Contracts.DAI,
-                            Contracts.LINK,
-                            _collateralRatio,
-                            _repaymentInterval,
-                            _noOfRepaymentIntervals,
-                            aaveYield.address,
-                            _collateralAmount,
-                            false,
-                            sha256(Buffer.from('borrower')),
-                            adminVerifier.address,
-                            zeroAddress
-                        )
-                )
-                    .to.emit(poolFactory, 'PoolCreated')
-                    .withArgs(generatedPoolAddress, borrower.address);
-
-                pool = await deployHelper.pool.getPool(generatedPoolAddress);
-                await pool.connect(borrower).depositCollateral(_collateralAmount, false);
-            });
-
-            it('Test Lending', async () => {
-                const deployHelper: DeployHelper = new DeployHelper(admin);
-                const DaiTokenContract = await deployHelper.mock.getMockERC20(Contracts.DAI);
-                await DaiTokenContract.transfer(lender.address, OperationalAmounts._amountLent);
-                await DaiTokenContract.connect(lender).approve(pool.address, OperationalAmounts._amountLent);
-
-                await expect(pool.connect(lender).lend(lender.address, OperationalAmounts._amountLent, false))
-                    .to.emit(pool, 'LiquiditySupplied')
-                    .withArgs(OperationalAmounts._amountLent, lender.address);
             });
         });
     });

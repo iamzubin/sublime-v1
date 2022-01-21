@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npx hardhat typechain",
     "compile": "npx hardhat compile",
-    "test": "npx hardhat test/SavingsAccount/1.spec.ts test/ --network hardhat",
+    "test": "npx hardhat test --network hardhat",
     "test:withEvents": "npx hardhat test --network hardhat --logs",
     "typechain": "npx hardhat typechain",
     "coverage": "npx hardhat typechain && npx hardhat coverage --network hardhat",
