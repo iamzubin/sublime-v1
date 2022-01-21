@@ -176,8 +176,29 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     function getInterestPerSecond(address _poolID) public view returns (uint256) {
         uint256 _activePrincipal = IPool(_poolID).totalSupply();
-        uint256 _interestPerSecond = _activePrincipal.mul(repayConstants[_poolID].borrowRate).div(YEAR_IN_SECONDS);
+        uint256 _interestPerSecond = _activePrincipal.mul(repayConstants[_poolID].borrowRate).div(YEAR_IN_SECONDS).div(10**30);
         return _interestPerSecond;
+    }
+
+    /**
+     * @notice returns interest for specific scaled up time
+     * @param _poolID address of the pool
+     * @return scaled interest per second
+     */
+    function getInterest(address _poolID, uint256 _scaledUpTime) public view returns (uint256) {
+        uint256 _activePrincipal = IPool(_poolID).totalSupply();
+        uint256 _borrowRate = repayConstants[_poolID].borrowRate;
+        return _activePrincipal.mul(_borrowRate).div(10**20).mul(_scaledUpTime).div(10**20).div(YEAR_IN_SECONDS).div(10**20);
+    }
+
+    /**
+     * @notice returns scaled up duration for specific pool
+     * @param _poolID address of the pool
+     * @param _amount scaled up amount
+     */
+    function getDuration(address _poolID, uint256 _amount) public view returns (uint256) {
+        uint256 _activePrincipal = IPool(_poolID).totalSupply();
+        return _amount.mul(YEAR_IN_SECONDS).mul(10**40).div(_activePrincipal).mul(10**20).div(repayConstants[_poolID].borrowRate);
     }
 
     /// @notice This function determines the number of completed instalments
@@ -186,7 +207,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getInstalmentsCompleted(address _poolID) public view returns (uint256) {
         uint256 _repaymentInterval = repayConstants[_poolID].repaymentInterval;
         uint256 _loanDurationCovered = repayVariables[_poolID].loanDurationCovered;
-        uint256 _instalmentsCompleted = _loanDurationCovered.div(_repaymentInterval).mul(10**30); // dividing exponents, returns whole number rounded down
+        uint256 _instalmentsCompleted = _loanDurationCovered.mul(10**30).div(_repaymentInterval); // dividing exponents, returns whole number rounded down
 
         return _instalmentsCompleted;
     }
@@ -195,12 +216,12 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID The address of the pool for which we want the interest
     /// @return scaled interest due till instalment deadline
     function getInterestDueTillInstalmentDeadline(address _poolID) public view returns (uint256) {
-        uint256 _interestPerSecond = getInterestPerSecond(_poolID);
         uint256 _nextInstalmentDeadline = getNextInstalmentDeadline(_poolID);
         uint256 _loanDurationCovered = repayVariables[_poolID].loanDurationCovered;
-        uint256 _interestDueTillInstalmentDeadline = (
+        uint256 _interestDueTillInstalmentDeadline = getInterest(
+            _poolID,
             _nextInstalmentDeadline.sub(repayConstants[_poolID].loanStartTime).sub(_loanDurationCovered)
-        ).mul(_interestPerSecond).div(10**30);
+        );
         return _interestDueTillInstalmentDeadline;
     }
 
@@ -284,9 +305,8 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool for which we want to calculate remaining interest
     /// @return interest remaining
     function getInterestLeft(address _poolID) public view returns (uint256) {
-        uint256 _interestPerSecond = getInterestPerSecond((_poolID));
         uint256 _loanDurationLeft = repayConstants[_poolID].loanDuration.sub(repayVariables[_poolID].loanDurationCovered);
-        uint256 _interestLeft = _interestPerSecond.mul(_loanDurationLeft.div(10**30)); // multiplying exponents
+        uint256 _interestLeft = getInterest(_poolID, _loanDurationLeft);
         return _interestLeft;
     }
 
@@ -297,14 +317,13 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getInterestOverdue(address _poolID) public view returns (uint256) {
         require(repayVariables[_poolID].isLoanExtensionActive, 'No overdue');
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-        uint256 _interestPerSecond = getInterestPerSecond(_poolID);
-        uint256 _interestOverdue = (
-            (
-                (_instalmentsCompleted.add(10**30)).mul(repayConstants[_poolID].repaymentInterval).div(10**30).sub(
-                    repayVariables[_poolID].loanDurationCovered
-                )
+
+        uint256 _interestOverdue = getInterest(
+            _poolID,
+            (_instalmentsCompleted.add(10**30)).mul(repayConstants[_poolID].repaymentInterval).div(10**30).sub(
+                repayVariables[_poolID].loanDurationCovered
             )
-        ).mul(_interestPerSecond).div(10**30);
+        );
         return _interestOverdue;
     }
 
@@ -354,24 +373,20 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         require((_amount < _interestLeft) != _isLastRepayment, 'Repayments::repay complete interest must be repaid along with principal');
 
         if (_amount < _interestLeft) {
-            if (_isLastRepayment) {}
-            uint256 _interestPerSecond = getInterestPerSecond(_poolID);
-            uint256 _newDurationRepaid = _amount.div(_interestPerSecond).mul(10**30); // dividing exponents
+            uint256 _newDurationRepaid = getDuration(_poolID, _amount);
             repayVariables[_poolID].loanDurationCovered = repayVariables[_poolID].loanDurationCovered.add(_newDurationRepaid);
             emit InterestRepaid(_poolID, _amount);
             return _amount;
         } else {
-            if (_isLastRepayment) {}
             repayVariables[_poolID].loanDurationCovered = repayConstants[_poolID].loanDuration; // full interest repaid
             emit InterestRepaymentComplete(_poolID, _interestLeft);
             return _interestLeft;
         }
     }
 
-    function _updateRepaidAmount(address _poolID, uint256 _scaledRepaidAmount) internal returns (uint256) {
-        uint256 _toPay = _scaledRepaidAmount.div(10**30);
-        repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_toPay);
-        return _toPay;
+    function _updateRepaidAmount(address _poolID, uint256 _repaidAmount) internal returns (uint256) {
+        repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_repaidAmount);
+        return _repaidAmount;
     }
 
     function _repay(
@@ -380,13 +395,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         bool _isLastRepayment
     ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
-        if (_isLastRepayment) {}
-
-        if (!_isLastRepayment) {
-            _amount = _amount.mul(10**30);
+        if (_isLastRepayment) {
+            _amount = MAX_INT;
         }
-
-        if (_isLastRepayment) {}
         uint256 _loanStatus = _pool.getLoanStatus();
         require(_loanStatus == uint256(LoanStatus.ACTIVE), 'Repayments:repayInterest Pool should be active.');
 
@@ -466,15 +477,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         address _asset,
         uint256 _amount
     ) internal {
-        if (_asset == address(0)) {
-            (bool transferSuccess, ) = _to.call{value: _amount}('');
-            require(transferSuccess, '_transferTokens: Transfer failed');
-            if (msg.value != _amount) {
-                (bool refundSuccess, ) = payable(_from).call{value: msg.value.sub(_amount)}('');
-                require(refundSuccess, '_transferTokens: Refund failed');
-            }
-        } else {
-            IERC20(_asset).safeTransferFrom(_from, _to, _amount);
-        }
+        IERC20(_asset).safeTransferFrom(_from, _to, _amount);
     }
 }
