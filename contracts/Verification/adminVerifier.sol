@@ -80,7 +80,7 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
         userData[msg.sender] = _twitterId;
         emit UserRegistered(msg.sender, _isMasterLinked, _twitterId);
     }
-    
+
     /**
      * @notice used to unregister user
      * @dev ohly owner can unregister users

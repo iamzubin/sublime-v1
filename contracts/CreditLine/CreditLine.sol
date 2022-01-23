@@ -449,9 +449,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _currentDebt = calculateCurrentDebt(_id);
 
-        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).mul(SCALING_FACTOR).div(
-            10**_decimals
-        );
+        uint256 _maxPossible = _totalCollateralToken
+            .mul(_ratioOfPrices)
+            .div(creditLineConstants[_id].idealCollateralRatio)
+            .mul(SCALING_FACTOR)
+            .div(10**_decimals);
 
         uint256 _borrowLimit = creditLineConstants[_id].borrowLimit;
 
@@ -599,14 +601,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         bool _requestByLender = creditLineConstants[_id].requestByLender;
         require(
-            _requestByLender ?
-            (msg.sender == creditLineConstants[_id].borrower) :
-            (msg.sender == creditLineConstants[_id].lender),
+            _requestByLender ? (msg.sender == creditLineConstants[_id].borrower) : (msg.sender == creditLineConstants[_id].lender),
             "Only Borrower or Lender who hasn't requested can accept"
         );
         creditLineVariables[_id].status = CreditLineStatus.ACTIVE;
         emit CreditLineAccepted(_id);
     }
+
     /**
      * @notice used to deposit collateral into the credit line
      * @dev collateral tokens have to be approved in savingsAccount or token contract(unless ether).
@@ -692,10 +693,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     function borrow(uint256 _id, uint256 _amount) external payable nonReentrant onlyCreditLineBorrower(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
-        require(_amount <= calculateBorrowableAmount(_id), "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount");
+        require(
+            _amount <= calculateBorrowableAmount(_id),
+            "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
+        );
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
         address _lender = creditLineConstants[_id].lender;
-        
+
         updateinterestAccruedTillLastPrincipalUpdate(_id);
         creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_amount);
         creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
@@ -735,7 +739,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
-        
+
         for (uint256 _index; _index < _strategyList.length; ++_index) {
             if (_strategyList[_index] == address(0)) {
                 continue;
@@ -890,7 +894,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _liquidityShares;
-        
+
         for (uint256 index; index < _strategyList.length; ++index) {
             if (_strategyList[index] == address(0)) {
                 continue;
@@ -957,7 +961,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _activeAmount;
-        
+
         for (uint256 index; index < _strategyList.length; ++index) {
             uint256 liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
             if (liquidityShares == 0 || _strategyList[index] == address(0)) {
@@ -1023,9 +1027,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 uint256 _returnETH = msg.value.sub(_borrowTokens, 'Insufficient ETH to liquidate');
 
                 (bool success, ) = _lender.call{value: _borrowTokens}('');
-		        
+
                 require(success, 'liquidate: Transfer failed');
-                
+
                 if (_returnETH != 0) {
                     (bool success, ) = msg.sender.call{value: _returnETH}('');
                     require(success, 'Transfer fail');
@@ -1061,7 +1065,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal view returns (uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(_collateralAsset, _borrowAsset);
         uint256 _borrowTokens = (
-            _totalCollateralTokens.mul(uint256(SCALING_FACTOR).sub(liquidatorRewardFraction)).div(SCALING_FACTOR).mul(_ratioOfPrices).div(10**_decimals)
+            _totalCollateralTokens.mul(uint256(SCALING_FACTOR).sub(liquidatorRewardFraction)).div(SCALING_FACTOR).mul(_ratioOfPrices).div(
+                10**_decimals
+            )
         );
 
         return _borrowTokens;

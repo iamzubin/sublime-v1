@@ -327,7 +327,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _to
     ) external override {
-        require(msg.sender != _to, "SavingsAccount::can not approve same account");
+        require(msg.sender != _to, 'SavingsAccount::can not approve same account');
         allowance[msg.sender][_token][_to] = _amount;
 
         emit Approved(_token, msg.sender, _to, _amount);
