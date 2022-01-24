@@ -9,6 +9,8 @@ import { ChainlinkPriceOracleData, UniswapPoolData } from '../../utils/types';
 const { loadFixture } = waffle;
 import { Contracts } from '../../existingContracts/compound.json';
 import { ChainLinkAggregators } from '../../config/constants';
+import { BigNumber } from 'ethers';
+import { expectApproxEqual } from '../../utils/helpers';
 
 const uniswapV3FactoryContract = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 
@@ -60,9 +62,21 @@ describe('Price Oracle', async () => {
         let result = await loadFixture(fixture);
         priceOracle = result.priceOracle;
         admin = result.admin;
+        await priceOracle.connect(admin).setUniswapPriceAveragingPeriod(1000);
     });
 
-    it('Test 1', async () => {});
-    it('Test 2', async () => {});
-    it('Test 3', async () => {});
+    it('get chainlink latest price', async () => {
+        let [chainlinkPrice, chainlinkDecimals]: BigNumber[] = await priceOracle
+            .connect(admin)
+            .getChainlinkLatestPrice(Contracts.WBTC, Contracts.USDT);
+        let [uniswapPrice, uniswapDecimals]: BigNumber[] = await priceOracle
+            .connect(admin)
+            .getUniswapLatestPrice(Contracts.WBTC, Contracts.USDT);
+
+        let scalingFactor = BigNumber.from(10).pow(100);
+        let scaledUpChainlinkPrice = chainlinkPrice.mul(scalingFactor).div(BigNumber.from(10).pow(chainlinkDecimals));
+        let scaledUpUniswapPrice = uniswapPrice.mul(scalingFactor).div(BigNumber.from(10).pow(uniswapDecimals));
+
+        expectApproxEqual(scaledUpChainlinkPrice, scaledUpUniswapPrice, scaledUpUniswapPrice.div(10000), 'more than 0.01 % difference');
+    });
 });
