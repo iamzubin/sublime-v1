@@ -95,7 +95,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice stores the fraction of borrowed amount charged as fee by protocol
-     * @dev it is multiplied by 10**30 (precision)
+     * @dev it is multiplied by 10**30 to maintain precision
      **/
     uint256 public protocolFeeFraction;
 
@@ -106,7 +106,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice stores the fraction of amount liquidated given as reward to liquidator
-     * @dev it is multiplied by 10**30 (precision)
+     * @dev it is multiplied by 10**30 to maintain precision
      **/
     uint256 public liquidatorRewardFraction;
     /**
