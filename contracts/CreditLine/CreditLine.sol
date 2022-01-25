@@ -1015,6 +1015,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
+        require(creditLineVariables[_id].principal != 0, 'CreditLine: cannot liquidate if principal is 0');
 
         uint256 currentCollateralRatio = calculateCurrentCollateralRatio(_id);
         require(
@@ -1030,8 +1031,20 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineVariables[_id].status = CreditLineStatus.LIQUIDATED;
 
         if (creditLineConstants[_id].autoLiquidation && _lender != msg.sender) {
-            uint256 _borrowToken = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
-            IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowToken);
+            uint256 _borrowTokens = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
+            if (_borrowAsset == address(0)) {
+                uint256 _returnETH = msg.value.sub(_borrowTokens, 'Insufficient ETH to liquidate');
+
+                (bool success, ) = _lender.call{value: _borrowTokens}('');
+                require(success, 'liquidate: Transfer failed');
+
+                if (_returnETH != 0) {
+                    (bool success, ) = msg.sender.call{value: _returnETH}('');
+                    require(success, 'Transfer fail');
+                }
+            } else {
+                IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowTokens);
+            }
         }
 
         _transferCollateral(_id, _collateralAsset, _totalCollateralTokens, _toSavingsAccount);
