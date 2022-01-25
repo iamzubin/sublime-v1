@@ -474,9 +474,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         require(_amount != 0, "SavingsAccount::burn _amount cannot be zero");
         require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::burn strategy do not exist');
 
-        if(_strategy != address(0)) {
-            _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
-        }
+        _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
 
         balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
             _amount, 
