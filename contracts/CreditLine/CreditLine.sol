@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
@@ -42,7 +42,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 totalInterestRepaid;
         uint256 lastPrincipalUpdateTime;
         uint256 interestAccruedTillLastPrincipalUpdate;
-        uint256 collateralAmount;
     }
 
     struct CreditLineConstants {
@@ -429,7 +428,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @return amount that can be borrowed from the credit line
      */
-    function calculateBorrowableAmount(uint256 _id) external returns (uint256) {
+    function calculateBorrowableAmount(uint256 _id) public returns (uint256) {
         CreditLineStatus _status = creditLineVariables[_id].status;
         require(
             _status == CreditLineStatus.ACTIVE || _status == CreditLineStatus.REQUESTED,
@@ -444,7 +443,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         uint256 _currentDebt = calculateCurrentDebt(_id);
 
-        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).div(
+        uint256 _maxPossible = _totalCollateralToken.mul(_ratioOfPrices).div(creditLineConstants[_id].idealCollateralRatio).mul(10**30).div(
             10**_decimals
         );
 
@@ -631,7 +630,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _amount,
         address _strategy,
         bool _fromSavingsAccount
-    ) internal {        
+    ) internal {
         if (_fromSavingsAccount) {
             _depositCollateralFromSavingsAccount(_id, _amount, msg.sender);
         } else {
@@ -684,22 +683,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     function borrow(uint256 _id, uint256 _amount) external payable nonReentrant onlyCreditLineBorrower(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
-        uint256 _currentDebt = calculateCurrentDebt(_id);
-        require(_currentDebt.add(_amount) <= creditLineConstants[_id].borrowLimit, 'CreditLine: Amount exceeds borrow limit.');
-        (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
-            creditLineConstants[_id].collateralAsset,
-            creditLineConstants[_id].borrowAsset
-        );
-
-        uint256 _totalCollateralToken = calculateTotalCollateralTokens(_id);
-
-        uint256 _collateralRatioIfAmountIsWithdrawn = _ratioOfPrices.mul(_totalCollateralToken).div(
-            (_currentDebt.add(_amount)).mul(10**_decimals)
-        );
-        require(
-            _collateralRatioIfAmountIsWithdrawn >= creditLineConstants[_id].idealCollateralRatio,
-            "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
-        );
+        uint256 _borrowableAmount = calculateBorrowableAmount(_id);
+        require(_amount <= _borrowableAmount, "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount");
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
         address _lender = creditLineConstants[_id].lender;
 
@@ -777,9 +762,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _lender = creditLineConstants[_id].lender;
         if (!_fromSavingsAccount) {
             if (_borrowAsset == address(0)) {
-                require(msg.value >= _amount, 'creditLine::repay - value should be eq or more than repay amount');
-                (bool success, ) = payable(msg.sender).call{value: msg.value.sub(_amount)}(''); // transfer the remaining amount
-                require(success, 'creditLine::repay - remainig value transfered successfully');
+                require(msg.value == _amount, 'creditLine::repay - Ether sent not equal to repay amount');
                 _savingsAccount.deposit{value: _amount}(_amount, _borrowAsset, _defaultStrategy, _lender);
             } else {
                 IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
@@ -869,13 +852,16 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     /**
      * @dev used to cancel credit line by borrower or lender
      * @param _id identifier for the credit line
-    */
+     */
     function cancel(uint256 _id) external ifCreditLineExists(_id) {
         require(
             msg.sender == creditLineConstants[_id].borrower || msg.sender == creditLineConstants[_id].lender,
             'CreditLine: Permission denied while cancelling CreditLine'
         );
-        require(creditLineVariables[_id].status == CreditLineStatus.REQUESTED, 'CreditLine:cancle Credit Line should be in requested state');
+        require(
+            creditLineVariables[_id].status == CreditLineStatus.REQUESTED,
+            'CreditLine:cancle Credit Line should be in requested state'
+        );
         delete creditLineVariables[_id];
         delete creditLineConstants[_id];
         emit CreditLineCancelled(_id);
@@ -888,15 +874,17 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @return collateral ratio multiplied by 10**30 to retain precision
      */
-    function calculateCurrentCollateralRatio(uint256 _id) public ifCreditLineExists(_id) returns (uint256) {
+    function calculateCurrentCollateralRatio(uint256 _id) public ifCreditLineExists(_id) returns (uint256, uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
             creditLineConstants[_id].borrowAsset
         );
 
         uint256 currentDebt = calculateCurrentDebt(_id);
-        uint256 currentCollateralRatio = calculateTotalCollateralTokens(_id).mul(_ratioOfPrices).div(currentDebt).div(10**_decimals);
-        return currentCollateralRatio;
+        uint256 totalCollateralTokens = calculateTotalCollateralTokens(_id);
+        uint256 currentCollateralRatio = totalCollateralTokens.mul(_ratioOfPrices).div(currentDebt).mul(10**30).div(10**_decimals);
+
+        return (currentCollateralRatio, totalCollateralTokens);
     }
 
     /**
@@ -1006,7 +994,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
-     * @notice used to liquidate credit line in case collateral ratio goes above the threshold
+     * @notice used to liquidate credit line in case collateral ratio goes below the threshold
      * @dev if lender liquidates, then collateral is directly transferred. 
             If autoLiquidation is true, anyone can liquidate by providing enough borrow tokens
      * @param _id identifier for the credit line
@@ -1017,7 +1005,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineVariables[_id].principal != 0, 'CreditLine: cannot liquidate if principal is 0');
 
-        uint256 currentCollateralRatio = calculateCurrentCollateralRatio(_id);
+        (uint256 currentCollateralRatio, uint256 _totalCollateralTokens) = calculateCurrentCollateralRatio(_id);
         require(
             currentCollateralRatio < creditLineConstants[_id].idealCollateralRatio,
             'CreditLine: Collateral ratio is higher than ideal value'
@@ -1025,7 +1013,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address _lender = creditLineConstants[_id].lender;
-        uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
+        // uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
 
         creditLineVariables[_id].status = CreditLineStatus.LIQUIDATED;
@@ -1034,10 +1022,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             uint256 _borrowTokens = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
             if (_borrowAsset == address(0)) {
                 uint256 _returnETH = msg.value.sub(_borrowTokens, 'Insufficient ETH to liquidate');
-
-                (bool success, ) = _lender.call{value: _borrowTokens}('');
-                require(success, 'liquidate: Transfer failed');
-
                 if (_returnETH != 0) {
                     (bool success, ) = msg.sender.call{value: _returnETH}('');
                     require(success, 'Transfer fail');

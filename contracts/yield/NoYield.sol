@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
@@ -22,7 +22,6 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      **/
     address payable public savingsAccount;
 
-
     /**
      * @notice emitted when all tokens are withdrawn, in case of emergencies
      * @param asset address of the token being withdrawn
@@ -30,7 +29,6 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param tokensReceived amount of tokens received
      */
     event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
-    
 
     /**
      * @notice checks if contract is invoked by savings account
@@ -86,16 +84,15 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
-        if(_asset == address(0)) {
+        if (_asset == address(0)) {
             received = address(this).balance;
             (bool success, ) = _wallet.call{value: received}('');
             require(success, 'Transfer fail');
-        }
-        else {
+        } else {
             received = IERC20(_asset).balanceOf(address(this));
             IERC20(_asset).safeTransfer(_wallet, received);
         }
-        emit EmergencyWithdraw(_asset,_wallet,received);
+        emit EmergencyWithdraw(_asset, _wallet, received);
     }
 
     /**

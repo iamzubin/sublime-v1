@@ -56,7 +56,7 @@ const config: HardhatUserConfig = {
             // hardfork: "istanbul",
             forking: {
                 url: 'https://eth-mainnet.alchemyapi.io/v2/snGskhAXMQaRLnJaxbcfOL7U5_bSZl_Y',
-                blockNumber: 12869777,
+                // blockNumber: 12869777,
             },
             blockGasLimit: 12500000,
             accounts: getHardhatPrivateKeys(),
@@ -187,7 +187,7 @@ const config: HardhatUserConfig = {
         target: 'ethers-v5',
     },
     solidity: {
-        version: '0.7.0',
+        version: '0.7.6',
         settings: {
             optimizer: {
                 enabled: true,

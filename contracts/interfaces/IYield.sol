@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IYield {
-
     /**
      * @dev emitted when tokens are locked
      * @param user the address of user, tokens locked for

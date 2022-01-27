@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
@@ -23,7 +23,6 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      **/
     address payable public savingsAccount;
 
-
     /**
      * @notice emitted when all tokens are withdrawn, in case of emergencies
      * @param asset address of the token being withdrawn
@@ -31,7 +30,6 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @param tokensReceived amount of tokens received
      */
     event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
-    
 
     /**
      * @notice stores the address of liquidity token for a given base token
@@ -112,7 +110,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
             received = _withdrawERC(_asset, investedTo, amount);
             IERC20(_asset).safeTransfer(_wallet, received);
         }
-        emit EmergencyWithdraw(_asset,_wallet,received);
+        emit EmergencyWithdraw(_asset, _wallet, received);
     }
 
     /**
@@ -216,6 +214,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         uint256 sharesBefore = IERC20(vault).balanceOf(address(this));
 
         //lock collateral in vault
+        IERC20(asset).approve(vault, 0);
         IERC20(asset).approve(vault, amount);
         IyVault(vault).deposit(amount);
 

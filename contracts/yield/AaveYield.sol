@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
@@ -46,7 +46,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      */
     uint16 public referralCode;
 
-
     /**
      * @notice emitted when all tokens are withdrawn, in case of emergencies
      * @param asset address of the token being withdrawn
@@ -54,7 +53,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param tokensReceived amount of tokens received
      */
     event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
-    
 
     /**
      * @notice emitted when aave protocol related addresses are updated
@@ -191,7 +189,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
             received = _withdrawERC(_asset, amount);
             IERC20(_asset).safeTransfer(_wallet, received);
         }
-        emit EmergencyWithdraw(_asset,_wallet,received);
+        emit EmergencyWithdraw(_asset, _wallet, received);
     }
 
     /**
@@ -302,6 +300,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         address lendingPool = ILendingPoolAddressesProvider(lendingPoolAddressesProvider).getLendingPool();
 
         //approve collateral to vault
+        IERC20(asset).approve(lendingPool, 0);
         IERC20(asset).approve(lendingPool, amount);
 
         //lock collateral in vault

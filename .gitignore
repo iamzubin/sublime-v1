@@ -23,6 +23,7 @@ typechain/
 *.log
 
 flatten
+flatten/*
 
 test.spec.ts
 node_modules

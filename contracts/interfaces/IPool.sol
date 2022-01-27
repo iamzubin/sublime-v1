@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IPool {
-    
     enum LoanStatus {
         COLLECTION, //denotes collection period
         ACTIVE, // denotes the active loan
@@ -59,9 +58,10 @@ interface IPool {
 
     /**
      * @notice emitted when borrower withdraws loan
-     * @param amount tokens the borrower withdrew
+     * @param amount tokens the borrower withdrew, taking into account the deducted protocol fee
+     * @param protocolFee protocol fee deducted when borrower withdrew the amount
      */
-    event AmountBorrowed(uint256 amount);
+    event AmountBorrowed(uint256 amount, uint256 protocolFee);
 
     /**
      * @notice emitted when lender withdraws from borrow pool

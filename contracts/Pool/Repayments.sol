@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
@@ -372,10 +372,8 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     ) internal returns (uint256) {
         IPool _pool = IPool(_poolID);
         _amount = _amount * 10**30;
-        {
-            uint256 _loanStatus = _pool.getLoanStatus();
-            require(_loanStatus == uint256(IPool.LoanStatus.ACTIVE), 'Repayments:repayInterest Pool should be active.');
-        }
+        uint256 _loanStatus = _pool.getLoanStatus();
+        require(_loanStatus == uint256(IPool.LoanStatus.ACTIVE), 'Repayments:repayInterest Pool should be active.');
 
         uint256 _initialAmount = _amount;
 

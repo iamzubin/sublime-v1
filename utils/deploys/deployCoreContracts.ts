@@ -42,7 +42,7 @@ export default class DeployCoreContracts {
     }
 
     public async deployNoYield(): Promise<NoYield> {
-        return await new NoYield__factory(this._deployerSigner).deploy();
+        return await (await new NoYield__factory(this._deployerSigner).deploy()).deployed();
     }
 
     public async getNoYield(noYieldAddress: Address): Promise<NoYield> {

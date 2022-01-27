@@ -18,12 +18,13 @@ import {
     Entities,
     MockTokenContract,
     PoolCreateParams,
+    VerificationParams,
 } from '../types';
 
 import { createSavingsAccount, initSavingsAccount } from './savingsAccount';
 import { createStrategyRegistry, initStrategyRegistry } from './strategyRegistry';
 import { impersonateAccount, getImpersonatedAccounts } from './impersonationsAndTransfers';
-import { randomAddress, zeroAddress } from '../../utils/constants';
+import { zeroAddress } from '../../config/constants';
 import { createAaveYieldWithInit, createCompoundYieldWithInit, createNoYieldWithInit, createYearnYieldWithInit } from './yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from './verification';
 import { createPriceOracle, setPriceOracleFeeds } from './priceOracle';
@@ -35,11 +36,11 @@ import { createCreditLines, initCreditLine } from './creditLines';
 import DeployHelper from '../../utils/deploys';
 
 import { getPoolAddress } from '../../utils/helpers';
-import { ERC20 } from '@typechain/ERC20';
-import { IYield } from '@typechain/IYield';
+import { ERC20 } from '../../typechain/ERC20';
+import { IYield } from '../../typechain/IYield';
 import { BytesLike, BigNumberish, BigNumber } from 'ethers';
-import { Pool } from '@typechain/Pool';
-import { ERC20Detailed } from '@typechain/ERC20Detailed';
+import { Pool } from '../../typechain/Pool';
+import { ERC20Detailed } from '../../typechain/ERC20Detailed';
 
 export async function createEnvironment(
     hre: HardhatRuntimeEnvironment,
@@ -51,7 +52,8 @@ export async function createEnvironment(
     repaymentsInitParams: RepaymentsInitParams,
     poolFactoryInitParams: PoolFactoryInitParams,
     creditLineDefaultStrategy: CreditLineDefaultStrategy,
-    creditLineInitParams: CreditLineInitParams
+    creditLineInitParams: CreditLineInitParams,
+    verificationInitParams: VerificationParams
 ): Promise<Environment> {
     const env = {} as Environment;
     const yields = {} as Yields;
@@ -111,7 +113,7 @@ export async function createEnvironment(
     await env.strategyRegistry.connect(admin).addStrategy(yields.compoundYield.address);
     await env.strategyRegistry.connect(admin).addStrategy(yields.noYield.address);
 
-    env.verification = await createVerificationWithInit(proxyAdmin, admin);
+    env.verification = await createVerificationWithInit(proxyAdmin, admin, verificationInitParams);
     env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification);
 
     await env.verification.connect(admin).addVerifier(env.adminVerifier.address);
