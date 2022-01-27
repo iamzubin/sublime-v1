@@ -478,6 +478,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         for (uint256 _index = 0; _index < _strategyList.length; _index++) {
             address _strategy = _strategyList[_index];
+            if (_strategy == address(0)) {
+                continue;
+            }
             uint256 _liquidityShares = _savingsAccount.balanceInShares(_sender, _collateralAsset, _strategy);
             if (_liquidityShares == 0) {
                 continue;
