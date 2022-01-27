@@ -54,7 +54,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @notice checks if contract is invoked by savings account
      **/
     modifier onlySavingsAccount() {
-        require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
+        require(msg.sender == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
@@ -93,6 +93,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @param _liquidityToken address of the liquidityToken for the given token
      **/
     function updateProtocolAddresses(address _asset, address _liquidityToken) external onlyOwner {
+        require(_liquidityToken != address(0), "Liquidity token of asset can't be zero");
         liquidityToken[_asset] = _liquidityToken;
         emit ProtocolAddressesUpdated(_asset, _liquidityToken);
     }
@@ -147,7 +148,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
 
     /**
      * @notice Used to unlock tokens from available protocol
-     * @param asset the address of underlying token
+     * @param asset the address of share token
      * @param amount the amount of asset
      * @return received amount of tokens received
      **/

@@ -82,7 +82,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @notice verifies if savings account invoked the contract
      */
     modifier onlySavingsAccount() {
-        require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
+        require(msg.sender == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
@@ -225,7 +225,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
 
     /**
      * @notice Used to unlock tokens from available protocol
-     * @param asset the address of underlying token
+     * @param asset the address of share token
      * @param amount the amount of asset
      * @return received amount of tokens received
      **/

@@ -111,4 +111,21 @@ interface IPool {
     function totalSupply() external view returns (uint256);
 
     function closeLoan() external payable;
+
+    function initialize(
+        uint256 _borrowAmountRequested,
+        uint256 _borrowRate,
+        address _borrower,
+        address _borrowAsset,
+        address _collateralAsset,
+        uint256 _idealCollateralRatio,
+        uint256 _repaymentInterval,
+        uint256 _noOfRepaymentIntervals,
+        address _poolSavingsStrategy,
+        uint256 _collateralAmount,
+        bool _transferFromSavingsAccount,
+        address _lenderVerifier,
+        uint256 _loanWithdrawalDuration,
+        uint256 _collectionPeriod
+    ) external payable;
 }
