@@ -8,6 +8,7 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 
 import '../interfaces/IYield.sol';
 import '../interfaces/Invest/IyVault.sol';
+import '../interfaces/IWETH9.sol';
 
 /**
  * @title Yield contract
@@ -18,10 +19,12 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    address public immutable weth;
+
     /**
      * @notice stores the address of savings account contract
      **/
-    address payable public savingsAccount;
+    address public savingsAccount;
 
     /**
      * @notice emitted when all tokens are withdrawn, in case of emergencies
@@ -35,6 +38,10 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @notice stores the address of liquidity token for a given base token
      */
     mapping(address => address) public override liquidityToken;
+
+    constructor(address _weth) {
+        weth = _weth;
+    }
 
     /**
      * @notice emitted when liquidity token address of an asset is updated
@@ -102,15 +109,13 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         address investedTo = liquidityToken[_asset];
         uint256 amount = IERC20(investedTo).balanceOf(address(this));
 
-        if (_asset == address(0)) {
+        if (_asset == weth) {
             received = _withdrawETH(investedTo, amount);
-            (bool success, ) = _wallet.call{value: received}('');
-            require(success, 'Transfer failed');
+            IWETH9(weth).deposit{value: received}();
         } else {
             received = _withdrawERC(_asset, investedTo, amount);
-            IERC20(_asset).safeTransfer(_wallet, received);
         }
-        emit EmergencyWithdraw(_asset, _wallet, received);
+        IERC20(_asset).safeTransfer(_wallet, received);
     }
 
     /**
@@ -125,13 +130,15 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+        require(amount != 0, 'Invest: amount');
+
         address investedTo = liquidityToken[asset];
-        if (asset == address(0)) {
-            require(msg.value == amount, 'Invest: ETH amount');
+        IERC20(asset).safeTransferFrom(user, address(this), amount);
+        if (asset == weth) {
+            IWETH9(weth).withdraw(amount);
             sharesReceived = _depositETH(investedTo, amount);
         } else {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
             sharesReceived = _depositERC20(asset, investedTo, amount);
         }
 
@@ -147,14 +154,13 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
         address investedTo = liquidityToken[asset];
 
-        if (asset == address(0)) {
+        if (asset == weth) {
             received = _withdrawETH(investedTo, amount);
-            (bool success, ) = savingsAccount.call{value: received}('');
-            require(success, 'Transfer failed');
+            IWETH9(weth).deposit{value: received}();
         } else {
             received = _withdrawERC(asset, investedTo, amount);
-            IERC20(asset).safeTransfer(savingsAccount, received);
         }
+        IERC20(asset).safeTransfer(savingsAccount, received);
 
         emit UnlockedTokens(asset, received);
     }

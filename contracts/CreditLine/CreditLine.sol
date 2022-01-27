@@ -381,6 +381,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev Used to Calculate Interest Per second on given principal and Interest rate
      * @param _principal principal Amount for which interest has to be calculated.
      * @param _borrowRate It is the Interest Rate at which Credit Line is approved
+     * @param _timeElapsed time in seconds to calculate interest for
      * @return interest per second for the given parameters
      */
     function calculateInterest(
@@ -453,7 +454,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _maxPossible = _borrowLimit;
         }
         if (_maxPossible > _currentDebt) {
-            return _maxPossible.sub(_currentDebt);
+            return _maxPossible - _currentDebt;
         }
         return 0;
     }
@@ -476,7 +477,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
 
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+        for (uint256 _index = 0; _index < _strategyList.length; ++_index) {
             address _strategy = _strategyList[_index];
             if (_strategy == address(0)) {
                 continue;
@@ -638,13 +639,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         } else {
             address _collateralAsset = creditLineConstants[_id].collateralAsset;
             ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
-            if (_collateralAsset == address(0)) {
-                require(msg.value == _amount, "CreditLine::_depositCollateral - value to transfer doesn't match argument");
-            } else {
-                IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _amount);
-                IERC20(_collateralAsset).approve(_strategy, _amount);
-            }
-            uint256 _sharesReceived = _savingsAccount.deposit{value: msg.value}(_amount, _collateralAsset, _strategy, address(this));
+            IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _amount);
+            IERC20(_collateralAsset).approve(_strategy, _amount);
+            uint256 _sharesReceived = _savingsAccount.deposit(_amount, _collateralAsset, _strategy, address(this));
             collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_sharesReceived);
         }
     }
@@ -657,7 +654,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+        for (uint256 _index = 0; _index < _strategyList.length; ++_index) {
+            if (_strategyList[_index] == address(0)) {
+                continue;
+            }
             uint256 _liquidityShares = _savingsAccount.balanceInShares(_lender, _asset, _strategyList[_index]);
             if (_liquidityShares != 0) {
                 uint256 tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
@@ -693,30 +693,15 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_amount);
         creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
 
-        uint256 _tokenDiffBalance;
-        if (_borrowAsset != address(0)) {
-            uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
-            _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
-            uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
-            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
-        } else {
-            uint256 _balanceBefore = address(this).balance;
-            _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
-            uint256 _balanceAfter = address(this).balance;
-            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
-        }
+        uint256 _balanceBefore = address(this).balance;
+        _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
+        uint256 _balanceAfter = address(this).balance;
+        uint256 _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
         _tokenDiffBalance = _tokenDiffBalance.sub(_protocolFee);
 
-        if (_borrowAsset == address(0)) {
-            (bool feeSuccess, ) = protocolFeeCollector.call{value: _protocolFee}('');
-            require(feeSuccess, 'Transfer fail');
-            (bool success, ) = msg.sender.call{value: _tokenDiffBalance}('');
-            require(success, 'Transfer fail');
-        } else {
-            IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);
-            IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
-        }
+        IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);
+        IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
         emit BorrowedFromCreditLine(_id, _tokenDiffBalance);
     }
 
@@ -729,7 +714,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         uint256 _activeAmount;
 
-        for (uint256 _index = 0; _index < _strategyList.length; _index++) {
+        for (uint256 _index = 0; _index < _strategyList.length; ++_index) {
+            if (_strategyList[_index] == address(0)) {
+                continue;
+            }
             uint256 _liquidityShares = _savingsAccount.balanceInShares(msg.sender, _asset, _strategyList[_index]);
             if (_liquidityShares == 0) {
                 continue;
@@ -761,14 +749,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
         address _lender = creditLineConstants[_id].lender;
         if (!_fromSavingsAccount) {
-            if (_borrowAsset == address(0)) {
-                require(msg.value == _amount, 'creditLine::repay - Ether sent not equal to repay amount');
-                _savingsAccount.deposit{value: _amount}(_amount, _borrowAsset, _defaultStrategy, _lender);
-            } else {
-                IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
-                IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
-                _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
-            }
+            IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
+            IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
+            _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
         } else {
             _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
         }
@@ -897,7 +880,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _liquidityShares;
-        for (uint256 index = 0; index < _strategyList.length; index++) {
+        for (uint256 index = 0; index < _strategyList.length; ++index) {
             if (_strategyList[index] == address(0)) {
                 continue;
             }
@@ -963,7 +946,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _activeAmount;
-        for (uint256 index = 0; index < _strategyList.length; index++) {
+        for (uint256 index = 0; index < _strategyList.length; ++index) {
             uint256 liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
             if (liquidityShares == 0 || _strategyList[index] == address(0)) {
                 continue;
@@ -1018,15 +1001,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         if (creditLineConstants[_id].autoLiquidation && _lender != msg.sender) {
             uint256 _borrowTokens = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
-            if (_borrowAsset == address(0)) {
-                uint256 _returnETH = msg.value.sub(_borrowTokens, 'Insufficient ETH to liquidate');
-                if (_returnETH != 0) {
-                    (bool success, ) = msg.sender.call{value: _returnETH}('');
-                    require(success, 'Transfer fail');
-                }
-            } else {
-                IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowTokens);
-            }
+            IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowTokens);
         }
 
         _transferCollateral(_id, _collateralAsset, _totalCollateralTokens, _toSavingsAccount);

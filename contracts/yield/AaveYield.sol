@@ -11,6 +11,7 @@ import '../interfaces/Invest/IWETHGateway.sol';
 import '../interfaces/Invest/AaveLendingPool.sol';
 import '../interfaces/Invest/IScaledBalanceToken.sol';
 import '../interfaces/Invest/IProtocolDataProvider.sol';
+import '../interfaces/IWETH9.sol';
 
 /**
  * @title Yield contract
@@ -21,6 +22,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    address public immutable weth;
     /**
      * @notice address of wethGateway used to deposit ETH to aave
      */
@@ -39,12 +41,16 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
     /**
      * @notice address of savings account contract
      */
-    address payable public savingsAccount;
+    address public savingsAccount;
 
     /**
      * @notice aave referral code to represent sublime
      */
     uint16 public referralCode;
+
+    constructor(address _weth) {
+        weth = _weth;
+    }
 
     /**
      * @notice emitted when all tokens are withdrawn, in case of emergencies
@@ -109,7 +115,7 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @return aToken address of liquidity token
      **/
     function liquidityToken(address asset) public view override returns (address aToken) {
-        if (asset == address(0)) {
+        if (asset == weth) {
             aToken = IWETHGateway(wethGateway).getAWETHAddress();
         } else {
             (aToken, , ) = IProtocolDataProvider(protocolDataProvider).getReserveTokensAddresses(asset);
@@ -177,17 +183,15 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @param _wallet address to which tokens are withdrawn
      * @return received amount of tokens received
      */
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+    function emergencyWithdraw(address _asset, address _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
         uint256 amount = IERC20(liquidityToken(_asset)).balanceOf(address(this));
 
-        if (_asset == address(0)) {
+        if (_asset == weth) {
             received = _withdrawETH(amount);
-            (bool success, ) = _wallet.call{value: received}('');
-            require(success, 'Transfer failed');
+            IWETH9(weth).deposit{value: received}();
         } else {
             received = _withdrawERC(_asset, amount);
-            IERC20(_asset).safeTransfer(_wallet, received);
         }
         emit EmergencyWithdraw(_asset, _wallet, received);
     }
@@ -203,13 +207,16 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+        require(amount != 0, 'Invest: amount');
+
         address investedTo;
-        if (asset == address(0)) {
-            require(msg.value == amount, 'Invest: ETH amount');
+        IERC20(asset).safeTransferFrom(user, address(this), amount);
+        if (asset == weth) {
+            IWETH9(weth).withdraw(amount);
+
             (investedTo, sharesReceived) = _depositETH(amount);
         } else {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
             (investedTo, sharesReceived) = _depositERC20(asset, amount);
         }
 
@@ -223,14 +230,15 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @return received amount of tokens received
      **/
     function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
-        if (asset == address(0)) {
+        require(amount != 0, 'Invest: amount');
+
+        if (asset == weth) {
             received = _withdrawETH(amount);
-            (bool success, ) = savingsAccount.call{value: received}('');
-            require(success, 'Transfer failed');
+            IWETH9(weth).deposit{value: received}();
         } else {
             received = _withdrawERC(asset, amount);
-            IERC20(asset).safeTransfer(savingsAccount, received);
         }
+        IERC20(asset).safeTransfer(savingsAccount, received);
 
         emit UnlockedTokens(asset, received);
     }

@@ -53,7 +53,8 @@ export async function createEnvironment(
     poolFactoryInitParams: PoolFactoryInitParams,
     creditLineDefaultStrategy: CreditLineDefaultStrategy,
     creditLineInitParams: CreditLineInitParams,
-    verificationInitParams: VerificationParams
+    verificationInitParams: VerificationParams,
+    weth: Address
 ): Promise<Environment> {
     const env = {} as Environment;
     const yields = {} as Yields;
@@ -104,9 +105,9 @@ export async function createEnvironment(
     env.impersonatedAccounts = await getImpersonatedAccounts(hre, whales);
 
     yields.noYield = await createNoYieldWithInit(proxyAdmin, admin, env.savingsAccount);
-    yields.aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, env.savingsAccount);
-    yields.yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedYearnTokens);
-    yields.compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedCompoundTokens);
+    yields.aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, env.savingsAccount, weth);
+    yields.yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedYearnTokens, weth);
+    yields.compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedCompoundTokens, weth);
 
     await env.strategyRegistry.connect(admin).addStrategy(yields.aaveYield.address);
     await env.strategyRegistry.connect(admin).addStrategy(yields.yearnYield.address);
