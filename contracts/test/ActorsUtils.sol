@@ -18,11 +18,9 @@ interface Hevm {
     function store(address,bytes32,bytes32) external;
 }
 
-contract Util is DSTest {
+contract DeployUtils is DSTest {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
-
-    Hevm hevm;
 
     User admin;
     User fakeAdmin;
@@ -41,30 +39,6 @@ contract Util is DSTest {
     User creditLineBorrower;
     User creditLineLender;
     User creditLineLiquidator;
-
-    // Price feed addresses
-    // We'll be creating price feeds for:-
-    // 1. WETH / USDC
-    // 2. WBTC / WETH
-    // 3. WBTC / DAI
-
-    address constant DAI   = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-    address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
-    address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
-
-    IERC20 constant dai  = IERC20(DAI);
-    IERC20 constant usdc = IERC20(USDC);
-    IERC20 constant weth = IERC20(WETH);
-    IERC20 constant wbtc = IERC20(WBTC);
-
-    uint256 constant USD_decimals = 10 ** 6;  // USDC precision decimals
-    uint256 constant BTC_decimals = 10 ** 8;  // WBTC precision decimals
-    
-    uint256 constant WAD = 10 ** 18;
-    uint256 constant RAY = 10 ** 27;
-
-    constructor() public { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
 
     function createPoolBorrower() public {
         poolBorrower = new User();
@@ -132,28 +106,6 @@ contract Util is DSTest {
         createFakeVerifier();
 
         createBob();
-    }
-
-    function createDaiChainlinkOracle() public {
-
-    }
-
-    function createWethChainlinkOracle() public {
-
-    }
-
-
-
-    function deployGlobalContracts() public {
-
-    }
-
-    function setUpGlobalContracts() public {
-
-    }
-
-    function setUpPriceFeeds() public {
-
     }
 
 }
