@@ -265,7 +265,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _to
     ) internal {
-        IERC20(_token).safeTransfer(_to, _amount);
+        require(_to != address(0), "SavingsAccounts::_transfer _to address should be non-zero");
+        if (_token == address(0)) {
+            (bool _success, ) = _to.call{value: _amount}('');
+            require(_success, 'Transfer failed');
+        } else {
+            IERC20(_token).safeTransfer(_to, _amount);
+        }
     }
 
     /**
