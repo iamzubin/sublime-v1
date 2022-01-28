@@ -137,6 +137,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     ///     link address can only accept the request made by a master address, but can't initiate a linking request
     /// @param _masterAddress master address to link to
     function linkAddress(address _masterAddress) external {
+        require(_masterAddress != address(0), 'Verification:: _masterAddress cannot be zero');
         require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
         require(pendingLinkAddresses[msg.sender][_masterAddress], 'V:LA-No pending request');
         _linkAddress(msg.sender, _masterAddress);

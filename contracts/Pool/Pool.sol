@@ -328,16 +328,17 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         uint256 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
         uint256 _repaymentInterval = poolConstants.repaymentInterval;
+        address _borrowAsset = poolConstants.borrowAsset;
+
         IRepayment(_poolFactory.repaymentImpl()).initializeRepayment(
             _noOfRepaymentIntervals,
             _repaymentInterval,
             poolConstants.borrowRate,
             poolConstants.loanStartTime,
-            poolConstants.borrowAsset
+            _borrowAsset
         );
         IExtension(_poolFactory.extension()).initializePoolExtension(_repaymentInterval);
 
-        address _borrowAsset = poolConstants.borrowAsset;
         (uint256 _protocolFeeFraction, address _collector) = _poolFactory.getProtocolFeeData();
         uint256 _protocolFee = _tokensLent.mul(_protocolFeeFraction).div(SCALING_FACTOR);
         delete poolConstants.loanWithdrawalDeadline;
@@ -902,7 +903,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             poolConstants.collateralAsset,
             poolConstants.borrowAsset
         );
-        return _totalCollateralTokens.mul(_ratioOfPrices).div(10**_decimals).mul(uint256(SCALING_FACTOR).sub(_fraction)).div(SCALING_FACTOR);
+        return
+            _totalCollateralTokens.mul(_ratioOfPrices).div(10**_decimals).mul(uint256(SCALING_FACTOR).sub(_fraction)).div(SCALING_FACTOR);
     }
 
     /**

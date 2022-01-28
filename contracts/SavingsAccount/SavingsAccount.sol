@@ -335,6 +335,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _to
     ) external override {
+        require(msg.sender != _to, 'SavingsAccount::can not approve same account');
         allowance[msg.sender][_token][_to] = _amount;
 
         emit Approved(_token, msg.sender, _to, _amount);
@@ -451,7 +452,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         //reduce sender's balance
         balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
             _amount,
-            'SavingsAccount::transferFrom insufficient allowance'
+            'SavingsAccount::transferFrom insufficient balance'
         );
 
         //update receiver's balance

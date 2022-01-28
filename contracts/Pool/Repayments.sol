@@ -220,11 +220,13 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 _nextInstalmentDeadline;
 
         if (_loanExtensionPeriod > _instalmentsCompleted) {
-            _nextInstalmentDeadline = ((_instalmentsCompleted.add(SCALING_FACTOR).add(SCALING_FACTOR)).mul(_repaymentInterval).div(SCALING_FACTOR)).add(
+            _nextInstalmentDeadline = (
+                (_instalmentsCompleted.add(SCALING_FACTOR).add(SCALING_FACTOR)).mul(_repaymentInterval).div(SCALING_FACTOR)
+            ).add(_loanStartTime);
+        } else {
+            _nextInstalmentDeadline = ((_instalmentsCompleted.add(SCALING_FACTOR)).mul(_repaymentInterval).div(SCALING_FACTOR)).add(
                 _loanStartTime
             );
-        } else {
-            _nextInstalmentDeadline = ((_instalmentsCompleted.add(SCALING_FACTOR)).mul(_repaymentInterval).div(SCALING_FACTOR)).add(_loanStartTime);
         }
         return _nextInstalmentDeadline;
     }
@@ -340,7 +342,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
 
         if (_isBorrowerLate) {
-            uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(SCALING_FACTOR);
+            uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(
+                SCALING_FACTOR
+            );
             emit GracePenaltyRepaid(_poolID, _penalty);
             return _penalty;
         } else {
