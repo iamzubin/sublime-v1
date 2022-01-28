@@ -138,13 +138,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         if(Address(_token) != Address(0)) {
             require(msg.value == 0, '_depositToYield: ETH is not required for this operation');
         }
-        uint256 _ethValue;
-
-        if (_token == address(0)) {
-            _ethValue = _amount;
-            require(msg.value == _amount, 'SavingsAccount::deposit ETH sent must be equal to amount');
-        }
-        _sharesReceived = IYield(_strategy).lockTokens{value: _ethValue}(msg.sender, _token, _amount);
+        _sharesReceived = IYield(_strategy).lockTokens(msg.sender, _token, _amount);
     }
 
     /**
