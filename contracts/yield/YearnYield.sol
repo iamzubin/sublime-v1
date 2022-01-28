@@ -154,7 +154,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
 
     /**
      * @notice Used to unlock shares
-     * @param asset the address of underlying token
+     * @param asset the address of token locked
      * @param amount the amount of shares to unlock
      * @return received amount of shares received
      * @return address of Yearn shares of asset 

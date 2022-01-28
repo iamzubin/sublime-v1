@@ -153,7 +153,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
 
     /**
      * @notice Used to unlock shares
-     * @param asset the address of underlying token
+     * @param asset the address of token locked
      * @param amount the amount of shares to unlock
      * @return received amount of shares received
      * @return address of Compound shares of asset 
