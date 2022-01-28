@@ -3,7 +3,15 @@ pragma solidity 0.7.0;
 
 import "ds-test/test.sol";
 
-import "./roles/User.sol";
+import "./roles/Admin.sol";
+import "./roles/PoolBorrower.sol";
+import "./roles/PoolLender.sol";
+import "./roles/PoolLiquidator.sol";
+import "./roles/CreditLineBorrower.sol";
+import "./roles/CreditLineLender.sol";
+import "./roles/CreditLineLiquidator.sol";
+import "./roles/SavingsAccountUser.sol";
+import "./roles/Verifier.sol";
 
 import '../interfaces/IPriceOracle.sol';
 import '../interfaces/IYield.sol';
@@ -22,23 +30,23 @@ contract DeployUtils is DSTest {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    User admin;
-    User fakeAdmin;
+    Admin admin;
+    Admin fakeAdmin;
 
-    User verifier;
-    User fakeVerifier;
+    Verifier verifier;
+    Verifier fakeVerifier;
 
-    User bob;
+    SavingsAccountUser bob;
 
-    User poolBorrower;
-    User poolLender_1;
-    User poolLender_2;
-    User poolLender_3;
-    User poolLiquidator;
+    PoolBorrower poolBorrower;
+    PoolLender poolLender_1;
+    PoolLender poolLender_2;
+    PoolLender poolLender_3;
+    PoolLiquidator poolLiquidator;
 
-    User creditLineBorrower;
-    User creditLineLender;
-    User creditLineLiquidator;
+    CreditLineBorrower creditLineBorrower;
+    CreditLineLender creditLineLender;
+    CreditLineLiquidator creditLineLiquidator;
 
     function createPoolBorrower() public {
         poolBorrower = new User();

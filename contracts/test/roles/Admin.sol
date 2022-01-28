@@ -6,8 +6,10 @@ import "../../SavingsAccount/SavingsAccount.sol";
 import "../../yield/StrategyRegistry.sol";
 import "../../yield/NoYield.sol";
 
+import "../DeployUtils.sol";
 
-contract Governor {
+
+contract User is DeployUtils {
     function updateSavingsAccount(address _address, CreditLine creditLineContract) public {
         creditLineContract.updateSavingsAccount(_address);
     }
