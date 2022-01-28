@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IPool {
-    
     enum LoanStatus {
         COLLECTION, //denotes collection period
         ACTIVE, // denotes the active loan
@@ -59,9 +58,10 @@ interface IPool {
 
     /**
      * @notice emitted when borrower withdraws loan
-     * @param amount tokens the borrower withdrew
+     * @param amount tokens the borrower withdrew, taking into account the deducted protocol fee
+     * @param protocolFee protocol fee deducted when borrower withdrew the amount
      */
-    event AmountBorrowed(uint256 amount);
+    event AmountBorrowed(uint256 amount, uint256 protocolFee);
 
     /**
      * @notice emitted when lender withdraws from borrow pool
@@ -111,4 +111,21 @@ interface IPool {
     function totalSupply() external view returns (uint256);
 
     function closeLoan() external payable;
+
+    function initialize(
+        uint256 _borrowAmountRequested,
+        uint256 _borrowRate,
+        address _borrower,
+        address _borrowAsset,
+        address _collateralAsset,
+        uint256 _idealCollateralRatio,
+        uint256 _repaymentInterval,
+        uint256 _noOfRepaymentIntervals,
+        address _poolSavingsStrategy,
+        uint256 _collateralAmount,
+        bool _transferFromSavingsAccount,
+        address _lenderVerifier,
+        uint256 _loanWithdrawalDuration,
+        uint256 _collectionPeriod
+    ) external payable;
 }
