@@ -3,7 +3,7 @@
  *Submitted for verification at Etherscan.io on 2020-09-01
  */
 
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/Address.sol';
