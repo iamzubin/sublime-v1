@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
@@ -66,7 +66,7 @@ contract Extension is Initializable, IExtension {
      * @notice initializing the pool extension for the Pool
      * @param _repaymentInterval value of the repayment interval
      */
-    function initializePoolExtension(uint256 _repaymentInterval) external override {
+    function initializePoolExtension(uint128 _repaymentInterval) external override {
         IPoolFactory _poolFactory = poolFactory;
         require(extensions[msg.sender].repaymentInterval == 0, 'Extension::initializePoolExtension - already initialized');
         require(_poolFactory.poolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
@@ -122,6 +122,7 @@ contract Extension is Initializable, IExtension {
                 extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.add(_amount);
             }
         }
+        emit RebalaneVotes(_from, _to, _amount);
     }
 
     /**
