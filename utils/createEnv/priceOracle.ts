@@ -7,6 +7,8 @@ import { SublimeProxy } from '@typechain/SublimeProxy';
 import { Address } from 'hardhat-deploy/dist/types';
 import { PriceOracleSource } from '@utils/types';
 
+import { induceDelay } from '../helpers';
+
 export async function createPriceOracle(proxyAdmin: SignerWithAddress, admin: SignerWithAddress): Promise<PriceOracle> {
     let deployHelper: DeployHelper = await new DeployHelper(proxyAdmin);
     let priceOracleLogic: PriceOracle = await deployHelper.helper.deployPriceOracle();

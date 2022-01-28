@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IYield {
     /**
@@ -48,7 +48,7 @@ interface IYield {
         address user,
         address asset,
         uint256 amount
-    ) external payable returns (uint256 sharesReceived);
+    ) external returns (uint256 sharesReceived);
 
     /**
      * @dev Used to unlock tokens from available protocol

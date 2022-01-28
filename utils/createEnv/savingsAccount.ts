@@ -21,5 +21,5 @@ export async function initSavingsAccount(
     strategyRegistry: StrategyRegistry,
     creditLines: Address
 ) {
-    await (await savingsAccount.connect(admin).initialize(admin.address, strategyRegistry.address, creditLines)).wait();
+    await savingsAccount.connect(admin).initialize(admin.address, strategyRegistry.address, creditLines);
 }
