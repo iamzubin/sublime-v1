@@ -49,49 +49,49 @@ contract DeployUtils is DSTest {
     CreditLineLiquidator creditLineLiquidator;
 
     function createPoolBorrower() public {
-        poolBorrower = new User();
+        poolBorrower = new PoolBorrower();
     }
     
     function createPoolLenders() public {
-        poolLender_1 = new User();
-        poolLender_2 = new User();
-        poolLender_3 = new User();
+        poolLender_1 = new PoolLender();
+        poolLender_2 = new PoolLender();
+        poolLender_3 = new PoolLender();
     }
 
     function createPoolLiquidator() public {
-        poolLiquidator = new User();
+        poolLiquidator = new PoolLiquidator();
     }
 
     function createCreditLineBorrower() public {
-        creditLineBorrower = new User();
+        creditLineBorrower = new CreditLineBorrower();
     }
 
     function createCreditLineLender() public {
-        creditLineLender = new User();
+        creditLineLender = new CreditLineLender();
     }
 
     function createCreditLineLiquidator() public {
-        creditLineLiquidator = new User();
+        creditLineLiquidator = new CreditLineLiquidator();
     }
 
     function createAdmin() public {
-        admin = new User();
+        admin = new Admin();
     }
 
     function createFakeAdmin() public {
-        fakeAdmin = new User();
+        fakeAdmin = new Admin();
     }
 
     function createVerifier() public {
-        verifier = new User();
+        verifier = new Verifier();
     }
 
     function createFakeVerifier() public {
-        fakeVerifier = new User();
+        fakeVerifier = new Verifier();
     }
 
     function createBob() public {
-        bob = new User();
+        bob = new SavingsAccountUser();
     }
 
     function setUpPoolActors() public {
