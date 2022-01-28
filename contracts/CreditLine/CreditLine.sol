@@ -615,9 +615,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) external payable nonReentrant ifCreditLineExists(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
-        if(Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
-            require(msg.value == 0, 'DepositCollateral: ETH is not required for this operation');
-        }
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
         emit CollateralDeposited(_id, _amount, _strategy);
     }
@@ -629,6 +626,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) internal {
         require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
+        if(Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
+            require(msg.value == 0, '_depositCollateral: ETH is not required for this operation');
+        }
         if (_fromSavingsAccount) {
             _depositCollateralFromSavingsAccount(_id, _amount, msg.sender);
         } else {
