@@ -58,7 +58,7 @@ interface IYield {
      **/
     function unlockTokens(address asset, uint256 amount) external returns (uint256 tokensReceived);
 
-    function unlockShares(address asset, uint256 amount) external returns (uint256 received);
+    function unlockShares(address asset, uint256 amount) external returns (uint256 received, address tokenReceived);
 
     /**
      * @dev Used to get amount of underlying tokens for current number of shares
