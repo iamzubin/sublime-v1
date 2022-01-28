@@ -717,7 +717,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the collateral ratio
      */
     function updateidealCollateralRatioLimit(uint256 _min, uint256 _max) external onlyOwner {
-        require(_min != 0, "PoolFactory:updateidealCollateralRatioLimit _min should be non-zero");
         idealCollateralRatioLimit = Limits(_min, _max);
         emit LimitsUpdated('CollateralRatio', _min, _max);
     }
@@ -739,7 +738,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the repayment interval
      */
     function updateRepaymentIntervalLimit(uint256 _min, uint256 _max) external onlyOwner {
-        require(_min != 0, "PoolFactory:updateRepaymentIntervalLimit _min should be non-zero");
         repaymentIntervalLimit = Limits(_min, _max);
         emit LimitsUpdated('RepaymentInterval', _min, _max);
     }
