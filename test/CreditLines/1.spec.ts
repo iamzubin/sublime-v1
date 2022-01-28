@@ -574,13 +574,13 @@ describe('Credit Lines', async () => {
                         creditLine
                             .connect(borrower)
                             .depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, false)
-                    ).to.be.revertedWith('Credit line does not exist');
+                    ).to.be.revertedWith('CreditLine not active');
 
                     await expect(
                         creditLine
                             .connect(borrower)
                             .depositCollateral(randomInvalidHash, BigNumber.from('123123123'), yearnYield.address, true)
-                    ).to.be.revertedWith('Credit line does not exist');
+                    ).to.be.revertedWith('CreditLine not active');
                 });
 
                 it('should fail if any other user/address is trying to accept the credit line', async () => {

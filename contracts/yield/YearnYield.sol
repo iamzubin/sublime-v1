@@ -23,6 +23,16 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      **/
     address payable public savingsAccount;
 
+
+    /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+    
+
     /**
      * @notice stores the address of liquidity token for a given base token
      */
@@ -87,6 +97,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @return received amount of tokens received
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner nonReentrant returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
@@ -101,6 +112,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
             received = _withdrawERC(_asset, investedTo, amount);
             IERC20(_asset).safeTransfer(_wallet, received);
         }
+        emit EmergencyWithdraw(_asset,_wallet,received);
     }
 
     /**
@@ -116,8 +128,6 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         address asset,
         uint256 amount
     ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
-        require(amount != 0, 'Invest: amount');
-
         address investedTo = liquidityToken[asset];
         if (asset == address(0)) {
             require(msg.value == amount, 'Invest: ETH amount');
@@ -137,7 +147,6 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @return received amount of tokens received
      **/
     function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
-        require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
 
         if (asset == address(0)) {

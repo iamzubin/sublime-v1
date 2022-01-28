@@ -25,15 +25,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     IPoolFactory poolFactory;
 
-    enum LoanStatus {
-        COLLECTION, //denotes collection period
-        ACTIVE, // denotes the active loan
-        CLOSED, // Loan is repaid and closed
-        CANCELLED, // Cancelled by borrower
-        DEFAULTED, // Repaymennt defaulted by  borrower
-        TERMINATED // Pool terminated by admin
-    }
-
     uint256 gracePenaltyRate;
     uint256 gracePeriodFraction; // fraction of the repayment interval
 
@@ -292,7 +283,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         return _interestLeft;
     }
 
-    /// @notice Given there is no loan extension, find the overdue interest after missing the repayment deadline
+    /// @notice Given there is a loan extension, find the overdue interest after missing the repayment deadline
     /// @dev (10**30) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
     /// @return interest amount that is overdue
@@ -383,7 +374,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _amount = _amount * 10**30;
         {
             uint256 _loanStatus = _pool.getLoanStatus();
-            require(_loanStatus == 1, 'Repayments:repayInterest Pool should be active.');
+            require(_loanStatus == uint256(IPool.LoanStatus.ACTIVE), 'Repayments:repayInterest Pool should be active.');
         }
 
         uint256 _initialAmount = _amount;
