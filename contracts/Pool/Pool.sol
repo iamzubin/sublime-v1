@@ -435,7 +435,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _from,
         address _to,
         uint256 _amount
-    ) internal override {
+    ) internal override nonReentrant {
         if (_to != address(0)) {
             require(!paused(), 'TT1');
         }
