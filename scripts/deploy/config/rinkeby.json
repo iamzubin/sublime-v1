@@ -60,5 +60,8 @@
             "collector": "0x0000000000000000000000000000000000000000"
         },
         "liquidatorRewardFraction": 0.04
+    },
+    "verificationParams": {
+        "activationDelay": 300
     }
 }
