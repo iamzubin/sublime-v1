@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat';
 
-import contracts from './contractsToVerify.json';
+import { contractsToVerify as contracts } from './contractsToVerify';
 
 export async function getAddressesToVerify() {
     let addresses: any = {} as string;

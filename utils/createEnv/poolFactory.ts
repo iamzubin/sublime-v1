@@ -13,7 +13,7 @@ import { PriceOracle } from '@typechain/PriceOracle';
 import { SavingsAccount } from '@typechain/SavingsAccount';
 import { Extension } from '@typechain/Extension';
 import { PoolFactoryInitParams } from '../../utils/types';
-import { zeroAddress } from '../../utils/constants';
+import { zeroAddress } from '../../config/constants';
 
 export async function createPoolFactory(proxyAdmin: SignerWithAddress): Promise<PoolFactory> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -85,15 +85,17 @@ export async function setImplementations(
     savingsAccount: SavingsAccount,
     extension: Extension
 ) {
-    await poolFactory
-        .connect(admin)
-        .setImplementations(
-            poolLogic.address,
-            repayments.address,
-            verification.address,
-            strategyRegistry.address,
-            priceOracle.address,
-            savingsAccount.address,
-            extension.address
-        );
+    await (
+        await poolFactory
+            .connect(admin)
+            .setImplementations(
+                poolLogic.address,
+                repayments.address,
+                verification.address,
+                strategyRegistry.address,
+                priceOracle.address,
+                savingsAccount.address,
+                extension.address
+            )
+    ).wait();
 }

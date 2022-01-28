@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IExtension {
     /**
@@ -33,6 +33,14 @@ interface IExtension {
      * @param lastVoteTime the last time the lender has voted on an extension request
      */
     event LenderVoted(address indexed lender, uint256 totalExtensionSupport, uint256 lastVoteTime);
+
+    /**
+     * @notice emited when votes are rebalanced of from and to addresses when pool tokens are transferred
+     * @param oldLender address of user from whom pool tokens are transferred
+     * @param newLender address of user to whom pool tokens are transferred
+     * @param amount amount of tokens rebalanced
+     */
+    event RebalaneVotes(address indexed oldLender, address indexed newLender, uint256 amount);
 
     function initializePoolExtension(uint128 _repaymentInterval) external;
 
