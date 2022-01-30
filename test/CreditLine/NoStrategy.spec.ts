@@ -36,6 +36,7 @@ describe('Credit Lines with No Yield', async () => {
                 protocolFeeCollector: '',
                 _minBorrowFraction: 100000000,
                 noStrategy: '',
+                beacon: '',
             },
             CreditLineDefaultStrategy.NoStrategy,
             {
