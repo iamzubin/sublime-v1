@@ -218,7 +218,7 @@ export async function calculateNewPoolAddress(
     _transferFromSavingsAccount: Boolean,
     poolCreateParams: PoolCreateParams
 ): Promise<Address> {
-    let generatedPoolAddress = await env.poolFactory.connect(env.entities.borrower).preComputeAddress(salt);
+    let generatedPoolAddress = await env.poolFactory.connect(env.entities.borrower).preComputeAddress(env.entities.borrower.address, salt);
 
     return generatedPoolAddress;
 }
@@ -234,7 +234,7 @@ export async function createNewPool(
 ): Promise<Pool> {
     let deployHelper: DeployHelper = new DeployHelper(env.entities.borrower);
 
-    let generatedPoolAddress = await env.poolFactory.connect(env.entities.borrower).preComputeAddress(salt);
+    let generatedPoolAddress = await env.poolFactory.connect(env.entities.borrower).preComputeAddress(env.entities.borrower.address, salt);
 
     await env.poolFactory
         .connect(env.entities.borrower)

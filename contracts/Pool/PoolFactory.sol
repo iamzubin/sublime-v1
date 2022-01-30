@@ -30,11 +30,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     /**
-     * @notice function definition of the pool contract
-     */
-    bytes4 public poolInitFuncSelector; //  bytes4(keccak256("initialize(uint256,address,address,address,uint256,uint256,uint256,uint256,bool)"))
-
-    /**
      * @notice address of the latest implementation of the pool logic
      */
     address public poolImpl;
@@ -180,7 +175,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _collectionPeriod period for which lenders can lend for pool
      * @param _loanWithdrawalDuration period for which lent tokens can be withdrawn after pool starts
      * @param _marginCallDuration duration of margin call before which collateral ratio has to be maintained
-     * @param _poolInitFuncSelector function signature for initializing pool
      * @param _liquidatorRewardFraction fraction of liquidation amount which is given to liquidator as reward multiplied by SCALING_FACTOR(10**30)
      * @param _poolCancelPenaltyMultiple multiple of borrow rate of pool as penality for cancellation of pool multiplied by SCALING_FACTOR(10**30)
      * @param _minBorrowFraction amountCollected/amountRequested for a pool, if less than fraction by pool start time then pool can be cancelled without penality multiplied by SCALING_FACTOR(10**30)
@@ -193,7 +187,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _collectionPeriod,
         uint256 _loanWithdrawalDuration,
         uint256 _marginCallDuration,
-        bytes4 _poolInitFuncSelector,
         uint256 _liquidatorRewardFraction,
         uint256 _poolCancelPenaltyMultiple,
         uint256 _minBorrowFraction,
@@ -208,7 +201,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updateCollectionPeriod(_collectionPeriod);
         _updateLoanWithdrawalDuration(_loanWithdrawalDuration);
         _updateMarginCallDuration(_marginCallDuration);
-        _updatepoolInitFuncSelector(_poolInitFuncSelector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
         _updatePoolCancelPenaltyMultiple(_poolCancelPenaltyMultiple);
         _updateMinBorrowFraction(_minBorrowFraction);
@@ -319,8 +311,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         );
     }
 
-    function preComputeAddress(bytes32 salt) public view returns (address predicted) {
+    function preComputeAddress(address creator, bytes32 salt) public view returns (address predicted) {
         address deployer = address(this);
+        salt = keccak256(abi.encode(creator, salt));
         address master = poolImpl;
         assembly {
             let ptr := mload(0x40)
@@ -349,6 +342,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt,
         address _lenderVerifier
     ) internal {
+        _salt = keccak256(abi.encode(msg.sender, _salt));
         address _pool = Clones.cloneDeterministic(poolImpl, _salt);
         _initPool(
             _pool,
@@ -449,19 +443,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function _updateSupportedCollateralTokens(address _collateralToken, bool _isSupported) internal {
         isCollateralToken[_collateralToken] = _isSupported;
         emit CollateralTokenUpdated(_collateralToken, _isSupported);
-    }
-
-    /**
-     * @notice used to update the pointer to Initializer function of the proxy pool contract
-     * @param _functionId updated function definition of the proxy pool contract
-     */
-    function updatepoolInitFuncSelector(bytes4 _functionId) external onlyOwner {
-        _updatepoolInitFuncSelector(_functionId);
-    }
-
-    function _updatepoolInitFuncSelector(bytes4 _functionId) internal {
-        poolInitFuncSelector = _functionId;
-        emit PoolInitSelectorUpdated(_functionId);
     }
 
     /**

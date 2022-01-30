@@ -1,6 +1,5 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { calculateNewPoolAddress, createEnvironment, createNewPool } from '../../utils/createEnv';
-import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
+import { createEnvironment, createNewPool } from '../../utils/createEnv';
 import { CreditLineDefaultStrategy, Environment, PoolCreateParams } from '../../utils/types';
 
 import hre from 'hardhat';
@@ -14,8 +13,6 @@ import { getPoolAddress } from '../../utils/helpers';
 import { sha256 } from 'ethers/lib/utils';
 import DeployHelper from '../../utils/deploys';
 import { BigNumber } from 'ethers';
-import { expect } from 'chai';
-import poolContractArtifact from '../../artifacts/contracts/Pool/Pool.sol/Pool.json';
 
 describe('Create Pools', async () => {
     let env: Environment;
@@ -45,7 +42,6 @@ describe('Create Pools', async () => {
                 _collectionPeriod: 1000000,
                 _loanWithdrawalDuration: 1000000,
                 _marginCallDuration: 1000000,
-                _poolInitFuncSelector: getPoolInitSigHash(),
                 _liquidatorRewardFraction: 1000000,
                 _poolCancelPenalityFraction: 10000000,
                 _protocolFeeFraction: 10000000,
@@ -107,7 +103,9 @@ describe('Create Pools', async () => {
 
         console.log(env.mockTokenContracts[1].name);
 
-        let generatedPoolAddress = await env.poolFactory.connect(env.entities.borrower).preComputeAddress(salt);
+        let generatedPoolAddress = await env.poolFactory
+            .connect(env.entities.borrower)
+            .preComputeAddress(env.entities.borrower.address, salt);
         console.log({ generatedPoolAddress });
 
         await WBTC.connect(env.impersonatedAccounts[0]).transfer(admin.address, '100000000');

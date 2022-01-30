@@ -101,7 +101,6 @@ export interface PoolFactoryInitParams {
     _collectionPeriod: BigNumberish;
     _loanWithdrawalDuration: BigNumberish;
     _marginCallDuration: BigNumberish;
-    _poolInitFuncSelector: BytesLike;
     _liquidatorRewardFraction: BigNumberish;
     _poolCancelPenalityFraction: BigNumberish;
     _minBorrowFraction: BigNumberish;
