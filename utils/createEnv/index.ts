@@ -117,6 +117,7 @@ export async function createEnvironment(
     env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification);
 
     await env.verification.connect(admin).addVerifier(env.adminVerifier.address);
+    // TODO : registerSelf
     await env.adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
     env.priceOracle = await createPriceOracle(proxyAdmin, admin);
     await setPriceOracleFeeds(env.priceOracle, admin, priceFeeds);

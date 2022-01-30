@@ -42,7 +42,7 @@ import { Repayments } from '../../typechain/Repayments';
 import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { CreditLine } from '../../typechain/CreditLine';
 import { IYield } from '../../typechain/IYield';
-import { zeroAddress } from '../../utils/constants';
+import { zeroAddress } from '../../config/constants';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
 import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
 
