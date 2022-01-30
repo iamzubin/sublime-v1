@@ -12,7 +12,7 @@ import '../SavingsAccount/SavingsAccountUtil.sol';
 import '../interfaces/IStrategyRegistry.sol';
 
 /**
- * @title Credit Line contract with Methods related to credit Line
+ * @title Credit Line contract with Methods related to creditLines
  * @notice Implements the functions related to Credit Line
  * @author Sublime
  **/
