@@ -121,7 +121,7 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
         verification.unregisterMasterAddress(_user, address(this));
         emit UserUnregistered(_user);
     }
-    
+
     /**
      * @notice used to update verification contract address
      * @dev ohly owner can update
