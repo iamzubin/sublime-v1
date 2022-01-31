@@ -591,7 +591,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice called to close the loan after repayment of principal
      */
-    function closeLoan() external payable override nonReentrant onlyRepaymentImpl {
+    function closeLoan() external override nonReentrant onlyRepaymentImpl {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'CL1');
 
         poolVariables.loanStatus = LoanStatus.CLOSED;
