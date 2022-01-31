@@ -94,14 +94,9 @@ export const extensionParams = {
 };
 
 export const verificationParams = {
-<<<<<<< HEAD:utils/constants.ts
-    activationDelay: 0
-}
-=======
     activationDelay: 0,
 };
 
->>>>>>> b4e9cf66a59752d520bb4339c3de9e5a992b61d2:config/constants.ts
 // Pool inputs to be manullay added
 // address _borrower,
 // address _borrowAsset,
