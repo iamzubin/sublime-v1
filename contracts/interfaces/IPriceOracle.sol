@@ -27,4 +27,12 @@ interface IPriceOracle {
     function getLatestPrice(address num, address den) external view returns (uint256, uint256);
 
     function doesFeedExist(address token1, address token2) external view returns (bool);
+
+    function setChainlinkFeedAddress(address token, address priceOracle) external;
+
+    function setUniswapFeedAddress(
+        address token1,
+        address token2,
+        address pool
+    ) external;
 }

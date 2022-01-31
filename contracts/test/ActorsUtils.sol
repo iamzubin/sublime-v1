@@ -4,12 +4,8 @@ pragma solidity 0.7.0;
 import "ds-test/test.sol";
 
 import "./roles/Admin.sol";
-import "./roles/PoolBorrower.sol";
-import "./roles/PoolLender.sol";
-import "./roles/PoolLiquidator.sol";
-import "./roles/CreditLineBorrower.sol";
-import "./roles/CreditLineLender.sol";
-import "./roles/CreditLineLiquidator.sol";
+import "./roles/PoolActor.sol";
+import "./roles/CreditLineActor.sol";
 import "./roles/SavingsAccountUser.sol";
 import "./roles/Verifier.sol";
 
@@ -21,12 +17,7 @@ import '../interfaces/IPool.sol';
 import '../interfaces/IPoolFactory.sol';
 import '../interfaces/IRepayment.sol';
 
-interface Hevm {
-    function warp(uint256) external;
-    function store(address,bytes32,bytes32) external;
-}
-
-contract DeployUtils is DSTest {
+contract ActorsUtils {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -38,40 +29,40 @@ contract DeployUtils is DSTest {
 
     SavingsAccountUser bob;
 
-    PoolBorrower poolBorrower;
-    PoolLender poolLender_1;
-    PoolLender poolLender_2;
-    PoolLender poolLender_3;
-    PoolLiquidator poolLiquidator;
+    PoolActor poolBorrower;
+    PoolActor poolLender_1;
+    PoolActor poolLender_2;
+    PoolActor poolLender_3;
+    PoolActor poolLiquidator;
 
-    CreditLineBorrower creditLineBorrower;
-    CreditLineLender creditLineLender;
-    CreditLineLiquidator creditLineLiquidator;
+    CreditLineActor creditLineBorrower;
+    CreditLineActor creditLineLender;
+    CreditLineActor creditLineLiquidator;
 
     function createPoolBorrower() public {
-        poolBorrower = new PoolBorrower();
+        poolBorrower = new PoolActor();
     }
     
     function createPoolLenders() public {
-        poolLender_1 = new PoolLender();
-        poolLender_2 = new PoolLender();
-        poolLender_3 = new PoolLender();
+        poolLender_1 = new PoolActor();
+        poolLender_2 = new PoolActor();
+        poolLender_3 = new PoolActor();
     }
 
     function createPoolLiquidator() public {
-        poolLiquidator = new PoolLiquidator();
+        poolLiquidator = new PoolActor();
     }
 
     function createCreditLineBorrower() public {
-        creditLineBorrower = new CreditLineBorrower();
+        creditLineBorrower = new CreditLineActor();
     }
 
     function createCreditLineLender() public {
-        creditLineLender = new CreditLineLender();
+        creditLineLender = new CreditLineActor();
     }
 
     function createCreditLineLiquidator() public {
-        creditLineLiquidator = new CreditLineLiquidator();
+        creditLineLiquidator = new CreditLineActor();
     }
 
     function createAdmin() public {
@@ -94,19 +85,19 @@ contract DeployUtils is DSTest {
         bob = new SavingsAccountUser();
     }
 
-    function setUpPoolActors() public {
+    function SetUpPoolActors() public {
         createPoolBorrower();
         createPoolLenders();
         createPoolLiquidator();
     }
 
-    function setUpCreditLineActors() public {
+    function SetUpCreditLineActors() public {
         createCreditLineBorrower();
         createCreditLineLender();
         createCreditLineLiquidator();
     }
 
-    function setUpGlobalActors() public {
+    function SetUpGlobalActors() public {
         createAdmin();
         createFakeAdmin();
 

@@ -177,7 +177,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      * @param token address of token for which price feed is added
      * @param priceOracle addrewss of the price feed for the token
      **/
-    function setChainlinkFeedAddress(address token, address priceOracle) external onlyOwner {
+    function setChainlinkFeedAddress(address token, address priceOracle) external override onlyOwner {
         uint256 priceOracleDecimals = AggregatorV3Interface(priceOracle).decimals();
         chainlinkFeedAddresses[token] = PriceData(priceOracle, priceOracleDecimals);
         decimals[token] = getDecimals(token);
@@ -195,7 +195,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         address token1,
         address token2,
         address pool
-    ) external onlyOwner {
+    ) external override onlyOwner {
         require(token1 != token2, 'token1 and token2 should be different addresses');
         bytes32 _poolTokensId = getUniswapPoolTokenId(token1, token2);
         uniswapPools[_poolTokensId] = pool;

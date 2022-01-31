@@ -3,12 +3,19 @@ pragma solidity 0.7.0;
 
 import "ds-test/test.sol";
 
-import "./roles/User.sol";
+import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
+import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20PausableUpgradeable.sol';
 
 contract Constants {
+    using SafeERC20 for IERC20;
+    using SafeMath for uint256;
+    
     address constant wethGateway = 0xcc9a0B7c43DC2a5F023Bb9b738E45B0Ef6B06E04;
     address constant aaveProtocolDataProvider = 0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d;
-    address constant aaveLendingPoolAddressesProvider = 0xb53c1a33016b2dc2ff3653530bff1848a515c8c5;
+    address constant aaveLendingPoolAddressesProvider = 0xB53C1a33016B2DC2fF3653530bfF1848a515c8c5;
 
     // Price feed addresses
     // We'll be creating price feeds for:-
@@ -19,6 +26,8 @@ contract Constants {
     address constant USDC  = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
+
+    mapping (address => uint256) balanceSlot;
 
     // Chainlink base feeds against USD
     address constant ETH_priceFeedChainlink = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
@@ -42,41 +51,32 @@ contract Constants {
     uint256 constant RAY = 10 ** 27;
 
     struct PoolFactoryDeploymentVars {
-        uint256 collectionPeriod,
-        uint256 loanWithdrawalDuration,
-        uint256 marginCallDuration,
-        bytes4 poolInitFuncSelector,
-        uint256 liquidatorRewardFraction,
-        uint256 poolCancelPenaltyMultiple,
-        uint256 minBorrowFraction,
-        uint256 protocolFeeFraction,
-        address protocolFeeCollector,
-        address noStrategy
+        uint256 collectionPeriod;
+        uint256 loanWithdrawalDuration;
+        uint256 marginCallDuration;
+        bytes4 poolInitFuncSelector;
+        uint256 liquidatorRewardFraction;
+        uint256 poolCancelPenaltyMultiple;
+        uint256 minBorrowFraction;
+        uint256 protocolFeeFraction;
+        address protocolFeeCollector;
+        address noStrategy;
     }
 
     struct CreditLineRequestVars {
-        uint256 borrowLimit,
-        uint256 borrowRate,
-        bool autoLiquidation,
-        uint256 collateralRatio,
-        address borrowAsset,
-        address collateralAsset,
-        bool requestAsLender
+        uint256 borrowLimit;
+        uint256 borrowRate;
+        bool autoLiquidation;
+        uint256 collateralRatio;
+        address borrowAsset;
+        address collateralAsset;
+        bool requestAsLender;
     }
 
-    CreditLineRequestVars defaultCreditLineRequest;
-    CreditLineRequestVars creditLineRequest_1;
+    //CreditLineRequestVars defaultCreditLineRequest;
+    //CreditLineRequestVars creditLineRequest_1;
 
-    creditLineRequest_1 = CreditLineRequestVars(
-                                                1e9,
-                                                10 * 1e28,
-                                                false,
-                                                50 * 1e28,
-                                                DAI,
-                                                WETH,
-                                                false);
-
-    defaultCreditLineRequest = creditLineRequest_1;
+    //defaultCreditLineRequest = creditLineRequest_1;
     
 
 }
