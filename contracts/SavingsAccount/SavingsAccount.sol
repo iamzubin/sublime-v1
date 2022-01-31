@@ -135,6 +135,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
         require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
+        if(Address(_token) != Address(0)) {
+            require(msg.value == 0, '_depositToYield: ETH is not required for this operation');
+        }
         _sharesReceived = IYield(_strategy).lockTokens(msg.sender, _token, _amount);
     }
 
@@ -271,9 +274,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
         for (uint256 i; i < _strategyList.length; ++i) {
-            if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0 && _strategyList[i] != address(0)) {
-                uint256 _amount = balanceInShares[msg.sender][_token][_strategyList[i]];
-                _amount = IYield(_strategyList[i]).unlockTokens(_token, balanceInShares[msg.sender][_token][_strategyList[i]]);
+            uint256 _amount = balanceInShares[msg.sender][_token][_strategyList[i]];
+            if (_amount != 0 && _strategyList[i] != address(0)) {
+                _amount = IYield(_strategyList[i]).unlockTokens(_token, _amount);
                 _tokenReceived = _tokenReceived.add(_amount);
                 delete balanceInShares[msg.sender][_token][_strategyList[i]];
             }
@@ -406,8 +409,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @param _strategy address of the strategy from which tokens are transferred
      * @param _from address from whose allowance tokens are transferred
      * @param _to address of the user tokens are transferred to
-     * @return the amount of tokens in terms of LP tokens of _token in _strategy strategy of
-     *         savingsAccount that will be transferred from the _from address to the _to address
      */
     function transferFrom(
         uint256 _amount,
@@ -415,7 +416,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _strategy,
         address _from,
         address _to
-    ) external override returns (uint256) {
+    ) external override {
         require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
         require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::transferFrom strategy do not exist');
 
@@ -437,8 +438,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         balanceInShares[_to][_token][_strategy] = (balanceInShares[_to][_token][_strategy]).add(_amount);
 
         emit Transfer(_token, _strategy, _from, _to, _amount);
-
-        return _amount;
     }
 
     /**

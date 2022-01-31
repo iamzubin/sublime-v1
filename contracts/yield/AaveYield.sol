@@ -344,6 +344,4 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
 
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(tokensBefore);
     }
-
-    receive() external payable {}
 }

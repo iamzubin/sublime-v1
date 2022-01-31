@@ -166,7 +166,7 @@ interface ISavingsAccount {
         address poolSavingsStrategy,
         address from,
         address to
-    ) external returns (uint256);
+    ) external;
 
     function balanceInShares(
         address user,

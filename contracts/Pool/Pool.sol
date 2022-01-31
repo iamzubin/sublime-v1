@@ -286,6 +286,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _transferFromSavingsAccount
     ) external payable override nonReentrant {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'ACMC1');
+        if(Address(poolConstants.collateralAsset) != Address(0)) {
+            require(msg.value == 0, 'AddCollateralInMarginCall: ETH is not required for this operation');
+        }
         require(balanceOf(msg.sender) == 0, 'ACMC2');
         require(getMarginCallEndTime(_lender) >= block.timestamp, 'ACMC3');
 
@@ -405,6 +408,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _lenderVerifier = poolConstants.lenderVerifier;
         address _borrower = poolConstants.borrower;
         require(_lender != _borrower && _borrower != msg.sender, 'L1');
+        if(Address(poolConstants.borrowAsset) != Address(0)) {
+            require(msg.value == 0, 'Lend: ETH is not required for this operation');
+        }
         if (_lenderVerifier != address(0)) {
             require(IVerification(IPoolFactory(poolFactory).userRegistry()).isUser(_lender, _lenderVerifier), 'L2');
         }
@@ -444,6 +450,20 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_from == address(0) || _to == address(0)) {
             return;
         }
+        _settleOnTokenTransfer(_from, _to, _amount);
+    }
+
+    /**
+     * @notice used to settle borrow pool token balances among lenders
+     * @param _from address of the lender who sends the borrow pool tokens
+     * @param _to addres of the lender who receives the borrow pool tokens
+     * @param _amount amount of borrow pool tokens transfered
+     */
+    function _settleOnTokenTransfer(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) internal nonReentrant {
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         address _lenderVerifier = poolConstants.lenderVerifier;
         if (_lenderVerifier != address(0)) {
@@ -585,7 +605,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice called to close the loan after repayment of principal
      */
-    function closeLoan() external payable override nonReentrant onlyRepaymentImpl {
+    function closeLoan() external override nonReentrant onlyRepaymentImpl {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'CL1');
 
         poolVariables.loanStatus = LoanStatus.CLOSED;
@@ -992,11 +1012,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     function getLoanStatus() external view override returns (uint256) {
         return uint256(poolVariables.loanStatus);
     }
-
-    /**
-     * @notice used to receive ethers from savings accounts
-     */
-    receive() external payable {}
 
     /**
      * @notice used to get the equivalent amount of tokens from source to target tokens
