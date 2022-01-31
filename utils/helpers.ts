@@ -24,9 +24,9 @@ export async function incrementChain(network: Network, blocks: number, blockTime
 }
 
 import poolContractMeta from '../artifacts/contracts/Pool/Pool.sol/Pool.json';
-import proxyMeta from '../artifacts/contracts/Proxy.sol/SublimeProxy.json';
+import proxyMeta from '../artifacts/contracts/SublimeProxy.sol/SublimeProxy.json';
 
-import { createPoolParams, testPoolFactoryParams, zeroAddress } from './constants';
+import { createPoolParams, testPoolFactoryParams, zeroAddress } from '../config/constants';
 
 const _interface = new ethers.utils.Interface(poolContractMeta.abi);
 const initializeFragement = _interface.getFunction('initialize');
@@ -104,4 +104,10 @@ export function expectApproxEqual(a: BigNumberish, b: BigNumberish, delta: BigNu
     }
     let _delta = _a.sub(_b);
     expect(_delta.lte(delta), errorMessage);
+}
+
+export function induceDelay(ts: number) {
+    const delay = ts || 3000;
+    console.log(`Inducing delay of ${delay} ms`);
+    return new Promise((resolve) => setTimeout(resolve, delay));
 }

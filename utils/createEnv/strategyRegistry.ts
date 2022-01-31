@@ -24,5 +24,6 @@ export async function initStrategyRegistry(
     admin: Address,
     maxStrategies: BigNumberish
 ) {
-    await (await strategyRegistry.connect(signer).initialize(admin, maxStrategies)).wait();
+    await strategyRegistry.connect(signer).initialize(admin, maxStrategies);
+    return;
 }
