@@ -168,20 +168,23 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
 
     /**
      * @notice Used to unlock shares
-     * @param asset the address of underlying token
+     * @param asset the address of token locked
      * @param amount the amount of shares to unlock
      * @return received amount of shares received
+     * @return address of Yearn shares of asset 
      **/
-    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
+    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256, address) {
+        address _yToken = liquidityToken[asset];
+        
         if (amount == 0) {
-            return 0;
+            return (0, _yToken);
         }
 
-        require(asset != address(0), 'Asset address cannot be address(0)');
-        IERC20(asset).safeTransfer(savingsAccount, amount);
+        require(_yToken != address(0), 'Asset address cannot be address(0)');
+        IERC20(_yToken).safeTransfer(savingsAccount, amount);
 
-        emit UnlockedShares(asset, amount);
-        return amount;
+        emit UnlockedShares(_yToken, amount);
+        return (amount, _yToken);
     }
 
     /**

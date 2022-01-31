@@ -253,9 +253,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) internal returns (address _tokenReceived, uint256 _amountReceived) {
         if (_withdrawShares) {
-            _tokenReceived = IYield(_strategy).liquidityToken(_token);
-            require(_tokenReceived != address(0), 'Liquidity Tokens address cannot be address(0)');
-            _amountReceived = IYield(_strategy).unlockShares(_tokenReceived, _amount);
+            (_amountReceived, _tokenReceived) = IYield(_strategy).unlockShares(_token, _amount);
         } else {
             _tokenReceived = _token;
             _amountReceived = IYield(_strategy).unlockTokens(_token, _amount);
