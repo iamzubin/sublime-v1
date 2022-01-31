@@ -175,11 +175,11 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @return address of Compound shares of asset 
      **/
     function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256, address) {
-        if (amount == 0) {
-            return (0, address(0));
-        }
-
         address _cToken = liquidityToken[asset];
+        
+        if (amount == 0) {
+            return (0, _cToken);
+        }
 
         require(_cToken != address(0), 'Asset address cannot be address(0)');
         IERC20(_cToken).safeTransfer(savingsAccount, amount);

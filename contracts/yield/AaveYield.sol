@@ -251,11 +251,11 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
      * @return address of Aave shares of asset 
      **/
     function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256, address) {
-        if (amount == 0) {
-            return (0, address(0));
-        }
-
         address _aToken = liquidityToken(asset);
+        
+        if (amount == 0) {
+            return (0, _aToken);
+        }
 
         require(_aToken != address(0), 'Asset address cannot be address(0)');
         IERC20(_aToken).safeTransfer(savingsAccount, amount);
