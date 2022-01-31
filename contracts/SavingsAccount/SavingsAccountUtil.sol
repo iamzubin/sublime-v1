@@ -17,6 +17,9 @@ library SavingsAccountUtil {
         bool _withdrawShares,
         bool _toSavingsAccount
     ) internal returns (uint256) {
+        if(Address(_token) != Address(0)) {
+            require(msg.value == 0, 'depositFromSavingsAccount: ETH is not required for this operation');
+        }
         if (_toSavingsAccount) {
             return savingsAccountTransfer(_savingsAccount, _from, _to, _amount, _token, _strategy);
         } else {
@@ -33,6 +36,9 @@ library SavingsAccountUtil {
         bool _toSavingsAccount,
         address _strategy
     ) internal returns (uint256) {
+        if(Address(_token) != Address(0)) {
+            require(msg.value == 0, 'directDeposit: ETH is not required for this operation');
+        }
         if (_toSavingsAccount) {
             return directSavingsAccountDeposit(_savingsAccount, _from, _to, _amount, _token, _strategy);
         } else {
@@ -48,6 +54,9 @@ library SavingsAccountUtil {
         address _token,
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
+        if(Address(_token) != Address(0)) {
+            require(msg.value == 0, 'directSavingsAccountDeposit: ETH is not required for this operation');
+        }
         transferTokens(_token, _amount, _from, address(this));
         address _approveTo = _strategy;
         if (_strategy == address(0)) {
