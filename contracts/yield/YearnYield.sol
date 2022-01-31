@@ -247,6 +247,4 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
 
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
     }
-
-    // receive() external payable {}
 }

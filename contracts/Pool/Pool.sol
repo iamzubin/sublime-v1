@@ -1000,11 +1000,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     }
 
     /**
-     * @notice used to receive ethers from savings accounts
-     */
-    // receive() external payable {}
-
-    /**
      * @notice used to get the equivalent amount of tokens from source to target tokens
      * @param _source address of the tokens to be converted
      * @param _target address of target conversion token

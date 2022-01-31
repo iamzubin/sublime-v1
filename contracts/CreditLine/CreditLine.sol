@@ -1053,8 +1053,4 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         return _borrowTokens;
     }
-
-    // receive() external payable {
-    //     require(msg.sender == savingsAccount, 'CreditLine::receive invalid transaction');
-    // }
 }
