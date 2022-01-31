@@ -363,9 +363,9 @@ contract yVault is ERC20, ERC20Detailed {
         return balance().mul(1e18).div(totalSupply());
     }
 
-    receive() external payable {
-        if (msg.sender != address(token)) {
-            depositETH();
-        }
-    }
+    // receive() external payable {
+    //     if (msg.sender != address(token)) {
+    //         depositETH();
+    //     }
+    // }
 }

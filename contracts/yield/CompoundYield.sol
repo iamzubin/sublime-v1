@@ -247,5 +247,5 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
     }
 
-    receive() external payable {}
+    // receive() external payable {}
 }
