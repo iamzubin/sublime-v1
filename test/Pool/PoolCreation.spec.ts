@@ -230,7 +230,6 @@ describe('Create Pools (Compound Strategy)', async () => {
                 await expect(pool.connect(lender).lend(lender.address, amountWithLenders, zeroAddress))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(amountWithLenders, lender.address);
-
                 for (let index = 0; index < 5; index++) {
                     const element = extraLenders[index];
                     await USDC.connect(element).approve(pool.address, amountWithLenders);
