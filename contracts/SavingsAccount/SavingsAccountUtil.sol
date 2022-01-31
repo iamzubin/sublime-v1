@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '../interfaces/ISavingsAccount.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 library SavingsAccountUtil {
     using SafeERC20 for IERC20;
@@ -18,6 +17,9 @@ library SavingsAccountUtil {
         bool _withdrawShares,
         bool _toSavingsAccount
     ) internal returns (uint256) {
+        if(Address(_token) != Address(0)) {
+            require(msg.value == 0, 'depositFromSavingsAccount: ETH is not required for this operation');
+        }
         if (_toSavingsAccount) {
             return savingsAccountTransfer(_savingsAccount, _from, _to, _amount, _token, _strategy);
         } else {
@@ -34,6 +36,9 @@ library SavingsAccountUtil {
         bool _toSavingsAccount,
         address _strategy
     ) internal returns (uint256) {
+        if(Address(_token) != Address(0)) {
+            require(msg.value == 0, 'directDeposit: ETH is not required for this operation');
+        }
         if (_toSavingsAccount) {
             return directSavingsAccountDeposit(_savingsAccount, _from, _to, _amount, _token, _strategy);
         } else {
@@ -49,18 +54,16 @@ library SavingsAccountUtil {
         address _token,
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
-        transferTokens(_token, _amount, _from, address(this));
-        uint256 _ethValue;
-        if (_token == address(0)) {
-            _ethValue = _amount;
-        } else {
-            address _approveTo = _strategy;
-            if (_strategy == address(0)) {
-                _approveTo = address(_savingsAccount);
-            }
-            IERC20(_token).safeApprove(_approveTo, _amount);
+        if(Address(_token) != Address(0)) {
+            require(msg.value == 0, 'directSavingsAccountDeposit: ETH is not required for this operation');
         }
-        _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_amount, _token, _strategy, _to);
+        transferTokens(_token, _amount, _from, address(this));
+        address _approveTo = _strategy;
+        if (_strategy == address(0)) {
+            _approveTo = address(_savingsAccount);
+        }
+        IERC20(_token).safeApprove(_approveTo, _amount);
+        _sharesReceived = _savingsAccount.deposit(_amount, _token, _strategy, _to);
     }
 
     function savingsAccountTransfer(
@@ -103,19 +106,6 @@ library SavingsAccountUtil {
     ) internal returns (uint256) {
         if (_amount == 0) {
             return 0;
-        }
-        if (_token == address(0)) {
-            require(msg.value >= _amount, 'ethers provided should be greater than _amount');
-
-            if (_to != address(this)) {
-                (bool success, ) = payable(_to).call{value: _amount}('');
-                require(success, 'Transfer failed');
-            }
-            if (msg.value > _amount) {
-                (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
-                require(success, 'Transfer failed');
-            }
-            return _amount;
         }
         if (_from == address(this)) {
             IERC20(_token).safeTransfer(_to, _amount);

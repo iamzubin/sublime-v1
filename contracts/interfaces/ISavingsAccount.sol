@@ -1,34 +1,51 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface ISavingsAccount {
     /**
      * @notice emitted when tokens are deposited into savings account
      * @param user address of user depositing the tokens
-     * @param amount amount of tokens deposited
+     * @param sharesReceived amount of shares received for deposit
      * @param token address of token that is deposited
      * @param strategy strategy into which tokens are deposited
      */
-    event Deposited(address indexed user, uint256 amount, address indexed token, address indexed strategy);
+    event Deposited(address indexed user, uint256 sharesReceived, address indexed token, address indexed strategy);
 
     /**
      * @notice emitted when tokens are switched from one strategy to another
      * @param user address of user switching strategies
      * @param token address of token for which strategies are switched
+     * @param sharesDecreasedInCurrentStrategy shares decreased in current strategy
+     * @param sharesIncreasedInNewStrategy shares increased in new strategy
      * @param currentStrategy address of the strategy from which tokens are switched
      * @param newStrategy address of the strategy to which tokens are switched
      */
-    event StrategySwitched(address indexed user, address indexed token, address currentStrategy, address indexed newStrategy);
+    event StrategySwitched(
+        address indexed user,
+        address indexed token,
+        uint256 sharesDecreasedInCurrentStrategy,
+        uint256 sharesIncreasedInNewStrategy,
+        address currentStrategy,
+        address indexed newStrategy
+    );
 
     /**
      * @notice emitted when tokens are withdrawn from savings account
      * @param from address of user from which tokens are withdrawn
      * @param to address of user to which tokens are withdrawn
-     * @param amountReceived amount of tokens withdrawn
+     * @param sharesWithdrawn amount of shares withdrawn
      * @param token address of token that is withdrawn
      * @param strategy strategy into which tokens are withdrawn
+     * @param withdrawShares flag to represent if shares are directly wirthdrawn
      */
-    event Withdrawn(address indexed from, address indexed to, uint256 amountReceived, address indexed token, address strategy);
+    event Withdrawn(
+        address indexed from,
+        address indexed to,
+        uint256 sharesWithdrawn,
+        address indexed token,
+        address strategy,
+        bool withdrawShares
+    );
 
     /**
      * @notice emitted when all tokens are withdrawn
@@ -75,14 +92,14 @@ interface ISavingsAccount {
      * @param from address of user from whcih allowance is increased
      * @param amount amount of tokens by which allowance is increased
      */
-    event CreditLineAllowanceRefreshed(address indexed token, address indexed from, uint256 amount);
+    event CreditLineAllowanceRefreshed(address indexed token, address indexed from, address indexed to, uint256 amount);
 
     function deposit(
         uint256 amount,
         address token,
         address strategy,
         address to
-    ) external payable returns (uint256 sharesReceived);
+    ) external returns (uint256 sharesReceived);
 
     /**
      * @dev Used to switch saving strategy of an token
@@ -110,11 +127,13 @@ interface ISavingsAccount {
         uint256 amount,
         address token,
         address strategy,
-        address payable withdrawTo,
+        address withdrawTo,
         bool withdrawShares
     ) external returns (uint256);
 
-    function withdrawAll(address _token) external returns (uint256 tokenReceived);
+    function withdrawAll(address token) external returns (uint256 tokenReceived);
+
+    function withdrawAll(address token, address strategy) external returns (uint256 tokenReceived);
 
     function approve(
         uint256 amount,
@@ -147,7 +166,7 @@ interface ISavingsAccount {
         address poolSavingsStrategy,
         address from,
         address to
-    ) external returns (uint256);
+    ) external;
 
     function balanceInShares(
         address user,
@@ -166,7 +185,7 @@ interface ISavingsAccount {
         address token,
         address strategy,
         address from,
-        address payable to,
+        address to,
         bool withdrawShares
     ) external returns (uint256 amountReceived);
 

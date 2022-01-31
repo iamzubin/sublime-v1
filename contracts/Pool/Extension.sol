@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
@@ -33,6 +33,7 @@ contract Extension is Initializable, IExtension {
      * @notice used to store voting pass ratio for approving extension
      */
     uint256 public votingPassRatio;
+    uint256 constant SCALING_FACTOR = 1e30;
 
     /**
      * @notice checks if the msg.sender is pool's valid owner
@@ -65,7 +66,7 @@ contract Extension is Initializable, IExtension {
      * @notice initializing the pool extension for the Pool
      * @param _repaymentInterval value of the repayment interval
      */
-    function initializePoolExtension(uint256 _repaymentInterval) external override {
+    function initializePoolExtension(uint128 _repaymentInterval) external override {
         IPoolFactory _poolFactory = poolFactory;
         require(extensions[msg.sender].repaymentInterval == 0, 'Extension::initializePoolExtension - already initialized');
         require(_poolFactory.poolRegistry(msg.sender) != 0, 'Repayments::onlyValidPool - Invalid Pool');
@@ -88,7 +89,7 @@ contract Extension is Initializable, IExtension {
         extensions[_pool].totalExtensionSupport = 0; // As we can multiple voting every time new voting start we have to make previous votes 0
         IRepayment _repayment = IRepayment(poolFactory.repaymentImpl());
         uint256 _nextDueTime = _repayment.getNextInstalmentDeadline(_pool);
-        _extensionVoteEndTime = (_nextDueTime).div(10**30);
+        _extensionVoteEndTime = (_nextDueTime).div(SCALING_FACTOR);
         extensions[_pool].extensionVoteEndTime = _extensionVoteEndTime; // this makes extension request single use
         emit ExtensionRequested(_extensionVoteEndTime);
     }
@@ -121,6 +122,7 @@ contract Extension is Initializable, IExtension {
                 extensions[_pool].totalExtensionSupport = extensions[_pool].totalExtensionSupport.add(_amount);
             }
         }
+        emit RebalaneVotes(_from, _to, _amount);
     }
 
     /**
@@ -147,7 +149,7 @@ contract Extension is Initializable, IExtension {
         emit LenderVoted(msg.sender, _extensionSupport, _lastVotedExtension);
         extensions[_pool].totalExtensionSupport = _extensionSupport;
 
-        if (((_extensionSupport)) >= (_totalSupply.mul(_votingPassRatio)).div(10**30)) {
+        if (((_extensionSupport)) >= (_totalSupply.mul(_votingPassRatio)).div(SCALING_FACTOR)) {
             grantExtension(_pool);
         }
     }

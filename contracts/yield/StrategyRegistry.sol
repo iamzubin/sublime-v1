@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
@@ -31,11 +31,10 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _maxStrategies maximum number of strategies allowed
      **/
     function initialize(address _owner, uint256 _maxStrategies) external initializer {
-        require(_maxStrategies != 0, 'StrategyRegistry::initialize maxStrategies cannot be zero');
         __Ownable_init();
         super.transferOwnership(_owner);
 
-        maxStrategies = _maxStrategies;
+        _updateMaxStrategies(_maxStrategies);
     }
 
     /**
@@ -44,8 +43,13 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _maxStrategies updated number of max strategies allowed
      **/
     function updateMaxStrategies(uint256 _maxStrategies) external onlyOwner {
+        _updateMaxStrategies(_maxStrategies);
+    }
+
+    function _updateMaxStrategies(uint256 _maxStrategies) internal {
         require(_maxStrategies != 0, 'StrategyRegistry::updateMaxStrategies should be more than zero');
         maxStrategies = _maxStrategies;
+        emit MaxStrategiesUpdated(_maxStrategies);
     }
 
     /**
@@ -94,14 +98,18 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         address _oldStrategy,
         address _newStrategy
     ) external override onlyOwner {
+        require(_strategyIndex < strategies.length, 'StrategyRegistry:: _strategy index cannot be more than array length');
         require(
             strategies[_strategyIndex] == _oldStrategy,
             "StrategyRegistry::updateStrategy - index to update and strategy address don't match"
         );
+        require(_newStrategy != address(0), 'StrategyRegistry::updateStrategy - New strategy cannot be address(0)');
         require(registry[_newStrategy] == 0, 'StrategyRegistry::updateStrategy - New strategy already exists');
         strategies[_strategyIndex] = _newStrategy;
 
         delete registry[_oldStrategy];
+        emit StrategyRemoved(_oldStrategy);
         registry[_newStrategy] = 1;
+        emit StrategyAdded(_newStrategy);
     }
 }
