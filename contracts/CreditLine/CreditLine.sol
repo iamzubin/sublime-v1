@@ -287,7 +287,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     function _updateDefaultStrategy(address _defaultStrategy) internal {
-        require(IStrategyRegistry(strategyRegistry).registry(_defaultStrategy), 'Invalid Strategy');
+        require(IStrategyRegistry(strategyRegistry).registry(_defaultStrategy) != 0, 'Invalid Strategy');
         defaultStrategy = _defaultStrategy;
         emit DefaultStrategyUpdated(_defaultStrategy);
     }

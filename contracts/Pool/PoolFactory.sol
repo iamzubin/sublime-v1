@@ -366,7 +366,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _transferFromSavingsAccount,
             _lenderVerifier
         );
-        poolRegistry[_pool] = true;
+        poolRegistry[_pool] = 1;
         emit PoolCreated(_pool, msg.sender);
     }
 
