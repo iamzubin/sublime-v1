@@ -427,6 +427,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         _deposit(_fromSavingsAccount, false, _borrowToken, _amount, _strategy, msg.sender, address(this));
         console.log('Pool: _mint');
         _mint(_lender, _amount);
+        console.log('Pool: _mint done');
         emit LiquiditySupplied(_amount, _lender);
     }
 
