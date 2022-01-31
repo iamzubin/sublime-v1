@@ -135,6 +135,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _strategy
     ) internal returns (uint256 _sharesReceived) {
         require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
+        if(Address(_token) != Address(0)) {
+            require(msg.value == 0, '_depositToYield: ETH is not required for this operation');
+        }
         _sharesReceived = IYield(_strategy).lockTokens(msg.sender, _token, _amount);
     }
 

@@ -327,6 +327,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _amount amount repaid by the borrower
     function repay(address _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
+        if(Address(_asset) != Address(0)) {
+            require(msg.value == 0, 'Repay: ETH is not required for this operation');
+        }
         uint256 _amountRepaid = _repay(_poolID, _amount, false);
 
         _transferTokens(msg.sender, _poolID, _asset, _amountRepaid);
@@ -419,6 +422,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool
     function repayPrincipal(address payable _poolID) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
+        if(Address(_asset) != Address(0)) {
+            require(msg.value == 0, 'repayPrincipal: ETH is not required for this operation');
+        }
         uint256 _interestToRepay = _repay(_poolID, MAX_INT, true);
         IPool _pool = IPool(_poolID);
 
