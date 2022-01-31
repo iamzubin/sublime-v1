@@ -27,15 +27,13 @@ contract Constants {
     address constant WETH  = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address constant WBTC  = 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599;
 
-    mapping (address => uint256) balanceSlot;
-
     // Chainlink base feeds against USD
     address constant ETH_priceFeedChainlink = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
     address constant WBTC_priceFeedChainlink = 0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c;
     address constant DAI_priceFeedChainlink = 0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9;
     address constant USDC_priceFeedChainlink = 0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6;
 
-    address constant USDC_ETH_priceFeedUniswap = 0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8;
+    address constant USDC_ETH_priceFeedUniswap = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640;
     address constant WBTC_WETH_priceFeedUniswap = 0xCBCdF9626bC03E24f779434178A73a0B4bad62eD;
     address constant WBTC_DAI_priceFeedUniswap = 0x391E8501b626C623d39474AfcA6f9e46c2686649; //has low liquidity
 

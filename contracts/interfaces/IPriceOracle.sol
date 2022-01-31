@@ -35,4 +35,6 @@ interface IPriceOracle {
         address token2,
         address pool
     ) external;
+
+    function setUniswapPriceAveragingPeriod(uint32 _uniswapPriceAveragingPeriod) external;
 }

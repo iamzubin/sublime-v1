@@ -49,4 +49,34 @@ contract CreditLineTest is TestUtils {
         }
     }
 
+    function testFail_creditLineRequest() public {
+        try creditLineBorrower.createRequest(address(creditLine), address(creditLineBorrower),
+                                            1e31,
+                                            1e29,
+                                            false,
+                                            1e30,
+                                            DAI,
+                                            WETH,
+                                            false) {
+                                                assertTrue(true);
+                                            }
+        catch Error(string memory reason) {
+            assertEq(reason, "Lender and Borrower cannot be same address");
+        }
+    }
+
+    function test_mint() public {
+        mint(USDC, address(creditLineBorrower), 1_550_000 * USD_decimals);
+
+        uint256 balance = IERC20(USDC).balanceOf(address(creditLineBorrower));
+
+        assertEq(1_550_000 * USD_decimals, balance);
+    }
+
+    //function test_prices() public {
+    //    (uint256 price1, ) = priceOracle.getChainlinkLatestPrice(USDC, WETH);
+    //    (uint256 price2, ) = priceOracle.getUniswapLatestPrice(USDC, WETH); 
+    //    assertEq(price1, price2);
+    //}
+
 }

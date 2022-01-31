@@ -207,7 +207,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      * @dev only owner can set. This is used to prevent attacks to control price feed
      * @param _uniswapPriceAveragingPeriod period for uniswap price averaging
      **/
-    function setUniswapPriceAveragingPeriod(uint32 _uniswapPriceAveragingPeriod) external onlyOwner {
+    function setUniswapPriceAveragingPeriod(uint32 _uniswapPriceAveragingPeriod) external override onlyOwner {
         uniswapPriceAveragingPeriod = _uniswapPriceAveragingPeriod;
         emit UniswapPriceAveragingPeriodUpdated(_uniswapPriceAveragingPeriod);
     }

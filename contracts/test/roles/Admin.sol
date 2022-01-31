@@ -43,10 +43,7 @@ contract Admin is Constants {
         priceOracle.setUniswapFeedAddress(WBTC, WETH, WBTC_WETH_priceFeedUniswap);
         priceOracle.setUniswapFeedAddress(WBTC, DAI, WBTC_DAI_priceFeedUniswap);
 
-        balanceSlot[USDC] = 9;
-        balanceSlot[DAI] = 2;
-        balanceSlot[WETH] = 3;
-        balanceSlot[WBTC] = 0;
+        priceOracle.setUniswapPriceAveragingPeriod(10);
     }
 
     function setUpChainlinkOracles(address priceOracleAddress) public {

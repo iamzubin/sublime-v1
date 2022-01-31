@@ -38,11 +38,19 @@ import "../yield/StrategyRegistry.sol";
 import "../PriceOracle.sol";
 import "./ActorsUtils.sol";
 
+interface Hevm {
+    function warp(uint256) external;
+    function store(address,bytes32,bytes32) external;
+}
+
+
 contract TestUtils is DSTest, ActorsUtils, Constants {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
     //Hevm hevm;
+
+    mapping (address => uint256) balanceSlot;
 
     PriceOracle priceOracle;
     StrategyRegistry strategyRegistry;
@@ -59,6 +67,24 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
     YearnYield yearnYield;
     NoYield noYield;
     ProtocolFeeCollector protocolFeeCollector;
+
+    Hevm hevm;
+
+    constructor() public { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
+
+    function mint(address token, address account, uint256 amt) public {
+        //address addr = token;
+        uint256 slot  = balanceSlot[token];
+        uint256 bal = IERC20(token).balanceOf(account);
+
+        hevm.store(
+            token,
+            keccak256(abi.encode(account, slot)), // Mint tokens
+            bytes32(bal + amt)
+        );
+
+        assertEq(IERC20(token).balanceOf(account), bal + amt); // Assert new balance
+    }
 
     function deployPriceOracle() public {
         priceOracle = new PriceOracle();
@@ -179,6 +205,11 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         admin.updateSavingsAccount(address(creditLine), address(savingsAccount));
         admin.updateDefaultStrategy(address(creditLine), address(noYield));
         admin.setUpAllOracles(address(priceOracle));
+
+        balanceSlot[USDC] = 9;
+        balanceSlot[DAI] = 2;
+        balanceSlot[WETH] = 3;
+        balanceSlot[WBTC] = 0;
     }
 
     function SetUpAllContracts() public {
