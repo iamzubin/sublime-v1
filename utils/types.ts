@@ -73,6 +73,10 @@ export interface DeploymentParams {
 }
 
 export interface VerificationParams {
+    activationDelay: BigNumberish;
+}
+
+export interface VerificationParams {
     activationDelay: BigNumberish
 }
 export interface InputParams {
@@ -148,4 +152,15 @@ export interface AaveYieldParams {
     wethGateway: Address;
     protocolDataProvider: Address;
     lendingPoolAddressesProvider: Address;
+}
+
+export interface ChainlinkPriceOracleData {
+    token: Address;
+    priceOracle: Address;
+}
+
+export interface UniswapPoolData {
+    token1: Address;
+    token2: Address;
+    fee: BigNumberish;
 }

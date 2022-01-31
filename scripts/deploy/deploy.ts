@@ -42,9 +42,11 @@ import { Repayments } from '../../typechain/Repayments';
 import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { CreditLine } from '../../typechain/CreditLine';
 import { IYield } from '../../typechain/IYield';
-import { zeroAddress } from '../../utils/constants';
+import { zeroAddress } from '../../config/constants';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
 import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
+
+import { induceDelay } from '../../utils/helpers';
 
 export async function deployer(signers: SignerWithAddress[], config: DeploymentParams) {
     const {
@@ -56,8 +58,8 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         extensionInitParams,
         repaymentsInitParams,
         poolFactoryInitParams,
-        // creditLineInitParams
-        verificationParams
+        // creditLineInitParams,
+        verificationParams,
     } = config;
     let [proxyAdmin, admin, deployer]: SignerWithAddress[] = signers;
 
@@ -178,7 +180,19 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     console.log('initialize credit lines');
     // TODO
-    // await initCreditLine(creditLine, admin, );
+    await initCreditLine(
+        creditLine,
+        admin,
+        noYield.address,
+        priceOracle,
+        savingsAccount,
+        strategyRegistry,
+        {
+            _protocolFeeFraction: '1750000000000000000000000000',
+            _liquidatorRewardFraction: '92000000000000000000000000000',
+        },
+        admin
+    );
 
     return {
         savingsAccount: savingsAccount.address,
@@ -186,6 +200,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         creditLines: creditLine.address,
         proxyAdmin: proxyAdmin.address,
         admin: admin.address,
+        noYield: noYield ? noYield.address : 'Contract not deplyed in this network',
         aaveYield: aaveYield ? aaveYield.address : 'Contract not deployed in this network',
         yearnYield: yearnYield ? yearnYield.address : 'Contract not deployed in this network',
         compoundYield: compoundYield ? compoundYield.address : 'Contract not deployed in this network',

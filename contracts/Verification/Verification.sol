@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/cryptography/ECDSA.sol';
@@ -30,8 +30,8 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @return Returns the master address and activation time for the linkedAddress
     mapping(address => LinkedAddress) public linkedAddresses;
 
-    /// @notice Maps address to link with the master address
-    /// @dev Mapping is linkedAddress -> MasterAddress -> isPending(bool)
+    /// @notice Maps address to link with the master addres
+    /// @dev Mapping is linkedAddress -> MasterAddress -> isPending
     /// @return Returns if linkedAddress has a pending request from master address
     mapping(address => mapping(address => bool)) public pendingLinkAddresses;
 
@@ -85,9 +85,9 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev Multiple accounts can be linked to master address to act on behalf. Master address can be registered by multiple verifiers
     /// @param _masterAddress address which is registered as verified
     /// @param _isMasterLinked boolean which specifies if the masterAddress has to be added as a linked address
-    /// _isMasterLinked is used to support users who want to keep the master address as a cold wallet for security
+    ///                        _isMasterLinked is used to support users who want to keep the master address as a cold wallet for security
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external override onlyVerifier {
-        require(masterAddresses[_masterAddress][msg.sender] == 0, "V:RMA-Already Registered");
+        require(masterAddresses[_masterAddress][msg.sender] == 0, 'V:RMA-Already registered');
         uint256 _masterAddressActivatesAt = block.timestamp + activationDelay;
         masterAddresses[_masterAddress][msg.sender] = _masterAddressActivatesAt;
         emit UserRegistered(_masterAddress, msg.sender, _masterAddressActivatesAt);
@@ -134,9 +134,10 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
 
     /// @notice Link an address with a master address
     /// @dev Master address to which the address is being linked need not be verified
-    /// linkAddress can only accept the request made by a master address, but can't initiate a linking request
+    ///     link address can only accept the request made by a master address, but can't initiate a linking request
     /// @param _masterAddress master address to link to
     function linkAddress(address _masterAddress) external {
+        require(_masterAddress != address(0), 'Verification:: _masterAddress cannot be zero');
         require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
         require(pendingLinkAddresses[msg.sender][_masterAddress], 'V:LA-No pending request');
         _linkAddress(msg.sender, _masterAddress);

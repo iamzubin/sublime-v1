@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
@@ -7,8 +7,6 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 
 import '../interfaces/IYield.sol';
-import '../interfaces/Invest/ICEther.sol';
-import '../interfaces/Invest/ICToken.sol';
 
 /**
  * @title Yield contract
@@ -25,10 +23,18 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     address payable public savingsAccount;
 
     /**
+     * @notice emitted when all tokens are withdrawn, in case of emergencies
+     * @param asset address of the token being withdrawn
+     * @param withdrawTo address of the wallet to which tokens are withdrawn
+     * @param tokensReceived amount of tokens received
+     */
+    event EmergencyWithdraw(address indexed asset, address indexed withdrawTo, uint256 tokensReceived);
+
+    /**
      * @notice checks if contract is invoked by savings account
      **/
     modifier onlySavingsAccount() {
-        require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
+        require(msg.sender == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
@@ -50,7 +56,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param _asset address of the asset
      * @return _tokenAddress address of the lqiudity token for the asset
      **/
-    function liquidityToken(address _asset) external view override returns (address _tokenAddress) {
+    function liquidityToken(address _asset) external pure override returns (address _tokenAddress) {
         _tokenAddress = _asset;
     }
 
@@ -74,12 +80,19 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @return received amount of tokens received
      */
     function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
-        uint256 amount = IERC20(_asset).balanceOf(address(this));
-        IERC20(_asset).safeTransfer(_wallet, received);
-        received = amount;
+        if (_asset == address(0)) {
+            received = address(this).balance;
+            (bool success, ) = _wallet.call{value: received}('');
+            require(success, 'Transfer fail');
+        } else {
+            received = IERC20(_asset).balanceOf(address(this));
+            IERC20(_asset).safeTransfer(_wallet, received);
+        }
+        emit EmergencyWithdraw(_asset, _wallet, received);
     }
 
     /**
@@ -94,20 +107,16 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
-        if (asset != address(0)) {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
-        } else {
-            require(msg.value == amount, 'Invest: ETH amount');
-        }
+        IERC20(asset).safeTransferFrom(user, address(this), amount);
         sharesReceived = amount;
         emit LockedTokens(user, asset, sharesReceived);
     }
 
     /**
      * @notice Used to unlock tokens from the protocol
-     * @param asset the address of underlying token
+     * @param asset the address of share token
      * @param amount the amount of asset
      * @return tokensReceived received amount of tokens received
      **/
@@ -123,33 +132,32 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
 
     /**
      * @notice Used to unlock shares
-     * @param asset the address of underlying token
+     * @param asset the address of token locked
      * @param amount the amount of shares to unlock
      * @return received amount of shares received
+     * @return address of NoYield shares of asset 
      **/
-    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
-        received = _unlockTokens(asset, amount);
+    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256, address) {
+        if(amount == 0) {
+            return (0, asset);
+        }
+        
+        uint256 received = _unlockTokens(asset, amount);
+        return (received, asset);
     }
 
     function _unlockTokens(address asset, uint256 amount) internal returns (uint256 received) {
-        require(amount != 0, 'Invest: amount');
         received = amount;
-        if (asset == address(0)) {
-            (bool success, ) = savingsAccount.call{value: received}('');
-            require(success, 'Transfer failed');
-        } else {
-            IERC20(asset).safeTransfer(savingsAccount, received);
-        }
+        IERC20(asset).safeTransfer(savingsAccount, received);
         emit UnlockedTokens(asset, received);
     }
 
     /**
      * @dev Used to get amount of underlying tokens for given number of shares
      * @param shares the amount of shares
-     * @param asset the address of token locked
      * @return amount amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) external pure override returns (uint256 amount) {
+    function getTokensForShares(uint256 shares, address) external pure override returns (uint256 amount) {
         amount = shares;
     }
 
