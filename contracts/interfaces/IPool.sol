@@ -110,7 +110,7 @@ interface IPool {
 
     function totalSupply() external view returns (uint256);
 
-    function closeLoan() external payable;
+    function closeLoan() external;
 
     function initialize(
         uint256 _borrowAmountRequested,
