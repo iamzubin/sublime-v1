@@ -334,6 +334,7 @@ describe('Create Pools (Compound Strategy)', async () => {
                 let DAI_decimals = await DAI.decimals();
                 let amountWithLenders = amoutFromEachLender.mul(BigNumber.from(10).pow(DAI_decimals));
                 await DAI.connect(lender).approve(pool.address, amountWithLenders);
+                console.log('Lending');
                 await expect(pool.connect(lender).lend(lender.address, amountWithLenders, zeroAddress))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(amountWithLenders, lender.address);

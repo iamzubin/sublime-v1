@@ -16,6 +16,8 @@ import '../interfaces/IPool.sol';
 import '../interfaces/IExtension.sol';
 import '../interfaces/IVerification.sol';
 
+import 'hardhat/console.sol';
+
 /**
  * @title Pool contract with Methods related to Pool
  * @notice Implements the functions related to Pool
@@ -410,6 +412,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         }
         require(poolVariables.loanStatus == LoanStatus.COLLECTION && block.timestamp < poolConstants.loanStartTime, 'L3');
         uint256 _borrowAmountNeeded = poolConstants.borrowAmountRequested;
+        console.log('Pool: totalSupply');
         uint256 _lentAmount = totalSupply();
         if (_amount.add(_lentAmount) > _borrowAmountNeeded) {
             _amount = _borrowAmountNeeded.sub(_lentAmount);
@@ -420,7 +423,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_strategy != address(0)) {
             _fromSavingsAccount = true;
         }
+        console.log('Pool: _deposit');
         _deposit(_fromSavingsAccount, false, _borrowToken, _amount, _strategy, msg.sender, address(this));
+        console.log('Pool: _mint');
         _mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);
     }
