@@ -444,10 +444,16 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_from == address(0) || _to == address(0)) {
             return;
         }
-        _pendingInterestWithdrawal(_from, _to, _amount);
+        _settleOnTokenTransfer(_from, _to, _amount);
     }
 
-    function _pendingInterestWithdrawal(
+    /**
+     * @notice used to settle borrow pool token balances among lenders
+     * @param _from address of the lender who sends the borrow pool tokens
+     * @param _to addres of the lender who receives the borrow pool tokens
+     * @param _amount amount of borrow pool tokens transfered
+     */
+    function _settleOnTokenTransfer(
         address _from,
         address _to,
         uint256 _amount
