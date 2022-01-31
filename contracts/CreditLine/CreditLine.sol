@@ -105,7 +105,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice stores the fraction of amount liquidated given as reward to liquidator
-     * @dev it is multiplied by SCALING_FACTOR
+     * @dev it is multiplied by SCALING_FACTOR to maintain precision
      **/
     uint256 public liquidatorRewardFraction;
     /**
@@ -381,9 +381,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @dev Used to Calculate Interest Per second on given principal and Interest rate
-     * @param _principal principal Amount for which interest has to be calculated.
+     * @param _principal principal Amount for which interest has to be calculated
      * @param _borrowRate It is the Interest Rate at which Credit Line is approved
-     * @param _timeElapsed time in seconds to calculate interest for
+     * @param _timeElapsed It is the time interval in seconds for which interest is calculated
      * @return interest per second for the given parameters
      */
     function calculateInterest(
