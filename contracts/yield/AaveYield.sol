@@ -245,20 +245,23 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
 
     /**
      * @notice Used to unlock shares
-     * @param asset the address of underlying token
+     * @param asset the address of token locked
      * @param amount the amount of shares to unlock
      * @return received amount of shares received
+     * @return address of Aave shares of asset 
      **/
-    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
+    function unlockShares(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256, address) {
+        address _aToken = liquidityToken(asset);
+        
         if (amount == 0) {
-            return 0;
+            return (0, _aToken);
         }
 
-        require(asset != address(0), 'Asset address cannot be address(0)');
-        IERC20(asset).safeTransfer(savingsAccount, amount);
+        require(_aToken != address(0), 'Asset address cannot be address(0)');
+        IERC20(_aToken).safeTransfer(savingsAccount, amount);
 
-        emit UnlockedShares(asset, amount);
-        return amount;
+        emit UnlockedShares(_aToken, amount);
+        return (amount, _aToken);
     }
 
     /**
@@ -322,7 +325,6 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
 
         uint256 ethBalance = address(this).balance;
 
-        //lock collateral
         IWETHGateway(wethGateway).withdrawETH(amount, address(this));
 
         received = address(this).balance.sub(ethBalance);

@@ -191,6 +191,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) external override nonReentrant returns (uint256) {
         require(_amount != 0, 'SavingsAccount::withdraw Amount must be greater than zero');
+        require(_to != address(0), "SavingsAccount::withdraw _to address should be nonz-zero");
 
         _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
 
@@ -224,6 +225,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) external override nonReentrant returns (uint256) {
         require(_amount != 0, 'SavingsAccount::withdrawFrom Amount must be greater than zero');
+        require(_from != address(0), "SavingsAccount::withdrawFrom _from address should be non-zero");
+        require(_to != address(0), "SavingsAccount::withdrawFrom _to address should be non-zero");
 
         allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
             _amount,
@@ -249,9 +252,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) internal returns (address _tokenReceived, uint256 _amountReceived) {
         if (_withdrawShares) {
-            _tokenReceived = IYield(_strategy).liquidityToken(_token);
-            require(_tokenReceived != address(0), 'Liquidity Tokens address cannot be address(0)');
-            _amountReceived = IYield(_strategy).unlockShares(_tokenReceived, _amount);
+            (_amountReceived, _tokenReceived) = IYield(_strategy).unlockShares(_token, _amount);
         } else {
             _tokenReceived = _token;
             _amountReceived = IYield(_strategy).unlockTokens(_token, _amount);
@@ -264,7 +265,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _to
     ) internal {
-        IERC20(_token).safeTransfer(_to, _amount);
+        require(_to != address(0), "SavingsAccounts::_transfer _to address should be non-zero");
+        if (_token == address(0)) {
+            (bool _success, ) = _to.call{value: _amount}('');
+            require(_success, 'Transfer failed');
+        } else {
+            IERC20(_token).safeTransfer(_to, _amount);
+        }
     }
 
     /**
@@ -386,6 +393,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to
     ) external override returns (uint256) {
         require(_amount != 0, 'SavingsAccount::transfer zero amount');
+        require(_to != address(0), "SavingsAccount::transfer _to address should be non-zero");
         require(IStrategyRegistry(strategyRegistry).registry(_strategy) != 0, 'SavingsAccount::transfer strategy do not exist');
 
         _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
@@ -419,6 +427,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to
     ) external override {
         require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
+        require(_from != address(0), "SavingsAccount::transferFrom _from address should be non-zero");
+        require(_to != address(0), "SavingsAccount::transferFrom _to address should be non-zero");
         require(IStrategyRegistry(strategyRegistry).registry(_strategy) != 0, 'SavingsAccount::transferFrom strategy do not exist');
 
         //update allowance
@@ -439,6 +449,33 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         balanceInShares[_to][_token][_strategy] = (balanceInShares[_to][_token][_strategy]).add(_amount);
 
         emit Transfer(_token, _strategy, _from, _to, _amount);
+    }
+
+    /**
+    @notice used to burn token shares
+    @dev _amount in function parameter is in terms of _token and _amount returned is in terms of tokenShares from _strategy strategy
+    @param _amount The amount of tokens that will be burnt
+    @param _token The address of the token whose shares will be burnt
+    @param _strategy The address of the strategy from which the _token's shares will be burnt
+    @return _amount The amount of _token shares that were burnt
+    */
+    function burn(
+        uint256 _amount, 
+        address _token, 
+        address _strategy
+    ) external override returns(uint256) {
+        require(_amount != 0, "SavingsAccount::burn _amount cannot be zero");
+        
+        _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
+
+        balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
+            _amount, 
+            "SavingsAccount::burn Burn _amount should should be less than or equal to your balance"
+        );
+
+        emit Burned(_token, _strategy, msg.sender, _amount);
+
+        return _amount;
     }
 
     /**
