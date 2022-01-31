@@ -435,7 +435,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _from,
         address _to,
         uint256 _amount
-    ) internal override nonReentrant {
+    ) internal override {
         if (_to != address(0)) {
             require(!paused(), 'TT1');
         }
@@ -444,6 +444,14 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         if (_from == address(0) || _to == address(0)) {
             return;
         }
+        _pendingInterestWithdrawal(_from, _to, _amount);
+    }
+
+    function _pendingInterestWithdrawal(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) internal nonReentrant {
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         address _lenderVerifier = poolConstants.lenderVerifier;
         if (_lenderVerifier != address(0)) {
