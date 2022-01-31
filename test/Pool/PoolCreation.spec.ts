@@ -22,7 +22,7 @@ import { ERC20Detailed } from '@typechain/ERC20Detailed';
 import { timeTravel, blocksTravel } from '../../utils/time';
 import { Repayments } from '@typechain/Repayments';
 
-describe('Create Pools (Compound Strategy)', async () => {
+describe.only('Create Pools (Compound Strategy)', async () => {
     let env: Environment;
     let admin: SignerWithAddress;
     let borrower: SignerWithAddress;
@@ -227,6 +227,7 @@ describe('Create Pools (Compound Strategy)', async () => {
                 USDC_decimals = await USDC.decimals();
                 let amountWithLenders = amoutFromEachLender.mul(BigNumber.from(10).pow(USDC_decimals));
                 await USDC.connect(lender).approve(pool.address, amountWithLenders);
+                console.log('Lend function');
                 await expect(pool.connect(lender).lend(lender.address, amountWithLenders, zeroAddress))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(amountWithLenders, lender.address);
@@ -246,6 +247,7 @@ describe('Create Pools (Compound Strategy)', async () => {
                 await blocksTravel(hre.network, 5);
                 borrowerBalanceBefore = await USDC.balanceOf(borrower.address);
                 protocolFeeBefore = await USDC.balanceOf(protocolFeeCollector.address);
+                console.log('withdrawBorrowedAmount function');
                 await pool.connect(borrower).withdrawBorrowedAmount();
 
                 let borrowerBalanceAfter = await USDC.balanceOf(borrower.address);
@@ -334,7 +336,6 @@ describe('Create Pools (Compound Strategy)', async () => {
                 let DAI_decimals = await DAI.decimals();
                 let amountWithLenders = amoutFromEachLender.mul(BigNumber.from(10).pow(DAI_decimals));
                 await DAI.connect(lender).approve(pool.address, amountWithLenders);
-                console.log('Lending');
                 await expect(pool.connect(lender).lend(lender.address, amountWithLenders, zeroAddress))
                     .to.emit(pool, 'LiquiditySupplied')
                     .withArgs(amountWithLenders, lender.address);
