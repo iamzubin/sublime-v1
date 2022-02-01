@@ -38,31 +38,31 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     address poolFactory;
 
     struct LendingDetails {
+        uint64 marginCallEndTime;
         uint256 effectiveInterestWithdrawn;
-        uint256 marginCallEndTime;
         uint256 extraLiquidityShares;
     }
 
     // Pool constants
     struct PoolConstants {
-        uint256 borrowAmountRequested;
         uint64 loanStartTime;
+        uint128 borrowRate;
         address borrower;
-        uint256 loanWithdrawalDeadline;
-        uint256 idealCollateralRatio;
-        uint256 borrowRate;
-        uint256 noOfRepaymentIntervals;
-        uint256 repaymentInterval;
         address collateralAsset;
         address borrowAsset;
         address poolSavingsStrategy; // invest contract
         address lenderVerifier;
+        uint256 loanWithdrawalDeadline;
+        uint256 idealCollateralRatio;
+        uint256 noOfRepaymentIntervals;
+        uint256 repaymentInterval;
+        uint256 borrowAmountRequested;
     }
 
     struct PoolVariables {
+        LoanStatus loanStatus;
         uint256 baseLiquidityShares;
         uint256 extraLiquidityShares;
-        LoanStatus loanStatus;
         uint256 penaltyLiquidityAmount;
     }
 
@@ -133,7 +133,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function initialize(
         uint256 _borrowAmountRequested,
-        uint256 _borrowRate,
+        uint128 _borrowRate,
         address _borrower,
         address _borrowAsset,
         address _collateralAsset,
@@ -653,7 +653,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         require(getMarginCallEndTime(msg.sender) == 0, 'RMC2');
         require(poolConstants.idealCollateralRatio > getCurrentCollateralRatio(msg.sender), 'RMC3');
 
-        lenders[msg.sender].marginCallEndTime = block.timestamp.add(_poolFactory.marginCallDuration());
+        lenders[msg.sender].marginCallEndTime = uint64(block.timestamp.add(_poolFactory.marginCallDuration()));
 
         emit MarginCalled(msg.sender);
     }
