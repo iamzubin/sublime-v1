@@ -722,56 +722,56 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         emit BorrowedFromCreditLine(_id, _tokenDiffBalance);
     }
 
-    function _repayFromSavingsAccount(
-        uint256 _amount,
-        address _asset,
-        address _lender
-    ) internal {
-        address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
-        ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
-        uint256 _activeAmount;
+    // function _repayFromSavingsAccount(
+    //     uint256 _amount,
+    //     address _asset,
+    //     address _lender
+    // ) internal {
+    //     address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
+    //     ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
+    //     uint256 _activeAmount;
 
-        for (uint256 _index; _index < _strategyList.length; ++_index) {
-            if (_strategyList[_index] == address(0)) {
-                continue;
-            }
-            uint256 _liquidityShares = _savingsAccount.balanceInShares(msg.sender, _asset, _strategyList[_index]);
-            if (_liquidityShares == 0) {
-                continue;
-            }
-            uint256 _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
+    //     for (uint256 _index; _index < _strategyList.length; ++_index) {
+    //         if (_strategyList[_index] == address(0)) {
+    //             continue;
+    //         }
+    //         uint256 _liquidityShares = _savingsAccount.balanceInShares(msg.sender, _asset, _strategyList[_index]);
+    //         if (_liquidityShares == 0) {
+    //             continue;
+    //         }
+    //         uint256 _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
 
-            uint256 _tokensToTransfer = _tokenInStrategy;
-            if (_activeAmount.add(_tokenInStrategy) >= _amount) {
-                _tokensToTransfer = (_amount.sub(_activeAmount));
-            }
-            _activeAmount = _activeAmount.add(_tokensToTransfer);
-            _savingsAccount.transferFrom(_tokensToTransfer, _asset, _strategyList[_index], msg.sender, _lender);
+    //         uint256 _tokensToTransfer = _tokenInStrategy;
+    //         if (_activeAmount.add(_tokenInStrategy) >= _amount) {
+    //             _tokensToTransfer = (_amount.sub(_activeAmount));
+    //         }
+    //         _activeAmount = _activeAmount.add(_tokensToTransfer);
+    //         _savingsAccount.transferFrom(_tokensToTransfer, _asset, _strategyList[_index], msg.sender, _lender);
 
-            if (_amount == _activeAmount) {
-                return;
-            }
-        }
-        revert('CreditLine::_repayFromSavingsAccount - Insufficient balance');
-    }
+    //         if (_amount == _activeAmount) {
+    //             return;
+    //         }
+    //     }
+    //     revert('CreditLine::_repayFromSavingsAccount - Insufficient balance');
+    // }
 
     function _repay(
         uint256 _id,
         uint256 _amount,
-        bool _fromSavingsAccount,
+        // bool _fromSavingsAccount,
         uint256 _principalPaid
     ) internal {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
         address _defaultStrategy = defaultStrategy;
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
         address _lender = creditLineConstants[_id].lender;
-        if (!_fromSavingsAccount) {
-            IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
-            IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
-            _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
-        } else {
-            _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
-        }
+        // if (!_fromSavingsAccount) {
+        IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
+        _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
+        // } else {
+        //     _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
+        // }
         if (_principalPaid != 0) {
             _savingsAccount.increaseAllowanceToCreditLine(_principalPaid, _borrowAsset, _lender);
         }
@@ -782,13 +782,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev partial repayments possible
      * @param _id identifier for the credit line
      * @param _amount amount being repaid
-     * @param _fromSavingsAccount if true, tokens are transferred from savingsAccount 
-                                otherwise direct from collateral token contract
      */
     function repay(
         uint256 _id,
-        uint256 _amount,
-        bool _fromSavingsAccount
+        uint256 _amount
+        // bool _fromSavingsAccount
     ) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         require(creditLineConstants[_id].lender != msg.sender, 'Lender cant repay');
@@ -821,7 +819,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineVariables[_id].totalInterestRepaid = creditLineVariables[_id].totalInterestRepaid.add(_amount);
         }
 
-        _repay(_id, _amount, _fromSavingsAccount, _principalPaid);
+        _repay(_id, _amount, _principalPaid);
 
         if (creditLineVariables[_id].principal == 0) {
             _resetCreditLine(_id);
