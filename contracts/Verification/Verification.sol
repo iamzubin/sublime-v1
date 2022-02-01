@@ -141,6 +141,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
         require(pendingLinkAddresses[msg.sender][_masterAddress], 'V:LA-No pending request');
         _linkAddress(msg.sender, _masterAddress);
+        delete pendingLinkAddresses[msg.sender][_masterAddress];
     }
     
 
