@@ -48,7 +48,7 @@ import { YearnYield__factory } from '../../typechain/factories/YearnYield__facto
 
 import { induceDelay } from '../../utils/helpers';
 
-export async function deployer(signers: SignerWithAddress[], config: DeploymentParams) {
+export async function deployer(signers: SignerWithAddress[], config: DeploymentParams, weth: string) {
     const {
         strategyRegistryParams,
         aaveYieldParams,
@@ -126,7 +126,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     console.log('Deploying price oracle');
 
-    const priceOracle: PriceOracle = await createPriceOracle(proxyAdmin, admin);
+    const priceOracle: PriceOracle = await createPriceOracle(proxyAdmin, admin, weth);
 
     console.log('setting price feeds');
 
