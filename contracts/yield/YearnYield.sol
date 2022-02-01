@@ -123,6 +123,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
             require(msg.value == amount, 'Invest: ETH amount');
             sharesReceived = _depositETH(investedTo, amount);
         } else {
+            require(msg.value == 0, 'Invest: ETH not required for this operation');
             IERC20(asset).safeTransferFrom(user, address(this), amount);
             sharesReceived = _depositERC20(asset, investedTo, amount);
         }
