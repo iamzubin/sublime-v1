@@ -175,7 +175,7 @@ interface ISavingsAccount {
         address poolSavingsStrategy,
         address from,
         address to
-    ) external;
+    ) external returns (uint256);
 
     function burn(
         uint256 amount,

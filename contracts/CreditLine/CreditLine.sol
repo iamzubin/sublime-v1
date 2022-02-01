@@ -495,10 +495,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 _tokensToTransfer = (_amount.sub(_activeAmount));
             }
             _activeAmount = _activeAmount.add(_tokensToTransfer);
-            uint256 _sharesInStrategy = _savingsAccount.transferFrom(_tokensToTransfer, _collateralAsset, _strategy, _sender, address(this));
 
             collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(
-                _sharesInStrategy
+                _savingsAccount.transferFrom(_tokensToTransfer, _collateralAsset, _strategy, _sender, address(this))
             );
 
             if (_amount == _activeAmount) {

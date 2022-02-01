@@ -419,6 +419,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @param _strategy address of the strategy from which tokens are transferred
      * @param _from address from whose allowance tokens are transferred
      * @param _to address of the user tokens are transferred to
+     * @return the amount of tokens in terms of LP tokens of _token in _strategy strategy of
+     *         savingsAccount that will be transferred from the _from address to the _to address
      */
     function transferFrom(
         uint256 _amount,
@@ -426,7 +428,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _strategy,
         address _from,
         address _to
-    ) external override {
+    ) external override returns (uint256) {
         require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
         require(_from != address(0), "SavingsAccount::transferFrom _from address should be non-zero");
         require(_to != address(0), "SavingsAccount::transferFrom _to address should be non-zero");
@@ -450,6 +452,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         balanceInShares[_to][_token][_strategy] = (balanceInShares[_to][_token][_strategy]).add(_amount);
 
         emit Transfer(_token, _strategy, _from, _to, _amount);
+
+        return _amount;
     }
 
     /**
