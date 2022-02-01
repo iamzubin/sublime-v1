@@ -674,8 +674,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 if (_activeAmount.add(tokenInStrategy) >= _amountInTokens) {
                     _tokensToTransfer = (_amountInTokens.sub(_activeAmount));
                 }
-                _activeAmount = _activeAmount.add(_tokensToTransfer);
-                _savingsAccount.withdrawFrom(_asset, _strategyList[_index], _lender, address(this), _tokensToTransfer, false);
+                try _savingsAccount.withdrawFrom( _asset, _strategyList[_index], _lender, address(this),_tokensToTransfer, false) {
+                    _activeAmount = _activeAmount.add(_tokensToTransfer);
+                } catch {}
                 if (_activeAmount == _amountInTokens) {
                     return;
                 }
@@ -961,10 +962,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) internal {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _activeAmount;
+        for (uint256 index = 0; index < _strategyList.length; index++) {
+            if (_strategyList[index] == address(0)) continue;
 
-        for (uint256 index; index < _strategyList.length; ++index) {
             uint256 liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            if (liquidityShares == 0 || _strategyList[index] == address(0)) {
+            if (liquidityShares == 0) {
                 continue;
             }
             uint256 _tokenInStrategy = liquidityShares;
@@ -979,9 +981,19 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 liquidityShares
             );
             if (_toSavingsAccount) {
-                ISavingsAccount(savingsAccount).transfer(_asset, _strategyList[index], msg.sender, _tokensToTransfer);
+                try ISavingsAccount(savingsAccount).transfer(_asset, _strategyList[index], msg.sender, _tokensToTransfer) {} catch {
+                    _activeAmount = _activeAmount.sub(_tokensToTransfer);
+                    collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].add(
+                        liquidityShares
+                    );
+                }
             } else {
-                ISavingsAccount(savingsAccount).withdraw(_asset, _strategyList[index], msg.sender, _tokensToTransfer, false);
+                try ISavingsAccount(savingsAccount).withdraw(_asset, _strategyList[index], msg.sender, _tokensToTransfer, false) {} catch {
+                    _activeAmount = _activeAmount.sub(_tokensToTransfer);
+                    collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].add(
+                        liquidityShares
+                    );
+                }
             }
 
             if (_activeAmount == _amountInTokens) {
