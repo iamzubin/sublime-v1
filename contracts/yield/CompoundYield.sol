@@ -9,6 +9,7 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 import '../interfaces/IYield.sol';
 import '../interfaces/Invest/ICEther.sol';
 import '../interfaces/Invest/ICToken.sol';
+import '../interfaces/Invest/Comptroller.sol';
 
 /**
  * @title Yield contract
@@ -117,6 +118,24 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
             received = _withdrawERC(_asset, investedTo, amount);
             IERC20(_asset).safeTransfer(_wallet, received);
         }
+    }
+
+    /**
+     * @notice withdraw the comp tokens supplied
+     * @dev only owner can call
+     * @param _comptroller address of the comptroller contract
+     * @param _compToken address of the comp token
+     * @param _receiver address of the receiver
+     */
+    function claimCompTokens(
+        address _comptroller,
+        address _compToken,
+        address _receiver
+    ) external onlyOwner returns (uint256) {
+        Comptroller(_comptroller).claimComp(address(this));
+        uint256 compBalance = IERC20(_compToken).balanceOf(address(this));
+        IERC20(_compToken).transfer(_receiver, compBalance);
+        return compBalance;
     }
 
     /**

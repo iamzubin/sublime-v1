@@ -1,5 +1,5 @@
 import { CompoundYield, SublimeProxy, SavingsAccount } from '../../typechain';
-import { waffle, ethers } from 'hardhat';
+import { waffle, ethers, network } from 'hardhat';
 
 import DeployHelper from '../../utils/deploys';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -7,13 +7,16 @@ const { loadFixture } = waffle;
 
 import { CompoundPair } from '../../utils/types';
 import { Contracts } from '../../existingContracts/compound.json';
-import { zeroAddress } from '../../config/constants';
+import { WBTCWhale, zeroAddress } from '../../config/constants';
+import { BigNumber } from 'ethers';
+import { expect } from 'chai';
 
 describe('Compound Yield', async () => {
     let compoundYield: CompoundYield;
     let admin: SignerWithAddress;
     let mockSavingsAccount: SignerWithAddress;
     let pair: CompoundPair[];
+    let WBTCWhaleSigner: SignerWithAddress;
 
     async function fixture() {
         const [proxyAdmin, admin, mockSavingsAccount]: SignerWithAddress[] = await ethers.getSigners();
@@ -30,6 +33,13 @@ describe('Compound Yield', async () => {
         return { compoundYield, admin, mockSavingsAccount };
     }
 
+    before(async () => {
+        await network.provider.request({
+            method: 'hardhat_impersonateAccount',
+            params: [WBTCWhale],
+        });
+    });
+
     beforeEach(async () => {
         pair = [
             { asset: Contracts.DAI, liquidityToken: Contracts.cDAI },
@@ -42,11 +52,29 @@ describe('Compound Yield', async () => {
         compoundYield = result.compoundYield;
         admin = result.admin;
         mockSavingsAccount = result.mockSavingsAccount;
+        WBTCWhaleSigner = await ethers.getSigner(WBTCWhale);
     });
 
     it('Test 1', async () => {});
     it('Test 2', async () => {});
     it('Test 3', async () => {});
+
+    it('Claim Comp Tokens', async () => {
+        let amountToTransfer = BigNumber.from(1).mul(BigNumber.from(10).pow(8)); // 1 BTC
+        let deployHelper = new DeployHelper(WBTCWhaleSigner);
+        let WBTC = await deployHelper.mock.getMockERC20Detailed(Contracts.WBTC);
+        await WBTC.transfer(admin.address, amountToTransfer);
+
+        await WBTC.connect(admin).approve(compoundYield.address, amountToTransfer);
+        await compoundYield.connect(admin).setDepositLimit(Contracts.cWBTC2, amountToTransfer.mul(100000000000000)); // a large deposit number
+        await compoundYield.connect(mockSavingsAccount).lockTokens(admin.address, Contracts.WBTC, amountToTransfer);
+
+        let compToken = await deployHelper.mock.getMockERC20Detailed(Contracts.Comp);
+        let compTokenBalanceBefore = await compToken.balanceOf(admin.address);
+        await compoundYield.connect(admin).claimCompTokens(Contracts.Comptroller, Contracts.Comp, admin.address);
+        let compTokenBalanceAfter = await compToken.balanceOf(admin.address);
+        expect(compTokenBalanceAfter.sub(compTokenBalanceBefore)).gt(0); // amount of COMP token gain should be more than 0
+    });
 
     describe('Sub section Tests', async () => {
         let newSavingsAccount: SavingsAccount;
