@@ -95,10 +95,10 @@ interface ISavingsAccount {
     event CreditLineAllowanceRefreshed(address indexed token, address indexed from, address indexed to, uint256 amount);
 
     function deposit(
-        uint256 amount,
         address token,
         address strategy,
-        address to
+        address to,
+        uint256 amount
     ) external payable returns (uint256 sharesReceived);
 
     /**
@@ -109,10 +109,10 @@ interface ISavingsAccount {
      * @param amount amount of tokens to be reinvested
      */
     function switchStrategy(
-        uint256 amount,
-        address token,
         address currentStrategy,
-        address newStrategy
+        address newStrategy,
+        address token,
+        uint256 amount
     ) external;
 
     /**
@@ -124,10 +124,10 @@ interface ISavingsAccount {
      * @param withdrawShares boolean indicating to withdraw in liquidity share or underlying token
      */
     function withdraw(
-        uint256 amount,
         address token,
         address strategy,
         address payable withdrawTo,
+        uint256 amount,
         bool withdrawShares
     ) external returns (uint256);
 
@@ -136,36 +136,36 @@ interface ISavingsAccount {
     function withdrawAll(address token, address strategy) external returns (uint256 tokenReceived);
 
     function approve(
-        uint256 amount,
         address token,
-        address to
+        address to,
+        uint256 amount
     ) external;
 
     function increaseAllowance(
-        uint256 amount,
         address token,
-        address to
+        address to,
+        uint256 amount
     ) external;
 
     function decreaseAllowance(
-        uint256 amount,
         address token,
-        address to
+        address to,
+        uint256 amount
     ) external;
 
     function transfer(
-        uint256 amount,
         address token,
         address poolSavingsStrategy,
-        address to
+        address to,
+        uint256 amount
     ) external returns (uint256);
 
     function transferFrom(
-        uint256 amount,
         address token,
         address poolSavingsStrategy,
         address from,
-        address to
+        address to,
+        uint256 amount
     ) external returns (uint256);
 
     function balanceInShares(
@@ -175,17 +175,17 @@ interface ISavingsAccount {
     ) external view returns (uint256);
 
     function increaseAllowanceToCreditLine(
-        uint256 amount,
         address token,
-        address from
+        address from,
+        uint256 amount
     ) external;
 
     function withdrawFrom(
-        uint256 amount,
         address token,
         address strategy,
         address from,
         address payable to,
+        uint256 amount,
         bool withdrawShares
     ) external returns (uint256 amountReceived);
 
