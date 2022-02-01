@@ -94,7 +94,7 @@ interface IPool {
 
     function withdrawBorrowedAmount() external;
 
-    function borrower() external returns (address borrower);
+    function borrower() external returns (address poolBorrower);
 
     function getMarginCallEndTime(address _lender) external returns (uint256 marginCallEndTimeFor_lender);
 
