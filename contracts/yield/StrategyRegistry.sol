@@ -22,7 +22,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
     /**
      * @notice registry which maps whitelisted strategies to true
      **/
-    mapping(address => bool) public override registry;
+    mapping(address => uint256) public override registry;
 
     /**
      * @notice used to initialize the paramters of strategy registry
@@ -66,9 +66,9 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      **/
     function addStrategy(address _strategy) external override onlyOwner {
         require(strategies.length.add(1) <= maxStrategies, "StrategyRegistry::addStrategy - Can't add more strategies");
-        require(!registry[_strategy], 'StrategyRegistry::addStrategy - Strategy already exists');
+        require(registry[_strategy] == 0, 'StrategyRegistry::addStrategy - Strategy already exists');
         require(_strategy != address(0), 'StrategyRegistry::addStrategy - _strategy cannot be address(0)');
-        registry[_strategy] = true;
+        registry[_strategy] = 1;
         strategies.push(_strategy);
 
         emit StrategyAdded(_strategy);
@@ -104,12 +104,12 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
             "StrategyRegistry::updateStrategy - index to update and strategy address don't match"
         );
         require(_newStrategy != address(0), 'StrategyRegistry::updateStrategy - New strategy cannot be address(0)');
-        require(!registry[_newStrategy], 'StrategyRegistry::updateStrategy - New strategy already exists');
+        require(registry[_newStrategy] == 0, 'StrategyRegistry::updateStrategy - New strategy already exists');
         strategies[_strategyIndex] = _newStrategy;
 
         delete registry[_oldStrategy];
         emit StrategyRemoved(_oldStrategy);
-        registry[_newStrategy] = true;
+        registry[_newStrategy] = 1;
         emit StrategyAdded(_newStrategy);
     }
 }
