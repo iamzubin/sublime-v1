@@ -309,7 +309,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         return _tokenReceived;
     }
 
-    function withdrawAll(address _token, address _strategy) external override nonReentrant returns (uint256 _tokenReceived) {
+    function withdrawAll(address _token, address _strategy) external override nonReentrant returns (uint256) {
         uint256 _sharesBalance = balanceInShares[msg.sender][_token][_strategy];
 
         if (_sharesBalance == 0) return 0;
@@ -321,6 +321,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         _transfer(_amount, _token, payable(msg.sender));
 
         emit Withdrawn(msg.sender, msg.sender, _amount, _token, _strategy, false);
+
+        return _amount;
     }
 
     /**

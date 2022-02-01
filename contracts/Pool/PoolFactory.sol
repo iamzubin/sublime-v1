@@ -367,8 +367,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
         address _lenderVerifier
-    ) internal view returns (bytes memory data) {
-        data = abi.encodeWithSelector(
+    ) internal view returns (bytes memory) {
+        bytes memory data = abi.encodeWithSelector(
             poolInitFuncSelector,
             _poolSize,
             _borrowRate,
@@ -385,6 +385,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             loanWithdrawalDuration,
             collectionPeriod
         );
+        return data;
     }
 
     /**
@@ -405,13 +406,15 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 amount,
         bytes32 salt,
         bytes memory bytecode
-    ) internal returns (address addr) {
+    ) internal returns (address) {
         require(bytecode.length != 0, 'Create2: bytecode length is zero');
         // solhint-disable-next-line no-inline-assembly
+        address addr;
         assembly {
             addr := create2(amount, add(bytecode, 0x20), mload(bytecode), salt)
         }
         require(addr != address(0), 'Create2: Failed on deploy');
+        return addr;
     }
 
     /**
