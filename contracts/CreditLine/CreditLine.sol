@@ -674,7 +674,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 if (_activeAmount.add(tokenInStrategy) >= _amountInTokens) {
                     _tokensToTransfer = (_amountInTokens.sub(_activeAmount));
                 }
-                try _savingsAccount.withdrawFrom( _asset, _strategyList[_index], _lender, address(this),_tokensToTransfer, false) {
+                try _savingsAccount.withdrawFrom(_asset, _strategyList[_index], _lender, address(this), _tokensToTransfer, false) {
                     _activeAmount = _activeAmount.add(_tokensToTransfer);
                 } catch {}
                 if (_activeAmount == _amountInTokens) {
