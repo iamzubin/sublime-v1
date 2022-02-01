@@ -477,6 +477,4 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             }
         }
     }
-
-    receive() external payable {}
 }
