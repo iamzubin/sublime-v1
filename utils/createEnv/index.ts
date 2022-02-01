@@ -139,7 +139,13 @@ export async function createEnvironment(
         protocolFeeCollector: protocolFeeCollector.address,
     };
 
-    env.poolLogic = await createPool(proxyAdmin);
+    env.poolLogic = await createPool(
+        proxyAdmin,
+        env.priceOracle.address,
+        env.savingsAccount.address,
+        env.extenstion.address,
+        env.repayments.address
+    );
 
     await addSupportedTokens(
         env.poolFactory,
@@ -212,26 +218,7 @@ export async function calculateNewPoolAddress(
     _transferFromSavingsAccount: Boolean,
     poolCreateParams: PoolCreateParams
 ): Promise<Address> {
-    let generatedPoolAddress = await getPoolAddress(
-        env.entities.borrower.address,
-        borrowToken.address,
-        collateralToken.address,
-        strategy.address,
-        env.poolFactory.address,
-        salt,
-        env.poolLogic.address,
-        _transferFromSavingsAccount,
-        {
-            _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
-            _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
-            _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
-            _collectionPeriod: BigNumber.from(poolCreateParams._collectionPeriod),
-            _loanWithdrawalDuration: BigNumber.from(poolCreateParams._loanWithdrawalDuration),
-            _noOfRepaymentIntervals: BigNumber.from(poolCreateParams._noOfRepaymentIntervals),
-            _repaymentInterval: BigNumber.from(poolCreateParams._repaymentInterval),
-        }
-    );
+    let generatedPoolAddress = await env.poolFactory.connect(env.entities.borrower).preComputeAddress(env.entities.borrower.address, salt);
 
     return generatedPoolAddress;
 }
@@ -247,26 +234,7 @@ export async function createNewPool(
 ): Promise<Pool> {
     let deployHelper: DeployHelper = new DeployHelper(env.entities.borrower);
 
-    let generatedPoolAddress = await getPoolAddress(
-        env.entities.borrower.address,
-        borrowToken.address,
-        collateralToken.address,
-        strategy.address,
-        env.poolFactory.address,
-        salt,
-        env.poolLogic.address,
-        _transferFromSavingsAccount,
-        {
-            _poolSize: BigNumber.from(poolCreateParams._poolSize),
-            _borrowRate: BigNumber.from(poolCreateParams._borrowRate),
-            _collateralAmount: BigNumber.from(poolCreateParams._collateralAmount),
-            _collateralRatio: BigNumber.from(poolCreateParams._collateralRatio),
-            _collectionPeriod: BigNumber.from(poolCreateParams._collectionPeriod),
-            _loanWithdrawalDuration: BigNumber.from(poolCreateParams._loanWithdrawalDuration),
-            _noOfRepaymentIntervals: BigNumber.from(poolCreateParams._noOfRepaymentIntervals),
-            _repaymentInterval: BigNumber.from(poolCreateParams._repaymentInterval),
-        }
-    );
+    let generatedPoolAddress = await env.poolFactory.connect(env.entities.borrower).preComputeAddress(env.entities.borrower.address, salt);
 
     await env.poolFactory
         .connect(env.entities.borrower)

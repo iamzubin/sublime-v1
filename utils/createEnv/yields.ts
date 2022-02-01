@@ -14,6 +14,7 @@ import { SavingsAccount } from '@typechain/SavingsAccount';
 import { AaveYieldParams, CompoundPair, YearnPair } from '../../utils/types';
 import { IYield } from '@typechain/IYield';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
+import { BigNumber } from 'ethers';
 
 export async function createAaveYieldWithInit(
     proxyAdmin: SignerWithAddress,
@@ -66,6 +67,7 @@ export async function createCompoundYieldWithInit(
     for (let index = 0; index < pairs.length; index++) {
         const pair = pairs[index];
         await (await compoundYield.connect(admin).updateProtocolAddresses(pair.asset, pair.liquidityToken)).wait();
+        await (await compoundYield.connect(admin).setDepositLimit(pair.liquidityToken, BigNumber.from(10).pow(77))).wait(); // set to almost max uint
     }
 
     return IYield__factory.connect(compoundYield.address, admin);
