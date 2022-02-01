@@ -745,10 +745,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @param _amount amount being repaid
      */
-    function repay(
-        uint256 _id,
-        uint256 _amount
-    ) external payable nonReentrant {
+    function repay(uint256 _id, uint256 _amount) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         require(creditLineConstants[_id].lender != msg.sender, 'Lender cant repay');
         if (Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
