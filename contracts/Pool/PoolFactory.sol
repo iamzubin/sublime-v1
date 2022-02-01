@@ -12,7 +12,8 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../SavingsAccount/SavingsAccountUtil.sol';
 import './Beacon.sol';
-import './MinimumBeaconProxy.sol';
+// import './MinimumBeaconProxy.sol';
+import './MinimumBeaconProxy2.sol';
 
 /**
  * @title Pool Factory contract with methods for handling different pools
