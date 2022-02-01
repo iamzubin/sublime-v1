@@ -5,12 +5,14 @@ import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { PriceOracle } from '../../typechain/PriceOracle';
 import { SublimeProxy } from '../../typechain/SublimeProxy';
 import { Beacon } from '../../typechain/Beacon';
+import { MinimumBeaconProxy } from '../../typechain/MinimumBeaconProxy';
 
 import { Verification__factory } from '../../typechain/factories/Verification__factory';
 import { AdminVerifier__factory } from '../../typechain/factories/AdminVerifier__factory';
 import { PriceOracle__factory } from '../../typechain/factories/PriceOracle__factory';
 import { SublimeProxy__factory } from '../../typechain/factories/SublimeProxy__factory';
 import { Beacon__factory } from '../../typechain/factories/Beacon__factory';
+import { MinimumBeaconProxy__factory } from '../../typechain/factories/MinimumBeaconProxy__factory';
 
 import { Address } from 'hardhat-deploy/dist/types';
 
@@ -19,6 +21,10 @@ export default class DeployHelperContracts {
 
     constructor(deployerSigner: Signer) {
         this._deployerSigner = deployerSigner;
+    }
+
+    public async deployMinimumBeaconProxy(beacon: Address): Promise<MinimumBeaconProxy> {
+        return await await new MinimumBeaconProxy__factory(this._deployerSigner).deploy(beacon);
     }
 
     public async deployBeacon(owner: Address, implementation: Address): Promise<Beacon> {

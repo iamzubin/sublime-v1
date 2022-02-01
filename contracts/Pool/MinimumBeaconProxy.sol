@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/proxy/IBeacon.sol';
 
-contract MinimumBeaconProxy {
+contract MinimumBeaconProxy_generic {
     bytes32 private constant _BEACON_SLOT = 0xa3f0ad74e5423aebfd80d3ef4346578335a9a72aeaee59ff6cb3582b35133d50;
 
     constructor(address beacon) {
