@@ -24,7 +24,7 @@ interface IPriceOracle {
      */
     event UniswapPriceAveragingPeriodUpdated(uint32 uniswapPriceAveragingPeriod);
 
-    function getLatestPrice(address num, address den) external view returns (uint256, uint256);
+    function getLatestPrice(address num, address den) external view returns (uint256 priceOfNumInTermsOfDen, uint256 priceDecimals);
 
-    function doesFeedExist(address token1, address token2) external view returns (bool);
+    function doesFeedExist(address token1, address token2) external view returns (bool feedExists);
 }
