@@ -31,7 +31,6 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _maxStrategies maximum number of strategies allowed
      **/
     function initialize(address _owner, uint256 _maxStrategies) external initializer {
-        require(_maxStrategies != 0, 'StrategyRegistry::initialize maxStrategies cannot be zero');
         __Ownable_init();
         super.transferOwnership(_owner);
 
@@ -104,6 +103,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
             strategies[_strategyIndex] == _oldStrategy,
             "StrategyRegistry::updateStrategy - index to update and strategy address don't match"
         );
+        require(_newStrategy != address(0), 'StrategyRegistry::updateStrategy - New strategy cannot be address(0)');
         require(!registry[_newStrategy], 'StrategyRegistry::updateStrategy - New strategy already exists');
         strategies[_strategyIndex] = _newStrategy;
 

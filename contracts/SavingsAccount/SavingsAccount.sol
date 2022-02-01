@@ -285,7 +285,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     function withdrawAll(address _token) external override nonReentrant returns (uint256 _tokenReceived) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
-        for (uint256 i = 0; i < _strategyList.length; ++i) {
+        for (uint256 i; i < _strategyList.length; ++i) {
             if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0 && _strategyList[i] != address(0)) {
                 uint256 _amount = balanceInShares[msg.sender][_token][_strategyList[i]];
                 _amount = IYield(_strategyList[i]).unlockTokens(_token, balanceInShares[msg.sender][_token][_strategyList[i]]);
@@ -327,6 +327,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _to,
         uint256 _amount
     ) external override {
+        require(msg.sender != _to, 'SavingsAccount::can not approve same account');
         allowance[msg.sender][_token][_to] = _amount;
 
         emit Approved(_token, msg.sender, _to, _amount);
@@ -443,7 +444,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         //reduce sender's balance
         balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
             _amount,
-            'SavingsAccount::transferFrom insufficient allowance'
+            'SavingsAccount::transferFrom insufficient balance'
         );
 
         //update receiver's balance
@@ -463,7 +464,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     function getTotalTokens(address _user, address _token) external override returns (uint256 _totalTokens) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
 
-        for (uint256 i = 0; i < _strategyList.length; ++i) {
+        for (uint256 i; i < _strategyList.length; ++i) {
             uint256 _liquidityShares = balanceInShares[_user][_token][_strategyList[i]];
 
             if (_liquidityShares != 0) {
@@ -476,6 +477,4 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             }
         }
     }
-
-    receive() external payable {}
 }
