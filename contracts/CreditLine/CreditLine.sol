@@ -782,7 +782,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             } else {
                 IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
                 IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
-                _savingsAccount.deposit( _borrowAsset, _defaultStrategy, _lender, _amount);
+                _savingsAccount.deposit(_borrowAsset, _defaultStrategy, _lender, _amount);
             }
         } else {
             _repayFromSavingsAccount(_borrowAsset, _lender, _amount);

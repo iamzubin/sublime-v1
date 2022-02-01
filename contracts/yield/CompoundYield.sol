@@ -25,6 +25,11 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     address payable public savingsAccount;
 
     /**
+     * @notice the max amount that can be deposited for every token to the yield contract
+     */
+    mapping(address => uint256) public depositLimit;
+
+    /**
      * @notice stores the address of liquidity token for a given base token
      */
     mapping(address => address) public override liquidityToken;
@@ -89,11 +94,20 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @param _amount amount to be withdraw. (if 0, it means all amount)
      */
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+    function emergencyWithdraw(
+        address _asset,
+        address payable _wallet,
+        uint256 _amount
+    ) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
-        uint256 amount = IERC20(investedTo).balanceOf(address(this));
+
+        uint256 amount = _amount;
+        if (_amount == 0) {
+            amount = IERC20(investedTo).balanceOf(address(this));
+        }
 
         if (_asset == address(0)) {
             received = _withdrawETH(investedTo, amount);
@@ -195,11 +209,12 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
 
     function _depositETH(address cToken, uint256 amount) internal returns (uint256 sharesReceived) {
         uint256 initialCTokenBalance = IERC20(cToken).balanceOf(address(this));
-
         //mint cToken
         ICEther(cToken).mint{value: amount}();
 
-        sharesReceived = IERC20(cToken).balanceOf(address(this)).sub(initialCTokenBalance);
+        uint256 latterCTokenBalance = IERC20(cToken).balanceOf(address(this));
+        require(depositLimit[cToken] > latterCTokenBalance, "Can't deposit more than permissible limit");
+        sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
     }
 
     function _depositERC20(
@@ -212,7 +227,10 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         IERC20(asset).approve(cToken, 0);
         IERC20(asset).approve(cToken, amount);
         require(ICToken(cToken).mint(amount) == 0, 'Error in minting tokens');
-        sharesReceived = IERC20(cToken).balanceOf(address(this)).sub(initialCTokenBalance);
+
+        uint256 latterCTokenBalance = IERC20(cToken).balanceOf(address(this));
+        require(depositLimit[cToken] > latterCTokenBalance, "Can't deposit more than permissible limit");
+        sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
     }
 
     function _withdrawETH(address cToken, uint256 amount) internal returns (uint256 received) {
@@ -231,6 +249,10 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         uint256 initialAssetBalance = IERC20(asset).balanceOf(address(this));
         require(ICToken(cToken).redeem(amount) == 0, 'Error in unwrapping');
         tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
+    }
+
+    function setDepositLimit(address asset, uint256 limit) external onlyOwner {
+        depositLimit[asset] = limit;
     }
 
     //to apply check
