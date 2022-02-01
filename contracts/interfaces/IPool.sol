@@ -96,7 +96,7 @@ interface IPool {
 
     function borrower() external returns (address poolBorrower);
 
-    function getMarginCallEndTime(address _lender) external returns (uint256 marginCallEndTimeFor_lender);
+    function getMarginCallEndTime(address _lender) external returns (uint256 marginCallEndTimeForLender);
 
     function getBalanceDetails(address _lender) external view returns (uint256 lenderPoolTokens, uint256 totalPoolTokens);
 

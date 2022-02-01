@@ -49,7 +49,6 @@ library SavingsAccountUtil {
         address _to,
         uint256 _amount
     ) internal returns (uint256) {
-        uint256 _sharesReceived;
         transferTokens(_token, _from, address(this), _amount);
         uint256 _ethValue;
         if (_token == address(0)) {
@@ -61,7 +60,7 @@ library SavingsAccountUtil {
             }
             IERC20(_token).safeApprove(_approveTo, _amount);
         }
-        _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_token, _strategy, _to, _amount);
+        uint256 _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_token, _strategy, _to, _amount);
         return _sharesReceived;
     }
 
