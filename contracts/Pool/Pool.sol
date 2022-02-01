@@ -153,6 +153,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         poolConstants.collateralAsset = _collateralAsset;
         poolConstants.poolSavingsStrategy = _poolSavingsStrategy;
         poolConstants.borrowAmountRequested = _borrowAmountRequested;
+        if(Address(_collateralAsset) != Address(0)) {
+            require(msg.value == 0, 'initialize: ETH is not required for this operation');
+        }
         _initialDeposit(_borrower, _collateralAmount, _transferFromSavingsAccount);
         poolConstants.borrower = _borrower;
         poolConstants.borrowRate = _borrowRate;
@@ -742,6 +745,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         LoanStatus _currentPoolStatus = poolVariables.loanStatus;
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         require(_currentPoolStatus == LoanStatus.ACTIVE, 'LP1');
+        if(Address(poolConstants.collateralAsset) != Address(0)) {
+            require(msg.value == 0, 'liquidatePool: ETH is not required for this operation');
+        }
         require(IRepayment(_poolFactory.repaymentImpl()).didBorrowerDefault(address(this)), 'LP2');
         poolVariables.loanStatus = LoanStatus.DEFAULTED;
 
@@ -870,7 +876,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _recieveLiquidityShare
     ) external payable nonReentrant {
         _canLenderBeLiquidated(_lender);
-
+        if(Address(poolConstants.collateralAsset) != Address(0)) {
+            require(msg.value == 0, 'liquidateForLender: ETH is not required for this operation');
+        }
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
         (uint256 _lenderCollateralLPShare, uint256 _lenderBalance) = _updateLenderSharesDuringLiquidation(_lender);
 
