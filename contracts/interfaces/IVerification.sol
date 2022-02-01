@@ -37,12 +37,12 @@ interface IVerification {
     /// @param linkedAddress The address which is to be linked to masterAddress
     /// @param masterAddress The masterAddress to which address is to be linked
     event AddressLinkingRequested(address indexed linkedAddress, address indexed masterAddress);
-
+    
     /// @notice Event emitted when master address cancels the request placed to link another address to itself
     /// @param linkedAddress The address which is to be linked to masterAddress
     /// @param masterAddress The masterAddress to which address is to be linked
     event AddressLinkingRequestCancelled(address indexed linkedAddress, address indexed masterAddress);
-
+    
     /// @notice Event emitted when activation delay is updated
     /// @param activationDelay updated value of activationDelay in seconds
     event ActivationDelayUpdated(uint256 activationDelay);

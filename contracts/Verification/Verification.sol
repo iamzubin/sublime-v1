@@ -85,7 +85,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev Multiple accounts can be linked to master address to act on behalf. Master address can be registered by multiple verifiers
     /// @param _masterAddress address which is registered as verified
     /// @param _isMasterLinked boolean which specifies if the masterAddress has to be added as a linked address
-    ///                         _isMasterLinked is used to support users who want to keep the master address as a cold wallet for security
+    ///                        _isMasterLinked is used to support users who want to keep the master address as a cold wallet for security
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external override onlyVerifier {
         require(masterAddresses[_masterAddress][msg.sender] == 0, 'V:RMA-Already registered');
         uint256 _masterAddressActivatesAt = block.timestamp + activationDelay;
@@ -103,7 +103,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _verifier verifier address from which master address is unregistered
     function unregisterMasterAddress(address _masterAddress, address _verifier) external override {
         if (msg.sender != super.owner()) {
-            require(masterAddresses[_masterAddress][msg.sender] != 0 && msg.sender == _verifier, 'V:UMA-Invalid verifier');
+            require(masterAddresses[_masterAddress][msg.sender] != 0, 'V:UMA-Invalid verifier');
         }
         delete masterAddresses[_masterAddress][_verifier];
         emit UserUnregistered(_masterAddress, _verifier, msg.sender);
@@ -119,13 +119,13 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @dev only master address can initiate linking of another address
     /// @param _linkedAddress address which is to be linked
     function requestAddressLinking(address _linkedAddress) external {
-        require(linkedAddresses[_linkedAddress].masterAddress == address(0), 'V:LA-Address already linked');
+        require(linkedAddresses[_linkedAddress].masterAddress == address(0), 'V:RAL-Address already linked');
         pendingLinkAddresses[_linkedAddress][msg.sender] = true;
         emit AddressLinkingRequested(_linkedAddress, msg.sender);
     }
 
     /// @notice Used by master address to cancel request linking another address to it
-    /// @param _linkedAddress address which is to be linked
+    /// @param  _linkedAddress address which is to be linked
     function cancelAddressLinkingRequest(address _linkedAddress) external {
         require(pendingLinkAddresses[_linkedAddress][msg.sender], 'V:CALR-No pending request');
         delete pendingLinkAddresses[_linkedAddress][msg.sender];
@@ -141,7 +141,9 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
         require(pendingLinkAddresses[msg.sender][_masterAddress], 'V:LA-No pending request');
         _linkAddress(msg.sender, _masterAddress);
+        delete pendingLinkAddresses[msg.sender][_masterAddress];
     }
+    
 
     /// @notice Unlink address with master address
     /// @dev a single address can be linked to only one master address
@@ -162,11 +164,11 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     function isUser(address _user, address _verifier) external view override returns (bool) {
         LinkedAddress memory _linkedAddress = linkedAddresses[_user];
         uint256 _masterActivatesAt = masterAddresses[_linkedAddress.masterAddress][_verifier];
-        if (
-            _linkedAddress.masterAddress == address(0) ||
+        if(
+            _linkedAddress.masterAddress == address(0) || 
             _linkedAddress.activatesAt > block.timestamp ||
-            _masterActivatesAt == 0 ||
-            _masterActivatesAt > block.timestamp
+            _masterActivatesAt > block.timestamp ||
+            _masterActivatesAt == 0 
         ) {
             return false;
         }

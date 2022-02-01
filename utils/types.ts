@@ -76,6 +76,9 @@ export interface VerificationParams {
     activationDelay: BigNumberish;
 }
 
+export interface VerificationParams {
+    activationDelay: BigNumberish
+}
 export interface InputParams {
     extenstionInitParams: ExtensionInitParams;
     creditLineInitParams: CreditLineInitParams;
