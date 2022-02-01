@@ -97,6 +97,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
     ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
         if (asset != address(0)) {
+            require(msg.value == 0, 'Invest: ETH not required for this operation');
             IERC20(asset).safeTransferFrom(user, address(this), amount);
         } else {
             require(msg.value == amount, 'Invest: ETH amount');
