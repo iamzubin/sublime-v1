@@ -107,6 +107,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     uint256 protocolFeeFraction;
     address protocolFeeCollector;
 
+    uint256 constant SCALING_FACTOR = 1e30;
+
     /*
      * @notice Used to mark assets supported for borrowing
      */
@@ -485,6 +487,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updatePoolLogic(address _poolLogic) internal {
+        require(_poolLogic != address(0), "PoolFactory:_updatePoolLogic _poolLogic address should be a non-zero address");
         poolImpl = _poolLogic;
         emit PoolLogicUpdated(_poolLogic);
     }
@@ -498,6 +501,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateUserRegistry(address _userRegistry) internal {
+        require(_userRegistry != address(0), "PoolFactory:_updateUserRegistry _userRegistry should be a non-zero address");
         userRegistry = _userRegistry;
         emit UserRegistryUpdated(_userRegistry);
     }
@@ -511,6 +515,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateStrategyRegistry(address _strategyRegistry) internal {
+        require(_strategyRegistry != address(0), "PoolFactory:_updateStrategyRegistry _strategyRegistry should be a non-zero address");
         strategyRegistry = _strategyRegistry;
         emit StrategyRegistryUpdated(_strategyRegistry);
     }
@@ -524,6 +529,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateRepaymentImpl(address _repaymentImpl) internal {
+        require(_repaymentImpl != address(0), "PoolFactory:_updateRepaymentImpl _repaymentImpl should be a non-zero address");
         repaymentImpl = _repaymentImpl;
         emit RepaymentImplUpdated(_repaymentImpl);
     }
@@ -537,6 +543,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateNoStrategy(address _noStrategy) internal {
+        require(_noStrategy != address(0), "PoolFactory:_updateNoStrategy _noStrategy should be a non-zero address");
         noStrategyAddress = _noStrategy;
         emit NoStrategyUpdated(_noStrategy);
     }
@@ -550,6 +557,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updatePriceoracle(address _priceOracle) internal {
+        require(_priceOracle != address(0), "PoolFactory:_updatePriceoracle _priceOracle should be a non-zero address");
         priceOracle = _priceOracle;
         emit PriceOracleUpdated(_priceOracle);
     }
@@ -563,6 +571,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updatedExtension(address _extension) internal {
+        require(_extension != address(0), "PoolFactory:_updateExtension _extension should be a non-zero address");
         extension = _extension;
         emit ExtensionImplUpdated(_extension);
     }
@@ -576,6 +585,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateSavingsAccount(address _savingsAccount) internal {
+        require(_savingsAccount != address(0), "PoolFactory:_updateSavingsAccount _savingsAccount should be a non-zero address");
         savingsAccount = _savingsAccount;
         emit SavingsAccountUpdated(_savingsAccount);
     }
@@ -589,6 +599,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateCollectionPeriod(uint256 _collectionPeriod) internal {
+        require(_collectionPeriod != 0, "PoolFactory:_updateCollectionPeriod _collectionPeriod should be non-zero");
         collectionPeriod = _collectionPeriod;
         emit CollectionPeriodUpdated(_collectionPeriod);
     }
@@ -602,6 +613,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateLoanWithdrawalDuration(uint256 _loanWithdrawalDuration) internal {
+        require(_loanWithdrawalDuration != 0, "PoolFactory:_updateLoanWithdrawalDeadline _loanWithdrawalDuration should be non-zero");
         loanWithdrawalDuration = _loanWithdrawalDuration;
         emit LoanWithdrawalDurationUpdated(_loanWithdrawalDuration);
     }
@@ -615,39 +627,43 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateMarginCallDuration(uint256 _marginCallDuration) internal {
+        require(_marginCallDuration != 0, "PoolFactory:updateMarginCallDuration _marginCallDuration should be non-zero");
         marginCallDuration = _marginCallDuration;
         emit MarginCallDurationUpdated(_marginCallDuration);
     }
 
     /**
      * @notice used to update the min borrow fraction by owner
-     * @param _minBorrowFraction updated value of min borrow fraction multiplied by SCALING_FACTOR(10**30)
+     * @param _minBorrowFraction updated value of min borrow fraction multiplied by SCALING_FACTOR
+
      */
     function updateMinBorrowFraction(uint256 _minBorrowFraction) external onlyOwner {
         _updateMinBorrowFraction(_minBorrowFraction);
     }
 
     function _updateMinBorrowFraction(uint256 _minBorrowFraction) internal {
+        require(_minBorrowFraction <= SCALING_FACTOR, "PoolFactory:_updateMinBorrowFraction _minBorrowFraction should be less than 100%");
         minBorrowFraction = _minBorrowFraction;
         emit MinBorrowFractionUpdated(_minBorrowFraction);
     }
 
     /**
      * @notice used to update the reward fraction for liquidation of the Pool
-     * @param _liquidatorRewardFraction updated value of the reward fraction for liquidation multiplied by SCALING_FACTOR(10**30)
+     * @param _liquidatorRewardFraction updated value of the reward fraction for liquidation multiplied by SCALING_FACTOR
      */
     function updateLiquidatorRewardFraction(uint256 _liquidatorRewardFraction) external onlyOwner {
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
     }
 
     function _updateLiquidatorRewardFraction(uint256 _liquidatorRewardFraction) internal {
+        require(_liquidatorRewardFraction <= SCALING_FACTOR, "PoolFactory:_updateLiquidatorRewardFraction _liquidatorRewardFraction should be less than 100%");
         liquidatorRewardFraction = _liquidatorRewardFraction;
         emit LiquidatorRewardFractionUpdated(_liquidatorRewardFraction);
     }
 
     /**
      * @notice used to update the pool cancel penalty multiple
-     * @param _poolCancelPenaltyMultiple updated value of the pool cancel penalty multiple multiplied by SCALING_FACTOR(10**30)
+     * @param _poolCancelPenaltyMultiple updated value of the pool cancel penalty multiple multiplied by SCALING_FACTOR
      */
     function updatePoolCancelPenaltyMultiple(uint256 _poolCancelPenaltyMultiple) external onlyOwner {
         _updatePoolCancelPenaltyMultiple(_poolCancelPenaltyMultiple);
@@ -660,13 +676,14 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
     /**
      * @notice used to update the fraction of borrowed amount charged as protocol fee
-     * @param _protocolFee updated value of protocol fee fraction multiplied by SCALING_FACTOR(10**30)
+     * @param _protocolFee updated value of protocol fee fraction multiplied by SCALING_FACTOR
      */
     function updateProtocolFeeFraction(uint256 _protocolFee) external onlyOwner {
         _updateProtocolFeeFraction(_protocolFee);
     }
 
     function _updateProtocolFeeFraction(uint256 _protocolFee) internal {
+        require(_protocolFee <= SCALING_FACTOR, "PoolFactory:_updateProtocolFeeFraction _protocolFee cannot be more than 100%");
         protocolFeeFraction = _protocolFee;
         emit ProtocolFeeFractionUpdated(_protocolFee);
     }
@@ -680,6 +697,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     function _updateProtocolFeeCollector(address _protocolFeeCollector) internal {
+        require(_protocolFeeCollector != address(0), "PoolFactory:_protocolFeeCollector address should not be zero");
         protocolFeeCollector = _protocolFeeCollector;
         emit ProtocolFeeCollectorUpdated(_protocolFeeCollector);
     }
@@ -690,6 +708,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the pool size
      */
     function updatePoolSizeLimit(uint256 _min, uint256 _max) external onlyOwner {
+        require(_min != 0, 'PoolFactory:updatePoolSizeLimit _min should be non-zero');
         poolSizeLimit = Limits(_min, _max);
         emit LimitsUpdated('PoolSize', _min, _max);
     }
@@ -710,6 +729,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the borrow rate
      */
     function updateBorrowRateLimit(uint256 _min, uint256 _max) external onlyOwner {
+        require(_min != 0, "PoolFactory:updateBorrowRateLimit _min should be non-zero");
         borrowRateLimit = Limits(_min, _max);
         emit LimitsUpdated('BorrowRate', _min, _max);
     }
@@ -730,13 +750,15 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _max updated value of the maximum threshold value of the number of repayment intervals
      */
     function updateNoOfRepaymentIntervalsLimit(uint256 _min, uint256 _max) external onlyOwner {
+        require(_min != 0,"PoolFactory:updateNoOfRepaymentIntervalsLimit _min should be non-zero");
         noOfRepaymentIntervalsLimit = Limits(_min, _max);
         emit LimitsUpdated('NoOfRepaymentIntervals', _min, _max);
     }
 
     /**
      * @notice used to query protocol fee fraction and address of the collector
-     * @return protocolFee Fraction multiplied by SCALING_FACTOR(10**30)
+     * @return protocolFee Fraction multiplied by SCALING_FACTOR
+
      * @return address of protocol fee collector
      */
     function getProtocolFeeData() external view override returns (uint256, address) {

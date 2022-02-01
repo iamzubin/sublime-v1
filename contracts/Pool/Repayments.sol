@@ -311,10 +311,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getInterestOverdue(address _poolID) public view returns (uint256) {
         require(repayVariables[_poolID].isLoanExtensionActive, 'No overdue');
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-
         uint256 _interestOverdue = getInterest(
             _poolID,
-            (_instalmentsCompleted.add(10**30)).mul(repayConstants[_poolID].repaymentInterval).div(10**30).sub(
+            (_instalmentsCompleted.add(SCALING_FACTOR)).mul(repayConstants[_poolID].repaymentInterval).div(SCALING_FACTOR).sub(
                 repayVariables[_poolID].loanDurationCovered
             )
         );
@@ -382,6 +381,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
             return _interestLeft;
         }
     }
+
 
     function _updateRepaidAmount(address _poolID, uint256 _repaidAmount) internal returns (uint256) {
         repayVariables[_poolID].repaidAmount = repayVariables[_poolID].repaidAmount.add(_repaidAmount);
