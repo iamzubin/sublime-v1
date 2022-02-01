@@ -30,6 +30,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     address immutable savingsAccount;
     address immutable extensions;
     address immutable repaymentImpl;
+
     uint256 constant SCALING_FACTOR = 1e30;
 
     struct LendingDetails {
@@ -684,8 +685,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function interestToPay() public view returns (uint256) {
         (uint256 _loanDurationCovered, uint256 _interestPerSecond) = IRepayment(repaymentImpl).getInterestCalculationVars(address(this));
-        uint256 _currentBlockTime = block.timestamp.mul(10**30);
-        uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(10**30));
+        uint256 _currentBlockTime = block.timestamp.mul(SCALING_FACTOR);
+        uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(SCALING_FACTOR));
+
         if (_loanDurationTillNow <= _loanDurationCovered) {
             return 0;
         }
