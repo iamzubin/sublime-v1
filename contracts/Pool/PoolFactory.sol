@@ -9,10 +9,10 @@ import '../interfaces/IRepayment.sol';
 import '../interfaces/IPriceOracle.sol';
 import '../interfaces/ISavingsAccount.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts/proxy/BeaconProxy.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '../SavingsAccount/SavingsAccountUtil.sol';
 import './Beacon.sol';
+import './MinimumBeaconProxy.sol';
 
 /**
  * @title Pool Factory contract with methods for handling different pools
@@ -311,8 +311,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function preComputeAddress(address creator, bytes32 salt) public view returns (address predicted) {
         salt = keccak256(abi.encode(creator, salt));
 
-        bytes memory empty;
-        bytes memory beaconProxyByteCode = abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(beacon, empty));
+        bytes memory beaconProxyByteCode = abi.encodePacked(type(MinimumBeaconProxy).creationCode, abi.encode(beacon));
 
         bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(beaconProxyByteCode)));
 
@@ -356,8 +355,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
     function _create(bytes32 _salt) internal returns (address) {
         address addr;
-        bytes memory empty;
-        bytes memory beaconProxyByteCode = abi.encodePacked(type(BeaconProxy).creationCode, abi.encode(beacon, empty));
+        bytes memory beaconProxyByteCode = abi.encodePacked(type(MinimumBeaconProxy).creationCode, abi.encode(beacon));
 
         assembly {
             addr := create2(callvalue(), add(beaconProxyByteCode, 0x20), mload(beaconProxyByteCode), _salt)
