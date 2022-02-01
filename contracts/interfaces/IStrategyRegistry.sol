@@ -20,7 +20,7 @@ interface IStrategyRegistry {
      */
     event MaxStrategiesUpdated(uint256 maxStrategies);
 
-    function registry(address _strategy) external view returns (bool);
+    function registry(address _strategy) external view returns (uint256);
 
     function getStrategies() external view returns (address[] memory);
 

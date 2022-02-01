@@ -68,7 +68,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice modifier used to determine whether the current pool is valid or not
     /// @dev poolRegistry from IPoolFactory interface returns a bool
     modifier onlyValidPool() {
-        require(poolFactory.poolRegistry(msg.sender), 'Repayments::onlyValidPool - Invalid Pool');
+        require(poolFactory.poolRegistry(msg.sender) != 0, 'Repayments::onlyValidPool - Invalid Pool');
         _;
     }
 
@@ -311,10 +311,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     function getInterestOverdue(address _poolID) public view returns (uint256) {
         require(repayVariables[_poolID].isLoanExtensionActive, 'No overdue');
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-
         uint256 _interestOverdue = getInterest(
             _poolID,
-            (_instalmentsCompleted.add(10**30)).mul(repayConstants[_poolID].repaymentInterval).div(10**30).sub(
+            (_instalmentsCompleted.add(SCALING_FACTOR)).mul(repayConstants[_poolID].repaymentInterval).div(SCALING_FACTOR).sub(
                 repayVariables[_poolID].loanDurationCovered
             )
         );
@@ -327,7 +326,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _amount amount repaid by the borrower
     function repay(address _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
-        if(Address(_asset) != Address(0)) {
+        if (Address(_asset) != Address(0)) {
             require(msg.value == 0, 'Repay: ETH is not required for this operation');
         }
         uint256 _amountRepaid = _repay(_poolID, _amount, false);
@@ -422,7 +421,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _poolID address of the pool
     function repayPrincipal(address payable _poolID) external payable nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
-        if(Address(_asset) != Address(0)) {
+        if (Address(_asset) != Address(0)) {
             require(msg.value == 0, 'repayPrincipal: ETH is not required for this operation');
         }
         uint256 _interestToRepay = _repay(_poolID, MAX_INT, true);

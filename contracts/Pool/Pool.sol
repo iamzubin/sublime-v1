@@ -30,6 +30,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     address immutable savingsAccount;
     address immutable extensions;
     address immutable repaymentImpl;
+
     uint256 constant SCALING_FACTOR = 1e30;
 
     struct LendingDetails {
@@ -286,7 +287,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _transferFromSavingsAccount
     ) external payable override nonReentrant {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'ACMC1');
-        if(Address(poolConstants.collateralAsset) != Address(0)) {
+        if (Address(poolConstants.collateralAsset) != Address(0)) {
             require(msg.value == 0, 'AddCollateralInMarginCall: ETH is not required for this operation');
         }
         require(balanceOf(msg.sender) == 0, 'ACMC2');
@@ -408,7 +409,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _lenderVerifier = poolConstants.lenderVerifier;
         address _borrower = poolConstants.borrower;
         require(_lender != _borrower && _borrower != msg.sender, 'L1');
-        if(Address(poolConstants.borrowAsset) != Address(0)) {
+        if (Address(poolConstants.borrowAsset) != Address(0)) {
             require(msg.value == 0, 'Lend: ETH is not required for this operation');
         }
         if (_lenderVerifier != address(0)) {
@@ -684,8 +685,9 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function interestToPay() public view returns (uint256) {
         (uint256 _loanDurationCovered, uint256 _interestPerSecond) = IRepayment(repaymentImpl).getInterestCalculationVars(address(this));
-        uint256 _currentBlockTime = block.timestamp.mul(10**30);
-        uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(10**30));
+        uint256 _currentBlockTime = block.timestamp.mul(SCALING_FACTOR);
+        uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(SCALING_FACTOR));
+
         if (_loanDurationTillNow <= _loanDurationCovered) {
             return 0;
         }
