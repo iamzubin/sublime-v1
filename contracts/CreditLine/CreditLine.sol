@@ -158,7 +158,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param lender address of the lender for credit line
      * @param borrower address of the borrower for credit line
      */
-    event CreditLineRequested(uint256 indexed id, address indexed lender, address indexed borrower);
+    event CreditLineRequested(uint256 indexed id, address indexed lender, address indexed borrower, bool requestByLender);
 
     /**
      * @notice emitted when a credit line is liquidated
@@ -189,22 +189,25 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     /**
      * @notice emitted when the credit line is partially repaid
      * @param id id of the credit line
+     * @param repayer address of the repayer
      * @param repayAmount amount repaid
      */
-    event PartialCreditLineRepaid(uint256 indexed id, uint256 repayAmount);
+    event PartialCreditLineRepaid(uint256 indexed id, address indexed repayer, uint256 repayAmount);
 
     /**
      * @notice emitted when the credit line is completely repaid
      * @param id id of the credit line
+     * @param repayer address of the repayer
      * @param repayAmount amount repaid
      */
-    event CompleteCreditLineRepaid(uint256 indexed id, uint256 repayAmount);
+    event CompleteCreditLineRepaid(uint256 indexed id, address indexed repayer, uint256 repayAmount);
 
     /**
      * @notice emitted when the credit line is closed by one of the parties of credit line
      * @param id id of the credit line
+     * @param closedByLender is true when it is closed by lender
      */
-    event CreditLineClosed(uint256 indexed id);
+    event CreditLineClosed(uint256 indexed id, bool closedByLender);
 
     /**
      * @notice emitted when default strategy for the credit line is updated
@@ -558,7 +561,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _requestAsLender
         );
 
-        emit CreditLineRequested(_id, _lender, _borrower);
+        emit CreditLineRequested(_id, _lender, _borrower, _requestAsLender);
         return _id;
     }
 
@@ -819,9 +822,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         if (_amount >= _totalCurrentDebt) {
             _amount = _totalCurrentDebt;
-            emit CompleteCreditLineRepaid(_id, _amount);
+            emit CompleteCreditLineRepaid(_id, msg.sender, _amount);
         } else {
-            emit PartialCreditLineRepaid(_id, _amount);
+            emit PartialCreditLineRepaid(_id, msg.sender, _amount);
         }
 
         if (_amount > _interestToPay) {
@@ -861,7 +864,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineVariables[_id].principal == 0, 'CreditLine: Cannot be closed since not repaid.');
         require(creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate == 0, 'CreditLine: Cannot be closed since not repaid.');
         creditLineVariables[_id].status = CreditLineStatus.CLOSED;
-        emit CreditLineClosed(_id);
+        emit CreditLineClosed(_id, msg.sender == creditLineConstants[_id].lender);
     }
 
     /**
