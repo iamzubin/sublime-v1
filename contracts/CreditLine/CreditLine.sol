@@ -499,11 +499,15 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 _tokensToTransfer = (_amount.sub(_activeAmount));
             }
             _activeAmount = _activeAmount.add(_tokensToTransfer);
-            uint256 _sharesInStrategy = _savingsAccount.transferFrom(_tokensToTransfer, _collateralAsset, _strategy, _sender, address(this));
-            
-            collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(
-                _sharesInStrategy
+            uint256 _sharesInStrategy = _savingsAccount.transferFrom(
+                _tokensToTransfer,
+                _collateralAsset,
+                _strategy,
+                _sender,
+                address(this)
             );
+
+            collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_sharesInStrategy);
 
             if (_amount == _activeAmount) {
                 return;
@@ -640,7 +644,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) internal {
         require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
-        if(Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
+        if (Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
             require(msg.value == 0, '_depositCollateral: ETH is not required for this operation');
         }
         if (_fromSavingsAccount) {
@@ -704,7 +708,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         updateinterestAccruedTillLastPrincipalUpdate(_id);
         creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_amount);
         creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
-        
+
         uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
         _withdrawBorrowAmount(_borrowAsset, _amount, _lender);
         uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
@@ -788,7 +792,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         require(creditLineConstants[_id].lender != msg.sender, 'Lender cant repay');
-        if(Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
+        if (Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
             require(msg.value == 0, 'Repay: ETH is not required for this operation');
         }
 
@@ -1002,7 +1006,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
-        if(Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
+        if (Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
             require(msg.value == 0, 'Liquidate: ETH is not required for this operation');
         }
         require(creditLineVariables[_id].principal != 0, 'CreditLine: cannot liquidate if principal is 0');
