@@ -385,6 +385,32 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
     /**
      * @notice used to transfer tokens
+     * @param _shares shares of tokens transferred
+     * @param _token address of token transferred
+     * @param _strategy address of the strategy from which tokens are transferred
+     * @param _to address of the user tokens are transferred to
+     */
+    function transferShares(
+        uint256 _shares,
+        address _token,
+        address _strategy,
+        address _to
+    ) external override returns (uint256) {
+        require(_shares != 0, 'SavingsAccount::transfer zero amount');
+
+        balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
+            _shares,
+            'SavingsAccount::transfer insufficient funds'
+        );
+        balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_shares);
+
+        emit TransferShares(_token, _strategy, msg.sender, _to, _shares);
+
+        return _shares;
+    }
+
+    /**
+     * @notice used to transfer tokens
      * @param _amount amount of tokens transferred
      * @param _token address of token transferred
      * @param _strategy address of the strategy from which tokens are transferred
@@ -397,10 +423,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 _amount
     ) external override returns (uint256) {
         require(_amount != 0, 'SavingsAccount::transfer zero amount');
-
-        if (_strategy != address(0)) {
-            _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
-        }
+        _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
 
         balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
             _amount,
@@ -413,6 +436,41 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         emit Transfer(_token, _strategy, msg.sender, _to, _amount);
 
         return _amount;
+    }
+
+    /**
+     * @notice used to transfer tokens from allowance by another address
+     * @param _shares shares of tokens transferred
+     * @param _token address of token transferred
+     * @param _strategy address of the strategy from which tokens are transferred
+     * @param _from address from whose allowance tokens are transferred
+     * @param _to address of the user tokens are transferred to
+     */
+    function transferSharesFrom(
+        uint256 _shares,
+        address _token,
+        address _strategy,
+        address _from,
+        address _to
+    ) external override returns (uint256) {
+        require(_shares != 0, 'SavingsAccount::transfer zero amount');
+        uint256 _amount = IYield(_strategy).getTokensForShares(_shares, _token);
+
+        allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
+            _amount,
+            'SavingsAccount::transferFrom allowance limit exceeding'
+        );
+
+        balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
+            _shares,
+            'SavingsAccount::transferFrom insufficient allowance'
+        );
+
+        balanceInShares[_to][_token][_strategy] = (balanceInShares[_to][_token][_strategy]).add(_shares);
+
+        emit Transfer(_token, _strategy, _from, _to, _shares);
+
+        return _shares;
     }
 
     /**
@@ -437,9 +495,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
             'SavingsAccount::transferFrom allowance limit exceeding'
         );
 
-        if (_strategy != address(0)) {
-            _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
-        }
+        _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
 
         //reduce sender's balance
         balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
