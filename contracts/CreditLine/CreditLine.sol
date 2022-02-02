@@ -785,11 +785,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             } else {
                 IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
                 IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
-<<<<<<< HEAD
-                _savingsAccount.deposit(_borrowAsset, _defaultStrategy, _lender, _amount);
-=======
                 _savingsAccount.deposit(_amount, _borrowAsset, _defaultStrategy, _lender);
->>>>>>> parent of 6ffaa76... Merge pull request #178 from sublime-finance/lime-93
             }
         } else {
             _repayFromSavingsAccount(_amount, _borrowAsset, _lender);
@@ -987,25 +983,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
                 liquidityShares
             );
             if (_toSavingsAccount) {
-<<<<<<< HEAD
-                try ISavingsAccount(savingsAccount).transfer(_asset, _strategyList[index], msg.sender, _tokensToTransfer) {} catch {
-                    _activeAmount = _activeAmount.sub(_tokensToTransfer);
-                    collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].add(
-                        liquidityShares
-                    );
-                }
-            } else {
-                try ISavingsAccount(savingsAccount).withdraw(_asset, _strategyList[index], msg.sender, _tokensToTransfer, false) {} catch {
-                    _activeAmount = _activeAmount.sub(_tokensToTransfer);
-                    collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].add(
-                        liquidityShares
-                    );
-                }
-=======
                 ISavingsAccount(savingsAccount).transfer(_tokensToTransfer, _asset, _strategyList[index], msg.sender);
             } else {
                 ISavingsAccount(savingsAccount).withdraw(_tokensToTransfer, _asset, _strategyList[index], msg.sender, false);
->>>>>>> parent of 6ffaa76... Merge pull request #178 from sublime-finance/lime-93
             }
 
             if (_activeAmount == _amountInTokens) {
