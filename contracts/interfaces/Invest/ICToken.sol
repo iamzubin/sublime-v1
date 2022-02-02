@@ -27,4 +27,6 @@ interface ICToken {
     function supplyRatePerBlock() external returns (uint256);
 
     function redeemUnderlying(uint256) external returns (uint256);
+
+    function comptroller() external view returns (address);
 }

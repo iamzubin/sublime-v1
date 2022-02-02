@@ -1,10 +1,11 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { createEnvironment } from '../../utils/createEnv';
-import { getPoolInitSigHash } from '../../utils/createEnv/poolLogic';
 import { CreditLineDefaultStrategy, Environment } from '../../utils/types';
 
 import hre from 'hardhat';
 import { CreditLine } from '../../typechain/CreditLine';
+import { Contracts } from '../../existingContracts/compound.json';
+
 const { waffle } = hre;
 const { loadFixture } = waffle;
 
@@ -31,7 +32,6 @@ describe('Credit Lines with No Yield', async () => {
                 _collectionPeriod: 1000000,
                 _loanWithdrawalDuration: 1000000,
                 _marginCallDuration: 1000000,
-                _poolInitFuncSelector: getPoolInitSigHash(),
                 _liquidatorRewardFraction: 1000000,
                 _poolCancelPenalityFraction: 10000000,
                 _protocolFeeFraction: 10000000,
@@ -46,7 +46,8 @@ describe('Credit Lines with No Yield', async () => {
             },
             {
                 activationDelay: 1000000000,
-            }
+            },
+            Contracts.WETH
         );
         return {
             env,

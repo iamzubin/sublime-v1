@@ -28,7 +28,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @notice checks if contract is invoked by savings account
      **/
     modifier onlySavingsAccount() {
-        require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
+        require(msg.sender == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
@@ -50,7 +50,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param _asset address of the asset
      * @return _tokenAddress address of the lqiudity token for the asset
      **/
-    function liquidityToken(address _asset) external view override returns (address _tokenAddress) {
+    function liquidityToken(address _asset) external pure override returns (address _tokenAddress) {
         _tokenAddress = _asset;
     }
 
@@ -74,10 +74,18 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @param _amount amount to be withdraw. (if 0, it means all amount)
      */
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+    function emergencyWithdraw(
+        address _asset,
+        address payable _wallet,
+        uint256 _amount
+    ) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
-        uint256 amount = IERC20(_asset).balanceOf(address(this));
+        uint256 amount = _amount;
+        if (_amount == 0) {
+            amount = IERC20(_asset).balanceOf(address(this));
+        }
         IERC20(_asset).safeTransfer(_wallet, received);
         received = amount;
     }
@@ -107,7 +115,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
 
     /**
      * @notice Used to unlock tokens from the protocol
-     * @param asset the address of underlying token
+     * @param asset the address of share token
      * @param amount the amount of asset
      * @return tokensReceived received amount of tokens received
      **/
