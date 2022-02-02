@@ -7,6 +7,8 @@ import { SublimeProxy } from '../../typechain/SublimeProxy';
 import { IWETH9 } from '../../typechain/IWETH9';
 import { CreditLineUtils } from '../../typechain/CreditLineUtils';
 import { SavingsAccountEthUtils } from '../../typechain/SavingsAccountEthUtils';
+import { Beacon } from '../../typechain/Beacon';
+import { MinimumBeaconProxy } from '../../typechain/MinimumBeaconProxy';
 
 import { Verification__factory } from '../../typechain/factories/Verification__factory';
 import { AdminVerifier__factory } from '../../typechain/factories/AdminVerifier__factory';
@@ -15,6 +17,8 @@ import { SublimeProxy__factory } from '../../typechain/factories/SublimeProxy__f
 import { IWETH9__factory } from '../../typechain/factories/IWETH9__factory';
 import { CreditLineUtils__factory } from '../../typechain/factories/CreditLineUtils__factory';
 import { SavingsAccountEthUtils__factory } from '../../typechain/factories/SavingsAccountEthUtils__factory';
+import { Beacon__factory } from '../../typechain/factories/Beacon__factory';
+import { MinimumBeaconProxy__factory } from '../../typechain/factories/MinimumBeaconProxy__factory';
 
 import { Address } from 'hardhat-deploy/dist/types';
 
@@ -43,6 +47,14 @@ export default class DeployHelperContracts {
 
     public async getIWETH9(contractAddress: Address): Promise<IWETH9> {
         return await IWETH9__factory.connect(contractAddress, this._deployerSigner);
+    }
+    
+    public async deployMinimumBeaconProxy(beacon: Address): Promise<MinimumBeaconProxy> {
+        return await await new MinimumBeaconProxy__factory(this._deployerSigner).deploy(beacon);
+    }
+
+    public async deployBeacon(owner: Address, implementation: Address): Promise<Beacon> {
+        return await await new Beacon__factory(this._deployerSigner).deploy(owner, implementation);
     }
 
     public async deployVerification(): Promise<Verification> {

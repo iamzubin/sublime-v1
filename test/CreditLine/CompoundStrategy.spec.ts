@@ -39,6 +39,7 @@ describe('Credit Lines with Compound Yield', async () => {
                 protocolFeeCollector: '',
                 _minBorrowFraction: 100000000,
                 noStrategy: '',
+                beacon: '',
             },
             CreditLineDefaultStrategy.NoStrategy,
             {

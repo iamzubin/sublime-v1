@@ -14,6 +14,13 @@ import { SavingsAccount } from '@typechain/SavingsAccount';
 import { Extension } from '@typechain/Extension';
 import { PoolFactoryInitParams } from '../../utils/types';
 import { zeroAddress } from '../../config/constants';
+import { Beacon } from '@typechain/Beacon';
+
+export async function createBeacon(proxyAdmin: SignerWithAddress, owner: Address, implementation: Address): Promise<Beacon> {
+    let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
+    let beacon: Beacon = await deployHelper.helper.deployBeacon(owner, implementation);
+    return beacon;
+}
 
 export async function createPoolFactory(proxyAdmin: SignerWithAddress): Promise<PoolFactory> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
@@ -35,6 +42,7 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
         _protocolFeeFraction,
         protocolFeeCollector,
         noStrategy,
+        beacon,
     } = initParams;
     await (
         await poolFactory
@@ -49,7 +57,8 @@ export async function initPoolFactory(poolFactory: PoolFactory, signer: SignerWi
                 _minBorrowFraction,
                 _protocolFeeFraction,
                 protocolFeeCollector,
-                noStrategy
+                noStrategy,
+                beacon
             )
     ).wait();
 }
@@ -75,7 +84,6 @@ export async function addSupportedTokens(
 export async function setImplementations(
     poolFactory: PoolFactory,
     admin: SignerWithAddress,
-    poolLogic: Pool,
     repayments: Repayments,
     verification: Verification,
     strategyRegistry: StrategyRegistry,
@@ -87,7 +95,6 @@ export async function setImplementations(
         await poolFactory
             .connect(admin)
             .setImplementations(
-                poolLogic.address,
                 repayments.address,
                 verification.address,
                 strategyRegistry.address,
