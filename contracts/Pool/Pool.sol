@@ -46,16 +46,16 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     // Pool constants
     struct PoolConstants {
         uint64 loanStartTime;
+        uint64 loanWithdrawalDeadline;
         uint128 borrowRate;
+        uint128 noOfRepaymentIntervals;
+        uint128 repaymentInterval;
         address borrower;
         address collateralAsset;
         address borrowAsset;
         address poolSavingsStrategy; // invest contract
         address lenderVerifier;
-        uint256 loanWithdrawalDeadline;
         uint256 idealCollateralRatio;
-        uint256 noOfRepaymentIntervals;
-        uint256 repaymentInterval;
         uint256 borrowAmountRequested;
     }
 
@@ -133,7 +133,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function initialize(
         uint256 _borrowAmountRequested,
-        uint128 _borrowRate,
+        uint256 _borrowRate,
         address _borrower,
         address _borrowAsset,
         address _collateralAsset,
@@ -155,13 +155,13 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         poolConstants.borrowAmountRequested = _borrowAmountRequested;
         _initialDeposit(_borrower, _collateralAmount, _transferFromSavingsAccount);
         poolConstants.borrower = _borrower;
-        poolConstants.borrowRate = _borrowRate;
-        poolConstants.noOfRepaymentIntervals = _noOfRepaymentIntervals;
-        poolConstants.repaymentInterval = _repaymentInterval;
+        poolConstants.borrowRate = uint128(_borrowRate);
+        poolConstants.noOfRepaymentIntervals = uint128(_noOfRepaymentIntervals);
+        poolConstants.repaymentInterval = uint128(_repaymentInterval);
         poolConstants.lenderVerifier = _lenderVerifier;
 
         poolConstants.loanStartTime = uint64(block.timestamp.add(_collectionPeriod));
-        poolConstants.loanWithdrawalDeadline = block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration);
+        poolConstants.loanWithdrawalDeadline = uint64(block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration));
         __ERC20_init('Pool Tokens', 'PT');
         try ERC20Upgradeable(_borrowAsset).decimals() returns (uint8 _decimals) {
             _setupDecimals(_decimals);
@@ -324,8 +324,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
         require(_currentCollateralRatio >= poolConstants.idealCollateralRatio, 'WBA3');
 
-        uint256 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
-        uint256 _repaymentInterval = poolConstants.repaymentInterval;
+        uint256 _noOfRepaymentIntervals = uint256(poolConstants.noOfRepaymentIntervals);
+        uint256 _repaymentInterval = uint256(poolConstants.repaymentInterval);
         IRepayment(_poolFactory.repaymentImpl()).initializeRepayment(
             _noOfRepaymentIntervals,
             _repaymentInterval,
@@ -477,7 +477,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     }
 
     function _calculatePenaltyTime(uint256 _loanStartTime, uint256 _loanWithdrawalDeadline) internal view returns (uint256) {
-        uint256 _penaltyTime = poolConstants.repaymentInterval;
+        uint256 _penaltyTime = uint256(poolConstants.repaymentInterval);
         if (block.timestamp > _loanStartTime) {
             uint256 _penaltyEndTime = block.timestamp;
             if (block.timestamp > _loanWithdrawalDeadline) {
@@ -504,7 +504,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             return _cancelPool(0);
         }
 
-        uint256 _loanWithdrawalDeadline = poolConstants.loanWithdrawalDeadline;
+        uint256 _loanWithdrawalDeadline = uint256(poolConstants.loanWithdrawalDeadline);
 
         if (_loanWithdrawalDeadline > block.timestamp) {
             require(msg.sender == poolConstants.borrower, 'CP2');
