@@ -76,10 +76,19 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param _wallet address to which tokens are withdrawn
      * @param _amount amount to be withdraw. (if 0, it means all amount)
      */
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+    function emergencyWithdraw(
+        address _asset,
+        address payable _wallet,
+        uint256 _amount
+    ) external onlyOwner returns (uint256) {
         require(_wallet != address(0), 'cant burn');
-        received = IERC20(_asset).balanceOf(address(this));
+        uint256 received = _amount;
+        if (_amount == 0) {
+            received = IERC20(_asset).balanceOf(address(this));
+        }
         IERC20(_asset).safeTransfer(_wallet, received);
+
+        return received;
     }
 
     /**
