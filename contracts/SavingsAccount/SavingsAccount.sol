@@ -110,7 +110,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _strategy,
         address _to,
         uint256 _amount
-    ) external payable override nonReentrant returns (uint256) {
+    ) external override nonReentrant returns (uint256) {
         require(_to != address(0), 'SavingsAccount::deposit receiver address should not be zero address');
         uint256 _sharesReceived = _deposit(_token, _strategy, _amount);
         balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_sharesReceived);
@@ -133,13 +133,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 _amount
     ) internal returns (uint256 _sharesReceived) {
         require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
-        uint256 _ethValue;
-
-        if (_token == address(0)) {
-            _ethValue = _amount;
-            require(msg.value == _amount, 'SavingsAccount::deposit ETH sent must be equal to amount');
-        }
-        _sharesReceived = IYield(_strategy).lockTokens{value: _ethValue}(msg.sender, _token, _amount);
+        _sharesReceived = IYield(_strategy).lockTokens(msg.sender, _token, _amount);
     }
 
     /**
@@ -168,14 +162,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
         uint256 _tokensReceived = IYield(_currentStrategy).unlockTokens(_token, _amount);
 
-        uint256 _ethValue;
-        if (_token != address(0)) {
-            IERC20(_token).safeApprove(_newStrategy, _tokensReceived);
-        } else {
-            _ethValue = _tokensReceived;
-        }
+        IERC20(_token).safeApprove(_newStrategy, _tokensReceived);
 
-        uint256 _sharesReceived = IYield(_newStrategy).lockTokens{value: _ethValue}(address(this), _token, _tokensReceived);
+        uint256 _sharesReceived = IYield(_newStrategy).lockTokens(address(this), _token, _tokensReceived);
 
         balanceInShares[msg.sender][_token][_newStrategy] = balanceInShares[msg.sender][_token][_newStrategy].add(_sharesReceived);
         emit StrategySwitched(msg.sender, _token, _amount, _sharesReceived, _currentStrategy, _newStrategy);
@@ -192,7 +181,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     function withdraw(
         address _token,
         address _strategy,
-        address payable _to,
+        address _to,
         uint256 _amount,
         bool _withdrawShares
     ) external override nonReentrant returns (uint256) {
@@ -225,7 +214,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _strategy,
         address _from,
-        address payable _to,
+        address _to,
         uint256 _amount,
         bool _withdrawShares
     ) external override nonReentrant returns (uint256) {
@@ -250,7 +239,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     function _withdraw(
         address _token,
         address _strategy,
-        address payable _to,
+        address _to,
         uint256 _amount,
         bool _withdrawShares
     ) internal returns (address _tokenReceived, uint256 _amountReceived) {
@@ -267,15 +256,10 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
     function _transfer(
         address _token,
-        address payable _to,
+        address _to,
         uint256 _amount
     ) internal {
-        if (_token == address(0)) {
-            (bool _success, ) = _to.call{value: _amount}('');
-            require(_success, 'Transfer failed');
-        } else {
-            IERC20(_token).safeTransfer(_to, _amount);
-        }
+        IERC20(_token).safeTransfer(_to, _amount);
     }
 
     /**
@@ -296,7 +280,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
         if (_tokenReceived == 0) return 0;
 
-        _transfer(_token, payable(msg.sender), _tokenReceived);
+        _transfer(_token, (msg.sender), _tokenReceived);
 
         emit WithdrawnAll(msg.sender, _tokenReceived, _token);
     }
@@ -310,7 +294,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
         delete balanceInShares[msg.sender][_token][_strategy];
 
-        _transfer(_token, payable(msg.sender), _amount);
+        _transfer(_token, (msg.sender), _amount);
 
         emit Withdrawn(msg.sender, msg.sender, _amount, _token, _strategy, false);
     }
@@ -525,10 +509,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
 
             if (_liquidityShares != 0) {
                 uint256 _tokenInStrategy = _liquidityShares;
-                if (_strategyList[i] != address(0)) {
-                    _tokenInStrategy = IYield(_strategyList[i]).getTokensForShares(_liquidityShares, _token);
-                }
-
+                _tokenInStrategy = IYield(_strategyList[i]).getTokensForShares(_liquidityShares, _token);
                 _totalTokens = _totalTokens.add(_tokenInStrategy);
             }
         }

@@ -50,17 +50,12 @@ library SavingsAccountUtil {
         uint256 _amount
     ) internal returns (uint256 _sharesReceived) {
         transferTokens(_token, _from, address(this), _amount);
-        uint256 _ethValue;
-        if (_token == address(0)) {
-            _ethValue = _amount;
-        } else {
-            address _approveTo = _strategy;
-            if (_strategy == address(0)) {
-                _approveTo = address(_savingsAccount);
-            }
-            IERC20(_token).safeApprove(_approveTo, _amount);
+        address _approveTo = _strategy;
+        if (_strategy == address(0)) {
+            _approveTo = address(_savingsAccount);
         }
-        _sharesReceived = _savingsAccount.deposit{value: _ethValue}(_token, _strategy, _to, _amount);
+        IERC20(_token).safeApprove(_approveTo, _amount);
+        _sharesReceived = _savingsAccount.deposit(_token, _strategy, _to, _amount);
     }
 
     function savingsAccountTransferShares(
@@ -119,19 +114,6 @@ library SavingsAccountUtil {
     ) internal returns (uint256) {
         if (_amount == 0) {
             return 0;
-        }
-        if (_token == address(0)) {
-            require(msg.value >= _amount, 'ethers provided should be greater than _amount');
-
-            if (_to != address(this)) {
-                (bool success, ) = payable(_to).call{value: _amount}('');
-                require(success, 'Transfer failed');
-            }
-            if (msg.value > _amount) {
-                (bool success, ) = payable(address(msg.sender)).call{value: msg.value - _amount}('');
-                require(success, 'Transfer failed');
-            }
-            return _amount;
         }
         if (_from == address(this)) {
             IERC20(_token).safeTransfer(_to, _amount);

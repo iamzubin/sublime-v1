@@ -120,4 +120,11 @@ interface IPool {
         uint256 _loanWithdrawalDuration,
         uint256 _collectionPeriod
     ) external payable;
+
+    function lend(
+        address _lender,
+        uint256 _amount,
+        address _strategy,
+        bool _fromSavingsAccount
+    ) external;
 }

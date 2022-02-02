@@ -399,15 +399,14 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice used by lender to supply liquidity to a borrow pool
      * @param _strategy address of strategy from which tokens are lent if done from savings account,
-     *                  in case of direct deposits, zeroAddress should be used
-     * @param _lender address of the lender
-     * @param _amount amount of liquidity supplied by the _lender
+     * @param _fromSavingsAccount in case of direct deposits it is false
      */
     function lend(
-        address _strategy,
         address _lender,
-        uint256 _amount
-    ) external payable nonReentrant {
+        uint256 _amount,
+        address _strategy,
+        bool _fromSavingsAccount
+    ) external override nonReentrant {
         address _lenderVerifier = poolConstants.lenderVerifier;
         address _borrower = poolConstants.borrower;
         require(_lender != _borrower && _borrower != msg.sender, 'L1');
@@ -422,10 +421,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         }
 
         address _borrowToken = poolConstants.borrowAsset;
-        bool _fromSavingsAccount;
-        if (_strategy != address(0)) {
-            _fromSavingsAccount = true;
-        }
+
         _deposit(_borrowToken, _strategy, msg.sender, address(this), _amount, _fromSavingsAccount, false);
         _mint(_lender, _amount);
         emit LiquiditySupplied(_amount, _lender);
@@ -625,11 +621,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
         if (_loanStatus == LoanStatus.DEFAULTED || _loanStatus == LoanStatus.TERMINATED) {
             uint256 _totalAsset;
-            if (poolConstants.borrowAsset != address(0)) {
-                _totalAsset = IERC20(poolConstants.borrowAsset).balanceOf(address(this));
-            } else {
-                _totalAsset = address(this).balance;
-            }
+            _totalAsset = IERC20(poolConstants.borrowAsset).balanceOf(address(this));
             //assuming their will be no tokens in pool in any case except liquidation (to be checked) or we should store the amount in liquidate()
             _toTransfer = _toTransfer.mul(_totalAsset).div(totalSupply());
         }
@@ -674,7 +666,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @return ineterest accrued till current time
      */
     function interestToPay() public view returns (uint256) {
-        IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         (uint256 _loanDurationCovered, uint256 _interestPerSecond) = IRepayment(repaymentImpl).getInterestCalculationVars(address(this));
         uint256 _currentBlockTime = block.timestamp.mul(SCALING_FACTOR);
         uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(10**30));

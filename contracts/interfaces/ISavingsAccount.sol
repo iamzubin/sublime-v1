@@ -109,7 +109,7 @@ interface ISavingsAccount {
         address strategy,
         address to,
         uint256 amount
-    ) external payable returns (uint256 sharesReceived);
+    ) external returns (uint256 sharesReceived);
 
     /**
      * @dev Used to switch saving strategy of an token
@@ -136,7 +136,7 @@ interface ISavingsAccount {
     function withdraw(
         address token,
         address strategy,
-        address payable withdrawTo,
+        address withdrawTo,
         uint256 amount,
         bool withdrawShares
     ) external returns (uint256);
@@ -209,7 +209,7 @@ interface ISavingsAccount {
         address token,
         address strategy,
         address from,
-        address payable to,
+        address to,
         uint256 amount,
         bool withdrawShares
     ) external returns (uint256 amountReceived);

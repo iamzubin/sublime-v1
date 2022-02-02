@@ -10,6 +10,7 @@ import '../interfaces/IYield.sol';
 import '../interfaces/Invest/ICEther.sol';
 import '../interfaces/Invest/ICToken.sol';
 import '../interfaces/Invest/Comptroller.sol';
+import '../interfaces/IWETH9.sol';
 
 /**
  * @title Yield contract
@@ -23,7 +24,12 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
     /**
      * @notice stores the address of savings account contract
      **/
-    address payable public savingsAccount;
+    address public savingsAccount;
+
+    /**
+     * @notice stores the address of wrapped eth token
+     **/
+    address public immutable weth;
 
     /**
      * @notice the max amount that can be deposited for every token to the yield contract
@@ -42,6 +48,10 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      **/
     event ProtocolAddressesUpdated(address indexed asset, address indexed protocolToken);
 
+    constructor(address _weth) {
+        weth = _weth;
+    }
+
     /**
      * @notice checks if contract is invoked by savings account
      **/
@@ -56,10 +66,9 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @param _owner address of the owner
      * @param _savingsAccount address of the savings account contract
      **/
-    function initialize(address _owner, address payable _savingsAccount) external initializer {
+    function initialize(address _owner, address _savingsAccount) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
-
         _updateSavingsAccount(_savingsAccount);
     }
 
@@ -68,11 +77,11 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @dev can only be called by owner
      * @param _savingsAccount address of updated savings account contract
      **/
-    function updateSavingsAccount(address payable _savingsAccount) external onlyOwner {
+    function updateSavingsAccount(address _savingsAccount) external onlyOwner {
         _updateSavingsAccount(_savingsAccount);
     }
 
-    function _updateSavingsAccount(address payable _savingsAccount) internal {
+    function _updateSavingsAccount(address _savingsAccount) internal {
         require(_savingsAccount != address(0), 'Invest: zero address');
         savingsAccount = _savingsAccount;
         emit SavingsAccountUpdated(_savingsAccount);
@@ -110,14 +119,13 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
             amount = IERC20(investedTo).balanceOf(address(this));
         }
 
-        if (_asset == address(0)) {
+        if (_asset == weth) {
             received = _withdrawETH(investedTo, amount);
-            (bool success, ) = _wallet.call{value: received}('');
-            require(success, 'Transfer failed');
+            IWETH9(weth).deposit{value: received}();
         } else {
             received = _withdrawERC(_asset, investedTo, amount);
-            IERC20(_asset).safeTransfer(_wallet, received);
         }
+        IERC20(_asset).safeTransfer(_wallet, received);
     }
 
     /**
@@ -150,14 +158,14 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
         require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
-        if (asset == address(0)) {
-            require(msg.value == amount, 'Invest: ETH amount');
+        IERC20(asset).safeTransferFrom(user, address(this), amount);
+        if (asset == weth) {
+            IWETH9(weth).withdraw(amount);
             sharesReceived = _depositETH(investedTo, amount);
         } else {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
             sharesReceived = _depositERC20(asset, investedTo, amount);
         }
         emit LockedTokens(user, investedTo, sharesReceived);
@@ -173,14 +181,13 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
 
-        if (asset == address(0)) {
+        if (asset == weth) {
             received = _withdrawETH(investedTo, amount);
-            (bool success, ) = savingsAccount.call{value: received}('');
-            require(success, 'Transfer failed');
+            IWETH9(weth).deposit{value: received}();
         } else {
             received = _withdrawERC(asset, investedTo, amount);
-            IERC20(asset).safeTransfer(savingsAccount, received);
         }
+        IERC20(asset).safeTransfer(savingsAccount, received);
 
         emit UnlockedTokens(asset, received);
     }
@@ -196,7 +203,6 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
             return 0;
         }
 
-        require(asset != address(0), 'Asset address cannot be address(0)');
         IERC20(asset).safeTransfer(savingsAccount, amount);
 
         emit UnlockedShares(asset, amount);
