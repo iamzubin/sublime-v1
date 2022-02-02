@@ -48,7 +48,7 @@ export default class DeployHelperContracts {
     public async getIWETH9(contractAddress: Address): Promise<IWETH9> {
         return await IWETH9__factory.connect(contractAddress, this._deployerSigner);
     }
-    
+
     public async deployMinimumBeaconProxy(beacon: Address): Promise<MinimumBeaconProxy> {
         return await await new MinimumBeaconProxy__factory(this._deployerSigner).deploy(beacon);
     }
