@@ -931,6 +931,20 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
+     * @notice used to withdraw all the permissible collateral as per the current col ratio
+     * @dev if the withdrawable collateral amount is non-zero the transaction will pass
+     * @param _id identifier for the credit line
+    * @param _toSavingsAccount if true, tokens are transferred from savingsAccount 
+                                otherwise direct from collateral token contract
+     */
+    function withdrawAllPossibleCollateral(uint256 _id, bool _toSavingsAccount) external nonReentrant onlyCreditLineBorrower(_id) {
+        uint256 _withdrawableCollateral = withdrawableCollateral(_id);
+        address _collateralAsset = creditLineConstants[_id].collateralAsset;
+        _transferCollateral(_id, _collateralAsset, _withdrawableCollateral, _toSavingsAccount);
+        emit CollateralWithdrawn(_id, _withdrawableCollateral);
+    }
+
+    /**
      * @notice used to calculate the collateral that can be withdrawn
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @param _id identifier for the credit line
