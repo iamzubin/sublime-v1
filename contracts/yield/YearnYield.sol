@@ -39,7 +39,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @notice checks if contract is invoked by savings account
      **/
     modifier onlySavingsAccount() {
-        require(_msgSender() == savingsAccount, 'Invest: Only savings account can invoke');
+        require(msg.sender == savingsAccount, 'Invest: Only savings account can invoke');
         _;
     }
 
@@ -78,6 +78,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @param _liquidityToken address of the liquidityToken for the given token
      **/
     function updateProtocolAddresses(address _asset, address _liquidityToken) external onlyOwner {
+        require(_liquidityToken != address(0), "Liquidity token of asset can't be zero");
         liquidityToken[_asset] = _liquidityToken;
         emit ProtocolAddressesUpdated(_asset, _liquidityToken);
     }
@@ -87,11 +88,23 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @param _amount amount to be withdraw. (if 0, it means all amount)
      */
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner nonReentrant returns (uint256 received) {
+    function emergencyWithdraw(
+        address _asset,
+        address payable _wallet,
+        uint256 _amount
+    ) external onlyOwner nonReentrant returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
-        uint256 amount = IERC20(investedTo).balanceOf(address(this));
+        uint256 amount = _amount;
+        if (_amount != 0) {
+            if (_asset == address(0)) {
+                amount = address(this).balance;
+            } else {
+                amount = IERC20(investedTo).balanceOf(address(this));
+            }
+        }
 
         if (_asset == address(0)) {
             received = _withdrawETH(investedTo, amount);
@@ -132,7 +145,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
 
     /**
      * @notice Used to unlock tokens from available protocol
-     * @param asset the address of underlying token
+     * @param asset the address of share token
      * @param amount the amount of asset
      * @return received amount of tokens received
      **/
