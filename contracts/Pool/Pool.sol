@@ -47,7 +47,6 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     struct PoolConstants {
         uint64 loanStartTime;
         uint64 loanWithdrawalDeadline;
-        uint128 borrowRate;
         uint128 noOfRepaymentIntervals;
         uint128 repaymentInterval;
         address borrower;
@@ -55,6 +54,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address borrowAsset;
         address poolSavingsStrategy; // invest contract
         address lenderVerifier;
+        uint256 borrowRate;
         uint256 idealCollateralRatio;
         uint256 borrowAmountRequested;
     }
@@ -155,7 +155,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         poolConstants.borrowAmountRequested = _borrowAmountRequested;
         _initialDeposit(_borrower, _collateralAmount, _transferFromSavingsAccount);
         poolConstants.borrower = _borrower;
-        poolConstants.borrowRate = uint128(_borrowRate);
+        poolConstants.borrowRate = _borrowRate;
         poolConstants.noOfRepaymentIntervals = uint128(_noOfRepaymentIntervals);
         poolConstants.repaymentInterval = uint128(_repaymentInterval);
         poolConstants.lenderVerifier = _lenderVerifier;

@@ -48,9 +48,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     struct RepaymentConstants {
         uint128 gracePenaltyRate;
         uint128 gracePeriodFraction;
-        uint128 borrowRate;
         uint128 numberOfTotalRepayments; // using it to check if RepaymentDetails Exists as repayment Interval!=0 in any case
         address repayAsset;
+        uint256 borrowRate;
         uint256 loanDuration;
         uint256 repaymentInterval;
         uint256 loanStartTime;
@@ -164,7 +164,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         repayConstants[msg.sender].numberOfTotalRepayments = uint128(numberOfTotalRepayments);
         repayConstants[msg.sender].loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**30);
         repayConstants[msg.sender].repaymentInterval = repaymentInterval.mul(10**30);
-        repayConstants[msg.sender].borrowRate = uint128(borrowRate);
+        repayConstants[msg.sender].borrowRate = borrowRate;
         repayConstants[msg.sender].loanStartTime = loanStartTime.mul(10**30);
         repayConstants[msg.sender].repayAsset = lentAsset;
     }
