@@ -134,7 +134,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 _amount
     ) internal returns (uint256) {
         require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
-        _sharesReceived = IYield(_strategy).lockTokens(msg.sender, _token, _amount);
+        uint256 _sharesReceived = IYield(_strategy).lockTokens(msg.sender, _token, _amount);
+        return _sharesReceived;
     }
 
     /**
