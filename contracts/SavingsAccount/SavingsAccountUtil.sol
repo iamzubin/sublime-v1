@@ -83,11 +83,10 @@ library SavingsAccountUtil {
         uint256 _amount
     ) internal returns (uint256) {
         if (_from == address(this)) {
-            _savingsAccount.transfer(_token, _strategy, _to, _amount);
+            return _savingsAccount.transfer(_token, _strategy, _to, _amount);
         } else {
-            _savingsAccount.transferFrom(_token, _strategy, _from, _to, _amount);
+            return _savingsAccount.transferFrom(_token, _strategy, _from, _to, _amount);
         }
-        return _amount;
     }
 
     function withdrawFromSavingsAccount(
