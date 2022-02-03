@@ -398,7 +398,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             loanWithdrawalDuration,
             collectionPeriod
         );
-        return data;
     }
 
     /**
