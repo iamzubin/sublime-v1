@@ -35,25 +35,25 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         TERMINATED // Pool terminated by admin
     }
 
-    uint256 gracePenaltyRate;
-    uint256 gracePeriodFraction; // fraction of the repayment interval
+    uint128 gracePenaltyRate;
+    uint128 gracePeriodFraction; // fraction of the repayment interval
 
     struct RepaymentVariables {
-        uint256 repaidAmount;
         bool isLoanExtensionActive;
+        uint256 repaidAmount;
         uint256 loanDurationCovered;
         uint256 loanExtensionPeriod; // period for which the extension was granted, ie, if loanExtensionPeriod is 7 * SCALING_FACTOR, 7th instalment can be repaid by 8th instalment deadline
     }
 
     struct RepaymentConstants {
-        uint256 numberOfTotalRepayments; // using it to check if RepaymentDetails Exists as repayment Interval!=0 in any case
-        uint256 gracePenaltyRate;
-        uint256 gracePeriodFraction;
-        uint256 loanDuration;
-        uint256 repaymentInterval;
-        uint256 borrowRate;
-        uint256 loanStartTime;
+        uint64 numberOfTotalRepayments; // using it to check if RepaymentDetails Exists as repayment Interval!=0 in any case
         address repayAsset;
+        uint128 gracePenaltyRate;
+        uint128 gracePeriodFraction;
+        uint256 borrowRate;
+        uint256 repaymentInterval;
+        uint256 loanDuration;
+        uint256 loanStartTime;
     }
 
     /**
@@ -97,8 +97,8 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param _gracePeriodFraction The fraction of repayment interval that will be allowed as grace period
     function initialize(
         address _poolFactory,
-        uint256 _gracePenaltyRate,
-        uint256 _gracePeriodFraction
+        uint128 _gracePenaltyRate,
+        uint128 _gracePeriodFraction
     ) external initializer {
         _updatePoolFactory(_poolFactory);
         _updateGracePenaltyRate(_gracePenaltyRate);
@@ -123,11 +123,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
      * @notice used to update grace period as a fraction of repayment interval
      * @param _gracePeriodFraction updated value of gracePeriodFraction multiplied by SCALING_FACTOR
      */
-    function updateGracePeriodFraction(uint256 _gracePeriodFraction) external onlyOwner {
+    function updateGracePeriodFraction(uint128 _gracePeriodFraction) external onlyOwner {
         _updateGracePeriodFraction(_gracePeriodFraction);
     }
 
-    function _updateGracePeriodFraction(uint256 _gracePeriodFraction) internal {
+    function _updateGracePeriodFraction(uint128 _gracePeriodFraction) internal {
         gracePeriodFraction = _gracePeriodFraction;
         emit GracePeriodFractionUpdated(_gracePeriodFraction);
     }
@@ -136,11 +136,11 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
      * @notice used to update grace penality rate
      * @param _gracePenaltyRate value of grace penality rate multiplied by SCALING_FACTOR
      */
-    function updateGracePenaltyRate(uint256 _gracePenaltyRate) external onlyOwner {
+    function updateGracePenaltyRate(uint128 _gracePenaltyRate) external onlyOwner {
         _updateGracePenaltyRate(_gracePenaltyRate);
     }
 
-    function _updateGracePenaltyRate(uint256 _gracePenaltyRate) internal {
+    function _updateGracePenaltyRate(uint128 _gracePenaltyRate) internal {
         gracePenaltyRate = _gracePenaltyRate;
         emit GracePenaltyRateUpdated(_gracePenaltyRate);
     }
@@ -153,7 +153,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param loanStartTime The starting time of the loan
     /// @param lentAsset The address of the asset that was lent (basically a ERC20 token address)
     function initializeRepayment(
-        uint256 numberOfTotalRepayments,
+        uint64 numberOfTotalRepayments,
         uint256 repaymentInterval,
         uint256 borrowRate,
         uint256 loanStartTime,
@@ -212,7 +212,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return timestamp before which next instalment ends
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-        if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(SCALING_FACTOR)) {
+        if (_instalmentsCompleted == uint256(repayConstants[_poolID].numberOfTotalRepayments).mul(SCALING_FACTOR)) {
             revert('Pool completely repaid');
         }
         uint256 _loanExtensionPeriod = repayVariables[_poolID].loanExtensionPeriod;
@@ -343,9 +343,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
 
         if (_isBorrowerLate) {
-            uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(
-                SCALING_FACTOR
-            );
+            uint256 _penalty = uint256(repayConstants[_poolID].gracePenaltyRate).mul(getInterestDueTillInstalmentDeadline(_poolID)).div(SCALING_FACTOR);
             emit GracePenaltyRepaid(_poolID, _penalty);
             return _penalty;
         } else {
