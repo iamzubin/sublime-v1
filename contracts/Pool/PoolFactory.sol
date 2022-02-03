@@ -380,15 +380,9 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
         address _lenderVerifier
-<<<<<<< HEAD
-    ) internal view returns (bytes memory) {
-        bytes memory data = abi.encodeWithSelector(
-            poolInitFuncSelector,
-=======
     ) internal {
         IPool pool = IPool(_pool);
         pool.initialize(
->>>>>>> 601277f3092c06891fc9973cf5825d5827a72e18
             _poolSize,
             _borrowRate,
             msg.sender,
@@ -408,38 +402,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     /**
-<<<<<<< HEAD
-     * @dev Deploys a contract using `CREATE2`. The address where the contract
-     * will be deployed can be known in advance via {computeAddress}.
-     *
-     * The bytecode for a contract can be obtained from Solidity with
-     * `type(contractName).creationCode`.
-     *
-     * Requirements:
-     *
-     * - `bytecode` must not be empty.
-     * - `salt` must have not been used for `bytecode` already.
-     * - the factory must have a balance of at least `amount`.
-     * - if `amount` is non-zero, `bytecode` must have a `payable` constructor.
-     */
-    function _deploy(
-        uint256 amount,
-        bytes32 salt,
-        bytes memory bytecode
-    ) internal returns (address) {
-        require(bytecode.length != 0, 'Create2: bytecode length is zero');
-        // solhint-disable-next-line no-inline-assembly
-        address addr;
-        assembly {
-            addr := create2(amount, add(bytecode, 0x20), mload(bytecode), salt)
-        }
-        require(addr != address(0), 'Create2: Failed on deploy');
-        return addr;
-    }
-
-    /**
-=======
->>>>>>> 601277f3092c06891fc9973cf5825d5827a72e18
      * @notice invoked to check if pool parameters are within thresholds
      * @param _value supplied value of the parameter
      * @param _min minimum threshold of the parameter
