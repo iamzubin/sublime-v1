@@ -19,7 +19,7 @@ import '../interfaces/IRepayment.sol';
 contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
-    using SafeMath for uint128;
+    // using SafeMath for uint128;
 
     uint256 constant MAX_INT = 2**256 - 1;
     uint256 constant YEAR_IN_SECONDS = 365 days;
@@ -211,7 +211,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @return timestamp before which next instalment ends
     function getNextInstalmentDeadline(address _poolID) public view override returns (uint256) {
         uint256 _instalmentsCompleted = getInstalmentsCompleted(_poolID);
-        if (_instalmentsCompleted == repayConstants[_poolID].numberOfTotalRepayments.mul(10**30)) {
+        if (_instalmentsCompleted == uint256(repayConstants[_poolID].numberOfTotalRepayments).mul(10**30)) {
             revert('Pool completely repaid');
         }
         uint256 _loanExtensionPeriod = repayVariables[_poolID].loanExtensionPeriod;
@@ -340,7 +340,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
 
         if (_isBorrowerLate) {
-            uint256 _penalty = repayConstants[_poolID].gracePenaltyRate.mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
+            uint256 _penalty = uint256(repayConstants[_poolID].gracePenaltyRate).mul(getInterestDueTillInstalmentDeadline(_poolID)).div(10**30);
             emit GracePenaltyRepaid(_poolID, _penalty);
             return _penalty;
         } else {
