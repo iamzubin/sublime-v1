@@ -37,7 +37,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     address poolFactory;
 
     struct LendingDetails {
-        uint64 marginCallEndTime;
+        uint256 marginCallEndTime;
         uint256 effectiveInterestWithdrawn;
         uint256 extraLiquidityShares;
     }
@@ -46,8 +46,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     struct PoolConstants {
         uint64 loanStartTime;
         uint64 loanWithdrawalDeadline;
-        uint128 noOfRepaymentIntervals;
-        uint128 repaymentInterval;
+        uint64 noOfRepaymentIntervals;
+        uint64 repaymentInterval;
         address borrower;
         address collateralAsset;
         address borrowAsset;
@@ -137,8 +137,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _borrowAsset,
         address _collateralAsset,
         uint256 _idealCollateralRatio,
-        uint128 _repaymentInterval,
-        uint128 _noOfRepaymentIntervals,
+        uint64 _repaymentInterval,
+        uint64 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
@@ -323,8 +323,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
         require(_currentCollateralRatio >= poolConstants.idealCollateralRatio, 'WBA3');
 
-        uint128 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
-        uint256 _repaymentInterval = uint256(poolConstants.repaymentInterval);
+        uint64 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
+        uint64 _repaymentInterval = poolConstants.repaymentInterval;
         IRepayment(_poolFactory.repaymentImpl()).initializeRepayment(
             _noOfRepaymentIntervals,
             _repaymentInterval,
@@ -652,7 +652,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         require(getMarginCallEndTime(msg.sender) == 0, 'RMC2');
         require(poolConstants.idealCollateralRatio > getCurrentCollateralRatio(msg.sender), 'RMC3');
 
-        lenders[msg.sender].marginCallEndTime = uint64(block.timestamp.add(_poolFactory.marginCallDuration()));
+        lenders[msg.sender].marginCallEndTime = block.timestamp.add(_poolFactory.marginCallDuration());
 
         emit MarginCalled(msg.sender);
     }

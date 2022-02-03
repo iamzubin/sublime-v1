@@ -45,10 +45,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     }
 
     struct RepaymentConstants {
+        uint64 numberOfTotalRepayments; // using it to check if RepaymentDetails Exists as repayment Interval!=0 in any case
+        address repayAsset;
         uint128 gracePenaltyRate;
         uint128 gracePeriodFraction;
-        uint128 numberOfTotalRepayments; // using it to check if RepaymentDetails Exists as repayment Interval!=0 in any case
-        address repayAsset;
         uint256 borrowRate;
         uint256 repaymentInterval;
         uint256 loanDuration;
@@ -152,7 +152,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param loanStartTime The starting time of the loan
     /// @param lentAsset The address of the asset that was lent (basically a ERC20 token address)
     function initializeRepayment(
-        uint128 numberOfTotalRepayments,
+        uint64 numberOfTotalRepayments,
         uint256 repaymentInterval,
         uint256 borrowRate,
         uint256 loanStartTime,
