@@ -29,7 +29,8 @@ import {
     KOVAN_DEPLOY_MNEMONIC,
     KOVAN_DEPLOY_PRIVATE_KEY,
 } from './utils/keys';
-import { ethers } from 'ethers';
+
+import { BigNumber } from 'bignumber.js';
 
 function getHardhatPrivateKeys() {
     return privateKeys.map((key) => {
@@ -49,14 +50,27 @@ task('accounts', 'Prints the list of accounts', async (args, hre) => {
     }
 });
 
+task('balances', 'Print the balances of all accounts', async (args, hre) => {
+    const accounts = await hre.ethers.getSigners();
+
+    let balances = [];
+    for (const account of accounts) {
+        balances.push({
+            address: account.address,
+            ethBalance: new BigNumber(await (await account.getBalance()).toString()).div(new BigNumber(10).pow(18)).toString(),
+        });
+    }
+    console.table(balances);
+});
+
 const config: HardhatUserConfig = {
     defaultNetwork: 'hardhat',
     networks: {
         hardhat: {
             // hardfork: "istanbul",
             forking: {
-                url: 'https://eth-mainnet.alchemyapi.io/v2/wsHSVJhcoPmPHEDrXAOWE-jW2wXCO8jE',
-                // blockNumber: 12869777,
+                url: 'https://eth-mainnet.alchemyapi.io/v2/snGskhAXMQaRLnJaxbcfOL7U5_bSZl_Y',
+                blockNumber: 14028094,
             },
             blockGasLimit: 12500000,
             accounts: getHardhatPrivateKeys(),

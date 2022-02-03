@@ -75,6 +75,16 @@ interface ISavingsAccount {
     event Transfer(address indexed token, address strategy, address indexed from, address indexed to, uint256 amount);
 
     /**
+     * @notice emitted when tokens are transferred
+     * @param token address of token transferred
+     * @param strategy address of strategy from which tokens are transferred
+     * @param from address of user from whom tokens are transferred
+     * @param to address of user to whom tokens are transferred
+     * @param shares amount of tokens transferred
+     */
+    event TransferShares(address indexed token, address strategy, address indexed from, address indexed to, uint256 shares);
+
+    /**
      * @notice emitted when credit line address is updated
      * @param updatedCreditLine updated credit line contract address
      */
@@ -99,7 +109,7 @@ interface ISavingsAccount {
         address strategy,
         address to,
         uint256 amount
-    ) external payable returns (uint256 sharesReceived);
+    ) external returns (uint256 sharesReceived);
 
     /**
      * @dev Used to switch saving strategy of an token
@@ -126,7 +136,7 @@ interface ISavingsAccount {
     function withdraw(
         address token,
         address strategy,
-        address payable withdrawTo,
+        address withdrawTo,
         uint256 amount,
         bool withdrawShares
     ) external returns (uint256);
@@ -153,16 +163,31 @@ interface ISavingsAccount {
         uint256 amount
     ) external;
 
+    function transferShares(
+        uint256 _shares,
+        address _token,
+        address _strategy,
+        address _to
+    ) external returns (uint256);
+
     function transfer(
         address token,
-        address poolSavingsStrategy,
+        address strategy,
         address to,
         uint256 amount
     ) external returns (uint256);
 
+    function transferSharesFrom(
+        uint256 shares,
+        address token,
+        address strategy,
+        address from,
+        address to
+    ) external returns (uint256);
+
     function transferFrom(
         address token,
-        address poolSavingsStrategy,
+        address strategy,
         address from,
         address to,
         uint256 amount
@@ -184,7 +209,7 @@ interface ISavingsAccount {
         address token,
         address strategy,
         address from,
-        address payable to,
+        address to,
         uint256 amount,
         bool withdrawShares
     ) external returns (uint256 amountReceived);
