@@ -86,6 +86,16 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         assertEq(IERC20(token).balanceOf(account), bal + amt); // Assert new balance
     }
 
+    function restrictToRange(uint256 val, uint256 min, uint256 max) public pure returns (uint256) {
+        return restrictToRange(val, min, max, false);
+    }
+
+    function restrictToRange(uint256 val, uint256 min, uint256 max, bool nonZero) public pure returns (uint256) {
+        if      (val == 0 && !nonZero) return 0;
+        else if (max == min)           return max;
+        else                           return val % (max - min) + min;
+    }
+
     function deployPriceOracle() public {
         priceOracle = new PriceOracle();
         priceOracle.initialize(address(admin));

@@ -21,9 +21,10 @@ import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20PausableUpgradeable.sol';
 
 import "./TestUtils.sol";
+import "./Scenarios.sol";
 
 
-contract CreditLineTest is TestUtils {
+contract CreditLineTest is TestUtils, Scenarios {
 
     function setUp() public {
         SetUpGlobalActors();
@@ -49,15 +50,15 @@ contract CreditLineTest is TestUtils {
         }
     }
 
-    function testFail_creditLineRequest() public {
+    function test_1creditLineRequest() public {
         try creditLineBorrower.createRequest(address(creditLine), address(creditLineBorrower),
-                                            1e31,
-                                            1e29,
-                                            false,
-                                            1e30,
-                                            DAI,
-                                            WETH,
-                                            false) {
+                                            CreditLine_1.borrowLimit,
+                                            CreditLine_1.borrowRate,
+                                            CreditLine_1.autoLiquidation,
+                                            CreditLine_1.collateralRatio,
+                                            CreditLine_1.borrowAsset,
+                                            CreditLine_1.collateralAsset,
+                                            CreditLine_1.requestAsLender) {
                                                 assertTrue(true);
                                             }
         catch Error(string memory reason) {

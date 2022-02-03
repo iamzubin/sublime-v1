@@ -46,30 +46,7 @@ contract Constants {
     uint256 constant BTC_decimals = 10 ** 8;  // WBTC precision decimals
 
     uint256 constant WAD = 10 ** 18;
-    uint256 constant RAY = 10 ** 27;
-
-    struct PoolFactoryDeploymentVars {
-        uint256 collectionPeriod;
-        uint256 loanWithdrawalDuration;
-        uint256 marginCallDuration;
-        bytes4 poolInitFuncSelector;
-        uint256 liquidatorRewardFraction;
-        uint256 poolCancelPenaltyMultiple;
-        uint256 minBorrowFraction;
-        uint256 protocolFeeFraction;
-        address protocolFeeCollector;
-        address noStrategy;
-    }
-
-    struct CreditLineRequestVars {
-        uint256 borrowLimit;
-        uint256 borrowRate;
-        bool autoLiquidation;
-        uint256 collateralRatio;
-        address borrowAsset;
-        address collateralAsset;
-        bool requestAsLender;
-    }
+    uint256 constant RAY = 10 ** 27;    
 
     //CreditLineRequestVars defaultCreditLineRequest;
     //CreditLineRequestVars creditLineRequest_1;
