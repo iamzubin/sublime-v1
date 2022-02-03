@@ -245,7 +245,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
 
         uint256 latterCTokenBalance = IERC20(cToken).balanceOf(address(this));
         require(depositLimit[cToken] > latterCTokenBalance, "Can't deposit more than permissible limit");
-        sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
+        uint256 sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
         return sharesReceived;
     }
 
@@ -262,7 +262,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
 
         uint256 latterCTokenBalance = IERC20(cToken).balanceOf(address(this));
         require(depositLimit[cToken] > latterCTokenBalance, "Can't deposit more than permissible limit");
-        sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
+        uint256 sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
         return sharesReceived;
     }
 
