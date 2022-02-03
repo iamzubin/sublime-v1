@@ -24,8 +24,7 @@ import '../interfaces/IVerification.sol';
 contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
-    using SafeMath for uint64;
-
+    
     enum LoanStatus {
         COLLECTION, //denotes collection period
         ACTIVE, // denotes the active loan
@@ -668,7 +667,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
             address(this)
         );
         uint256 _currentBlockTime = block.timestamp.mul(10**30);
-        uint256 _loanDurationTillNow = _currentBlockTime.sub(poolConstants.loanStartTime.mul(10**30));
+        uint256 _loanDurationTillNow = _currentBlockTime.sub(uint256(poolConstants.loanStartTime).mul(10**30));
         if (_loanDurationTillNow <= _loanDurationCovered) {
             return 0;
         }
