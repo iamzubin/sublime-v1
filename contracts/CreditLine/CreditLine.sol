@@ -916,7 +916,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     * @param _toSavingsAccount if true, tokens are transferred from savingsAccount 
                                 otherwise direct from collateral token contract
      */
-    function withdrawAllPossibleCollateral(uint256 _id, bool _toSavingsAccount) external nonReentrant onlyCreditLineBorrower(_id) {
+    function withdrawCollateral(uint256 _id, bool _toSavingsAccount) external nonReentrant onlyCreditLineBorrower(_id) {
         uint256 _withdrawableCollateral = withdrawableCollateral(_id);
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         _transferCollateral(_id, _collateralAsset, _withdrawableCollateral, _toSavingsAccount);
