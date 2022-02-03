@@ -13,6 +13,7 @@ import { Pool } from '@typechain/Pool';
 import { BigNumberish, BytesLike } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
+import { Beacon } from '@typechain/Beacon';
 
 export interface Environment {
     savingsAccount: SavingsAccount;
@@ -24,6 +25,7 @@ export interface Environment {
     extenstion: Extension;
     repayments: Repayments;
     poolFactory: PoolFactory;
+    beacon: Beacon;
     creditLine: CreditLine;
     entities: Entities;
     poolLogic: Pool;
@@ -101,13 +103,13 @@ export interface PoolFactoryInitParams {
     _collectionPeriod: BigNumberish;
     _loanWithdrawalDuration: BigNumberish;
     _marginCallDuration: BigNumberish;
-    _poolInitFuncSelector: BytesLike;
     _liquidatorRewardFraction: BigNumberish;
     _poolCancelPenalityFraction: BigNumberish;
     _minBorrowFraction: BigNumberish;
     _protocolFeeFraction: BigNumberish;
     protocolFeeCollector: Address;
     noStrategy: Address;
+    beacon: Address;
 }
 
 export interface PriceOracleSource {
