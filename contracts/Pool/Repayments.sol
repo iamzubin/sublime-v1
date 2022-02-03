@@ -159,14 +159,15 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint256 loanStartTime,
         address lentAsset
     ) external override onlyValidPool {
-        repayConstants[msg.sender].gracePenaltyRate = gracePenaltyRate;
-        repayConstants[msg.sender].gracePeriodFraction = gracePeriodFraction;
-        repayConstants[msg.sender].numberOfTotalRepayments = numberOfTotalRepayments;
-        repayConstants[msg.sender].loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(SCALING_FACTOR);
-        repayConstants[msg.sender].repaymentInterval = repaymentInterval.mul(SCALING_FACTOR);
-        repayConstants[msg.sender].borrowRate = borrowRate;
-        repayConstants[msg.sender].loanStartTime = loanStartTime.mul(SCALING_FACTOR);
-        repayConstants[msg.sender].repayAsset = lentAsset;
+        RepaymentConstants storage _repaymentConstants = repayConstants[msg.sender];
+        _repaymentConstants.gracePenaltyRate = gracePenaltyRate;
+        _repaymentConstants.gracePeriodFraction = gracePeriodFraction;
+        _repaymentConstants.numberOfTotalRepayments = numberOfTotalRepayments;
+        _repaymentConstants.loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**30);
+        _repaymentConstants.repaymentInterval = repaymentInterval.mul(10**30);
+        _repaymentConstants.borrowRate = borrowRate;
+        _repaymentConstants.loanStartTime = loanStartTime.mul(10**30);
+        _repaymentConstants.repayAsset = lentAsset;
     }
 
     /**
@@ -465,15 +466,6 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         address _asset,
         uint256 _amount
     ) internal {
-        if (_asset == address(0)) {
-            (bool transferSuccess, ) = _to.call{value: _amount}('');
-            require(transferSuccess, '_transferTokens: Transfer failed');
-            if (msg.value != _amount) {
-                (bool refundSuccess, ) = payable(_from).call{value: msg.value.sub(_amount)}('');
-                require(refundSuccess, '_transferTokens: Refund failed');
-            }
-        } else {
-            IERC20(_asset).safeTransferFrom(_from, _to, _amount);
-        }
+        IERC20(_asset).safeTransferFrom(_from, _to, _amount);
     }
 }

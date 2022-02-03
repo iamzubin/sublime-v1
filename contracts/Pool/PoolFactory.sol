@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.6;
 
-import '../SublimeProxy.sol';
 import '../interfaces/IPoolFactory.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IVerification.sol';
 import '../interfaces/IStrategyRegistry.sol';
 import '../interfaces/IRepayment.sol';
 import '../interfaces/IPriceOracle.sol';
+import '../interfaces/ISavingsAccount.sol';
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../SavingsAccount/SavingsAccountUtil.sol';
+import './Beacon.sol';
+// import './MinimumBeaconProxy.sol';
+import './MinimumBeaconProxy2.sol';
 
 /**
  * @title Pool Factory contract with methods for handling different pools
@@ -25,16 +30,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 min;
         uint256 max;
     }
-
-    /**
-     * @notice function definition of the pool contract
-     */
-    bytes4 public poolInitFuncSelector; //  bytes4(keccak256("initialize(uint256,address,address,address,uint256,uint256,uint256,uint256,bool)"))
-
-    /**
-     * @notice address of the latest implementation of the pool logic
-     */
-    address public poolImpl;
 
     /**
      * @notice address of the contract storing the user registry
@@ -103,6 +98,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
 
     uint256 protocolFeeFraction;
     address protocolFeeCollector;
+
+    address public beacon;
 
     /*
      * @notice Used to mark assets supported for borrowing
@@ -177,7 +174,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _collectionPeriod period for which lenders can lend for pool
      * @param _loanWithdrawalDuration period for which lent tokens can be withdrawn after pool starts
      * @param _marginCallDuration duration of margin call before which collateral ratio has to be maintained
-     * @param _poolInitFuncSelector function signature for initializing pool
      * @param _liquidatorRewardFraction fraction of liquidation amount which is given to liquidator as reward multiplied by SCALING_FACTOR(10**30)
      * @param _poolCancelPenaltyMultiple multiple of borrow rate of pool as penality for cancellation of pool multiplied by SCALING_FACTOR(10**30)
      * @param _minBorrowFraction amountCollected/amountRequested for a pool, if less than fraction by pool start time then pool can be cancelled without penality multiplied by SCALING_FACTOR(10**30)
@@ -190,13 +186,13 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _collectionPeriod,
         uint256 _loanWithdrawalDuration,
         uint256 _marginCallDuration,
-        bytes4 _poolInitFuncSelector,
         uint256 _liquidatorRewardFraction,
         uint256 _poolCancelPenaltyMultiple,
         uint256 _minBorrowFraction,
         uint256 _protocolFeeFraction,
         address _protocolFeeCollector,
-        address _noStrategy
+        address _noStrategy,
+        address _beacon
     ) external initializer {
         {
             OwnableUpgradeable.__Ownable_init();
@@ -205,19 +201,18 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         _updateCollectionPeriod(_collectionPeriod);
         _updateLoanWithdrawalDuration(_loanWithdrawalDuration);
         _updateMarginCallDuration(_marginCallDuration);
-        _updatepoolInitFuncSelector(_poolInitFuncSelector);
         _updateLiquidatorRewardFraction(_liquidatorRewardFraction);
         _updatePoolCancelPenaltyMultiple(_poolCancelPenaltyMultiple);
         _updateMinBorrowFraction(_minBorrowFraction);
         _updateProtocolFeeFraction(_protocolFeeFraction);
         _updateProtocolFeeCollector(_protocolFeeCollector);
         _updateNoStrategy(_noStrategy);
+        beacon = _beacon;
     }
 
     /**
      * @notice used to setImplementation addresses
      * @dev used to set some of the contracts pool factory interacts with. only admin can invoke
-     * @param _poolImpl address of the implementation address of pool
      * @param _repaymentImpl address of the implementation address of repayments
      * @param _userRegistry address of the user registry where users are verified
      * @param _strategyRegistry address of the startegy registry where strategies are whitelisted
@@ -226,7 +221,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
      * @param _extension address of the extension contract for pools
      */
     function setImplementations(
-        address _poolImpl,
         address _repaymentImpl,
         address _userRegistry,
         address _strategyRegistry,
@@ -234,7 +228,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         address _savingsAccount,
         address _extension
     ) external onlyOwner {
-        _updatePoolLogic(_poolImpl);
         _updateRepaymentImpl(_repaymentImpl);
         _updateSavingsAccount(_savingsAccount);
         _updatedExtension(_extension);
@@ -316,6 +309,16 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         );
     }
 
+    function preComputeAddress(address creator, bytes32 salt) public view returns (address predicted) {
+        salt = keccak256(abi.encode(creator, salt));
+
+        bytes memory beaconProxyByteCode = abi.encodePacked(type(MinimumBeaconProxy).creationCode, abi.encode(beacon));
+
+        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff), address(this), salt, keccak256(beaconProxyByteCode)));
+
+        return address(uint160(uint256(hash)));
+    }
+
     // @dev These functions are used to avoid stack too deep
     function _createPool(
         uint256 _poolSize,
@@ -331,7 +334,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt,
         address _lenderVerifier
     ) internal {
-        bytes memory data = _encodePoolInitCall(
+        _salt = keccak256(abi.encode(msg.sender, _salt));
+        address addr = _create(_salt);
+        _initPool(
+            addr,
             _poolSize,
             _borrowRate,
             _borrowToken,
@@ -344,18 +350,25 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             _transferFromSavingsAccount,
             _lenderVerifier
         );
-        bytes32 salt = keccak256(abi.encodePacked(_salt, msg.sender));
-        bytes memory bytecode = abi.encodePacked(type(SublimeProxy).creationCode, abi.encode(poolImpl, address(0x01), data));
-        uint256 amount = _collateralToken == address(0) ? _collateralAmount : 0;
-
-        address pool = _deploy(amount, salt, bytecode);
-
-        poolRegistry[pool] = true;
-        emit PoolCreated(pool, msg.sender);
+        poolRegistry[addr] = true;
+        emit PoolCreated(addr, msg.sender);
     }
 
-    // @dev These functions are used to avoid stack too deep
-    function _encodePoolInitCall(
+    function _create(bytes32 _salt) internal returns (address) {
+        address addr;
+        bytes memory beaconProxyByteCode = abi.encodePacked(type(MinimumBeaconProxy).creationCode, abi.encode(beacon));
+
+        assembly {
+            addr := create2(callvalue(), add(beaconProxyByteCode, 0x20), mload(beaconProxyByteCode), _salt)
+            if iszero(extcodesize(addr)) {
+                revert(0, 0)
+            }
+        }
+        return addr;
+    }
+
+    function _initPool(
+        address _pool,
         uint256 _poolSize,
         uint256 _borrowRate,
         address _borrowToken,
@@ -367,9 +380,15 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
         address _lenderVerifier
+<<<<<<< HEAD
     ) internal view returns (bytes memory) {
         bytes memory data = abi.encodeWithSelector(
             poolInitFuncSelector,
+=======
+    ) internal {
+        IPool pool = IPool(_pool);
+        pool.initialize(
+>>>>>>> 601277f3092c06891fc9973cf5825d5827a72e18
             _poolSize,
             _borrowRate,
             msg.sender,
@@ -389,6 +408,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     /**
+<<<<<<< HEAD
      * @dev Deploys a contract using `CREATE2`. The address where the contract
      * will be deployed can be known in advance via {computeAddress}.
      *
@@ -418,6 +438,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     }
 
     /**
+=======
+>>>>>>> 601277f3092c06891fc9973cf5825d5827a72e18
      * @notice invoked to check if pool parameters are within thresholds
      * @param _value supplied value of the parameter
      * @param _min minimum threshold of the parameter
@@ -465,32 +487,6 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     function _updateSupportedCollateralTokens(address _collateralToken, bool _isSupported) internal {
         isCollateralToken[_collateralToken] = _isSupported;
         emit CollateralTokenUpdated(_collateralToken, _isSupported);
-    }
-
-    /**
-     * @notice used to update the pointer to Initializer function of the proxy pool contract
-     * @param _functionId updated function definition of the proxy pool contract
-     */
-    function updatepoolInitFuncSelector(bytes4 _functionId) external onlyOwner {
-        _updatepoolInitFuncSelector(_functionId);
-    }
-
-    function _updatepoolInitFuncSelector(bytes4 _functionId) internal {
-        poolInitFuncSelector = _functionId;
-        emit PoolInitSelectorUpdated(_functionId);
-    }
-
-    /**
-     * @notice used to update the Pool.sol logic
-     * @param _poolLogic the address of the new Pool logic contract
-     */
-    function updatePoolLogic(address _poolLogic) external onlyOwner {
-        _updatePoolLogic(_poolLogic);
-    }
-
-    function _updatePoolLogic(address _poolLogic) internal {
-        poolImpl = _poolLogic;
-        emit PoolLogicUpdated(_poolLogic);
     }
 
     /**

@@ -8,6 +8,7 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 
 import '../interfaces/IYield.sol';
 import '../interfaces/Invest/IyVault.sol';
+import '../interfaces/IWETH9.sol';
 
 /**
  * @title Yield contract
@@ -18,15 +19,21 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    address public immutable weth;
+
     /**
      * @notice stores the address of savings account contract
      **/
-    address payable public savingsAccount;
+    address public savingsAccount;
 
     /**
      * @notice stores the address of liquidity token for a given base token
      */
     mapping(address => address) public override liquidityToken;
+
+    constructor(address _weth) {
+        weth = _weth;
+    }
 
     /**
      * @notice emitted when liquidity token address of an asset is updated
@@ -88,20 +95,32 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @param _amount amount to be withdraw. (if 0, it means all amount)
      */
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner nonReentrant returns (uint256) {
+    function emergencyWithdraw(
+        address _asset,
+        address payable _wallet,
+        uint256 _amount
+    ) external onlyOwner nonReentrant returns (uint256) {
         require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
-        uint256 amount = IERC20(investedTo).balanceOf(address(this));
+        uint256 amount = _amount;
         uint256 received;
-        if (_asset == address(0)) {
+        if (_amount != 0) {
+            if (_asset == address(0)) {
+                amount = address(this).balance;
+            } else {
+                amount = IERC20(investedTo).balanceOf(address(this));
+            }
+        }
+
+        if (_asset == weth) {
             received = _withdrawETH(investedTo, amount);
-            (bool success, ) = _wallet.call{value: received}('');
-            require(success, 'Transfer failed');
+            IWETH9(weth).deposit{value: received}();
         } else {
             received = _withdrawERC(_asset, investedTo, amount);
-            IERC20(_asset).safeTransfer(_wallet, received);
         }
+        IERC20(_asset).safeTransfer(_wallet, received);
         return received;
     }
 
@@ -117,15 +136,15 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
         uint256 sharesReceived;
         address investedTo = liquidityToken[asset];
-        if (asset == address(0)) {
-            require(msg.value == amount, 'Invest: ETH amount');
+        IERC20(asset).safeTransferFrom(user, address(this), amount);
+        if (asset == weth) {
+            IWETH9(weth).withdraw(amount);
             sharesReceived = _depositETH(investedTo, amount);
         } else {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
             sharesReceived = _depositERC20(asset, investedTo, amount);
         }
 
@@ -143,14 +162,13 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
         uint256 received;
-        if (asset == address(0)) {
+        if (asset == weth) {
             received = _withdrawETH(investedTo, amount);
-            (bool success, ) = savingsAccount.call{value: received}('');
-            require(success, 'Transfer failed');
+            IWETH9(weth).deposit{value: received}();
         } else {
             received = _withdrawERC(asset, investedTo, amount);
-            IERC20(asset).safeTransfer(savingsAccount, received);
         }
+        IERC20(asset).safeTransfer(savingsAccount, received);
 
         emit UnlockedTokens(asset, received);
         return received;

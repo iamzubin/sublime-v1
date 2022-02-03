@@ -75,10 +75,18 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @dev only owner can withdraw
      * @param _asset address of the token being withdrawn
      * @param _wallet address to which tokens are withdrawn
+     * @param _amount amount to be withdraw. (if 0, it means all amount)
      */
-    function emergencyWithdraw(address _asset, address payable _wallet) external onlyOwner returns (uint256 received) {
+    function emergencyWithdraw(
+        address _asset,
+        address payable _wallet,
+        uint256 _amount
+    ) external onlyOwner returns (uint256 received) {
         require(_wallet != address(0), 'cant burn');
-        uint256 amount = IERC20(_asset).balanceOf(address(this));
+        uint256 amount = _amount;
+        if (_amount == 0) {
+            amount = IERC20(_asset).balanceOf(address(this));
+        }
         IERC20(_asset).safeTransfer(_wallet, received);
         received = amount;
     }
@@ -95,15 +103,12 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         address user,
         address asset,
         uint256 amount
-    ) external payable override onlySavingsAccount nonReentrant returns (uint256) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
-        if (asset != address(0)) {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
-        } else {
-            require(msg.value == amount, 'Invest: ETH amount');
-        }
-        emit LockedTokens(user, asset, amount);
-        return amount;
+        IERC20(asset).safeTransferFrom(user, address(this), amount);
+        uint256 sharesReceived = amount;
+        emit LockedTokens(user, asset, sharesReceived);
+        return sharesReceived;
     }
 
     /**
@@ -134,33 +139,27 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
 
     function _unlockTokens(address asset, uint256 amount) internal returns (uint256) {
         require(amount != 0, 'Invest: amount');
-        if (asset == address(0)) {
-            (bool success, ) = savingsAccount.call{value: amount}('');
-            require(success, 'Transfer failed');
-        } else {
-            IERC20(asset).safeTransfer(savingsAccount, amount);
-        }
-        emit UnlockedTokens(asset, amount);
-        return amount;
+        uint256 received = amount;
+        IERC20(asset).safeTransfer(savingsAccount, received);
+        emit UnlockedTokens(asset, received);
+        return received;
     }
 
     /**
      * @dev Used to get amount of underlying tokens for given number of shares
      * @param shares the amount of shares
-     * @param asset the address of token locked
-     * @return amount: amount of underlying tokens
+     * @return amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) external pure override returns (uint256) {
+    function getTokensForShares(uint256 shares, address) external pure override returns (uint256) {
         return shares;
     }
 
     /**
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
-     * @param asset the address of token
-     * @return shares: amount of shares for given tokens
+     * @return amount of shares for given tokens
      **/
-    function getSharesForTokens(uint256 amount, address asset) external pure override returns (uint256) {
+    function getSharesForTokens(uint256 amount, address) external pure override returns (uint256) {
         return amount;
     }
 }
