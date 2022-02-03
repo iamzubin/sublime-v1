@@ -24,7 +24,7 @@ import '../interfaces/IVerification.sol';
 contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
-    
+
     enum LoanStatus {
         COLLECTION, //denotes collection period
         ACTIVE, // denotes the active loan
@@ -137,8 +137,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _borrowAsset,
         address _collateralAsset,
         uint256 _idealCollateralRatio,
-        uint256 _repaymentInterval,
-        uint256 _noOfRepaymentIntervals,
+        uint128 _repaymentInterval,
+        uint128 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
@@ -155,8 +155,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         _initialDeposit(_borrower, _collateralAmount, _transferFromSavingsAccount);
         poolConstants.borrower = _borrower;
         poolConstants.borrowRate = _borrowRate;
-        poolConstants.noOfRepaymentIntervals = uint128(_noOfRepaymentIntervals);
-        poolConstants.repaymentInterval = uint128(_repaymentInterval);
+        poolConstants.noOfRepaymentIntervals = _noOfRepaymentIntervals;
+        poolConstants.repaymentInterval = _repaymentInterval;
         poolConstants.lenderVerifier = _lenderVerifier;
 
         poolConstants.loanStartTime = uint64(block.timestamp.add(_collectionPeriod));
@@ -323,7 +323,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _currentCollateralRatio = getCurrentCollateralRatio();
         require(_currentCollateralRatio >= poolConstants.idealCollateralRatio, 'WBA3');
 
-        uint256 _noOfRepaymentIntervals = uint256(poolConstants.noOfRepaymentIntervals);
+        uint128 _noOfRepaymentIntervals = poolConstants.noOfRepaymentIntervals;
         uint256 _repaymentInterval = uint256(poolConstants.repaymentInterval);
         IRepayment(_poolFactory.repaymentImpl()).initializeRepayment(
             _noOfRepaymentIntervals,

@@ -50,8 +50,8 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         uint128 numberOfTotalRepayments; // using it to check if RepaymentDetails Exists as repayment Interval!=0 in any case
         address repayAsset;
         uint256 borrowRate;
-        uint256 loanDuration;
         uint256 repaymentInterval;
+        uint256 loanDuration;
         uint256 loanStartTime;
     }
 
@@ -152,7 +152,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @param loanStartTime The starting time of the loan
     /// @param lentAsset The address of the asset that was lent (basically a ERC20 token address)
     function initializeRepayment(
-        uint256 numberOfTotalRepayments,
+        uint128 numberOfTotalRepayments,
         uint256 repaymentInterval,
         uint256 borrowRate,
         uint256 loanStartTime,
@@ -160,7 +160,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     ) external override onlyValidPool {
         repayConstants[msg.sender].gracePenaltyRate = gracePenaltyRate;
         repayConstants[msg.sender].gracePeriodFraction = gracePeriodFraction;
-        repayConstants[msg.sender].numberOfTotalRepayments = uint128(numberOfTotalRepayments);
+        repayConstants[msg.sender].numberOfTotalRepayments = numberOfTotalRepayments;
         repayConstants[msg.sender].loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**30);
         repayConstants[msg.sender].repaymentInterval = repaymentInterval.mul(10**30);
         repayConstants[msg.sender].borrowRate = borrowRate;

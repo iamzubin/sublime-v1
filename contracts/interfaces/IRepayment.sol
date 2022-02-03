@@ -41,7 +41,7 @@ interface IRepayment {
     event GracePeriodFractionUpdated(uint256 indexed gracePeriodFraction);
 
     function initializeRepayment(
-        uint256 numberOfTotalRepayments,
+        uint128 numberOfTotalRepayments,
         uint256 repaymentInterval,
         uint256 borrowRate,
         uint256 loanStartTime,
