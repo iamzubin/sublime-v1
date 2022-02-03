@@ -55,7 +55,8 @@ library SavingsAccountUtil {
             _approveTo = address(_savingsAccount);
         }
         IERC20(_token).safeApprove(_approveTo, _amount);
-        _sharesReceived = _savingsAccount.deposit(_token, _strategy, _to, _amount);
+        uint256 _sharesReceived = _savingsAccount.deposit(_token, _strategy, _to, _amount);
+        return _sharesReceived;
     }
 
     function savingsAccountTransferShares(
