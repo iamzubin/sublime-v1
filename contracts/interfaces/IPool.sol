@@ -82,27 +82,27 @@ interface IPool {
      */
     event PoolLiquidated(address indexed liquidator);
 
-    function getLoanStatus() external view returns (uint256);
+    function getLoanStatus() external view returns (uint256 loanStatus); 
 
-    function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable;
+    function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external;
 
     function addCollateralInMarginCall(
         address _lender,
         uint256 _amount,
         bool _isDirect
-    ) external payable;
+    ) external;
 
     function withdrawBorrowedAmount() external;
 
-    function borrower() external returns (address);
+    function borrower() external returns (address poolBorrower);
 
-    function getMarginCallEndTime(address _lender) external returns (uint256);
+    function getMarginCallEndTime(address _lender) external returns (uint256 marginCallEndTimeForLender);
 
-    function getBalanceDetails(address _lender) external view returns (uint256, uint256);
+    function getBalanceDetails(address _lender) external view returns (uint256 lenderPoolTokens, uint256 totalPoolTokens);
 
-    function totalSupply() external view returns (uint256);
+    function totalSupply() external view returns (uint256 totalPoolTokens);
 
-    function closeLoan() external payable;
+    function closeLoan() external;
 
     function initialize(
         uint256 _borrowAmountRequested,
@@ -111,13 +111,20 @@ interface IPool {
         address _borrowAsset,
         address _collateralAsset,
         uint256 _idealCollateralRatio,
-        uint256 _repaymentInterval,
-        uint256 _noOfRepaymentIntervals,
+        uint64 _repaymentInterval,
+        uint64 _noOfRepaymentIntervals,
         address _poolSavingsStrategy,
         uint256 _collateralAmount,
         bool _transferFromSavingsAccount,
         address _lenderVerifier,
         uint256 _loanWithdrawalDuration,
         uint256 _collectionPeriod
-    ) external payable;
+    ) external;
+
+    function lend(
+        address _lender,
+        uint256 _amount,
+        address _strategy,
+        bool _fromSavingsAccount
+    ) external;
 }

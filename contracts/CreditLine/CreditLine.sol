@@ -629,6 +629,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) external payable nonReentrant ifCreditLineExists(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
+        if(Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
+            require(msg.value == 0, 'DepositCollateral: ETH is not required for this operation');
+        }
         _depositCollateral(_id, _strategy, _amount, _fromSavingsAccount);
         emit CollateralDeposited(_id, _amount, _strategy);
     }
@@ -645,13 +648,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         } else {
             address _collateralAsset = creditLineConstants[_id].collateralAsset;
             ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
-            if (_collateralAsset == address(0)) {
-                require(msg.value == _amount, "CreditLine::_depositCollateral - value to transfer doesn't match argument");
-            } else {
-                IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _amount);
-                IERC20(_collateralAsset).approve(_strategy, _amount);
-            }
-            uint256 _sharesReceived = _savingsAccount.deposit{value: msg.value}(_collateralAsset, _strategy, address(this), _amount);
+
+            IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _amount);
+            IERC20(_collateralAsset).approve(_strategy, _amount);
+
+            uint256 _sharesReceived = _savingsAccount.deposit(_collateralAsset, _strategy, address(this), _amount);
             collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_sharesReceived);
         }
     }
@@ -705,33 +706,20 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _lender = creditLineConstants[_id].lender;
 
         updateinterestAccruedTillLastPrincipalUpdate(_id);
-        creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_amount);
         creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
 
-        uint256 _tokenDiffBalance;
-        if (_borrowAsset != address(0)) {
-            uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
-            _withdrawBorrowAmount(_borrowAsset, _lender, _amount);
-            uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
-            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
-        } else {
-            uint256 _balanceBefore = address(this).balance;
-            _withdrawBorrowAmount(_borrowAsset, _lender, _amount);
-            uint256 _balanceAfter = address(this).balance;
-            _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
-        }
-        uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(SCALING_FACTOR);
+        uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
+        _withdrawBorrowAmount(_borrowAsset, _lender, _amount);
+        uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
+
+        uint256 _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
+        creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_tokenDiffBalance);
+
+        uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
         _tokenDiffBalance = _tokenDiffBalance.sub(_protocolFee);
 
-        if (_borrowAsset == address(0)) {
-            (bool feeSuccess, ) = protocolFeeCollector.call{value: _protocolFee}('');
-            require(feeSuccess, 'Transfer fail');
-            (bool success, ) = msg.sender.call{value: _tokenDiffBalance}('');
-            require(success, 'Transfer fail');
-        } else {
-            IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);
-            IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
-        }
+        IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);
+        IERC20(_borrowAsset).safeTransfer(msg.sender, _tokenDiffBalance);
         emit BorrowedFromCreditLine(_id, _tokenDiffBalance);
     }
 
@@ -780,14 +768,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
         address _lender = creditLineConstants[_id].lender;
         if (!_fromSavingsAccount) {
-            if (_borrowAsset == address(0)) {
-                require(msg.value == _amount, 'creditLine::repay - Ether sent not equal to repay amount');
-                _savingsAccount.deposit{value: _amount}(_borrowAsset, _defaultStrategy, _lender, _amount);
-            } else {
-                IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
-                IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
-                _savingsAccount.deposit(_borrowAsset, _defaultStrategy, _lender, _amount);
-            }
+            IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
+            IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
+            _savingsAccount.deposit(_borrowAsset, _defaultStrategy, _lender, _amount);
         } else {
             _repayFromSavingsAccount(_borrowAsset, _lender, _amount);
         }
@@ -811,6 +794,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         require(creditLineConstants[_id].lender != msg.sender, 'Lender cant repay');
+        if(Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
+            require(msg.value == 0, 'Repay: ETH is not required for this operation');
+        }
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(_id);
         uint256 _totalInterestAccrued = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(
@@ -894,11 +880,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @return _amount total collateral tokens deposited into the credit line
      */
-    function calculateTotalCollateralTokens(uint256 _id) public returns (uint256 _amount) {
+    function calculateTotalCollateralTokens(uint256 _id) public returns (uint256) {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _liquidityShares;
-
+        uint256 _amount;
         for (uint256 index; index < _strategyList.length; ++index) {
             if (_strategyList[index] == address(0)) {
                 continue;
@@ -908,6 +894,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
             _amount = _amount.add(_tokenInStrategy);
         }
+        return _amount;
     }
 
     /**
@@ -928,6 +915,20 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         _transferCollateral(_id, _collateralAsset, _amount, _toSavingsAccount);
         emit CollateralWithdrawn(_id, _amount);
+    }
+
+    /**
+     * @notice used to withdraw all the permissible collateral as per the current col ratio
+     * @dev if the withdrawable collateral amount is non-zero the transaction will pass
+     * @param _id identifier for the credit line
+    * @param _toSavingsAccount if true, tokens are transferred from savingsAccount 
+                                otherwise direct from collateral token contract
+     */
+    function withdrawCollateral(uint256 _id, bool _toSavingsAccount) external nonReentrant onlyCreditLineBorrower(_id) {
+        uint256 _withdrawableCollateral = withdrawableCollateral(_id);
+        address _collateralAsset = creditLineConstants[_id].collateralAsset;
+        _transferCollateral(_id, _collateralAsset, _withdrawableCollateral, _toSavingsAccount);
+        emit CollateralWithdrawn(_id, _withdrawableCollateral);
     }
 
     /**
@@ -1017,6 +1018,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineVariables[_id].principal != 0, 'CreditLine: cannot liquidate if principal is 0');
+        address _borrowAsset = creditLineConstants[_id].borrowAsset;
+        if(_borrowAsset != address(0)) {
+            require(msg.value == 0, 'Liquidate: ETH is not required for this operation');
+        }
 
         uint256 currentCollateralRatio = calculateCurrentCollateralRatio(_id);
         require(
@@ -1032,26 +1037,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
-        address _borrowAsset = creditLineConstants[_id].borrowAsset;
 
         creditLineVariables[_id].status = CreditLineStatus.LIQUIDATED;
 
         if (creditLineConstants[_id].autoLiquidation && _lender != msg.sender) {
             uint256 _borrowTokens = _borrowTokensToLiquidate(_borrowAsset, _collateralAsset, _totalCollateralTokens);
-            if (_borrowAsset == address(0)) {
-                uint256 _returnETH = msg.value.sub(_borrowTokens, 'Insufficient ETH to liquidate');
-
-                (bool success, ) = _lender.call{value: _borrowTokens}('');
-
-                require(success, 'liquidate: Transfer failed');
-
-                if (_returnETH != 0) {
-                    (bool success, ) = msg.sender.call{value: _returnETH}('');
-                    require(success, 'Transfer fail');
-                }
-            } else {
-                IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowTokens);
-            }
+            IERC20(_borrowAsset).safeTransferFrom(msg.sender, _lender, _borrowTokens);
         }
 
         _transferCollateral(_id, _collateralAsset, _totalCollateralTokens, _toSavingsAccount);
