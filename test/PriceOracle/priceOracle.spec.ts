@@ -29,7 +29,7 @@ describe('Price Oracle', async () => {
         let proxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(priceOracleLogic.address, proxyAdmin.address);
         let priceOracle = await deployHelper.helper.getPriceOracle(proxy.address);
         priceOracle = await priceOracle.connect(admin);
-        await priceOracle.initialize(admin.address);
+        await priceOracle.initialize(admin.address, Contracts.WETH);
 
         for (let index = 0; index < chainlinkData.length; index++) {
             const element = chainlinkData[index];

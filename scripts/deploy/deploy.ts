@@ -42,13 +42,13 @@ import { Repayments } from '../../typechain/Repayments';
 import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { CreditLine } from '../../typechain/CreditLine';
 import { IYield } from '../../typechain/IYield';
-import { zeroAddress } from '../../utils/constants';
+import { zeroAddress } from '../../config/constants';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
 import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
 
 import { induceDelay } from '../../utils/helpers';
 
-export async function deployer(signers: SignerWithAddress[], config: DeploymentParams) {
+export async function deployer(signers: SignerWithAddress[], config: DeploymentParams, weth: string) {
     const {
         strategyRegistryParams,
         aaveYieldParams,
@@ -126,7 +126,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     console.log('Deploying price oracle');
 
-    const priceOracle: PriceOracle = await createPriceOracle(proxyAdmin, admin);
+    const priceOracle: PriceOracle = await createPriceOracle(proxyAdmin, admin, weth);
 
     console.log('setting price feeds');
 
