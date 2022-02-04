@@ -166,7 +166,6 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
             IWETH9(weth).withdraw(amount);
             sharesReceived = _depositETH(investedTo, amount);
         } else {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
             sharesReceived = _depositERC20(asset, investedTo, amount);
         }
         emit LockedTokens(user, investedTo, sharesReceived);

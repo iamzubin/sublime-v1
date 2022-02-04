@@ -143,7 +143,6 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
             IWETH9(weth).withdraw(amount);
             sharesReceived = _depositETH(investedTo, amount);
         } else {
-            IERC20(asset).safeTransferFrom(user, address(this), amount);
             sharesReceived = _depositERC20(asset, investedTo, amount);
         }
 

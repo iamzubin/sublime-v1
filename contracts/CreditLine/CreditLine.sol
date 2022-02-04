@@ -1016,7 +1016,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineVariables[_id].principal != 0, 'CreditLine: cannot liquidate if principal is 0');
-        if(Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
+        address _borrowAsset = creditLineConstants[_id].borrowAsset;
+        if(_borrowAsset != address(0)) {
             require(msg.value == 0, 'Liquidate: ETH is not required for this operation');
         }
 
@@ -1034,7 +1035,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         uint256 _totalCollateralTokens = calculateTotalCollateralTokens(_id);
-        address _borrowAsset = creditLineConstants[_id].borrowAsset;
 
         creditLineVariables[_id].status = CreditLineStatus.LIQUIDATED;
 
