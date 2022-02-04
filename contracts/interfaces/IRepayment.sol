@@ -41,24 +41,24 @@ interface IRepayment {
     event GracePeriodFractionUpdated(uint256 indexed gracePeriodFraction);
 
     function initializeRepayment(
-        uint256 numberOfTotalRepayments,
+        uint64 numberOfTotalRepayments,
         uint256 repaymentInterval,
         uint256 borrowRate,
         uint256 loanStartTime,
         address lentAsset
     ) external;
 
-    function getTotalRepaidAmount(address poolID) external view returns (uint256);
+    function getTotalRepaidAmount(address poolID) external view returns (uint256 amountRepaid);
 
-    function getInterestCalculationVars(address poolID) external view returns (uint256, uint256);
+    function getInterestCalculationVars(address poolID) external view returns (uint256 loanDurationCovered, uint256 interestPerSecond);
 
-    function getCurrentLoanInterval(address poolID) external view returns (uint256);
+    function getCurrentLoanInterval(address poolID) external view returns (uint256 scaledCurrentInterval);
 
     function instalmentDeadlineExtended(address _poolID) external;
 
-    function didBorrowerDefault(address _poolID) external view returns (bool);
+    function didBorrowerDefault(address _poolID) external view returns (bool isBorrowerDefaulter);
 
-    function getGracePeriodFraction() external view returns (uint256);
+    function getGracePeriodFraction() external view returns (uint256 gracePeriod);
 
-    function getNextInstalmentDeadline(address _poolID) external view returns (uint256);
+    function getNextInstalmentDeadline(address _poolID) external view returns (uint256 nextInstalmentDeadlineTimestamp);
 }

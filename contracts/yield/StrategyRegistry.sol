@@ -31,7 +31,6 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _maxStrategies maximum number of strategies allowed
      **/
     function initialize(address _owner, uint256 _maxStrategies) external initializer {
-        require(_maxStrategies != 0, 'StrategyRegistry::initialize maxStrategies cannot be zero');
         __Ownable_init();
         super.transferOwnership(_owner);
 
@@ -66,7 +65,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      * @param _strategy address of the strategy contract
      **/
     function addStrategy(address _strategy) external override onlyOwner {
-        require(strategies.length.add(1) <= maxStrategies, "StrategyRegistry::addStrategy - Can't add more strategies");
+        require(strategies.length + 1 <= maxStrategies, "StrategyRegistry::addStrategy - Can't add more strategies");
         require(!registry[_strategy], 'StrategyRegistry::addStrategy - Strategy already exists');
         require(_strategy != address(0), 'StrategyRegistry::addStrategy - _strategy cannot be address(0)');
         registry[_strategy] = true;
@@ -83,7 +82,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         address _strategy = strategies[_strategyIndex];
         strategies[_strategyIndex] = strategies[strategies.length.sub(1, 'StrategyRegistry::removeStrategy - No strategies exist')];
         strategies.pop();
-        registry[_strategy] = false;
+        delete registry[_strategy];
 
         emit StrategyRemoved(_strategy);
     }
@@ -104,10 +103,11 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
             strategies[_strategyIndex] == _oldStrategy,
             "StrategyRegistry::updateStrategy - index to update and strategy address don't match"
         );
+        require(_newStrategy != address(0), 'StrategyRegistry::updateStrategy - New strategy cannot be address(0)');
         require(!registry[_newStrategy], 'StrategyRegistry::updateStrategy - New strategy already exists');
         strategies[_strategyIndex] = _newStrategy;
 
-        registry[_oldStrategy] = false;
+        delete registry[_oldStrategy];
         emit StrategyRemoved(_oldStrategy);
         registry[_newStrategy] = true;
         emit StrategyAdded(_newStrategy);

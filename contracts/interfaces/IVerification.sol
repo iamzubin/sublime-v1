@@ -47,7 +47,7 @@ interface IVerification {
     /// @param activationDelay updated value of activationDelay in seconds
     event ActivationDelayUpdated(uint256 activationDelay);
 
-    function isUser(address _user, address _verifier) external view returns (bool);
+    function isUser(address _user, address _verifier) external view returns (bool isMsgSenderUser);
 
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external;
 
