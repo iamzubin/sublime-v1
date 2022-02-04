@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.7.6;
+pragma solidity 0.7.6;
 
 import '@chainlink/contracts/src/v0.7/interfaces/AggregatorV3Interface.sol';
 import '@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol';
@@ -13,6 +13,9 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
     using SafeMath for uint256;
 
     uint32 uniswapPriceAveragingPeriod;
+    uint256 constant SCALING_EXPONENT = 30;
+    uint256 constant SCALING_FACTOR = 10**(SCALING_EXPONENT);
+
     struct PriceData {
         address oracle;
         uint256 decimals;
@@ -29,13 +32,19 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
     mapping(bytes32 => address) public uniswapPools;
 
     /**
+     * @notice wrapped ETH address
+     */
+    address public weth;
+
+    /**
      * @notice Used to initialize the price oracle contract
      * @dev can only be invoked once
      * @param _admin owner of the price oracle
      **/
-    function initialize(address _admin) external initializer {
+    function initialize(address _admin, address _weth) external initializer {
         OwnableUpgradeable.__Ownable_init();
         OwnableUpgradeable.transferOwnership(_admin);
+        weth = _weth;
     }
 
     /**
@@ -73,12 +82,12 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
         uint256 price = uint256(price1)
             .mul(10**_feedData2.decimals)
-            .mul(10**30)
+            .mul(SCALING_FACTOR)
             .div(uint256(price2))
             .div(10**_feedData1.decimals)
             .mul(10**decimals[den])
             .div(10**decimals[num]);
-        return (price, 30);
+        return (price, SCALING_EXPONENT);
     }
 
     /**
@@ -115,11 +124,14 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         }
 
         int24 _twapTick = OracleLibrary.consult(_pool, uniswapPriceAveragingPeriod);
-        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, 10**30, num, den);
-        return (_numTokens, 30);
+        uint256 _numTokens = OracleLibrary.getQuoteAtTick(_twapTick, uint128(SCALING_FACTOR), num, den);
+        return (_numTokens, SCALING_EXPONENT);
     }
 
-    function getUniswapPoolTokenId(address num, address den) internal pure returns (bytes32) {
+    function getUniswapPoolTokenId(address num, address den) internal view returns (bytes32) {
+        if (num == address(0)) num = weth;
+        if (den == address(0)) den = weth;
+
         if (uint256(num) < uint256(den)) {
             return keccak256(abi.encodePacked(num, den));
         } else {

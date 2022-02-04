@@ -75,6 +75,16 @@ interface ISavingsAccount {
     event Transfer(address indexed token, address strategy, address indexed from, address indexed to, uint256 amount);
 
     /**
+     * @notice emitted when tokens are transferred
+     * @param token address of token transferred
+     * @param strategy address of strategy from which tokens are transferred
+     * @param from address of user from whom tokens are transferred
+     * @param to address of user to whom tokens are transferred
+     * @param shares amount of tokens transferred
+     */
+    event TransferShares(address indexed token, address strategy, address indexed from, address indexed to, uint256 shares);
+
+    /**
      * @notice emitted when credit line address is updated
      * @param updatedCreditLine updated credit line contract address
      */
@@ -95,11 +105,11 @@ interface ISavingsAccount {
     event CreditLineAllowanceRefreshed(address indexed token, address indexed from, address indexed to, uint256 amount);
 
     function deposit(
-        uint256 amount,
         address token,
         address strategy,
-        address to
-    ) external payable returns (uint256 sharesReceived);
+        address to,
+        uint256 amount
+    ) external returns (uint256 sharesReceived);
 
     /**
      * @dev Used to switch saving strategy of an token
@@ -109,10 +119,10 @@ interface ISavingsAccount {
      * @param amount amount of tokens to be reinvested
      */
     function switchStrategy(
-        uint256 amount,
-        address token,
         address currentStrategy,
-        address newStrategy
+        address newStrategy,
+        address token,
+        uint256 amount
     ) external;
 
     /**
@@ -124,68 +134,83 @@ interface ISavingsAccount {
      * @param withdrawShares boolean indicating to withdraw in liquidity share or underlying token
      */
     function withdraw(
-        uint256 amount,
         address token,
         address strategy,
-        address payable withdrawTo,
+        address withdrawTo,
+        uint256 amount,
         bool withdrawShares
-    ) external returns (uint256);
+    ) external returns (uint256 amountWithdrawn);
 
     function withdrawAll(address token) external returns (uint256 tokenReceived);
 
     function withdrawAll(address token, address strategy) external returns (uint256 tokenReceived);
 
     function approve(
-        uint256 amount,
         address token,
-        address to
+        address to,
+        uint256 amount
     ) external;
 
     function increaseAllowance(
-        uint256 amount,
         address token,
-        address to
+        address to,
+        uint256 amount
     ) external;
 
     function decreaseAllowance(
-        uint256 amount,
         address token,
-        address to
+        address to,
+        uint256 amount
     ) external;
 
+    function transferShares(
+        uint256 _shares,
+        address _token,
+        address _strategy,
+        address _to
+    ) external returns (uint256);
+
     function transfer(
-        uint256 amount,
         address token,
-        address poolSavingsStrategy,
+        address strategy,
+        address to,
+        uint256 amount
+    ) external returns (uint256 tokensReceived);
+
+    function transferSharesFrom(
+        uint256 shares,
+        address token,
+        address strategy,
+        address from,
         address to
     ) external returns (uint256);
 
     function transferFrom(
-        uint256 amount,
         address token,
-        address poolSavingsStrategy,
+        address strategy,
         address from,
-        address to
-    ) external returns (uint256);
+        address to,
+        uint256 amount
+    ) external returns (uint256 tokensReceived);
 
     function balanceInShares(
         address user,
         address token,
         address strategy
-    ) external view returns (uint256);
+    ) external view returns (uint256 shareBalance);
 
     function increaseAllowanceToCreditLine(
-        uint256 amount,
         address token,
-        address from
+        address from,
+        uint256 amount
     ) external;
 
     function withdrawFrom(
-        uint256 amount,
         address token,
         address strategy,
         address from,
-        address payable to,
+        address to,
+        uint256 amount,
         bool withdrawShares
     ) external returns (uint256 amountReceived);
 
