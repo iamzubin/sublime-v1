@@ -9,12 +9,12 @@ import { PriceOracleSource } from '@utils/types';
 
 import { induceDelay } from '../helpers';
 
-export async function createPriceOracle(proxyAdmin: SignerWithAddress, admin: SignerWithAddress): Promise<PriceOracle> {
+export async function createPriceOracle(proxyAdmin: SignerWithAddress, admin: SignerWithAddress, weth: Address): Promise<PriceOracle> {
     let deployHelper: DeployHelper = await new DeployHelper(proxyAdmin);
     let priceOracleLogic: PriceOracle = await deployHelper.helper.deployPriceOracle();
     let priceOracleProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(priceOracleLogic.address, proxyAdmin.address);
     let priceOracle: PriceOracle = await deployHelper.helper.getPriceOracle(priceOracleProxy.address);
-    await (await priceOracle.connect(admin).initialize(admin.address)).wait();
+    await (await priceOracle.connect(admin).initialize(admin.address, weth)).wait();
     return priceOracle;
 }
 

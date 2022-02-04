@@ -93,6 +93,36 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
     }
 
     /**
+     * @notice used to register user
+     * @dev ohly owner can register users
+     * @param _user address of the user being registered
+     * @param _metadata metadata related to the user
+     * @param _isMasterLinked should master address be linked to itself
+     */
+    function registerUser(
+        address _user,
+        string memory _metadata,
+        bool _isMasterLinked
+    ) external onlyOwner {
+        require(bytes(userData[_user]).length == 0, 'User already exists');
+        verification.registerMasterAddress(_user, _isMasterLinked);
+        userData[_user] = _metadata;
+        emit UserRegistered(_user, _isMasterLinked, _metadata);
+    }
+
+    /**
+     * @notice used to unregister user
+     * @dev ohly owner can unregister users
+     * @param _user address of the user being unregistered
+     */
+    function unregisterUser(address _user) external onlyOwner {
+        require(bytes(userData[_user]).length != 0, 'User doesnt exists');
+        delete userData[_user];
+        verification.unregisterMasterAddress(_user, address(this));
+        emit UserUnregistered(_user);
+    }
+
+    /**
      * @notice used to update verification contract address
      * @dev ohly owner can update
      * @param _verification address of the verification contract
