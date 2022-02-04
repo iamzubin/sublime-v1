@@ -162,7 +162,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _lenderVerifier,
         uint256 _loanWithdrawalDuration,
         uint256 _collectionPeriod
-    ) external payable override initializer {
+    ) external override initializer {
         poolFactory = msg.sender;
         poolConstants.borrowAsset = _borrowAsset;
         poolConstants.idealCollateralRatio = _idealCollateralRatio;
@@ -189,7 +189,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @param _amount amount of collateral to be deposited denominated in collateral asset
      * @param _transferFromSavingsAccount if true, collateral is transferred from msg.sender's savings account, if false, it is transferred from their wallet
      */
-    function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable override {
+    function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external override {
         require(_amount != 0, 'DC1');
         require(balanceOf(msg.sender) == 0, 'DC2');
         _depositCollateral(msg.sender, _amount, _transferFromSavingsAccount);
@@ -295,7 +295,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         address _lender,
         uint256 _amount,
         bool _transferFromSavingsAccount
-    ) external payable override nonReentrant {
+    ) external override nonReentrant {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'ACMC1');
         require(balanceOf(msg.sender) == 0, 'ACMC2');
         require(getMarginCallEndTime(_lender) >= block.timestamp, 'ACMC3');
@@ -590,7 +590,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
     /**
      * @notice called to close the loan after repayment of principal
      */
-    function closeLoan() external payable override nonReentrant onlyRepaymentImpl {
+    function closeLoan() external override nonReentrant onlyRepaymentImpl {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'CL1');
 
         poolVariables.loanStatus = LoanStatus.CLOSED;
@@ -736,7 +736,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _fromSavingsAccount,
         bool _toSavingsAccount,
         bool _recieveLiquidityShare
-    ) external payable nonReentrant {
+    ) external nonReentrant {
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'LP1');
         require(IRepayment(repaymentImpl).didBorrowerDefault(address(this)), 'LP2');
@@ -861,9 +861,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         bool _fromSavingsAccount,
         bool _toSavingsAccount,
         bool _recieveLiquidityShare
-    ) external payable nonReentrant {
+    ) external nonReentrant {
         _canLenderBeLiquidated(_lender);
-
         address _poolSavingsStrategy = poolConstants.poolSavingsStrategy;
         (uint256 _lenderCollateralLPShare, uint256 _lenderBalance) = _updateLenderSharesDuringLiquidation(_lender);
 
