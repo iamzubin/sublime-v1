@@ -49,24 +49,24 @@ export default class DeployCoreContracts {
         return new NoYield__factory(this._deployerSigner).attach(noYieldAddress);
     }
 
-    public async deployAaveYield(): Promise<AaveYield> {
-        return await (await new AaveYield__factory(this._deployerSigner).deploy()).deployed();
+    public async deployAaveYield(weth: Address): Promise<AaveYield> {
+        return await (await new AaveYield__factory(this._deployerSigner).deploy(weth)).deployed();
     }
 
     public async getAaveYield(aaveYieldAddress: Address): Promise<AaveYield> {
         return await new AaveYield__factory(this._deployerSigner).attach(aaveYieldAddress);
     }
 
-    public async deployCompoundYield(): Promise<CompoundYield> {
-        return await (await new CompoundYield__factory(this._deployerSigner).deploy()).deployed();
+    public async deployCompoundYield(weth: Address): Promise<CompoundYield> {
+        return await (await new CompoundYield__factory(this._deployerSigner).deploy(weth)).deployed();
     }
 
     public async getCompoundYield(compoundYieldAddress: Address): Promise<CompoundYield> {
         return await new CompoundYield__factory(this._deployerSigner).attach(compoundYieldAddress);
     }
 
-    public async deployYearnYield(): Promise<YearnYield> {
-        return await (await new YearnYield__factory(this._deployerSigner).deploy()).deployed();
+    public async deployYearnYield(weth: Address): Promise<YearnYield> {
+        return await (await new YearnYield__factory(this._deployerSigner).deploy(weth)).deployed();
     }
 
     public async getYearnYield(yearnYieldAddress: Address): Promise<YearnYield> {
