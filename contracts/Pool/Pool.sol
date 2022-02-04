@@ -466,7 +466,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         // Similarly, we use 100 for _to's effectiveInterestWithdrawn calculation since their future interest withdrawals are calculated
         // based on 100 pool tokens. Refer calculateRepaymentWithdrawable()
         _withdrawRepayment(_from);
-        _withdrawRepayment(_to)
+        _withdrawRepayment(_to);
         uint256 _totalRepaidAmount = IRepayment(repaymentImpl).getTotalRepaidAmount(address(this));
         uint256 _totalSupply = totalSupply();
         uint256 _fromBalance = balanceOf(_from);
