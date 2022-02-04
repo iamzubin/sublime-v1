@@ -267,9 +267,8 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     ) external payable onlyBorrower(_verifier) {
         if (_collateralToken == address(0)) {
             require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
-        }
-        else {            
-            require(msg.value == 0, 'PoolFactory::createPool - ETH is not required for this operation');
+        } else {
+            require(msg.value == 0, 'PoolFactory::createPool - Ether not required when collateral Token is not ETH');
         }
         require(_borrowToken != _collateralToken, 'PoolFactory::createPool - cant borrow the asset put in as collateralToken');
         require(isBorrowToken[_borrowToken], 'PoolFactory::createPool - Invalid borrow token type');
