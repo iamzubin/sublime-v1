@@ -84,13 +84,13 @@ interface IPool {
 
     function getLoanStatus() external view returns (uint256);
 
-    function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external payable;
+    function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external;
 
     function addCollateralInMarginCall(
         address _lender,
         uint256 _amount,
         bool _isDirect
-    ) external payable;
+    ) external;
 
     function withdrawBorrowedAmount() external;
 
@@ -103,4 +103,28 @@ interface IPool {
     function totalSupply() external view returns (uint256);
 
     function closeLoan() external;
+
+    function initialize(
+        uint256 _borrowAmountRequested,
+        uint256 _borrowRate,
+        address _borrower,
+        address _borrowAsset,
+        address _collateralAsset,
+        uint256 _idealCollateralRatio,
+        uint64 _repaymentInterval,
+        uint64 _noOfRepaymentIntervals,
+        address _poolSavingsStrategy,
+        uint256 _collateralAmount,
+        bool _transferFromSavingsAccount,
+        address _lenderVerifier,
+        uint256 _loanWithdrawalDuration,
+        uint256 _collectionPeriod
+    ) external;
+
+    function lend(
+        address _lender,
+        uint256 _amount,
+        address _strategy,
+        bool _fromSavingsAccount
+    ) external;
 }
