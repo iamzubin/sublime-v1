@@ -706,7 +706,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _lender = creditLineConstants[_id].lender;
 
         updateinterestAccruedTillLastPrincipalUpdate(_id);
-        creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_amount);
         creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
 
         uint256 _balanceBefore = IERC20(_borrowAsset).balanceOf(address(this));
@@ -714,6 +713,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _balanceAfter = IERC20(_borrowAsset).balanceOf(address(this));
 
         uint256 _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
+        creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_tokenDiffBalance);
+
         uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
         _tokenDiffBalance = _tokenDiffBalance.sub(_protocolFee);
 
