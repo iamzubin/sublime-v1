@@ -227,6 +227,7 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
         uint256 _amount,
         bool _transferFromSavingsAccount
     ) internal nonReentrant {
+        require(poolVariables.loanStatus == LoanStatus.ACTIVE || poolVariables.loanStatus == LoanStatus.COLLECTION, '_depositCollateral: Pool should be active to deposit any collateral');
         uint256 _sharesReceived = _deposit(
             poolConstants.collateralAsset,
             poolConstants.poolSavingsStrategy,
