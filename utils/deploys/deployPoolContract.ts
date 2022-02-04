@@ -35,8 +35,10 @@ export default class DeployPoolContracts {
         return await new Extension__factory(this._deployerSigner).attach(extensionAddress);
     }
 
-    public async deployPool(): Promise<Pool> {
-        return await (await new Pool__factory(this._deployerSigner).deploy()).deployed();
+    public async deployPool(priceOracle: Address, savingsAccount: Address, extenstions: Address, repaymentImpl: Address): Promise<Pool> {
+        return await (
+            await new Pool__factory(this._deployerSigner).deploy(priceOracle, savingsAccount, extenstions, repaymentImpl)
+        ).deployed();
     }
 
     public async getPool(poolAddress: Address): Promise<Pool> {
