@@ -176,8 +176,6 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
         poolConstants.repaymentInterval = _repaymentInterval;
         poolConstants.lenderVerifier = _lenderVerifier;
 
-        poolConstants.loanStartTime = block.timestamp.add(_collectionPeriod);
-        poolConstants.loanWithdrawalDeadline = block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration);
         poolConstants.loanStartTime = uint64(block.timestamp.add(_collectionPeriod));
         poolConstants.loanWithdrawalDeadline = uint64(block.timestamp.add(_collectionPeriod).add(_loanWithdrawalDuration));
         __ReentrancyGuard_init();
