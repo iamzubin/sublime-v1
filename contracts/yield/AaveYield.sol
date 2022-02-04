@@ -287,15 +287,16 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         return (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
     }
 
-    function _depositETH(uint256 amount) internal returns (address, uint256) {
-        address aToken = IWETHGateway(wethGateway).getAWETHAddress();
+    function _depositETH(uint256 amount) internal returns (address aToken, uint256 sharesReceived) {
+        IWETHGateway gateway = IWETHGateway(wethGateway);
+        aToken = gateway.getAWETHAddress();
 
         uint256 aTokensBefore = IERC20(aToken).balanceOf(address(this));
 
         address lendingPool = ILendingPoolAddressesProvider(lendingPoolAddressesProvider).getLendingPool();
 
         //lock collateral
-        IWETHGateway(wethGateway).depositETH{value: amount}(lendingPool, address(this), referralCode);
+        gateway.depositETH{value: amount}(lendingPool, address(this), referralCode);
 
         uint256 sharesReceived = IERC20(aToken).balanceOf(address(this)).sub(aTokensBefore);
 
@@ -320,13 +321,14 @@ contract AaveYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard
         return (aToken, sharesReceived);
     }
 
-    function _withdrawETH(uint256 amount) internal returns (uint256) {
-        IERC20(IWETHGateway(wethGateway).getAWETHAddress()).approve(wethGateway, amount);
+    function _withdrawETH(uint256 amount) internal returns (uint256 received) {
+        IWETHGateway gateway = IWETHGateway(wethGateway);
+        IERC20(gateway.getAWETHAddress()).approve(wethGateway, amount);
 
         uint256 ethBalance = address(this).balance;
 
         //lock collateral
-        IWETHGateway(wethGateway).withdrawETH(amount, address(this));
+        gateway.withdrawETH(amount, address(this));
 
         return (address(this).balance.sub(ethBalance));
     }

@@ -425,7 +425,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _transferTokens(msg.sender, _poolID, _asset, _amountToPay);
         emit PrincipalRepaid(_poolID, _amount);
 
-        IPool(_poolID).closeLoan();
+        _pool.closeLoan();
     }
 
     /// @notice Returns the total amount that has been repaid by the borrower till now
