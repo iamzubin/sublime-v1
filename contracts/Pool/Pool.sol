@@ -580,7 +580,7 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
      * @notice used to terminate the pool
      * @dev kill switch for owner to terminate the pool
      */
-    function terminatePool() external onlyOwner {
+    function terminatePool() external nonReentrant onlyOwner {
         _withdrawAllCollateral(msg.sender, 0);
         _pause();
         poolVariables.loanStatus = LoanStatus.TERMINATED;
@@ -628,12 +628,10 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
             //assuming their will be no tokens in pool in any case except liquidation (to be checked) or we should store the amount in liquidate()
             _toTransfer = _toTransfer.mul(_totalAsset).div(totalSupply());
         }
-
-        if (_loanStatus == LoanStatus.CANCELLED) {
+        else if (_loanStatus == LoanStatus.CANCELLED) {
             _toTransfer = _toTransfer.add(_toTransfer.mul(poolVariables.penaltyLiquidityAmount).div(totalSupply()));
         }
-
-        if (_loanStatus == LoanStatus.CLOSED) {
+        else if (_loanStatus == LoanStatus.CLOSED) {
             //transfer repayment
             _withdrawRepayment(msg.sender);
         }
@@ -652,7 +650,7 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
      * or the lender has already called it.
      */
 
-    function requestMarginCall() external isLender(msg.sender) {
+    function requestMarginCall() external nonReentrant isLender(msg.sender) {
         require(poolVariables.loanStatus == LoanStatus.ACTIVE, 'RMC1');
 
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);

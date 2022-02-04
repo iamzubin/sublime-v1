@@ -141,6 +141,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         require(linkedAddresses[msg.sender].masterAddress == address(0), 'V:LA-Address already linked');
         require(pendingLinkAddresses[msg.sender][_masterAddress], 'V:LA-No pending request');
         _linkAddress(msg.sender, _masterAddress);
+        delete pendingLinkAddresses[msg.sender][_masterAddress]; 
     }
 
     /// @notice Unlink address with master address
@@ -148,7 +149,6 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @param _linkedAddress Address that is being unlinked
     function unlinkAddress(address _linkedAddress) external {
         address _linkedTo = linkedAddresses[_linkedAddress].masterAddress;
-        require(_linkedTo != address(0), 'V:UA-Address not linked');
         require(_linkedTo == msg.sender, 'V:UA-Not linked to sender');
         delete linkedAddresses[_linkedAddress];
         emit AddressUnlinked(_linkedAddress, _linkedTo);
