@@ -258,7 +258,8 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
         uint256 _amount,
         bool _fromSavingsAccount,
         bool _toSavingsAccount
-    ) internal returns (uint256 _sharesReceived) {
+    ) internal returns (uint256) {
+        uint256 _sharesReceived;
         if (_fromSavingsAccount) {
             _sharesReceived = SavingsAccountUtil.depositFromSavingsAccount(
                 ISavingsAccount(savingsAccount),
@@ -281,6 +282,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
                 _toSavingsAccount
             );
         }
+        return _sharesReceived;
     }
 
     /**
@@ -663,7 +665,7 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
 
     /**
      * @notice used to get the interest accrued till current time in the current loan duration
-     * @return ineterest accrued till current time
+     * @return interest accrued till current time
      */
     function interestToPay() public view returns (uint256) {
         IPoolFactory _poolFactory = IPoolFactory(poolFactory);
@@ -686,35 +688,36 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
      * @param _balance the principal amount lent
      * @param _liquidityShares amount of collateral tokens available
-     * @return _ratio the collateral ratio
+     * @return _ratio: the collateral ratio
      */
-    function calculateCollateralRatio(uint256 _balance, uint256 _liquidityShares) public returns (uint256 _ratio) {
+    function calculateCollateralRatio(uint256 _balance, uint256 _liquidityShares) public returns (uint256) {
         uint256 _interest = interestToPay().mul(_balance).div(totalSupply());
         address _collateralAsset = poolConstants.collateralAsset;
         address _strategy = poolConstants.poolSavingsStrategy;
         uint256 _currentCollateralTokens = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
 
         uint256 _equivalentCollateral = getEquivalentTokens(_collateralAsset, poolConstants.borrowAsset, _currentCollateralTokens);
-        _ratio = _equivalentCollateral.mul(SCALING_FACTOR).div(_balance.add(_interest));
+        
+        return (_equivalentCollateral.mul(SCALING_FACTOR).div(_balance.add(_interest)));
     }
 
     /**
      * @notice used to get the current collateral ratio of the borrow pool
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
-     * @return _ratio the current collateral ratio of the borrow pool
+     * @return _ratio: the current collateral ratio of the borrow pool
      */
-    function getCurrentCollateralRatio() public returns (uint256 _ratio) {
+    function getCurrentCollateralRatio() public returns (uint256) {
         uint256 _liquidityShares = poolVariables.baseLiquidityShares.add(poolVariables.extraLiquidityShares);
 
-        _ratio = calculateCollateralRatio(totalSupply(), _liquidityShares);
+        return (calculateCollateralRatio(totalSupply(), _liquidityShares));
     }
 
     /**
      * @notice used to get the current collateral ratio of a lender
      * @dev is a view function for the protocol itself, but isn't view because of getTokensForShares which is not view
-     * @return _ratio the current collateral ratio of the lender
+     * @return _ratio: the current collateral ratio of the lender
      */
-    function getCurrentCollateralRatio(address _lender) public returns (uint256 _ratio) {
+    function getCurrentCollateralRatio(address _lender) public returns (uint256) {
         uint256 _balanceOfLender = balanceOf(_lender);
         uint256 _liquidityShares = (poolVariables.baseLiquidityShares.mul(_balanceOfLender).div(totalSupply())).add(
             lenders[_lender].extraLiquidityShares
@@ -807,17 +810,18 @@ contract Pool is Initializable, ERC20PausableUpgradeable, IPool, ReentrancyGuard
      */
     function _updateLenderSharesDuringLiquidation(address _lender)
         internal
-        returns (uint256 _lenderCollateralLPShare, uint256 _lenderBalance)
+        returns (uint256, uint256)
     {
         uint256 _poolBaseLPShares = poolVariables.baseLiquidityShares;
-        _lenderBalance = balanceOf(_lender);
+        uint _lenderBalance = balanceOf(_lender);
 
         uint256 _lenderBaseLPShares = (_poolBaseLPShares.mul(_lenderBalance)).div(totalSupply());
         uint256 _lenderExtraLPShares = lenders[_lender].extraLiquidityShares;
         poolVariables.baseLiquidityShares = _poolBaseLPShares.sub(_lenderBaseLPShares);
         poolVariables.extraLiquidityShares = poolVariables.extraLiquidityShares.sub(_lenderExtraLPShares);
 
-        _lenderCollateralLPShare = _lenderBaseLPShares.add(_lenderExtraLPShares);
+        uint _lenderCollateralLPShare = _lenderBaseLPShares.add(_lenderExtraLPShares);
+        return (_lenderCollateralLPShare, _lenderBalance);
     }
 
     /**

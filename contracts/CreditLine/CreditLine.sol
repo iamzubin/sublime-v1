@@ -873,11 +873,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @return _amount total collateral tokens deposited into the credit line
      */
-    function calculateTotalCollateralTokens(uint256 _id) public returns (uint256 _amount) {
+    function calculateTotalCollateralTokens(uint256 _id) public returns (uint256) {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
         uint256 _liquidityShares;
-
+        uint256 _amount;
         for (uint256 index; index < _strategyList.length; ++index) {
             if (_strategyList[index] == address(0)) {
                 continue;
@@ -887,6 +887,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
             _amount = _amount.add(_tokenInStrategy);
         }
+        return _amount;
     }
 
     /**

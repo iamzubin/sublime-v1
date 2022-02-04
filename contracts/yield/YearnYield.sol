@@ -101,10 +101,11 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         address _asset,
         address payable _wallet,
         uint256 _amount
-    ) external onlyOwner nonReentrant returns (uint256 received) {
+    ) external onlyOwner nonReentrant returns (uint256) {
         require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
         uint256 amount = _amount;
+        uint256 received;
         if (_amount != 0) {
             if (_asset == address(0)) {
                 amount = address(this).balance;
@@ -120,6 +121,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
             received = _withdrawERC(_asset, investedTo, amount);
         }
         IERC20(_asset).safeTransfer(_wallet, received);
+        return received;
     }
 
     /**
@@ -134,9 +136,9 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         address user,
         address asset,
         uint256 amount
-    ) external override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
-
+        uint256 sharesReceived;
         address investedTo = liquidityToken[asset];
         IERC20(asset).safeTransferFrom(user, address(this), amount);
         if (asset == weth) {
@@ -147,6 +149,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         }
 
         emit LockedTokens(user, investedTo, sharesReceived);
+        return sharesReceived;
     }
 
     /**
@@ -155,10 +158,10 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
      * @param amount the amount of asset
      * @return received amount of tokens received
      **/
-    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
+    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
-
+        uint256 received;
         if (asset == weth) {
             received = _withdrawETH(investedTo, amount);
             IWETH9(weth).deposit{value: received}();
@@ -168,6 +171,7 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         IERC20(asset).safeTransfer(savingsAccount, received);
 
         emit UnlockedTokens(asset, received);
+        return received;
     }
 
     /**
@@ -191,37 +195,40 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
     /**
      * @dev Used to get amount of underlying tokens for current number of shares
      * @param shares the amount of shares
-     * @return amount amount of underlying tokens
+     * @return amount: amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) public view override returns (uint256 amount) {
+    function getTokensForShares(uint256 shares, address asset) public view override returns (uint256) {
         if (shares == 0) return 0;
-        amount = IyVault(liquidityToken[asset]).getPricePerFullShare().mul(shares).div(1e18);
+        uint256 amount = IyVault(liquidityToken[asset]).getPricePerFullShare().mul(shares).div(1e18);
+        return amount;
     }
 
     /**
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
      * @param asset the address of token
-     * @return shares amount of shares for given tokens
+     * @return shares: amount of shares for given tokens
      **/
-    function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256 shares) {
-        shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
+    function getSharesForTokens(uint256 amount, address asset) external view override returns (uint256) {
+        uint256 shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
+        return shares;
     }
 
-    function _depositETH(address vault, uint256 amount) internal returns (uint256 sharesReceived) {
+    function _depositETH(address vault, uint256 amount) internal returns (uint256) {
         uint256 initialTokenBalance = IERC20(vault).balanceOf(address(this));
 
         //mint vault
         IyVault(vault).depositETH{value: amount}();
 
-        sharesReceived = IERC20(vault).balanceOf(address(this)).sub(initialTokenBalance);
+        uint256 sharesReceived = IERC20(vault).balanceOf(address(this)).sub(initialTokenBalance);
+        return sharesReceived;
     }
 
     function _depositERC20(
         address asset,
         address vault,
         uint256 amount
-    ) internal returns (uint256 sharesReceived) {
+    ) internal returns (uint256) {
         uint256 sharesBefore = IERC20(vault).balanceOf(address(this));
 
         //lock collateral in vault
@@ -229,27 +236,30 @@ contract YearnYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuar
         IERC20(asset).approve(vault, amount);
         IyVault(vault).deposit(amount);
 
-        sharesReceived = IERC20(vault).balanceOf(address(this)).sub(sharesBefore);
+        uint256 sharesReceived = IERC20(vault).balanceOf(address(this)).sub(sharesBefore);
+        return sharesReceived;
     }
 
-    function _withdrawETH(address vault, uint256 amount) internal returns (uint256 received) {
+    function _withdrawETH(address vault, uint256 amount) internal returns (uint256) {
         uint256 ethBalance = address(this).balance;
 
         IyVault(vault).withdrawETH(amount);
 
-        received = address(this).balance.sub(ethBalance);
+        uint256 received = address(this).balance.sub(ethBalance);
+        return received;
     }
 
     function _withdrawERC(
         address asset,
         address vault,
         uint256 amount
-    ) internal returns (uint256 tokensReceived) {
+    ) internal returns (uint256) {
         uint256 initialAssetBalance = IERC20(asset).balanceOf(address(this));
 
         IyVault(vault).withdraw(amount);
 
-        tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
+        uint256 tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
+        return tokensReceived;
     }
 
     receive() external payable {}

@@ -110,11 +110,12 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         address _asset,
         address payable _wallet,
         uint256 _amount
-    ) external onlyOwner returns (uint256 received) {
+    ) external onlyOwner returns (uint256) {
         require(_wallet != address(0), 'cant burn');
         address investedTo = liquidityToken[_asset];
-
+        uint256 received;
         uint256 amount = _amount;
+        
         if (_amount == 0) {
             amount = IERC20(investedTo).balanceOf(address(this));
         }
@@ -126,6 +127,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
             received = _withdrawERC(_asset, investedTo, amount);
         }
         IERC20(_asset).safeTransfer(_wallet, received);
+        return received;
     }
 
     /**
@@ -158,8 +160,9 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         address user,
         address asset,
         uint256 amount
-    ) external override onlySavingsAccount nonReentrant returns (uint256 sharesReceived) {
+    ) external override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
+        uint256 sharesReceived;
         address investedTo = liquidityToken[asset];
         IERC20(asset).safeTransferFrom(user, address(this), amount);
         if (asset == weth) {
@@ -169,18 +172,19 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
             sharesReceived = _depositERC20(asset, investedTo, amount);
         }
         emit LockedTokens(user, investedTo, sharesReceived);
+        return sharesReceived;
     }
 
     /**
      * @notice Used to unlock tokens from available protocol
      * @param asset the address of share token
      * @param amount the amount of asset
-     * @return received amount of tokens received
+     * @return amount of tokens received
      **/
-    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256 received) {
+    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
         require(amount != 0, 'Invest: amount');
         address investedTo = liquidityToken[asset];
-
+        uint256 received;
         if (asset == weth) {
             received = _withdrawETH(investedTo, amount);
             IWETH9(weth).deposit{value: received}();
@@ -190,6 +194,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         IERC20(asset).safeTransfer(savingsAccount, received);
 
         emit UnlockedTokens(asset, received);
+        return received;
     }
 
     /**
@@ -213,40 +218,42 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @dev Used to get amount of underlying tokens for given number of shares
      * @param shares the amount of shares
      * @param asset the address of token locked
-     * @return amount amount of underlying tokens
+     * @return amount of underlying tokens
      **/
-    function getTokensForShares(uint256 shares, address asset) public override returns (uint256 amount) {
+    function getTokensForShares(uint256 shares, address asset) public override returns (uint256) {
         //balanceOfUnderlying returns underlying balance for total shares
         if (shares == 0) return 0;
         address cToken = liquidityToken[asset];
-        amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
+        uint256 amount = ICToken(cToken).balanceOfUnderlying(address(this)).mul(shares).div(IERC20(cToken).balanceOf(address(this)));
+        return amount;
     }
 
     /**
      * @notice Used to get number of shares from an amount of underlying tokens
      * @param amount the amount of tokens
      * @param asset the address of token
-     * @return shares amount of shares for given tokens
+     * @return amount of shares for given tokens
      **/
-    function getSharesForTokens(uint256 amount, address asset) external override returns (uint256 shares) {
-        shares = (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
+    function getSharesForTokens(uint256 amount, address asset) external override returns (uint256) {
+        return (amount.mul(1e18)).div(getTokensForShares(1e18, asset));
     }
 
-    function _depositETH(address cToken, uint256 amount) internal returns (uint256 sharesReceived) {
+    function _depositETH(address cToken, uint256 amount) internal returns (uint256) {
         uint256 initialCTokenBalance = IERC20(cToken).balanceOf(address(this));
         //mint cToken
         ICEther(cToken).mint{value: amount}();
 
         uint256 latterCTokenBalance = IERC20(cToken).balanceOf(address(this));
         require(depositLimit[cToken] > latterCTokenBalance, "Can't deposit more than permissible limit");
-        sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
+        uint256 sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
+        return sharesReceived;
     }
 
     function _depositERC20(
         address asset,
         address cToken,
         uint256 amount
-    ) internal returns (uint256 sharesReceived) {
+    ) internal returns (uint256) {
         uint256 initialCTokenBalance = IERC20(cToken).balanceOf(address(this));
         //mint cToken
         IERC20(asset).approve(cToken, 0);
@@ -255,25 +262,27 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
 
         uint256 latterCTokenBalance = IERC20(cToken).balanceOf(address(this));
         require(depositLimit[cToken] > latterCTokenBalance, "Can't deposit more than permissible limit");
-        sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
+        uint256 sharesReceived = latterCTokenBalance.sub(initialCTokenBalance);
+        return sharesReceived;
     }
 
-    function _withdrawETH(address cToken, uint256 amount) internal returns (uint256 received) {
+    function _withdrawETH(address cToken, uint256 amount) internal returns (uint256) {
         uint256 ethBalance = address(this).balance;
 
         require(ICToken(cToken).redeem(amount) == 0, 'Error in unwrapping');
 
-        received = address(this).balance.sub(ethBalance);
+        return (address(this).balance.sub(ethBalance));
     }
 
     function _withdrawERC(
         address asset,
         address cToken,
         uint256 amount
-    ) internal returns (uint256 tokensReceived) {
+    ) internal returns (uint256) {
         uint256 initialAssetBalance = IERC20(asset).balanceOf(address(this));
         require(ICToken(cToken).redeem(amount) == 0, 'Error in unwrapping');
-        tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
+        uint256 tokensReceived = IERC20(asset).balanceOf(address(this)).sub(initialAssetBalance);
+        return tokensReceived;
     }
 
     function setDepositLimit(address asset, uint256 limit) external onlyOwner {

@@ -139,7 +139,7 @@ interface ISavingsAccount {
         address withdrawTo,
         uint256 amount,
         bool withdrawShares
-    ) external returns (uint256);
+    ) external returns (uint256 amountWithdrawn);
 
     function withdrawAll(address token) external returns (uint256 tokenReceived);
 
@@ -175,7 +175,7 @@ interface ISavingsAccount {
         address strategy,
         address to,
         uint256 amount
-    ) external returns (uint256);
+    ) external returns (uint256 tokensReceived);
 
     function transferSharesFrom(
         uint256 shares,
@@ -191,13 +191,13 @@ interface ISavingsAccount {
         address from,
         address to,
         uint256 amount
-    ) external returns (uint256);
+    ) external returns (uint256 tokensReceived);
 
     function balanceInShares(
         address user,
         address token,
         address strategy
-    ) external view returns (uint256);
+    ) external view returns (uint256 shareBalance);
 
     function increaseAllowanceToCreditLine(
         address token,
