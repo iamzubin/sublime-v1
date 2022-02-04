@@ -133,33 +133,34 @@ interface IPoolFactory {
      */
     event NoStrategyUpdated(address noStrategy);
 
-    function savingsAccount() external view returns (address);
+    function savingsAccount() external view returns (address savingsAccount);
 
-    function owner() external view returns (address);
+    function owner() external view returns (address owner);
 
-    function poolRegistry(address pool) external view returns (bool);
+    function poolRegistry(address pool) external view returns (bool isPoolValid);
 
-    function priceOracle() external view returns (address);
+    function priceOracle() external view returns (address priceOracle);
 
-    function extension() external view returns (address);
+    function extension() external view returns (address extension);
 
-    function repaymentImpl() external view returns (address);
+    function repaymentImpl() external view returns (address repaymentImpl);
 
-    function userRegistry() external view returns (address);
+    function userRegistry() external view returns (address userRegistry);
 
-    function collectionPeriod() external view returns (uint256);
+    function collectionPeriod() external view returns (uint256 collectionPeriod);
 
-    function loanWithdrawalDuration() external view returns (uint256);
+    function loanWithdrawalDuration() external view returns (uint256 loanWithdrawalDuration);
 
-    function marginCallDuration() external view returns (uint256);
+    function marginCallDuration() external view returns (uint256 marginCallDuration);
 
-    function minBorrowFraction() external view returns (uint256);
+    function minBorrowFraction() external view returns (uint256 minBorrowFraction);
 
-    function liquidatorRewardFraction() external view returns (uint256);
+    function liquidatorRewardFraction() external view returns (uint256 liquidatorRewardFraction);
 
-    function poolCancelPenaltyMultiple() external view returns (uint256);
+    function poolCancelPenaltyMultiple() external view returns (uint256 poolCancelPenaltyMultiple);
 
-    function getProtocolFeeData() external view returns (uint256, address);
+    function getProtocolFeeData() external view returns (uint256 protocolFeeFraction, address protocolFeeCollector);
 
-    function noStrategyAddress() external view returns (address);
+    function noStrategyAddress() external view returns (address noStrategyAddress);
 }
+ 
