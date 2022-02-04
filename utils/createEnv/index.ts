@@ -28,7 +28,7 @@ import { zeroAddress } from '../../config/constants';
 import { createAaveYieldWithInit, createCompoundYieldWithInit, createNoYieldWithInit, createYearnYieldWithInit } from './yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from './verification';
 import { createPriceOracle, setPriceOracleFeeds } from './priceOracle';
-import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from './poolFactory';
+import { addSupportedTokens, createBeacon, createPoolFactory, initPoolFactory, setImplementations } from './poolFactory';
 import { createExtenstionWithInit } from './extension';
 import { createRepaymentsWithInit } from './repayments';
 import { createPool } from './poolLogic';
@@ -54,7 +54,7 @@ export async function createEnvironment(
     creditLineDefaultStrategy: CreditLineDefaultStrategy,
     creditLineInitParams: CreditLineInitParams,
     verificationInitParams: VerificationParams,
-    wethTokenAddress: string
+    weth: Address
 ): Promise<Environment> {
     const env = {} as Environment;
     const yields = {} as Yields;
@@ -105,9 +105,9 @@ export async function createEnvironment(
     env.impersonatedAccounts = await getImpersonatedAccounts(hre, whales);
 
     yields.noYield = await createNoYieldWithInit(proxyAdmin, admin, env.savingsAccount);
-    yields.aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, env.savingsAccount);
-    yields.yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedYearnTokens);
-    yields.compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedCompoundTokens);
+    yields.aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, env.savingsAccount, weth);
+    yields.yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedYearnTokens, weth);
+    yields.compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, env.savingsAccount, supportedCompoundTokens, weth);
 
     await env.strategyRegistry.connect(admin).addStrategy(yields.aaveYield.address);
     await env.strategyRegistry.connect(admin).addStrategy(yields.yearnYield.address);
@@ -119,9 +119,10 @@ export async function createEnvironment(
 
     await env.verification.connect(admin).addVerifier(env.adminVerifier.address);
     await env.adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
-    env.priceOracle = await createPriceOracle(proxyAdmin, admin, wethTokenAddress);
+    env.priceOracle = await createPriceOracle(proxyAdmin, admin, weth);
     await setPriceOracleFeeds(env.priceOracle, admin, priceFeeds);
 
+    env.beacon = await createBeacon(proxyAdmin, admin.address, zeroAddress);
     env.poolFactory = await createPoolFactory(proxyAdmin);
     env.extenstion = await createExtenstionWithInit(proxyAdmin, admin, env.poolFactory, extensionInitParams);
     env.repayments = await createRepaymentsWithInit(proxyAdmin, admin, env.poolFactory, env.savingsAccount, repaymentsInitParams);
@@ -131,6 +132,7 @@ export async function createEnvironment(
         admin: admin.address,
         protocolFeeCollector: protocolFeeCollector.address,
         noStrategy: yields.noYield.address,
+        beacon: env.beacon.address,
     });
 
     env.inputParams.poolFactoryInitParams = {
@@ -147,6 +149,8 @@ export async function createEnvironment(
         env.repayments.address
     );
 
+    await env.beacon.connect(admin).changeImpl(env.poolLogic.address);
+
     await addSupportedTokens(
         env.poolFactory,
         admin,
@@ -156,7 +160,6 @@ export async function createEnvironment(
     await setImplementations(
         env.poolFactory,
         admin,
-        env.poolLogic,
         env.repayments,
         env.verification,
         env.strategyRegistry,

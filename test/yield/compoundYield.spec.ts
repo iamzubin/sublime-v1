@@ -21,7 +21,7 @@ describe('Compound Yield', async () => {
     async function fixture() {
         const [proxyAdmin, admin, mockSavingsAccount]: SignerWithAddress[] = await ethers.getSigners();
         let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-        let compoundYieldLogic: CompoundYield = await deployHelper.core.deployCompoundYield();
+        let compoundYieldLogic: CompoundYield = await deployHelper.core.deployCompoundYield(Contracts.WETH);
         let proxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(compoundYieldLogic.address, proxyAdmin.address);
 
         let compoundYield: CompoundYield = await (await deployHelper.core.getCompoundYield(proxy.address)).connect(admin);

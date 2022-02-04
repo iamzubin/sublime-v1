@@ -20,11 +20,12 @@ export async function createAaveYieldWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount,
+    weth: Address,
     aaveYieldParams?: AaveYieldParams
 ): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
 
-    let aaveYieldLogic: AaveYield = await deployHelper.core.deployAaveYield();
+    let aaveYieldLogic: AaveYield = await deployHelper.core.deployAaveYield(weth);
     let aaveYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(aaveYieldLogic.address, proxyAdmin.address);
     let aaveYield: AaveYield = await deployHelper.core.getAaveYield(aaveYieldProxy.address);
 
@@ -55,10 +56,11 @@ export async function createCompoundYieldWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount,
-    pairs: CompoundPair[]
+    pairs: CompoundPair[],
+    weth: Address
 ): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    let compoundYieldLogic: CompoundYield = await deployHelper.core.deployCompoundYield();
+    let compoundYieldLogic: CompoundYield = await deployHelper.core.deployCompoundYield(weth);
     let compoundYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(compoundYieldLogic.address, proxyAdmin.address);
     let compoundYield: CompoundYield = await deployHelper.core.getCompoundYield(compoundYieldProxy.address);
 
@@ -77,10 +79,11 @@ export async function createYearnYieldWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount,
-    pairs: YearnPair[]
+    pairs: YearnPair[],
+    weth: Address
 ): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    let yearnYieldLogic: YearnYield = await deployHelper.core.deployYearnYield();
+    let yearnYieldLogic: YearnYield = await deployHelper.core.deployYearnYield(weth);
     let yearnYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(yearnYieldLogic.address, proxyAdmin.address);
     let yearnYield: YearnYield = await deployHelper.core.getYearnYield(yearnYieldProxy.address);
 
