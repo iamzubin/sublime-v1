@@ -80,14 +80,15 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
         address _asset,
         address payable _wallet,
         uint256 _amount
-    ) external onlyOwner returns (uint256 received) {
+    ) external onlyOwner returns (uint256) {
         require(_wallet != address(0), 'cant burn');
-        uint256 amount = _amount;
+        uint256 received = _amount;
         if (_amount == 0) {
-            amount = IERC20(_asset).balanceOf(address(this));
+            received = IERC20(_asset).balanceOf(address(this));
         }
         IERC20(_asset).safeTransfer(_wallet, received);
-        received = amount;
+
+        return received;
     }
 
     /**
