@@ -153,6 +153,14 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     }
 
     /**
+     * @notice emitted when threhsolds for one of the parameters (borrowLimitLimits, idealCollateralRatioLimits, borrowRateLimits) is updated
+     * @param limitType specifies the parameter whose limits are being updated
+     * @param max maximum threshold value for limitType
+     * @param min minimum threshold value for limitType
+     */
+    event LimitsUpdated(string indexed limitType, uint256 max, uint256 min);
+
+    /**
      * @notice emitted when a collateral is deposited into credit line
      * @param id id of the credit line
      * @param amount amount of collateral deposited
