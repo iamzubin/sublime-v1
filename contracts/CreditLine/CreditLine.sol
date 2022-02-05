@@ -56,6 +56,32 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool autoLiquidation;
         bool requestByLender;
     }
+
+    /*
+     * @notice Used to define limits for the credit line parameters
+     * @param min the minimum threshold for the parameter
+     * @param max the maximum threshold for the parameter
+     */
+    struct Limits {
+        uint256 min;
+        uint256 max;
+    }
+
+    /*
+     * @notice Used to set the min/max borrow limits for credit lines
+     */
+    Limits borrowLimitLimits;
+
+    /*
+     * @notice Used to set the min/max collateral ratio for credit lines
+     */
+    Limits idealCollateralRatioLimits;
+
+    /*
+     * @notice Used to set the min/max borrow rate for credit lines
+     */
+    Limits borrowRateLimits;
+
     /**
      * @notice stores the collateral shares in a credit line per strategy
      * @dev creditLineId => Strategy => collateralShares
@@ -242,6 +268,58 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param liquidatorRewardFraction fraction of the liquidated amount given as reward to the liquidator
      */
     event LiquidationRewardFractionUpdated(uint256 liquidatorRewardFraction);
+
+    /**
+     * @notice invoked to check if credit lines parameters are within thresholds
+     * @param _value supplied value of the parameter
+     * @param _min minimum threshold of the parameter
+     * @param _max maximum threshold of the parameter
+     */
+    function isWithinLimits(
+        uint256 _value,
+        uint256 _min,
+        uint256 _max
+    ) internal pure returns (bool) {
+        if (_min != 0 && _max != 0) {
+            return (_value >= _min && _value <= _max);
+        } else if (_min != 0) {
+            return (_value >= _min);
+        } else if (_max != 0) {
+            return (_value <= _max);
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * @notice used to update the thresholds of the borrow limit of the credit line
+     * @param _min updated value of the minimum threshold value of the borrow limit
+     * @param _max updated value of the maximum threshold value of the borrow limit
+     */
+    function updateBorrowLimitLimits(uint256 _min, uint256 _max) external onlyOwner {
+        borrowLimitLimits = Limits(_min, _max);
+        emit LimitsUpdated('borrowLimit', _min, _max);
+    }
+
+    /**
+     * @notice used to update the thresholds of the ideal collateral ratio of the credit line
+     * @param _min updated value of the minimum threshold value of the ideal collateral ratio
+     * @param _max updated value of the maximum threshold value of the ideal collateral ratio
+     */
+    function updateIdealCollateralRatioLimits(uint256 _min, uint256 _max) external onlyOwner {
+        idealCollateralRatioLimits = Limits(_min, _max);
+        emit LimitsUpdated('idealCollateralRatio', _min, _max);
+    }
+
+    /**
+     * @notice used to update the thresholds of the borrow rate of the credit line
+     * @param _min updated value of the minimum threshold value of the borrow rate
+     * @param _max updated value of the maximum threshold value of the borrow rate
+     */
+    function updateBorrowRateLimits(uint256 _min, uint256 _max) external onlyOwner {
+        borrowRateLimits = Limits(_min, _max);
+        emit LimitsUpdated('borrowRate', _min, _max);
+    }
 
     /**
      * @notice used to initialize the contract
@@ -531,7 +609,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     ) external returns (uint256) {
         require(_borrowAsset != _collateralAsset, 'R: cant borrow lent token');
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'R: No price feed');
-
+        require(isWithinLimits(_borrowLimit, borrowLimitLimits.min, borrowLimitLimits.max), 'R: _borrowLimit out of limits');
+        require(isWithinLimits(_borrowRate, borrowRateLimits.min, borrowRateLimits.max), 'R: _borrowRate out of limits');
+        require(isWithinLimits(_collateralRatio, idealCollateralRatioLimits.min, idealCollateralRatioLimits.max), 'R: _collateralRatio out of limits');
         address _lender = _requestTo;
         address _borrower = msg.sender;
         if (_requestAsLender) {
