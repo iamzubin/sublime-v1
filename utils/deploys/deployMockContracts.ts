@@ -6,6 +6,7 @@ import { IWETHGateway } from '../../typechain/IWETHGateway';
 import { IyVault } from '../../typechain/IyVault';
 import { ICEther } from '../../typechain/ICEther';
 import { Token } from '../../typechain/Token';
+import { IUniswapV3Factory } from '../../typechain/IUniswapV3Factory';
 
 import { ERC20__factory } from '../../typechain/factories/ERC20__factory';
 import { ERC20Detailed__factory } from '../../typechain/factories/ERC20Detailed__factory';
@@ -14,6 +15,7 @@ import { IyVault__factory } from '../../typechain/factories/IyVault__factory';
 import { ICEther__factory } from '../../typechain/factories/ICEther__factory';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
 import { Token__factory } from '../../typechain/factories/Token__factory';
+import { IUniswapV3Factory__factory } from '../../typechain/factories/IUniswapV3Factory__factory';
 
 import { Address } from 'hardhat-deploy/dist/types';
 import { IYield } from '../../typechain/IYield';
@@ -55,6 +57,10 @@ export default class DeployMockContracts {
 
     public async getYield(yieldAddress: Address): Promise<IYield> {
         return await IYield__factory.connect(yieldAddress, this._deployerSigner);
+    }
+
+    public async getIUniswapV3Factory(contractAddress: Address): Promise<IUniswapV3Factory> {
+        return await IUniswapV3Factory__factory.connect(contractAddress, this._deployerSigner);
     }
 
     public async deployToken(name: string, symbol: string, initSupply: BigNumberish): Promise<Token> {

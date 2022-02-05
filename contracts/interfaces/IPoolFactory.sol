@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IPoolFactory {
     /**
@@ -137,7 +137,7 @@ interface IPoolFactory {
 
     function owner() external view returns (address);
 
-    function poolRegistry(address pool) external view returns (bool);
+    function poolRegistry(address pool) external view returns (uint256);
 
     function priceOracle() external view returns (address);
 
