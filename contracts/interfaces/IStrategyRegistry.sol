@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IStrategyRegistry {
     /**
@@ -14,7 +14,13 @@ interface IStrategyRegistry {
      */
     event StrategyRemoved(address indexed strategy);
 
-    function registry(address _strategy) external view returns (bool);
+    /**
+     * @notice emitted when a maximum number of approved strategies is updated
+     * @param maxStrategies updated number of maximum approved strategies
+     */
+    event MaxStrategiesUpdated(uint256 maxStrategies);
+
+    function registry(address _strategy) external view returns (uint256);
 
     function getStrategies() external view returns (address[] memory);
 

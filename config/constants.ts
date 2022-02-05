@@ -38,6 +38,7 @@ export const USDTWhale = '0x34ea4138580435B5A521E460035edb19Df1938c1';
 export const WBTCWhale = '0x28C6c06298d514Db089934071355E5743bf21d60'; // Binance 14
 export const UNIWhale = '0x72A53cDBBcc1b9efa39c834A540550e23463AAcB';
 export const INCHWhale = '0x72A53cDBBcc1b9efa39c834A540550e23463AAcB';
+export const DAIWhale = "0x075e72a5eDf65F0A5f44699c7654C1a76941Ddc8";
 
 export const aLink = '0xa06bC25B5805d5F8d82847D191Cb4Af5A3e873E0';
 
@@ -92,6 +93,10 @@ export const extensionParams = {
     votingPassRatio: BigNumber.from(10).pow(28).mul(50),
 };
 
+export const verificationParams = {
+    activationDelay: 0,
+};
+
 // Pool inputs to be manullay added
 // address _borrower,
 // address _borrowAsset,
@@ -116,3 +121,5 @@ export const ChainLinkAggregators = {
     'HEGIC/USD': '0xBFC189aC214E6A4a35EBC281ad15669619b75534',
     'BTC/USD': '0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c',
 };
+
+

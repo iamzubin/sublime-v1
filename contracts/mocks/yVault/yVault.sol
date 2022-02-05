@@ -3,7 +3,7 @@
  *Submitted for verification at Etherscan.io on 2020-09-01
  */
 
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/Address.sol';
@@ -361,11 +361,5 @@ contract yVault is ERC20, ERC20Detailed {
 
     function getPricePerFullShare() public view returns (uint256) {
         return balance().mul(1e18).div(totalSupply());
-    }
-
-    receive() external payable {
-        if (msg.sender != address(token)) {
-            depositETH();
-        }
     }
 }

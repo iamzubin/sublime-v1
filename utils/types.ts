@@ -69,8 +69,16 @@ export interface DeploymentParams {
     extensionInitParams: ExtensionInitParams;
     repaymentsInitParams: RepaymentsInitParams;
     poolFactoryInitParams: PoolFactoryInitParams;
+    verificationParams: VerificationParams;
 }
 
+export interface VerificationParams {
+    activationDelay: BigNumberish;
+}
+
+export interface VerificationParams {
+    activationDelay: BigNumberish
+}
 export interface InputParams {
     extenstionInitParams: ExtensionInitParams;
     creditLineInitParams: CreditLineInitParams;
@@ -144,4 +152,15 @@ export interface AaveYieldParams {
     wethGateway: Address;
     protocolDataProvider: Address;
     lendingPoolAddressesProvider: Address;
+}
+
+export interface ChainlinkPriceOracleData {
+    token: Address;
+    priceOracle: Address;
+}
+
+export interface UniswapPoolData {
+    token1: Address;
+    token2: Address;
+    fee: BigNumberish;
 }

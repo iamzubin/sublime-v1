@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface IYield {
-
     /**
      * @dev emitted when tokens are locked
      * @param user the address of user, tokens locked for
@@ -49,7 +48,7 @@ interface IYield {
         address user,
         address asset,
         uint256 amount
-    ) external payable returns (uint256 sharesReceived);
+    ) external returns (uint256 sharesReceived);
 
     /**
      * @dev Used to unlock tokens from available protocol
@@ -59,7 +58,7 @@ interface IYield {
      **/
     function unlockTokens(address asset, uint256 amount) external returns (uint256 tokensReceived);
 
-    function unlockShares(address asset, uint256 amount) external returns (uint256 received);
+    function unlockShares(address asset, uint256 amount) external returns (uint256 received, address strategyTokens);
 
     /**
      * @dev Used to get amount of underlying tokens for current number of shares

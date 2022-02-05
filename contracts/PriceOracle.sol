@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.7.0;
+pragma solidity ^0.7.6;
 
 import '@chainlink/contracts/src/v0.7/interfaces/AggregatorV3Interface.sol';
 import '@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol';
