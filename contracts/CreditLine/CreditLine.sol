@@ -140,7 +140,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _id identifier for the credit line
      **/
     modifier ifCreditLineExists(uint256 _id) {
-        require(creditLineVariables[_id].status != CreditLineStatus.NOT_CREATED, 'Credit line does not exist');
+        require(creditLineVariables[_id].status != CreditLineStatus.NOT_CREATED, 'CL1');
         _;
     }
 
@@ -149,7 +149,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _id creditLine identifier
      **/
     modifier onlyCreditLineBorrower(uint256 _id) {
-        require(creditLineConstants[_id].borrower == msg.sender, 'Only credit line Borrower can access');
+        require(creditLineConstants[_id].borrower == msg.sender, 'CL2');
         _;
     }
 
@@ -374,7 +374,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
     }
 
     function _updateDefaultStrategy(address _defaultStrategy) internal {
-        require(IStrategyRegistry(strategyRegistry).registry(_defaultStrategy) != 0, 'Invalid Strategy');
+        require(IStrategyRegistry(strategyRegistry).registry(_defaultStrategy) != 0, 'CL3');
         defaultStrategy = _defaultStrategy;
         emit DefaultStrategyUpdated(_defaultStrategy);
     }
@@ -431,7 +431,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
     }
 
     function _updateProtocolFeeCollector(address _protocolFeeCollector) internal {
-        require(_protocolFeeCollector != address(0), 'cant be 0 address');
+        require(_protocolFeeCollector != address(0), 'CL4');
         protocolFeeCollector = _protocolFeeCollector;
         emit ProtocolFeeCollectorUpdated(_protocolFeeCollector);
     }
@@ -446,7 +446,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
     }
 
     function _updateStrategyRegistry(address _strategyRegistry) internal {
-        require(_strategyRegistry != address(0), 'CL::I zero address');
+        require(_strategyRegistry != address(0), 'CL5');
         strategyRegistry = _strategyRegistry;
         emit StrategyRegistryUpdated(_strategyRegistry);
     }
@@ -461,7 +461,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
     }
 
     function _updateLiquidatorRewardFraction(uint256 _rewardFraction) internal {
-        require(_rewardFraction <= SCALING_FACTOR, 'Fraction has to be less than 1');
+        require(_rewardFraction <= SCALING_FACTOR, 'CL6');
         liquidatorRewardFraction = _rewardFraction;
         emit LiquidationRewardFractionUpdated(_rewardFraction);
     }
@@ -520,7 +520,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
         CreditLineStatus _status = creditLineVariables[_id].status;
         require(
             _status == CreditLineStatus.ACTIVE || _status == CreditLineStatus.REQUESTED,
-            'CreditLine: Cannot only if credit line ACTIVE or REQUESTED'
+            'CL7'
         );
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
@@ -549,7 +549,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
     }
 
     function updateinterestAccruedTillLastPrincipalUpdate(uint256 _id) internal {
-        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
+        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL8');
 
         uint256 _interestAccrued = calculateInterestAccrued(_id);
         uint256 _newInterestAccrued = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(_interestAccrued);
@@ -627,12 +627,12 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
         address _borrowAsset,
         address _collateralAsset,
         bool _requestAsLender
-    ) external override returns (uint256) {
-        require(_borrowAsset != _collateralAsset, 'R: cant borrow lent token');
-        require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'R: No price feed');
-        require(isWithinLimits(_borrowLimit, borrowLimitLimits.min, borrowLimitLimits.max), 'R: _borrowLimit out of limits');
-        require(isWithinLimits(_borrowRate, borrowRateLimits.min, borrowRateLimits.max), 'R: _borrowRate out of limits');
-        require(isWithinLimits(_collateralRatio, idealCollateralRatioLimits.min, idealCollateralRatioLimits.max), 'R: _collateralRatio out of limits');
+    ) external returns (uint256) {
+        require(_borrowAsset != _collateralAsset, 'CL9');
+        require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL10');
+        require(isWithinLimits(_borrowLimit, borrowLimitLimits.min, borrowLimitLimits.max), 'CL11');
+        require(isWithinLimits(_borrowRate, borrowRateLimits.min, borrowRateLimits.max), 'CL12');
+        require(isWithinLimits(_collateralRatio, idealCollateralRatioLimits.min, idealCollateralRatioLimits.max), 'CL13');
         address _lender = _requestTo;
         address _borrower = msg.sender;
         if (_requestAsLender) {
@@ -640,7 +640,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
             _borrower = _requestTo;
         }
 
-        require(_lender != _borrower, 'Lender and Borrower cannot be same addresses');
+        require(_lender != _borrower, 'CL14');
 
         uint256 _id = _createRequest(
             _lender,
@@ -692,12 +692,12 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
     function accept(uint256 _id) external override {
         require(
             creditLineVariables[_id].status == CreditLineStatus.REQUESTED,
-            'CreditLine::acceptCreditLineLender - CreditLine is already accepted'
+            'CL15'
         );
         bool _requestByLender = creditLineConstants[_id].requestByLender;
         require(
             _requestByLender ? (msg.sender == creditLineConstants[_id].borrower) : (msg.sender == creditLineConstants[_id].lender),
-            "Only Borrower or Lender who hasn't requested can accept"
+            "CL16"
         );
         creditLineVariables[_id].status = CreditLineStatus.ACTIVE;
         emit CreditLineAccepted(_id);
@@ -719,9 +719,9 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
         uint256 _amount,
         address _strategy,
         bool _fromSavingsAccount
-    ) external payable override nonReentrant {
-        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
-        require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
+    ) external payable nonReentrant {
+        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL17');
+        require(creditLineConstants[_id].lender != msg.sender, 'CL18');
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
         emit CollateralDeposited(_id, _amount, _strategy);
     }
@@ -732,9 +732,9 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
         address _strategy,
         bool _fromSavingsAccount
     ) internal {
-        require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
+        require(creditLineConstants[_id].lender != msg.sender, 'CL19');
         if (Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
-            require(msg.value == 0, '_depositCollateral: ETH is not required for this operation');
+            require(msg.value == 0, 'CL20');
         }
         if (_fromSavingsAccount) {
             _depositCollateralFromSavingsAccount(_id, _amount, msg.sender);
@@ -785,11 +785,11 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @param _amount amount of tokens to borrow
      */
-    function borrow(uint256 _id, uint256 _amount) external payable override nonReentrant onlyCreditLineBorrower(_id) {
-        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
+    function borrow(uint256 _id, uint256 _amount) external nonReentrant onlyCreditLineBorrower(_id) {
+        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL21');
         require(
             _amount <= calculateBorrowableAmount(_id),
-            "CreditLine::borrow - The current collateral ratio doesn't allow to withdraw the amount"
+            "CL22"
         );
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
         address _lender = creditLineConstants[_id].lender;
@@ -834,14 +834,11 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @param _amount amount being repaid
      */
-    function repay(
-        uint256 _id,
-        uint256 _amount
-    ) external payable override nonReentrant {
-        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
-        require(creditLineConstants[_id].lender != msg.sender, 'Lender cant repay');
+    function repay(uint256 _id, uint256 _amount) external payable nonReentrant {
+        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL23');
+        require(creditLineConstants[_id].lender != msg.sender, 'CL24');
         if (Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
-            require(msg.value == 0, 'Repay: ETH is not required for this operation');
+            require(msg.value == 0, 'CL25');
         }
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(_id);
@@ -890,11 +887,11 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
     function close(uint256 _id) external override {
         require(
             msg.sender == creditLineConstants[_id].borrower || msg.sender == creditLineConstants[_id].lender,
-            'CreditLine: Permission denied while closing Line of credit'
+            'CL26'
         );
-        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
-        require(creditLineVariables[_id].principal == 0, 'CreditLine: Cannot be closed since not repaid.');
-        require(creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate == 0, 'CreditLine: Cannot be closed since not repaid.');
+        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL27');
+        require(creditLineVariables[_id].principal == 0, 'CL28');
+        require(creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate == 0, 'CL29');
         delete creditLineConstants[_id];
         delete creditLineVariables[_id];
         emit CreditLineClosed(_id);
@@ -907,11 +904,11 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
     function cancel(uint256 _id) external override ifCreditLineExists(_id) {
         require(
             msg.sender == creditLineConstants[_id].borrower || msg.sender == creditLineConstants[_id].lender,
-            'CreditLine: Permission denied while cancelling CreditLine'
+            'CL30'
         );
         require(
             creditLineVariables[_id].status == CreditLineStatus.REQUESTED,
-            'CreditLine:cancle Credit Line should be in requested state'
+            'CL31'
         );
         delete creditLineVariables[_id];
         delete creditLineConstants[_id];
@@ -974,7 +971,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
         bool _toSavingsAccount
     ) external override nonReentrant onlyCreditLineBorrower(_id) {
         uint256 _withdrawableCollateral = withdrawableCollateral(_id);
-        require(_amount <= _withdrawableCollateral, 'Collateral ratio cant go below ideal');
+        require(_amount <= _withdrawableCollateral, 'CL32');
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
         _transferCollateral(_id, _collateralAsset, _amount, _toSavingsAccount);
         emit CollateralWithdrawn(_id, _amount);
@@ -1041,7 +1038,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
                 return;
             }
         }
-        revert('insufficient collateral');
+        revert('CL33');
     }
 
     /**
@@ -1052,17 +1049,17 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _toSavingsAccount if true, tokens are transferred from savingsAccount 
                                 otherwise direct from collateral token contract
      */
-    function liquidate(uint256 _id, bool _toSavingsAccount) external payable override nonReentrant {
-        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
+    function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
+        require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL34');
         if (Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
-            require(msg.value == 0, 'Liquidate: ETH is not required for this operation');
+            require(msg.value == 0, 'CL35');
         }
-        require(creditLineVariables[_id].principal != 0, 'CreditLine: cannot liquidate if principal is 0');
+        require(creditLineVariables[_id].principal != 0, 'CL36');
 
         (uint256 currentCollateralRatio, uint256 _totalCollateralTokens) = calculateCurrentCollateralRatio(_id);
         require(
             currentCollateralRatio < creditLineConstants[_id].idealCollateralRatio,
-            'CreditLine: Collateral ratio is higher than ideal value'
+            'CL37'
         );
 
         address _lender = creditLineConstants[_id].lender;
