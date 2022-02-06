@@ -68,7 +68,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
      * @param _owner address of the owner
      * @param _savingsAccount address of the savings account contract
      **/
-    function initialize(address _owner, address _savingsAccount) external initializer {
+    function initialize(address _owner, address payable _savingsAccount) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
         _updateSavingsAccount(_savingsAccount);

@@ -1,4 +1,4 @@
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 pragma experimental ABIEncoderV2;
 
 import "../../CreditLine/CreditLine.sol";
@@ -46,11 +46,10 @@ contract CreditLineActor is Constants {
         creditLine.borrow(id, amount);
     }
 
-    function repay(address creditLineAddress, uint256 id, uint256 amount, 
-                    bool fromSavingsAccount) public {
+    function repay(address creditLineAddress, uint256 id, uint256 amount) public {
         ICreditLine creditLine = ICreditLine(creditLineAddress);
 
-        creditLine.repay(id, amount, fromSavingsAccount);
+        creditLine.repay(id, amount);
     }
 
     function addCollateral(address creditLineAddress, uint256 id, uint256 amount, 

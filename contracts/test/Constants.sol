@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import "ds-test/test.sol";
 
@@ -46,7 +46,9 @@ contract Constants {
     uint256 constant BTC_decimals = 10 ** 8;  // WBTC precision decimals
 
     uint256 constant WAD = 10 ** 18;
-    uint256 constant RAY = 10 ** 27;    
+    uint256 constant RAY = 10 ** 27;  
+
+    uint256 constant verificationActivationDelay = 5 days;  
 
     //CreditLineRequestVars defaultCreditLineRequest;
     //CreditLineRequestVars creditLineRequest_1;

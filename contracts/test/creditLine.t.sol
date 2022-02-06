@@ -1,4 +1,4 @@
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import "ds-test/test.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
@@ -32,10 +32,21 @@ contract CreditLineTest is TestUtils, Scenarios {
         SetUpCreditLines();
     }
 
-    function test_creditLineRequest() public {
+    function create_creditLineReqeuest() public {
+        creditLineBorrower.createRequest(address(creditLine), address(creditLineLender),
+                                    1e31,
+                                    1e29,
+                                    false,
+                                    1e30,
+                                    DAI,
+                                    WETH,
+                                    false);
+    }
+
+    function testFail_invalidLender_1() public {
         //CreditLineRequestVars memory obj = CreditLineRequestVars(, , , , , , );
 
-        try creditLineBorrower.createRequest(address(creditLine), address(creditLineLender),
+        try creditLineBorrower.createRequest(address(creditLine), address(creditLineBorrower),
                                     1e31,
                                     1e29,
                                     false,
@@ -46,23 +57,109 @@ contract CreditLineTest is TestUtils, Scenarios {
                                         assertTrue(true);
                                     }
         catch Error(string memory reason) {
-            assertEq(reason, "Lender and Borrower cannot be same address");
+            assertEq(reason, "CL14");
         }
     }
 
-    function test_1creditLineRequest() public {
+    function testFail_invalidLender_2() public {
+        //CreditLineRequestVars memory obj = CreditLineRequestVars(, , , , , , );
+
         try creditLineBorrower.createRequest(address(creditLine), address(creditLineBorrower),
-                                            CreditLine_1.borrowLimit,
-                                            CreditLine_1.borrowRate,
-                                            CreditLine_1.autoLiquidation,
-                                            CreditLine_1.collateralRatio,
-                                            CreditLine_1.borrowAsset,
-                                            CreditLine_1.collateralAsset,
-                                            CreditLine_1.requestAsLender) {
-                                                assertTrue(true);
-                                            }
+                                    1e31,
+                                    1e29,
+                                    false,
+                                    1e30,
+                                    DAI,
+                                    WETH,
+                                    true) {
+                                        assertTrue(true);
+                                    }
         catch Error(string memory reason) {
-            assertEq(reason, "Lender and Borrower cannot be same address");
+            assertEq(reason, "CL14");
+        }
+    }
+
+    function testFail_invalidBorrower_1() public {
+        //CreditLineRequestVars memory obj = CreditLineRequestVars(, , , , , , );
+
+        try creditLineLender.createRequest(address(creditLine), address(creditLineLender),
+                                    1e31,
+                                    1e29,
+                                    false,
+                                    1e30,
+                                    DAI,
+                                    WETH,
+                                    false) {
+                                        assertTrue(true);
+                                    }
+        catch Error(string memory reason) {
+            assertEq(reason, "CL14");
+        }
+    }
+
+    function testFail_invalidBorrower_2() public {
+        //CreditLineRequestVars memory obj = CreditLineRequestVars(, , , , , , );
+
+        try creditLineLender.createRequest(address(creditLine), address(creditLineLender),
+                                    1e31,
+                                    1e29,
+                                    false,
+                                    1e30,
+                                    DAI,
+                                    WETH,
+                                    true) {
+                                        assertTrue(true);
+                                    }
+        catch Error(string memory reason) {
+            assertEq(reason, "CL14");
+        }
+    }
+
+    function testFail_invalidCollateralRatio() public {
+        try creditLineBorrower.createRequest(address(creditLine), address(creditLineLender),
+                                    1e31,
+                                    1e29,
+                                    false,
+                                    5*1e30 + 1,
+                                    DAI,
+                                    WETH,
+                                    false) {
+                                        assertTrue(true);
+                                    }
+        catch Error(string memory reason) {
+            assertEq(reason, 'CL13');
+        }
+    }
+
+    function test_validRequest_asBorrower() public {
+        try creditLineBorrower.createRequest(address(creditLine), address(creditLineLender),
+                                    1e31,
+                                    1e29,
+                                    false,
+                                    5*1e30 + 1,
+                                    DAI,
+                                    WETH,
+                                    false) {
+                                        assertTrue(true);
+                                    }
+        catch Error(string memory reason) {
+            assertEq(reason, 'CL13');
+        }
+    }
+
+    function test_validRequest_asLender() public {
+        try creditLineLender.createRequest(address(creditLine), address(creditLineBorrower),
+                                    1e31,
+                                    1e29,
+                                    false,
+                                    5*1e30 + 1,
+                                    DAI,
+                                    WETH,
+                                    true) {
+                                        assertTrue(true);
+                                    }
+        catch Error(string memory reason) {
+            assertEq(reason, 'CL13');
         }
     }
 

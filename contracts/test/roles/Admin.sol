@@ -1,4 +1,4 @@
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
@@ -18,6 +18,18 @@ import "../../interfaces/IPriceOracle.sol";
 contract Admin is Constants {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
+
+    function updateBorrowLimitLimits(address creditLine, uint256 min, uint256 max) public {
+        ICreditLine(creditLine).updateBorrowLimitLimits(min, max);
+    }
+
+    function updateIdealCollateralRatioLimits(address creditLine, uint256 min, uint256 max) public {
+        ICreditLine(creditLine).updateIdealCollateralRatioLimits(min, max);
+    }
+
+    function updateBorrowRateLimits(address creditLine, uint256 min, uint256 max) public {
+        ICreditLine(creditLine).updateBorrowRateLimits(min, max);
+    }
 
     function updateSavingsAccount(address creditLine, address savingsAccount) public {
         ICreditLine(creditLine).updateSavingsAccount(savingsAccount);

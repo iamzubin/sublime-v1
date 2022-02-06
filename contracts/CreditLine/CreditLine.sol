@@ -305,7 +305,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _min updated value of the minimum threshold value of the borrow limit
      * @param _max updated value of the maximum threshold value of the borrow limit
      */
-    function updateBorrowLimitLimits(uint256 _min, uint256 _max) external onlyOwner {
+    function updateBorrowLimitLimits(uint256 _min, uint256 _max) external override onlyOwner {
         borrowLimitLimits = Limits(_min, _max);
         emit LimitsUpdated('borrowLimit', _min, _max);
     }
@@ -315,7 +315,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _min updated value of the minimum threshold value of the ideal collateral ratio
      * @param _max updated value of the maximum threshold value of the ideal collateral ratio
      */
-    function updateIdealCollateralRatioLimits(uint256 _min, uint256 _max) external onlyOwner {
+    function updateIdealCollateralRatioLimits(uint256 _min, uint256 _max) external override onlyOwner {
         idealCollateralRatioLimits = Limits(_min, _max);
         emit LimitsUpdated('idealCollateralRatio', _min, _max);
     }
@@ -325,7 +325,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _min updated value of the minimum threshold value of the borrow rate
      * @param _max updated value of the maximum threshold value of the borrow rate
      */
-    function updateBorrowRateLimits(uint256 _min, uint256 _max) external onlyOwner {
+    function updateBorrowRateLimits(uint256 _min, uint256 _max) external override onlyOwner {
         borrowRateLimits = Limits(_min, _max);
         emit LimitsUpdated('borrowRate', _min, _max);
     }
@@ -627,7 +627,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
         address _borrowAsset,
         address _collateralAsset,
         bool _requestAsLender
-    ) external returns (uint256) {
+    ) external override returns (uint256) {
         require(_borrowAsset != _collateralAsset, 'CL9');
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'CL10');
         require(isWithinLimits(_borrowLimit, borrowLimitLimits.min, borrowLimitLimits.max), 'CL11');
@@ -719,7 +719,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
         uint256 _amount,
         address _strategy,
         bool _fromSavingsAccount
-    ) external payable nonReentrant {
+    ) external override payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL17');
         require(creditLineConstants[_id].lender != msg.sender, 'CL18');
         _depositCollateral(_id, _amount, _strategy, _fromSavingsAccount);
@@ -785,7 +785,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @param _amount amount of tokens to borrow
      */
-    function borrow(uint256 _id, uint256 _amount) external nonReentrant onlyCreditLineBorrower(_id) {
+    function borrow(uint256 _id, uint256 _amount) external override nonReentrant onlyCreditLineBorrower(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL21');
         require(
             _amount <= calculateBorrowableAmount(_id),
@@ -834,7 +834,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @param _amount amount being repaid
      */
-    function repay(uint256 _id, uint256 _amount) external payable nonReentrant {
+    function repay(uint256 _id, uint256 _amount) external override payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL23');
         require(creditLineConstants[_id].lender != msg.sender, 'CL24');
         if (Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
@@ -1049,7 +1049,7 @@ contract CreditLine is ReentrancyGuard, ICreditLine, OwnableUpgradeable {
      * @param _toSavingsAccount if true, tokens are transferred from savingsAccount 
                                 otherwise direct from collateral token contract
      */
-    function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
+    function liquidate(uint256 _id, bool _toSavingsAccount) external override payable nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CL34');
         if (Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
             require(msg.value == 0, 'CL35');

@@ -1,7 +1,7 @@
 # Basic build/test configuration.
 export DAPP_REMAPPINGS=$(cat remappings.txt)
 export DAPP_SRC=contracts
-export DAPP_SOLC_VERSION=0.7.0
+export DAPP_SOLC_VERSION=0.7.6
 export DAPP_BUILD_OPTIMIZE=1
 export DAPP_BUILD_OPTIMIZE_RUNS=10
 export DAPP_LINK_TEST_LIBRARIES=0

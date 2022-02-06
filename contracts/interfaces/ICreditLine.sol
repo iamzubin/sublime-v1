@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 interface ICreditLine {
     
@@ -37,12 +37,11 @@ interface ICreditLine {
         bool _fromSavingsAccount
     ) external payable;
 
-    function borrow(uint256 _id, uint256 _amount) external payable;
+    function borrow(uint256 _id, uint256 _amount) external;
 
     function repay(
         uint256 _id,
-        uint256 _amount,
-        bool _fromSavingsAccount
+        uint256 _amount
     ) external payable;
 
     function close(uint256 _id) external;
@@ -56,4 +55,10 @@ interface ICreditLine {
     ) external;
 
     function liquidate(uint256 _id, bool _toSavingsAccount) external payable;
+
+    function updateBorrowLimitLimits(uint256 _min, uint256 _max) external;
+
+    function updateIdealCollateralRatioLimits(uint256 _min, uint256 _max) external;
+    
+    function updateBorrowRateLimits(uint256 _min, uint256 _max) external;
 }

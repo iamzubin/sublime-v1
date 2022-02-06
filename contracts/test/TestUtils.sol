@@ -1,4 +1,4 @@
-pragma solidity 0.7.0;
+pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
@@ -113,23 +113,23 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
 
     function deployNoYield() public {
         noYield = new NoYield();
-        noYield.initialize(address(admin), address(savingsAccount));
+        noYield.initialize(address(admin), payable(address(savingsAccount)));
     }
 
     function deployCompoundYield() public {
-        compoundYield = new CompoundYield();
-        compoundYield.initialize(address(admin), address(savingsAccount));
+        compoundYield = new CompoundYield(WETH);
+        compoundYield.initialize(address(admin), payable(address(savingsAccount)));
     }
 
     function deployAaveYield() public {
-        aaveYield = new AaveYield();
-        aaveYield.initialize(address(admin), address(savingsAccount), wethGateway, 
+        aaveYield = new AaveYield(WETH);
+        aaveYield.initialize(address(admin), payable(address(savingsAccount)), wethGateway, 
                                 aaveProtocolDataProvider, aaveLendingPoolAddressesProvider);
     }
 
     function deployYearnYield() public {
-        yearnYield = new YearnYield();
-        yearnYield.initialize(address(admin), address(savingsAccount));
+        yearnYield = new YearnYield(WETH);
+        yearnYield.initialize(address(admin), payable(address(savingsAccount)));
     }
 
     // need to convert this to Solc 
@@ -191,7 +191,7 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
 
     function deployVerification() public {
         verification = new Verification();
-        verification.initialize(address(admin));
+        verification.initialize(address(admin), verificationActivationDelay);
     }
 
     function deployAdminVerifier() public {
@@ -220,6 +220,10 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         balanceSlot[DAI] = 2;
         balanceSlot[WETH] = 3;
         balanceSlot[WBTC] = 0;
+
+        admin.updateBorrowLimitLimits(address(creditLine), 1, 1e39);
+        admin.updateIdealCollateralRatioLimits(address(creditLine), 0, 5*1e30);
+        admin.updateBorrowRateLimits(address(creditLine), 0, 1e30);
     }
 
     function SetUpAllContracts() public {
