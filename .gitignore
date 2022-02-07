@@ -28,3 +28,4 @@ flatten/*
 test.spec.ts
 node_modules
 .env
+gasReport.md
