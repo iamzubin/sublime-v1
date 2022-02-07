@@ -121,7 +121,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @dev checks if called by credit Line Borrower
-     * @param _id creditLine identifier
+     * @param _id identifier for the credit line
      **/
     modifier onlyCreditLineBorrower(uint256 _id) {
         require(creditLineConstants[_id].borrower == msg.sender, 'Only credit line Borrower can access');
@@ -130,7 +130,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @dev checks if called by credit Line Lender
-     * @param _id creditLine identifier
+     * @param _id identifier for the credit line
      **/
     modifier onlyCreditLineLender(uint256 _id) {
         require(creditLineConstants[_id].lender == msg.sender, 'Only credit line Lender can access');
@@ -139,7 +139,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice emitted when a collateral is deposited into credit line
-     * @param id id of the credit line
+     * @param id identifier for the credit line
      * @param amount amount of collateral deposited
      * @param strategy address of the strategy into which collateral is deposited
      */
@@ -147,14 +147,14 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice emitted when collateral is withdrawn from credit line
-     * @param id id of the credit line
+     * @param id identifier for the credit line
      * @param amount amount of collateral withdrawn
      */
     event CollateralWithdrawn(uint256 indexed id, uint256 amount);
 
     /**
      * @notice emitted when a request for new credit line is placed
-     * @param id id of the credit line for which request was made
+     * @param id identifier for the credit line for which request was made
      * @param lender address of the lender for credit line
      * @param borrower address of the borrower for credit line
      */
@@ -162,33 +162,33 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice emitted when a credit line is liquidated
-     * @param id id of the credit line which is liquidated
+     * @param id identifier for the credit line which is liquidated
      * @param liquidator address of the liquidator
      */
     event CreditLineLiquidated(uint256 indexed id, address indexed liquidator);
 
     /**
      * @notice emitted when tokens are borrowed from credit line
-     * @param id id of the credit line from which tokens are borrowed
+     * @param id identifier for the credit line from which tokens are borrowed
      * @param borrowAmount amount of tokens borrowed
      */
     event BorrowedFromCreditLine(uint256 indexed id, uint256 borrowAmount);
 
     /**
      * @notice emitted when credit line is accepted
-     * @param id id of the credit line that was accepted
+     * @param id identifier for the credit line that was accepted
      */
     event CreditLineAccepted(uint256 indexed id);
 
     /**
      * @notice emitted when credit line is completely repaid and reset
-     * @param id id of the credit line that is reset
+     * @param id identifier for the credit line that is reset
      */
     event CreditLineReset(uint256 indexed id);
 
     /**
      * @notice emitted when the credit line is partially repaid
-     * @param id id of the credit line
+     * @param id identifier for the credit line
      * @param repayer address of the repayer
      * @param repayAmount amount repaid
      */
@@ -196,7 +196,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice emitted when the credit line is completely repaid
-     * @param id id of the credit line
+     * @param id identifier for the credit line
      * @param repayer address of the repayer
      * @param repayAmount amount repaid
      */
@@ -204,7 +204,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice emitted when the credit line is closed by one of the parties of credit line
-     * @param id id of the credit line
+     * @param id identifier for the credit line
      * @param closedByLender is true when it is closed by lender
      */
     event CreditLineClosed(uint256 indexed id, bool closedByLender);
