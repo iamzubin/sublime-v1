@@ -627,11 +627,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _strategy,
         uint256 _amount,
         bool _fromSavingsAccount
-    ) external payable nonReentrant ifCreditLineExists(_id) {
+    ) external nonReentrant ifCreditLineExists(_id) {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
-        if (Address(creditLineConstants[_id].collateralAsset) != Address(0)) {
-            require(msg.value == 0, 'DepositCollateral: ETH is not required for this operation');
-        }
         _depositCollateral(_id, _strategy, _amount, _fromSavingsAccount);
         emit CollateralDeposited(_id, _amount, _strategy);
     }
@@ -791,12 +788,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _id,
         uint256 _amount,
         bool _fromSavingsAccount
-    ) external payable nonReentrant {
+    ) external nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
         require(creditLineConstants[_id].lender != msg.sender, 'Lender cant repay');
-        if (Address(creditLineConstants[_id].borrowAsset) != Address(0)) {
-            require(msg.value == 0, 'Repay: ETH is not required for this operation');
-        }
 
         uint256 _interestSincePrincipalUpdate = calculateInterestAccrued(_id);
         uint256 _totalInterestAccrued = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(
@@ -1015,13 +1009,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _toSavingsAccount if true, tokens are transferred from savingsAccount 
                                 otherwise direct from collateral token contract
      */
-    function liquidate(uint256 _id, bool _toSavingsAccount) external payable nonReentrant {
+    function liquidate(uint256 _id, bool _toSavingsAccount) external nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineVariables[_id].principal != 0, 'CreditLine: cannot liquidate if principal is 0');
         address _borrowAsset = creditLineConstants[_id].borrowAsset;
-        if (_borrowAsset != address(0)) {
-            require(msg.value == 0, 'Liquidate: ETH is not required for this operation');
-        }
 
         uint256 currentCollateralRatio = calculateCurrentCollateralRatio(_id);
         require(
@@ -1077,9 +1068,5 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
 
         return _borrowTokens;
-    }
-
-    receive() external payable {
-        require(msg.sender == savingsAccount, 'CreditLine::receive invalid transaction');
     }
 }

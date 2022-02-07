@@ -318,7 +318,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @dev (SCALING_FACTOR) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
     /// @param _amount amount repaid by the borrower
-    function repay(address _poolID, uint256 _amount) external payable nonReentrant isPoolInitialized(_poolID) {
+    function repay(address _poolID, uint256 _amount) external nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
         uint256 _amountRepaid = _repay(_poolID, _amount, false);
 
@@ -410,7 +410,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
     /// @notice Used to pay off the principal of the loan, once the overdues and interests are repaid
     /// @dev (SCALING_FACTOR) is included to maintain the accuracy of the arithmetic operations
     /// @param _poolID address of the pool
-    function repayPrincipal(address payable _poolID) external payable nonReentrant isPoolInitialized(_poolID) {
+    function repayPrincipal(address _poolID) external nonReentrant isPoolInitialized(_poolID) {
         address _asset = repayConstants[_poolID].repayAsset;
         uint256 _interestToRepay = _repay(_poolID, MAX_INT, true);
         IPool _pool = IPool(_poolID);
