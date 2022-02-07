@@ -117,13 +117,7 @@ contract NoYield is IYield, Initializable, OwnableUpgradeable, ReentrancyGuard {
      * @param amount the amount of asset
      * @return tokensReceived received amount of tokens received
      **/
-    function unlockTokens(address asset, uint256 amount)
-        external
-        override
-        onlySavingsAccount
-        nonReentrant
-        returns (uint256)
-    {
+    function unlockTokens(address asset, uint256 amount) external override onlySavingsAccount nonReentrant returns (uint256) {
         return (_unlockTokens(asset, amount));
     }
 

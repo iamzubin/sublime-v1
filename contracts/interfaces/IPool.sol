@@ -82,7 +82,7 @@ interface IPool {
      */
     event PoolLiquidated(address indexed liquidator);
 
-    function getLoanStatus() external view returns (uint256 loanStatus); 
+    function getLoanStatus() external view returns (uint256 loanStatus);
 
     function depositCollateral(uint256 _amount, bool _transferFromSavingsAccount) external;
 

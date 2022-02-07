@@ -115,7 +115,7 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         address investedTo = liquidityToken[_asset];
         uint256 received;
         uint256 amount = _amount;
-        
+
         if (_amount == 0) {
             amount = IERC20(investedTo).balanceOf(address(this));
         }

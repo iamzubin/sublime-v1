@@ -275,7 +275,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      */
     function withdrawAll(address _token) external override nonReentrant returns (uint256) {
         address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
-        uint256  _tokenReceived;
+        uint256 _tokenReceived;
 
         for (uint256 i; i < _strategyList.length; ++i) {
             if (balanceInShares[msg.sender][_token][_strategyList[i]] != 0 && _strategyList[i] != address(0)) {

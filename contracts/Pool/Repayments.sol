@@ -343,7 +343,9 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         bool _isBorrowerLate = isGracePenaltyApplicable(_poolID);
 
         if (_isBorrowerLate) {
-            uint256 _penalty = uint256(repayConstants[_poolID].gracePenaltyRate).mul(getInterestDueTillInstalmentDeadline(_poolID)).div(SCALING_FACTOR);
+            uint256 _penalty = uint256(repayConstants[_poolID].gracePenaltyRate).mul(getInterestDueTillInstalmentDeadline(_poolID)).div(
+                SCALING_FACTOR
+            );
             emit GracePenaltyRepaid(_poolID, _penalty);
             return _penalty;
         } else {

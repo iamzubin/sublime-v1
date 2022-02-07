@@ -3,7 +3,7 @@ pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import '@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20PausableUpgradeable.sol';
 import '../interfaces/IPoolFactory.sol';
@@ -184,7 +184,7 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
             _setupDecimals(_decimals);
         } catch (bytes memory) {}
     }
-    
+
     /**
      * @notice add collateral to a pool
      * @param _amount amount of collateral to be deposited denominated in collateral asset
@@ -227,7 +227,10 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
         uint256 _amount,
         bool _transferFromSavingsAccount
     ) internal nonReentrant {
-        require(poolVariables.loanStatus == LoanStatus.ACTIVE || poolVariables.loanStatus == LoanStatus.COLLECTION, '_depositCollateral: Pool should be active to deposit any collateral');
+        require(
+            poolVariables.loanStatus == LoanStatus.ACTIVE || poolVariables.loanStatus == LoanStatus.COLLECTION,
+            '_depositCollateral: Pool should be active to deposit any collateral'
+        );
         uint256 _sharesReceived = _deposit(
             poolConstants.collateralAsset,
             poolConstants.poolSavingsStrategy,
@@ -629,11 +632,9 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
             _totalAsset = IERC20(poolConstants.borrowAsset).balanceOf(address(this));
             //assuming their will be no tokens in pool in any case except liquidation (to be checked) or we should store the amount in liquidate()
             _toTransfer = _toTransfer.mul(_totalAsset).div(totalSupply());
-        }
-        else if (_loanStatus == LoanStatus.CANCELLED) {
+        } else if (_loanStatus == LoanStatus.CANCELLED) {
             _toTransfer = _toTransfer.add(_toTransfer.mul(poolVariables.penaltyLiquidityAmount).div(totalSupply()));
-        }
-        else if (_loanStatus == LoanStatus.CLOSED) {
+        } else if (_loanStatus == LoanStatus.CLOSED) {
             //transfer repayment
             _withdrawRepayment(msg.sender);
         }
@@ -698,7 +699,7 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
         uint256 _currentCollateralTokens = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
 
         uint256 _equivalentCollateral = getEquivalentTokens(_collateralAsset, poolConstants.borrowAsset, _currentCollateralTokens);
-        
+
         return (_equivalentCollateral.mul(SCALING_FACTOR).div(_balance.add(_interest)));
     }
 
@@ -809,19 +810,16 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
      * @return _lenderCollateralLPShare share of the lender in collateral tokens
      * @return _lenderBalance balance of lender in pool tokens
      */
-    function _updateLenderSharesDuringLiquidation(address _lender)
-        internal
-        returns (uint256, uint256)
-    {
+    function _updateLenderSharesDuringLiquidation(address _lender) internal returns (uint256, uint256) {
         uint256 _poolBaseLPShares = poolVariables.baseLiquidityShares;
-        uint _lenderBalance = balanceOf(_lender);
+        uint256 _lenderBalance = balanceOf(_lender);
 
         uint256 _lenderBaseLPShares = (_poolBaseLPShares.mul(_lenderBalance)).div(totalSupply());
         uint256 _lenderExtraLPShares = lenders[_lender].extraLiquidityShares;
         poolVariables.baseLiquidityShares = _poolBaseLPShares.sub(_lenderBaseLPShares);
         poolVariables.extraLiquidityShares = poolVariables.extraLiquidityShares.sub(_lenderExtraLPShares);
 
-        uint _lenderCollateralLPShare = _lenderBaseLPShares.add(_lenderExtraLPShares);
+        uint256 _lenderCollateralLPShare = _lenderBaseLPShares.add(_lenderExtraLPShares);
         return (_lenderCollateralLPShare, _lenderBalance);
     }
 
