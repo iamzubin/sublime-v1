@@ -14,16 +14,18 @@ import { SavingsAccount } from '@typechain/SavingsAccount';
 import { AaveYieldParams, CompoundPair, YearnPair } from '../../utils/types';
 import { IYield } from '@typechain/IYield';
 import { IYield__factory } from '../../typechain/factories/IYield__factory';
+import { BigNumber } from 'ethers';
 
 export async function createAaveYieldWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount,
+    weth: Address,
     aaveYieldParams?: AaveYieldParams
 ): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
 
-    let aaveYieldLogic: AaveYield = await deployHelper.core.deployAaveYield();
+    let aaveYieldLogic: AaveYield = await deployHelper.core.deployAaveYield(weth);
     let aaveYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(aaveYieldLogic.address, proxyAdmin.address);
     let aaveYield: AaveYield = await deployHelper.core.getAaveYield(aaveYieldProxy.address);
 
@@ -54,10 +56,11 @@ export async function createCompoundYieldWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount,
-    pairs: CompoundPair[]
+    pairs: CompoundPair[],
+    weth: Address
 ): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    let compoundYieldLogic: CompoundYield = await deployHelper.core.deployCompoundYield();
+    let compoundYieldLogic: CompoundYield = await deployHelper.core.deployCompoundYield(weth);
     let compoundYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(compoundYieldLogic.address, proxyAdmin.address);
     let compoundYield: CompoundYield = await deployHelper.core.getCompoundYield(compoundYieldProxy.address);
 
@@ -66,6 +69,7 @@ export async function createCompoundYieldWithInit(
     for (let index = 0; index < pairs.length; index++) {
         const pair = pairs[index];
         await (await compoundYield.connect(admin).updateProtocolAddresses(pair.asset, pair.liquidityToken)).wait();
+        await (await compoundYield.connect(admin).setDepositLimit(pair.liquidityToken, BigNumber.from(10).pow(77))).wait(); // set to almost max uint
     }
 
     return IYield__factory.connect(compoundYield.address, admin);
@@ -75,10 +79,11 @@ export async function createYearnYieldWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
     savingsAccount: SavingsAccount,
-    pairs: YearnPair[]
+    pairs: YearnPair[],
+    weth: Address
 ): Promise<IYield> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    let yearnYieldLogic: YearnYield = await deployHelper.core.deployYearnYield();
+    let yearnYieldLogic: YearnYield = await deployHelper.core.deployYearnYield(weth);
     let yearnYieldProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(yearnYieldLogic.address, proxyAdmin.address);
     let yearnYield: YearnYield = await deployHelper.core.getYearnYield(yearnYieldProxy.address);
 
