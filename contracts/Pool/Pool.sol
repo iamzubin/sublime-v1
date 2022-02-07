@@ -445,6 +445,7 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
         if (_to != address(0)) {
             require(!paused(), 'TT1');
         }
+        require(_from != _to, 'TT6');
         require(_to != poolConstants.borrower, 'TT2');
 
         if (_from == address(0) || _to == address(0)) {
