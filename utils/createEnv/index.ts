@@ -26,7 +26,7 @@ import { createStrategyRegistry, initStrategyRegistry } from './strategyRegistry
 import { impersonateAccount, getImpersonatedAccounts } from './impersonationsAndTransfers';
 import { zeroAddress } from '../../config/constants';
 import { createAaveYieldWithInit, createCompoundYieldWithInit, createNoYieldWithInit, createYearnYieldWithInit } from './yields';
-import { createAdminVerifierWithInit, createVerificationWithInit } from './verification';
+import { createTwitterVerifierWithInit, createVerificationWithInit } from './verification';
 import { createPriceOracle, setPriceOracleFeeds } from './priceOracle';
 import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from './poolFactory';
 import { createExtenstionWithInit } from './extension';
@@ -114,11 +114,11 @@ export async function createEnvironment(
     await env.strategyRegistry.connect(admin).addStrategy(yields.noYield.address);
 
     env.verification = await createVerificationWithInit(proxyAdmin, admin, verificationInitParams);
-    env.adminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, env.verification);
+    env.twitterVerifier = await createTwitterVerifierWithInit(proxyAdmin, admin, env.verification);
 
-    await env.verification.connect(admin).addVerifier(env.adminVerifier.address);
+    await env.verification.connect(admin).addVerifier(env.twitterVerifier.address);
     // TODO : registerSelf
-    // await env.adminVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
+    // await env.twitterVerifier.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')), true);
     env.priceOracle = await createPriceOracle(proxyAdmin, admin);
     await setPriceOracleFeeds(env.priceOracle, admin, priceFeeds);
 
@@ -282,7 +282,7 @@ export async function createNewPool(
             poolCreateParams._collateralAmount,
             _transferFromSavingsAccount,
             salt,
-            env.adminVerifier.address,
+            env.twitterVerifier.address,
             zeroAddress,
             { value: collateralToken.address === zeroAddress ? poolCreateParams._collateralAmount : 0 }
         );

@@ -28,7 +28,7 @@ const contractsToVerify = [
         proxy: '0x4256a2722d60c90c39515E0Adb3E731b91480996',
     },
     {
-        contract: 'adminVerifier',
+        contract: 'twitterVerifier',
         proxy: '0x24E444Bb965769E962e52B21612699612AE33F8a',
     },
     {

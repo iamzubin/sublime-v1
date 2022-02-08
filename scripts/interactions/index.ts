@@ -1,5 +1,5 @@
 import { createPool } from './pool';
-import { verify } from './adminVerifier';
+import { verify } from './twitterVerifier';
 import contracts from './contracts.json';
 import { ethers } from 'hardhat';
 import { PoolData } from './types';
