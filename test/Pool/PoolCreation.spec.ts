@@ -76,7 +76,8 @@ describe('Create Pools', async () => {
             {
                 activationDelay: 1,
             },
-            Contracts.WETH
+            Contracts.WETH,
+            Contracts.USDC
         );
 
         let deployHelper = new DeployHelper(env.impersonatedAccounts[0]);

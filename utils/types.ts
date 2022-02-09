@@ -14,6 +14,9 @@ import { BigNumberish, BytesLike } from 'ethers';
 import { IYield } from '@typechain/IYield';
 import { AdminVerifier } from '@typechain/AdminVerifier';
 import { Beacon } from '@typechain/Beacon';
+import { PoolUtils } from '@typechain/PoolUtils';
+import { CreditLineUtils } from '@typechain/CreditLineUtils';
+import { SavingsAccountEthUtils } from '@typechain/SavingsAccountEthUtils';
 
 export interface Environment {
     savingsAccount: SavingsAccount;
@@ -32,6 +35,9 @@ export interface Environment {
     impersonatedAccounts: any[];
     mockTokenContracts: MockTokenContract[];
     inputParams: InputParams;
+    poolEthUtils: PoolUtils;
+    creditLineEthUtils: CreditLineUtils;
+    savingsAccountEthUtils: SavingsAccountEthUtils;
 }
 
 export interface Entities {
@@ -72,6 +78,8 @@ export interface DeploymentParams {
     repaymentsInitParams: RepaymentsInitParams;
     poolFactoryInitParams: PoolFactoryInitParams;
     verificationParams: VerificationParams;
+    weth: Address;
+    usdc: Address;
 }
 
 export interface VerificationParams {

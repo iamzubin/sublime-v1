@@ -49,7 +49,8 @@ describe('Credit Lines with Compound Yield', async () => {
             {
                 activationDelay: 1000000000,
             },
-            Contracts.WETH
+            Contracts.WETH,
+            Contracts.USDC
         );
         return {
             env,

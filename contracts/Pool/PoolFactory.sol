@@ -106,12 +106,12 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /*
      * @notice Used to mark assets supported for borrowing
      */
-    mapping(address => bool) isBorrowToken;
+    mapping(address => bool) public isBorrowToken;
 
     /*
      * @notice Used to mark supported collateral assets
      */
-    mapping(address => bool) isCollateralToken;
+    mapping(address => bool) public isCollateralToken;
 
     /**
      * @notice Used to keep track of valid pool addresses
@@ -121,28 +121,32 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
     /*
      * @notice Used to set the min/max borrow amount for Pools
      */
-    Limits poolSizeLimit;
+    Limits public poolSizeLimit;
 
     /*
      * @notice Used to set the min/max collateral ratio for Pools
      */
-    Limits idealCollateralRatioLimit;
+    Limits public idealCollateralRatioLimit;
 
     /*
      * @notice Used to set the min/max borrow rates (interest rate provided by borrower) for Pools
      */
-    Limits borrowRateLimit;
+    Limits public borrowRateLimit;
 
     /*
      * @notice used to set the min/max repayment interval for Pools
      */
-    Limits repaymentIntervalLimit;
+    Limits public repaymentIntervalLimit;
 
     /*
      * @notice used to set the min/max number of repayment intervals for Pools
      */
-    Limits noOfRepaymentIntervalsLimit;
+    Limits public noOfRepaymentIntervalsLimit;
 
+    /**
+     * @notice address of the usdc token contract
+     */
+    address public immutable usdcAsset;
     /**
      * @notice functions affected by this modifier can only be invoked by the Pool
      */
@@ -160,6 +164,10 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
             'PoolFactory::onlyBorrower - Only a valid Borrower can create Pool'
         );
         _;
+    }
+
+    constructor(address _usdcAsset) {
+        usdcAsset = _usdcAsset;
     }
 
     /**
@@ -266,12 +274,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         bytes32 _salt,
         address _verifier,
         address _lenderVerifier
-    ) external payable onlyBorrower(_verifier) {
-        if (_collateralToken == address(0)) {
-            require(msg.value == _collateralAmount, 'PoolFactory::createPool - Ether send is different from collateral amount specified');
-        } else {
-            require(msg.value == 0, 'PoolFactory::createPool - Ether not required when collateral Token is not ETH');
-        }
+    ) external onlyBorrower(_verifier) {
         require(_borrowToken != _collateralToken, 'PoolFactory::createPool - cant borrow the asset put in as collateralToken');
         require(isBorrowToken[_borrowToken], 'PoolFactory::createPool - Invalid borrow token type');
         require(isCollateralToken[_collateralToken], 'PoolFactory::createPool - Invalid collateral token type');
@@ -314,8 +317,7 @@ contract PoolFactory is Initializable, OwnableUpgradeable, IPoolFactory {
         );
     }
 
-    function _limitPoolSizeInUSD(address _borrowToken, uint256 _poolsize) internal {
-        address usdcAsset = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48; //USDC
+    function _limitPoolSizeInUSD(address _borrowToken, uint256 _poolsize) internal view {
         (uint256 RatioOfPrices, uint256 decimals) = IPriceOracle(priceOracle).getLatestPrice(_borrowToken, usdcAsset);
         uint256 _poolsizeInUSD = _poolsize.mul(RatioOfPrices).div(10**decimals);
         require(

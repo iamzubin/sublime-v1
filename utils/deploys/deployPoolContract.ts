@@ -45,8 +45,8 @@ export default class DeployPoolContracts {
         return await new Pool__factory(this._deployerSigner).attach(poolAddress);
     }
 
-    public async deployPoolFactory(): Promise<PoolFactory> {
-        return await (await new PoolFactory__factory(this._deployerSigner).deploy()).deployed();
+    public async deployPoolFactory(usdcContract: Address): Promise<PoolFactory> {
+        return await (await new PoolFactory__factory(this._deployerSigner).deploy(usdcContract)).deployed();
     }
 
     public async getPoolFactory(poolFactoryAddress: Address): Promise<PoolFactory> {

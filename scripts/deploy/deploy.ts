@@ -23,7 +23,13 @@ import {
 } from '../../utils/createEnv/yields';
 import { createAdminVerifierWithInit, createVerificationWithInit } from '../../utils/createEnv/verification';
 import { createPriceOracle, setPriceOracleFeeds } from '../../utils/createEnv/priceOracle';
-import { addSupportedTokens, createPoolFactory, initPoolFactory, setImplementations } from '../../utils/createEnv/poolFactory';
+import {
+    addSupportedTokens,
+    createBeacon,
+    createPoolFactory,
+    initPoolFactory,
+    setImplementations,
+} from '../../utils/createEnv/poolFactory';
 import { createExtenstionWithInit } from '../../utils/createEnv/extension';
 import { createRepaymentsWithInit } from '../../utils/createEnv/repayments';
 import { createPool } from '../../utils/createEnv/poolLogic';
@@ -47,8 +53,9 @@ import { IYield__factory } from '../../typechain/factories/IYield__factory';
 import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
 
 import { induceDelay } from '../../utils/helpers';
+import { createPoolUtils, createCreditLineUtils, createSavingsAccountEthUtils } from '../../utils/createEnv/helpers';
 
-export async function deployer(signers: SignerWithAddress[], config: DeploymentParams, weth: string) {
+export async function deployer(signers: SignerWithAddress[], config: DeploymentParams) {
     const {
         strategyRegistryParams,
         aaveYieldParams,
@@ -61,7 +68,9 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         // creditLineInitParams,
         verificationParams,
     } = config;
+
     let [proxyAdmin, admin, deployer]: SignerWithAddress[] = signers;
+    poolFactoryInitParams.protocolFeeCollector = admin.address;
 
     console.log('Deploying savings account');
 
@@ -91,8 +100,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     let aaveYield: IYield;
     if (aaveYieldParams?.wethGateway) {
         console.log('Deploy and initialize aaveYield');
-
-        aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, savingsAccount, aaveYieldParams);
+        aaveYield = await createAaveYieldWithInit(proxyAdmin, admin, savingsAccount, config.weth, aaveYieldParams);
         await (await strategyRegistry.connect(admin).addStrategy(aaveYield.address)).wait();
     } else {
         aaveYield = IYield__factory.connect(zeroAddress, admin);
@@ -102,7 +110,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     if (yearnYieldPairs && yearnYieldPairs.length != 0) {
         console.log('Deploy and initialize yearnYield');
 
-        yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, savingsAccount, yearnYieldPairs);
+        yearnYield = await createYearnYieldWithInit(proxyAdmin, admin, savingsAccount, yearnYieldPairs, config.weth);
         await (await strategyRegistry.connect(admin).addStrategy(yearnYield.address)).wait();
     } else {
         yearnYield = IYield__factory.connect(zeroAddress, admin);
@@ -112,7 +120,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     if (compoundPairs && compoundPairs?.length != 0) {
         console.log('Deploy and initialize compoundYield');
 
-        compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, savingsAccount, compoundPairs);
+        compoundYield = await createCompoundYieldWithInit(proxyAdmin, admin, savingsAccount, compoundPairs, config.weth);
         await (await strategyRegistry.connect(admin).addStrategy(compoundYield.address)).wait();
     } else {
         compoundYield = IYield__factory.connect(zeroAddress, admin);
@@ -126,46 +134,51 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
 
     console.log('Deploying price oracle');
 
-    const priceOracle: PriceOracle = await createPriceOracle(proxyAdmin, admin, weth);
+    const priceOracle: PriceOracle = await createPriceOracle(proxyAdmin, admin, config.weth);
 
     console.log('setting price feeds');
 
     await setPriceOracleFeeds(priceOracle, admin, priceFeeds);
 
+    console.log('Deploy beacon');
+    let beacon = await createBeacon(proxyAdmin, admin.address, zeroAddress);
+    config.poolFactoryInitParams.beacon = beacon.address;
+
     console.log('Deploy and initialize pool factory');
 
-    const poolFactory: PoolFactory = await createPoolFactory(proxyAdmin);
+    const poolFactory: PoolFactory = await createPoolFactory(proxyAdmin, config.usdc);
 
     await initPoolFactory(poolFactory, admin, {
         ...poolFactoryInitParams,
         admin: admin.address,
+        beacon: beacon.address,
+        noStrategy: noYield.address,
     });
 
     console.log('Deploying extenstions');
 
     const extension: Extension = await createExtenstionWithInit(proxyAdmin, admin, poolFactory, extensionInitParams);
 
-    console.log('Deploying pool logic');
-
-    const poolLogic: Pool = await createPool(proxyAdmin);
-
     console.log('Deploying repayment logic');
 
     const repaymentLogic: Repayments = await createRepaymentsWithInit(proxyAdmin, admin, poolFactory, savingsAccount, repaymentsInitParams);
 
+    console.log('Deploying pool logic');
+
+    const poolLogic: Pool = await createPool(
+        proxyAdmin,
+        priceOracle.address,
+        savingsAccount.address,
+        extension.address,
+        repaymentLogic.address
+    );
+
+    console.log('Update beacon');
+    await (await beacon.connect(admin).changeImpl(poolLogic.address)).wait();
+
     console.log('Set implementations in Pool Factory');
 
-    await setImplementations(
-        poolFactory,
-        admin,
-        poolLogic,
-        repaymentLogic,
-        verification,
-        strategyRegistry,
-        priceOracle,
-        savingsAccount,
-        extension
-    );
+    await setImplementations(poolFactory, admin, repaymentLogic, verification, strategyRegistry, priceOracle, savingsAccount, extension);
 
     console.log('set supported borrow and collateral tokens');
 
@@ -194,6 +207,10 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         admin
     );
 
+    let poolUtils = await createPoolUtils(proxyAdmin, config.weth, admin.address);
+    let creditLineUtils = await createCreditLineUtils(proxyAdmin, config.weth, creditLine.address);
+    let savingsAccountEthUtils = await createSavingsAccountEthUtils(proxyAdmin, config.weth, savingsAccount.address);
+
     return {
         savingsAccount: savingsAccount.address,
         strategyRegistry: strategyRegistry.address,
@@ -211,5 +228,11 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         poolLogic: poolLogic.address,
         repaymentLogic: repaymentLogic.address,
         poolFactory: poolFactory.address,
+        weth: config.weth,
+        usdc: config.usdc,
+        beacon: config.poolFactoryInitParams.beacon,
+        poolUtils: poolUtils.address,
+        creditLineUtils: creditLineUtils.address,
+        savingsAccountEthUtils: savingsAccountEthUtils.address,
     };
 }

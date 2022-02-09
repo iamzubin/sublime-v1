@@ -1,75 +1,96 @@
+const contractAddresses = {
+    savingsAccount: '0x04685dEa32be5Bf7C0224F06AfbEABe05c004d32',
+    strategyRegistry: '0x1A44F94625b131f5C2282A8aE2E352A2FAF60f21',
+    creditLines: '0x7927eB006c1Dea6a61658c927B276dB1F6c5Ccc9',
+    proxyAdmin: '0x03f484190bc6889B28739Af182D996df57B02CC9',
+    admin: '0x4813CB98f2322CFb9fbf2f2dAFe01297FD70D19e',
+    noYield: '0xbc27ee69efBf33F5E19f431629E49f6837851532',
+    aaveYield: '0x716637DC43D82fd0eC57316F50C8A410AA7AaF46',
+    yearnYield: '0x0000000000000000000000000000000000000000',
+    compoundYield: '0xA3aF03494b6DBcD24a2DaD76FBeCd1C8494bC1a9',
+    verification: '0x683FcC905E0AF3D9d60E25Ea93129716FA3a8a01',
+    adminVerifier: '0x7fae87c81F10A42513DFe81ec9DdF162F715EA00',
+    priceOracle: '0x0Aa2E83eFd3B15501C59cd9763E5660Cc5Ce930E',
+    extension: '0x9622C18A48eB3360042d9671B7212B0D17284669',
+    poolLogic: '0x7C6Cb81c939D35af67fB5aA1cA3d5122A5B18EeA',
+    repaymentLogic: '0xe731d021394Cf19085513A37c8Aa46A3e6143dfe',
+    poolFactory: '0x8646D1FD8aa12553680365b235d8c333Fc0f5cC2',
+    weth: '0xd0A1E359811322d97991E03f863a0C30C2cF029C',
+    beacon: '0x2B20C3C850E3dbEDEAAfa55FF2251516a0404427',
+    poolUtils: '0xC57FA13E78d1135c5Cd6f746De974491c50e001E',
+    creditLineUtils: '0xB3948380e9b2758E541a4d0fFbd50eCF8b62F3B2',
+    savingsAccountEthUtils: '0x681766eA83140F1dc3A39447F2e51C1FB226032F',
+};
+
 const contractsToVerify = [
     {
         contract: 'savingsAccount',
-        proxy: '0x5df1d0B6B50eEDc99Ac86f431891AAe527856069',
+        proxy: contractAddresses.savingsAccount,
     },
     {
         contract: 'strategyRegistry',
-        proxy: '0x92d31e76C9D6bC5b0c220146066989D9a54c0C7f',
+        proxy: contractAddresses.strategyRegistry,
     },
     {
         contract: 'creditLines',
-        proxy: '0x4F56393233fA617fe7bB65BB2A6352F298Cfc90F',
+        proxy: contractAddresses.creditLines,
     },
     {
         contract: 'noYield',
-        proxy: '0xDF243B4cD5A5A22e70DBACAe4e1aD304E358f46A',
+        proxy: contractAddresses.noYield,
     },
     {
         contract: 'aaveYield',
-        proxy: '0xcD1a9d51E78b5Ae36cF5F4D299F040AAc0224157',
+        proxy: contractAddresses.aaveYield,
     },
     {
         contract: 'compoundYield',
-        proxy: '0x2106F6308edAa95F150a6dF60ae329D4E8e004c3',
+        proxy: contractAddresses.compoundYield,
     },
     {
         contract: 'verification',
-        proxy: '0x02C7e18C75538964e867D1fccd60Ff30EFD351c0',
+        proxy: contractAddresses.verification,
     },
     {
         contract: 'adminVerifier',
-        proxy: '0x5bD975bdfEE06258a6F183C2878F3554AaA4E036',
+        proxy: contractAddresses.adminVerifier,
     },
     {
         contract: 'priceOracle',
-        proxy: '0xf3a773CF1c99FF83eD6CD8A0b2D8b435242fe0F9',
+        proxy: contractAddresses.priceOracle,
     },
     {
         contract: 'extension',
-        proxy: '0x52CbAD007660c35eE99405D959fa00385C701eE8',
+        proxy: contractAddresses.extension,
     },
     {
         contract: 'pool',
-        proxy: '0x444104deEab30bAB367b8C1476563d2735602a8f',
+        proxy: contractAddresses.poolLogic,
     },
     {
         contract: 'repayments',
-        proxy: '0xb36dAFeBB8996716f27fe124F29952b96324533C',
+        proxy: contractAddresses.repaymentLogic,
     },
     {
         contract: 'poolFactory',
-        proxy: '0x88cEf0fE1D0Cd7A3F1e2fF60015567373037266b',
+        proxy: contractAddresses.poolFactory,
     },
 ];
 
-export { contractsToVerify };
+const supportingContracts = {
+    weth: contractAddresses.weth,
+    savingsAccount: contractsToVerify.filter((a) => a.contract === 'savingsAccount')[0].proxy,
+    creditLines: contractsToVerify.filter((a) => a.contract === 'creditLines')[0].proxy,
+    bin: contractAddresses.admin, // admin,
+    owner: contractAddresses.admin, //admin,
+    poolLogic: contractsToVerify.filter((a) => a.contract === 'pool')[0].proxy,
+};
 
-// {
-//     "savingsAccount": "0x5df1d0B6B50eEDc99Ac86f431891AAe527856069",
-//     "strategyRegistry": "0x92d31e76C9D6bC5b0c220146066989D9a54c0C7f",
-//     "creditLines": "0x4F56393233fA617fe7bB65BB2A6352F298Cfc90F",
-//     "proxyAdmin": "0x03f484190bc6889B28739Af182D996df57B02CC9",
-//     "admin": "0x4813CB98f2322CFb9fbf2f2dAFe01297FD70D19e",
-//     "noYield": "0xDF243B4cD5A5A22e70DBACAe4e1aD304E358f46A",
-//     "aaveYield": "0xcD1a9d51E78b5Ae36cF5F4D299F040AAc0224157",
-//     "yearnYield": "0x0000000000000000000000000000000000000000",
-//     "compoundYield": "0x2106F6308edAa95F150a6dF60ae329D4E8e004c3",
-//     "verification": "0x02C7e18C75538964e867D1fccd60Ff30EFD351c0",
-//     "adminVerifier": "0x5bD975bdfEE06258a6F183C2878F3554AaA4E036",
-//     "priceOracle": "0xf3a773CF1c99FF83eD6CD8A0b2D8b435242fe0F9",
-//     "extension": "0x52CbAD007660c35eE99405D959fa00385C701eE8",
-//     "poolLogic": "0x444104deEab30bAB367b8C1476563d2735602a8f",
-//     "repaymentLogic": "0xb36dAFeBB8996716f27fe124F29952b96324533C",
-//     "poolFactory": "0x88cEf0fE1D0Cd7A3F1e2fF60015567373037266b"
-//   }
+const helperContractsToVerify = {
+    CreditLineUtils: contractAddresses.creditLineUtils,
+    PoolUtils: contractAddresses.poolUtils,
+    SavingsAccountEthUtils: contractAddresses.savingsAccountEthUtils,
+    beacon: contractAddresses.beacon,
+};
+
+export { contractsToVerify, helperContractsToVerify, supportingContracts, contractAddresses };

@@ -5,6 +5,7 @@ import { AdminVerifier } from '../../typechain/AdminVerifier';
 import { PriceOracle } from '../../typechain/PriceOracle';
 import { SublimeProxy } from '../../typechain/SublimeProxy';
 import { IWETH9 } from '../../typechain/IWETH9';
+import { PoolUtils } from '../../typechain/PoolUtils';
 import { CreditLineUtils } from '../../typechain/CreditLineUtils';
 import { SavingsAccountEthUtils } from '../../typechain/SavingsAccountEthUtils';
 import { Beacon } from '../../typechain/Beacon';
@@ -15,6 +16,7 @@ import { AdminVerifier__factory } from '../../typechain/factories/AdminVerifier_
 import { PriceOracle__factory } from '../../typechain/factories/PriceOracle__factory';
 import { SublimeProxy__factory } from '../../typechain/factories/SublimeProxy__factory';
 import { IWETH9__factory } from '../../typechain/factories/IWETH9__factory';
+import { PoolUtils__factory } from '../../typechain/factories/PoolUtils__factory';
 import { CreditLineUtils__factory } from '../../typechain/factories/CreditLineUtils__factory';
 import { SavingsAccountEthUtils__factory } from '../../typechain/factories/SavingsAccountEthUtils__factory';
 import { Beacon__factory } from '../../typechain/factories/Beacon__factory';
@@ -27,6 +29,14 @@ export default class DeployHelperContracts {
 
     constructor(deployerSigner: Signer) {
         this._deployerSigner = deployerSigner;
+    }
+
+    public async deployPoolUtils(weth: Address, bin: Address): Promise<PoolUtils> {
+        return await new PoolUtils__factory(this._deployerSigner).deploy(weth, bin);
+    }
+
+    public async getPoolUtils(contractAddress: Address): Promise<PoolUtils> {
+        return await new PoolUtils__factory(this._deployerSigner).attach(contractAddress);
     }
 
     public async deploySavingsAccountEthUtils(weth: Address, savingsAccount: Address): Promise<SavingsAccountEthUtils> {

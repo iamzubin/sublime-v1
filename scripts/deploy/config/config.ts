@@ -4,8 +4,6 @@ import { DeploymentParams } from '../../../utils/types';
 import kovanConfig from './kovan.json';
 import rinkebyConfig from './rinkeby.json';
 
-import { getPoolInitSigHash } from '../../../utils/createEnv/poolLogic';
-
 function getConfig(network: string): DeploymentParams {
     let networkConfig;
     if (network.includes('kovan')) {
@@ -35,17 +33,19 @@ function createConfig(rawConfig: any): DeploymentParams {
         _collectionPeriod: rawConfig.poolFactory.collectionPeriod,
         _loanWithdrawalDuration: rawConfig.poolFactory.loanWithdrawalDuration,
         _marginCallDuration: rawConfig.poolFactory.marginCallDuration,
-        _poolInitFuncSelector: getPoolInitSigHash(),
         _liquidatorRewardFraction: ethers.utils.parseUnits(rawConfig.poolFactory.liquidatorRewardFraction + '', 30),
         _poolCancelPenalityFraction: ethers.utils.parseUnits(rawConfig.poolFactory.poolCancelPenalityFraction + '', 30),
         _minBorrowFraction: ethers.utils.parseUnits(rawConfig.poolFactory.minBorrowFraction + '', 30),
         _protocolFeeFraction: ethers.utils.parseUnits(rawConfig.poolFactory.protocolFeeFraction + '', 30),
         protocolFeeCollector: rawConfig.poolFactory.protocolFeeCollector,
         noStrategy: ethers.constants.AddressZero,
+        beacon: '',
     };
     config.verificationParams = {
         activationDelay: rawConfig.verificationParams.activationDelay,
     };
+    config.weth = rawConfig.weth;
+    config.usdc = rawConfig.usdc;
     return config;
 }
 

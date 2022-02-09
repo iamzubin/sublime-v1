@@ -33,6 +33,8 @@ import { createExtenstionWithInit } from './extension';
 import { createRepaymentsWithInit } from './repayments';
 import { createPool } from './poolLogic';
 import { createCreditLines, initCreditLine } from './creditLines';
+import { createCreditLineUtils, createPoolUtils, createSavingsAccountEthUtils } from './helpers';
+
 import DeployHelper from '../../utils/deploys';
 
 import { getPoolAddress } from '../../utils/helpers';
@@ -54,7 +56,8 @@ export async function createEnvironment(
     creditLineDefaultStrategy: CreditLineDefaultStrategy,
     creditLineInitParams: CreditLineInitParams,
     verificationInitParams: VerificationParams,
-    weth: Address
+    weth: Address,
+    usdc: Address
 ): Promise<Environment> {
     const env = {} as Environment;
     const yields = {} as Yields;
@@ -123,7 +126,7 @@ export async function createEnvironment(
     await setPriceOracleFeeds(env.priceOracle, admin, priceFeeds);
 
     env.beacon = await createBeacon(proxyAdmin, admin.address, zeroAddress);
-    env.poolFactory = await createPoolFactory(proxyAdmin);
+    env.poolFactory = await createPoolFactory(proxyAdmin, usdc);
     env.extenstion = await createExtenstionWithInit(proxyAdmin, admin, env.poolFactory, extensionInitParams);
     env.repayments = await createRepaymentsWithInit(proxyAdmin, admin, env.poolFactory, env.savingsAccount, repaymentsInitParams);
 
@@ -209,6 +212,10 @@ export async function createEnvironment(
 
     env.yields = yields;
     env.entities = entities;
+
+    env.poolEthUtils = await createPoolUtils(env.entities.proxyAdmin, weth, env.entities.admin.address);
+    env.creditLineEthUtils = await createCreditLineUtils(env.entities.proxyAdmin, weth, env.creditLine.address);
+    env.savingsAccountEthUtils = await createSavingsAccountEthUtils(env.entities.proxyAdmin, weth, env.savingsAccount.address);
     return env;
 }
 
@@ -254,8 +261,7 @@ export async function createNewPool(
             _transferFromSavingsAccount,
             salt,
             env.adminVerifier.address,
-            zeroAddress,
-            { value: collateralToken.address === zeroAddress ? poolCreateParams._collateralAmount : 0 }
+            zeroAddress
         );
 
     return deployHelper.pool.getPool(generatedPoolAddress);

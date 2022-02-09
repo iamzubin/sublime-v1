@@ -22,9 +22,9 @@ export async function createBeacon(proxyAdmin: SignerWithAddress, owner: Address
     return beacon;
 }
 
-export async function createPoolFactory(proxyAdmin: SignerWithAddress): Promise<PoolFactory> {
+export async function createPoolFactory(proxyAdmin: SignerWithAddress, usdc: Address): Promise<PoolFactory> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    let poolFactoryLogic: PoolFactory = await deployHelper.pool.deployPoolFactory();
+    let poolFactoryLogic: PoolFactory = await deployHelper.pool.deployPoolFactory(usdc);
     let poolFactoryProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(poolFactoryLogic.address, proxyAdmin.address);
     let poolFactory: PoolFactory = await deployHelper.pool.getPoolFactory(poolFactoryProxy.address);
     return poolFactory;

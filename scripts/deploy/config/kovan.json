@@ -20,8 +20,12 @@
                     "liquidityToken": "0xf0d0eb522cfa50b716b3b1604c4f0fa6f04376ad"
                 },
                 {
-                    "asset": "0x0000000000000000000000000000000000000000",
+                    "asset": "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
                     "liquidityToken": "0x41b5844f4680a8c38fbb695b7f9cfd1f64474a72"
+                },
+                {
+                    "asset": "0xdCFaB8057d08634279f8201b55d311c2a67897D2",
+                    "liquidityToken": "0xcfC9bB230F00bFFDB560fCe2428b4E05F3442E35"
                 }
             ]
         }
@@ -36,8 +40,12 @@
             "feedAggregator": "0x777A68032a88E5A84678A77Af2CD65A7b3c0775a"
         },
         {
-            "tokenAddress": "0x0000000000000000000000000000000000000000",
+            "tokenAddress": "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
             "feedAggregator": "0x9326BFA02ADD2366b30bacB125260Af641031331"
+        },
+        {
+            "tokenAddress": "0xdCFaB8057d08634279f8201b55d311c2a67897D2",
+            "feedAggregator": "0x9211c6b3BF41A10F78539810Cf5c64e1BB78Ec60"
         }
     ],
     "extension": {
@@ -56,7 +64,7 @@
         "poolCancelPenalityFraction": 1.2,
         "minBorrowFraction": 0.5,
         "protocolFeeFraction": 0.01,
-        "protocolFeeCollector": "0x0000000000000000000000000000000000000000"
+        "protocolFeeCollector": "0x4813CB98f2322CFb9fbf2f2dAFe01297FD70D19e"
     },
     "creditLines": {
         "defaultStrategy": "0x0000000000000000000000000000000000000000",
@@ -68,5 +76,7 @@
     },
     "verificationParams": {
         "activationDelay": 300
-    }
+    },
+    "weth": "0xd0A1E359811322d97991E03f863a0C30C2cF029C",
+    "usdc": "0xdCFaB8057d08634279f8201b55d311c2a67897D2"
 }

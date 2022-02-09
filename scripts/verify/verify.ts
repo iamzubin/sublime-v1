@@ -1,23 +1,35 @@
 import hre from 'hardhat';
 import { getAddressesToVerify } from './populateLogicAddresses';
+import { contractsToVerify, helperContractsToVerify, supportingContracts, contractAddresses } from './contractsToVerify';
 
 async function verifyProxy(contracts: any) {
-    // let [proxyAdmin] = await hre.ethers.getSigners();
+    let [proxyAdmin] = await hre.ethers.getSigners();
 
-    // console.log(`Verifying contracts on network ${hre.network.name}`);
+    console.log(`Verifying contracts on network ${hre.network.name}`);
 
-    // console.log(`Verifying strategy proxy ${contracts.strategyRegistry.proxy}`);
-    // await hre.run('verify:verify', {
-    //     address: contracts.strategyRegistry.proxy,
-    //     constructorArguments: [contracts.strategyRegistry.logic, proxyAdmin.address, Buffer.from('')],
-    //     contract: 'contracts/Proxy.sol:SublimeProxy',
-    // });
+    console.log(`Verifying strategy proxy ${contracts.strategyRegistry.proxy}`);
+    await hre
+        .run('verify:verify', {
+            address: contracts.strategyRegistry.proxy,
+            constructorArguments: [contracts.strategyRegistry.logic, proxyAdmin.address, Buffer.from('')],
+            contract: 'contracts/SublimeProxy.sol:SublimeProxy',
+        })
+        .catch(console.log);
 
     // you don't need to verify all proxies. If needed, just copy the code snippet above
     return 'Proxy Verified';
 }
 
 async function verifyLogic(contracts: any) {
+    console.log('Verify admin verifier Logic');
+    await hre
+        .run('verify:verify', {
+            address: contracts.adminVerifier.logic,
+            constructorArguments: [],
+            contract: 'contracts/Verification/adminVerifier.sol:AdminVerifier',
+        })
+        .catch(console.log);
+
     console.log(`Verifying strategy logic ${contracts.strategyRegistry.logic}`);
     await hre
         .run('verify:verify', {
@@ -49,7 +61,7 @@ async function verifyLogic(contracts: any) {
     await hre
         .run('verify:verify', {
             address: contracts.aaveYield.logic,
-            constructorArguments: [],
+            constructorArguments: [supportingContracts.weth],
             contract: 'contracts/yield/AaveYield.sol:AaveYield',
         })
         .catch(console.log);
@@ -67,7 +79,7 @@ async function verifyLogic(contracts: any) {
     await hre
         .run('verify:verify', {
             address: contracts.compoundYield.logic,
-            constructorArguments: [],
+            constructorArguments: [supportingContracts.weth],
             contract: 'contracts/yield/CompoundYield.sol:CompoundYield',
         })
         .catch(console.log);
@@ -121,10 +133,43 @@ async function verifyLogic(contracts: any) {
     await hre
         .run('verify:verify', {
             address: contracts.pool.proxy,
-            constructorArguments: [],
+            constructorArguments: [
+                contractAddresses.priceOracle,
+                contractAddresses.savingsAccount,
+                contractAddresses.extension,
+                contractAddresses.repaymentLogic,
+            ],
             contract: 'contracts/Pool/Pool.sol:Pool',
         })
         .catch(console.log);
+
+    console.log('Verify savings account eth utils');
+    await hre.run('verify:verify', {
+        address: helperContractsToVerify.SavingsAccountEthUtils,
+        constructorArguments: [supportingContracts.weth, supportingContracts.savingsAccount],
+        contract: 'contracts/SavingsAccount/SavingsAccountEthUtils.sol:SavingsAccountEthUtils',
+    });
+
+    console.log('Verify credit line utils');
+    await hre.run('verify:verify', {
+        address: helperContractsToVerify.CreditLineUtils,
+        constructorArguments: [supportingContracts.weth, supportingContracts.creditLines],
+        contract: 'contracts/CreditLine/CreditLineUtils.sol:CreditLineUtils',
+    });
+
+    console.log('Verify Pool utils');
+    await hre.run('verify:verify', {
+        address: helperContractsToVerify.PoolUtils,
+        constructorArguments: [supportingContracts.weth, supportingContracts.bin],
+        contract: 'contracts/Pool/PoolUtils.sol:PoolUtils',
+    });
+
+    console.log('Verify beacon');
+    await hre.run('verify:verify', {
+        address: helperContractsToVerify.beacon,
+        constructorArguments: [supportingContracts.owner, supportingContracts.poolLogic],
+        contract: 'contracts/Pool/Beacon.sol:Beacon',
+    });
 
     return 'Logic Verified';
 }
