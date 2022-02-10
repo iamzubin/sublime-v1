@@ -106,7 +106,7 @@ async function verifyLogic(contracts: any) {
     await hre
         .run('verify:verify', {
             address: contracts.poolFactory.logic,
-            constructorArguments: [],
+            constructorArguments: [contractAddresses.usdc],
             contract: 'contracts/Pool/PoolFactory.sol:PoolFactory',
         })
         .catch(console.log);

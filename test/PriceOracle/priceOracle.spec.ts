@@ -8,11 +8,12 @@ import { ChainlinkPriceOracleData, UniswapPoolData } from '../../utils/types';
 
 const { loadFixture } = waffle;
 import { Contracts } from '../../existingContracts/compound.json';
-import { ChainLinkAggregators } from '../../config/constants';
+import { ChainLinkAggregators, zeroAddress } from '../../config/constants';
+import { expect } from 'chai';
 
 const uniswapV3FactoryContract = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 
-describe('Price Oracle', async () => {
+describe.only('Price Oracle', async () => {
     let priceOracle: PriceOracle;
     let admin: SignerWithAddress;
 
@@ -62,7 +63,16 @@ describe('Price Oracle', async () => {
         admin = result.admin;
     });
 
-    it('Test 1', async () => {});
-    it('Test 2', async () => {});
-    it('Test 3', async () => {});
+    it('get weth decimals', async () => {
+        let wethDecimals = await priceOracle.connect(admin).getDecimals(Contracts.WETH);
+        expect(wethDecimals).to.eq(18);
+    });
+
+    it('get 0 address decimals', async () => {
+        await expect(priceOracle.connect(admin).getDecimals(zeroAddress)).to.be.reverted;
+    });
+
+    it("get decimals of a some random contract which doesn't have decimals field", async () => {
+        expect(await priceOracle.connect(admin).getDecimals(priceOracle.address)).to.eq(0);
+    });
 });
