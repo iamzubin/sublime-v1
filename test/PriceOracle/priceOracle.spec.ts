@@ -13,7 +13,7 @@ import { expect } from 'chai';
 
 const uniswapV3FactoryContract = '0x1F98431c8aD98523631AE4a59f267346ea31F984';
 
-describe.only('Price Oracle', async () => {
+describe('Price Oracle', async () => {
     let priceOracle: PriceOracle;
     let admin: SignerWithAddress;
 
@@ -69,7 +69,7 @@ describe.only('Price Oracle', async () => {
     });
 
     it('get 0 address decimals', async () => {
-        await expect(priceOracle.connect(admin).getDecimals(zeroAddress)).to.be.reverted;
+        expect(await priceOracle.connect(admin).getDecimals(zeroAddress)).to.eq(0);
     });
 
     it("get decimals of a some random contract which doesn't have decimals field", async () => {

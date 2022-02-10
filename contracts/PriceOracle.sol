@@ -96,6 +96,9 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
      * @return number of decimals for the token
      **/
     function getDecimals(address _token) public view returns (uint8) {
+        if (!isContract(_token)) {
+            return 0;
+        }
         try ERC20(_token).decimals() returns (uint8 v) {
             return v;
         } catch Error(string memory) {
@@ -103,6 +106,19 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
         } catch (bytes memory) {
             return 0;
         }
+    }
+
+    /**
+     * @notice Check's if the given address is an contract address
+     * @param _addr Address to check
+     * @return true if _addr is a contract address
+     */
+    function isContract(address _addr) internal view returns (bool) {
+        uint32 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return (size > 0);
     }
 
     /**
