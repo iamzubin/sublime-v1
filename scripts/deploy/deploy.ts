@@ -131,6 +131,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     const verification: Verification = await createVerificationWithInit(proxyAdmin, admin, verificationParams);
     const adminVerifier: AdminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, verification);
     await (await verification.connect(admin).addVerifier(adminVerifier.address)).wait();
+    await adminVerifier.connect(admin).registerUser(admin.address, "Dragoon", true);
 
     console.log('Deploying price oracle');
 
