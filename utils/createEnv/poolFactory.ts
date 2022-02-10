@@ -77,8 +77,6 @@ export async function addSupportedTokens(
         const bor = borrowTokens[index];
         await (await poolFactory.connect(admin).updateSupportedBorrowTokens(bor, true)).wait();
     }
-    await (await poolFactory.connect(admin).updateSupportedCollateralTokens(zeroAddress, true)).wait();
-    await (await poolFactory.connect(admin).updateSupportedBorrowTokens(zeroAddress, true)).wait();
 }
 
 export async function setImplementations(
