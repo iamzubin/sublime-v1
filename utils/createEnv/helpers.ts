@@ -1,5 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { CreditLineUtils } from '@typechain/CreditLineUtils';
+import { MinimumBeaconProxy } from '@typechain/MinimumBeaconProxy';
 import { PoolUtils } from '@typechain/PoolUtils';
 import { SavingsAccountEthUtils } from '@typechain/SavingsAccountEthUtils';
 import { Address } from 'hardhat-deploy/dist/types';
@@ -26,4 +27,9 @@ export async function createSavingsAccountEthUtils(
 ): Promise<SavingsAccountEthUtils> {
     let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
     return await deployHelper.helper.deploySavingsAccountEthUtils(weth, savingsAccountContractAddress);
+}
+
+export async function deployMinimumBeaconProxy(proxyAdmin: SignerWithAddress, beaconAddress: Address): Promise<MinimumBeaconProxy> {
+    let deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
+    return await deployHelper.helper.deployMinimumBeaconProxy(beaconAddress);
 }

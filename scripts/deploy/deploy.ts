@@ -53,7 +53,12 @@ import { IYield__factory } from '../../typechain/factories/IYield__factory';
 import { YearnYield__factory } from '../../typechain/factories/YearnYield__factory';
 
 import { induceDelay } from '../../utils/helpers';
-import { createPoolUtils, createCreditLineUtils, createSavingsAccountEthUtils } from '../../utils/createEnv/helpers';
+import {
+    createPoolUtils,
+    createCreditLineUtils,
+    createSavingsAccountEthUtils,
+    deployMinimumBeaconProxy,
+} from '../../utils/createEnv/helpers';
 
 export async function deployer(signers: SignerWithAddress[], config: DeploymentParams) {
     const {
@@ -131,7 +136,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     const verification: Verification = await createVerificationWithInit(proxyAdmin, admin, verificationParams);
     const adminVerifier: AdminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, verification);
     await (await verification.connect(admin).addVerifier(adminVerifier.address)).wait();
-    await adminVerifier.connect(admin).registerUser(admin.address, "Dragoon", true);
+    await adminVerifier.connect(admin).registerUser(admin.address, 'Dragoon', true);
 
     console.log('Deploying price oracle');
 
@@ -212,6 +217,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     let creditLineUtils = await createCreditLineUtils(proxyAdmin, config.weth, creditLine.address);
     let savingsAccountEthUtils = await createSavingsAccountEthUtils(proxyAdmin, config.weth, savingsAccount.address);
 
+    let minimumBeaconProxy = await deployMinimumBeaconProxy(proxyAdmin, beacon.address);
     return {
         savingsAccount: savingsAccount.address,
         strategyRegistry: strategyRegistry.address,
@@ -235,5 +241,6 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         poolUtils: poolUtils.address,
         creditLineUtils: creditLineUtils.address,
         savingsAccountEthUtils: savingsAccountEthUtils.address,
+        minimumBeaconProxy: minimumBeaconProxy.address,
     };
 }

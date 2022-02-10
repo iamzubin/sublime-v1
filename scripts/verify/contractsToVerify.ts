@@ -21,6 +21,7 @@ const contractAddresses = {
     poolUtils: '0x44A43F2E8EbA51Dd708010FDCeC3e19f61d87891',
     creditLineUtils: '0x58728A2BFf9A19ec253748d24636AB0Bb02E5a6d',
     savingsAccountEthUtils: '0x055C6451DA6893e80003439ab6E01EDBad2F6F5B',
+    minimumBeaconProxy: '0x820a611BC2D58024060C908E0ae28Fb77bBA818F',
 };
 
 const contractsToVerify = [
@@ -92,6 +93,7 @@ const helperContractsToVerify = {
     PoolUtils: contractAddresses.poolUtils,
     SavingsAccountEthUtils: contractAddresses.savingsAccountEthUtils,
     beacon: contractAddresses.beacon,
+    minimumBeaconProxy: contractAddresses.minimumBeaconProxy,
 };
 
 export { contractsToVerify, helperContractsToVerify, supportingContracts, contractAddresses };

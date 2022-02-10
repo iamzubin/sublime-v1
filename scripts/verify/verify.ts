@@ -171,6 +171,12 @@ async function verifyLogic(contracts: any) {
         contract: 'contracts/Pool/Beacon.sol:Beacon',
     });
 
+    console.log('Verify Beacon Proxy');
+    await hre.run('verify:verify', {
+        address: helperContractsToVerify.minimumBeaconProxy,
+        constructorArguments: [helperContractsToVerify.beacon],
+        contract: 'contracts/Pool/MinimumBeaconProxy2.sol:MinimumBeaconProxy',
+    });
     return 'Logic Verified';
 }
 
