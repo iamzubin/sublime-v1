@@ -147,7 +147,7 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
     function deployCreditLines() public {
         creditLine = new CreditLine();
         creditLine.initialize(
-        address(noYield), //default strategy
+        address(admin), //default strategy NEEDS TO CHANGE
         address(priceOracle),//address _priceOracle,
         address(savingsAccount),//address _savingsAccount,
         address(strategyRegistry),//address _strategyRegistry,
@@ -196,7 +196,7 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
 
     function deployAdminVerifier() public {
         adminVerifier = new AdminVerifier();
-        adminVerifier.initialize(address(admin), address(verification));
+        adminVerifier.initialize(address(admin), address(verification), address(admin));
     }
 
     function SetUpCreditLines() public {
@@ -205,6 +205,9 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         deployPriceOracle();
         deployStrategyRegistry();
         deployProtocolFeeCollector();
+
+        admin.addStrategy(address(strategyRegistry), address(admin)); // CHANGE DEFAULT ADDRESS FROM ADMIN TO SOMETHING ELSE
+
         deployCreditLines();
         deploySavingsAccount();
         deployNoYield();
@@ -213,6 +216,10 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         deployAdminVerifier();
 
         admin.updateSavingsAccount(address(creditLine), address(savingsAccount));
+
+        admin.updateStrategy(address(strategyRegistry), 0, address(admin), address(noYield));
+        admin.addStrategy(address(strategyRegistry), address(compoundYield));
+
         admin.updateDefaultStrategy(address(creditLine), address(noYield));
         admin.setUpAllOracles(address(priceOracle));
 

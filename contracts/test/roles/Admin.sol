@@ -14,6 +14,7 @@ import "../../PriceOracle.sol";
 
 import "../../interfaces/ICreditLine.sol";
 import "../../interfaces/IPriceOracle.sol";
+import "../../interfaces/IStrategyRegistry.sol";
 
 contract Admin is Constants {
     using SafeERC20 for IERC20;
@@ -82,6 +83,14 @@ contract Admin is Constants {
         priceOracle.setChainlinkFeedAddress(WETH, ETH_priceFeedChainlink);
 
         priceOracle.setUniswapFeedAddress(USDC, WETH, USDC_ETH_priceFeedUniswap);
+    }
+
+    function addStrategy(address strategyRegistry, address strategy) public {
+        IStrategyRegistry(strategyRegistry).addStrategy(strategy);
+    }
+
+    function updateStrategy(address strategyRegistry, uint256 index, address oldStrategy, address newStrategy) public {
+        IStrategyRegistry(strategyRegistry).updateStrategy(index, oldStrategy, newStrategy);
     }
 
 }
