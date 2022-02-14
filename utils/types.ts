@@ -12,14 +12,14 @@ import { PriceOracle } from '@typechain/PriceOracle';
 import { Pool } from '@typechain/Pool';
 import { BigNumberish, BytesLike } from 'ethers';
 import { IYield } from '@typechain/IYield';
-import { AdminVerifier } from '@typechain/AdminVerifier';
+import { TwitterVerifier } from '@typechain/TwitterVerifier';
 
 export interface Environment {
     savingsAccount: SavingsAccount;
     strategyRegistry: StrategyRegistry;
     yields: Yields;
     verification: Verification;
-    adminVerifier: AdminVerifier;
+    twitterVerifier: TwitterVerifier;
     priceOracle: PriceOracle;
     extenstion: Extension;
     repayments: Repayments;

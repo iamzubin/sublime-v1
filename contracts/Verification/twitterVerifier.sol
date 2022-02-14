@@ -5,7 +5,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '../interfaces/IVerification.sol';
 import '../interfaces/IVerifier.sol';
 
-contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
+contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
     /**
      * @notice stores the verification contract instance
      */
@@ -15,6 +15,7 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
      * @notice stores the user metadata against their address
      */
     mapping(address => string) public userData;
+    mapping(string => address) public twitterIdMap;
     address public signerAddress;
 
     /**
@@ -78,6 +79,7 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
 
         verification.registerMasterAddress(msg.sender, _isMasterLinked);
         userData[msg.sender] = _twitterId;
+        twitterIdMap[_twitterId] = msg.sender;
         emit UserRegistered(msg.sender, _isMasterLinked, _twitterId);
     }
 
@@ -87,8 +89,15 @@ contract AdminVerifier is Initializable, IVerifier, OwnableUpgradeable {
      */
     function unregisterSelf() external {
         require(bytes(userData[msg.sender]).length != 0, 'User doesnt exists');
+        delete twitterIdMap[userData[msg.sender]];
         delete userData[msg.sender];
         verification.unregisterMasterAddress(msg.sender, address(this));
+        emit UserUnregistered(msg.sender);
+    }
+
+    function unregisterUser(address _user) external onlyOwner {
+        delete userData[_user];
+        verification.unregisterMasterAddress(_user, address(this));
         emit UserUnregistered(msg.sender);
     }
 

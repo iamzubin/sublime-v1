@@ -28,8 +28,8 @@ const contractsToVerify = [
         proxy: '0x02C7e18C75538964e867D1fccd60Ff30EFD351c0',
     },
     {
-        contract: 'adminVerifier',
-        proxy: '0x5bD975bdfEE06258a6F183C2878F3554AaA4E036',
+        contract: 'twitterVerifier',
+        proxy: '0x24E444Bb965769E962e52B21612699612AE33F8a',
     },
     {
         contract: 'priceOracle',

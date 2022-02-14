@@ -4,7 +4,7 @@ import DeployHelper from '../deploys';
 
 import { Verification } from '@typechain/Verification';
 import { SublimeProxy } from '@typechain/SublimeProxy';
-import { AdminVerifier } from '@typechain/AdminVerifier';
+import { TwitterVerifier } from '@typechain/TwitterVerifier';
 import { BigNumberish } from '@ethersproject/providers/node_modules/@ethersproject/bignumber';
 import { VerificationParams } from '@utils/types';
 
@@ -21,15 +21,15 @@ export async function createVerificationWithInit(
     return verification;
 }
 
-export async function createAdminVerifierWithInit(
+export async function createTwitterVerifierWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
     verification: Verification
-): Promise<AdminVerifier> {
+): Promise<TwitterVerifier> {
     const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    let adminVerifierLogic: AdminVerifier = await deployHelper.helper.deployAdminVerifier();
+    let adminVerifierLogic: TwitterVerifier = await deployHelper.helper.deployTwitterVerifier();
     let adminVerifierProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(adminVerifierLogic.address, proxyAdmin.address);
-    let adminVerifier = await deployHelper.helper.getAdminVerifier(adminVerifierProxy.address);
+    let adminVerifier = await deployHelper.helper.getTwitterVerifier(adminVerifierProxy.address);
     await (await adminVerifier.connect(admin).initialize(admin.address, verification.address, admin.address)).wait();
     // await verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
     return adminVerifier;
