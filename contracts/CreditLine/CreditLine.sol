@@ -473,8 +473,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: The credit line is not yet active.');
 
         uint256 _interestAccrued = calculateInterestAccrued(_id);
-        uint256 _newInterestAccrued = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(_interestAccrued);
-        creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = _newInterestAccrued;
+        creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = (creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate).add(_interestAccrued);
     }
 
     function _depositCollateralFromSavingsAccount(
@@ -493,8 +492,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             if (_liquidityShares == 0 || _strategyList[_index] == address(0)) {
                 continue;
             }
-            uint256 _tokenInStrategy = _liquidityShares;
-            _tokenInStrategy = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
+ 
+            uint256 _tokenInStrategy = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
 
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) >= _amount) {
@@ -664,23 +663,20 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _activeAmount;
 
         for (uint256 _index; _index < _strategyList.length; ++_index) {
-            if (_strategyList[_index] == address(0)) {
+            uint256 _liquidityShares = _savingsAccount.balanceInShares(_lender, _asset, _strategyList[_index]);
+            if(_strategyList[_index] == address(0) || _liquidityShares == 0) {
                 continue;
             }
-            uint256 _liquidityShares = _savingsAccount.balanceInShares(_lender, _asset, _strategyList[_index]);
-            if (_liquidityShares != 0) {
-                uint256 tokenInStrategy = _liquidityShares;
-                tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
-                uint256 _tokensToTransfer = tokenInStrategy;
-                if (_activeAmount.add(tokenInStrategy) >= _amountInTokens) {
-                    _tokensToTransfer = (_amountInTokens.sub(_activeAmount));
-                }
-                try _savingsAccount.withdrawFrom(_asset, _strategyList[_index], _lender, address(this), _tokensToTransfer, false) {
-                    _activeAmount = _activeAmount.add(_tokensToTransfer);
-                } catch {}
-                if (_activeAmount == _amountInTokens) {
-                    return;
-                }
+            uint256 tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
+            uint256 _tokensToTransfer = tokenInStrategy;
+            if (_activeAmount.add(tokenInStrategy) >= _amountInTokens) {
+                _tokensToTransfer = (_amountInTokens.sub(_activeAmount));
+            }
+            try _savingsAccount.withdrawFrom(_asset, _strategyList[_index], _lender, address(this), _tokensToTransfer, false) {
+                _activeAmount = _activeAmount.add(_tokensToTransfer);
+            } catch {}
+            if (_activeAmount == _amountInTokens) {
+                return;
             }
         }
         require(_activeAmount == _amountInTokens, 'insufficient balance');
@@ -730,15 +726,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _activeAmount;
 
         for (uint256 _index; _index < _strategyList.length; ++_index) {
-            if (_strategyList[_index] == address(0)) {
-                continue;
-            }
             uint256 _liquidityShares = _savingsAccount.balanceInShares(msg.sender, _asset, _strategyList[_index]);
-            if (_liquidityShares == 0) {
+            if (_strategyList[_index] == address(0) || _liquidityShares == 0) {
                 continue;
             }
-            uint256 _tokenInStrategy = _liquidityShares;
-            _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
+
+            uint256 _tokenInStrategy = IYield(_strategyList[_index]).getTokensForShares(_liquidityShares, _asset);
 
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) >= _amount) {
