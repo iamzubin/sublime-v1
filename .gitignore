@@ -29,3 +29,9 @@ test.spec.ts
 node_modules
 .env
 gasReport.md
+
+out
+out/*
+
+lib
+lib/*
