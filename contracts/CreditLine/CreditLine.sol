@@ -835,7 +835,10 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine: Credit line should be active.');
         require(creditLineVariables[_id].principal == 0, 'CreditLine: Cannot be closed since not repaid.');
+        
+        // The below one is an unnecessary check, since whenever the principal is 0, interestAccruedTillLastPrincipalUpdate would also be 0
         require(creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate == 0, 'CreditLine: Cannot be closed since not repaid.');
+        
         creditLineVariables[_id].status = CreditLineStatus.CLOSED;
         emit CreditLineClosed(_id, msg.sender == creditLineConstants[_id].lender);
     }
@@ -960,8 +963,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             if (liquidityShares == 0) {
                 continue;
             }
-            uint256 _tokenInStrategy = liquidityShares;
-            _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(liquidityShares, _asset);
+
+            uint256 _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(liquidityShares, _asset);
             uint256 _tokensToTransfer = _tokenInStrategy;
             if (_activeAmount.add(_tokenInStrategy) > _amountInTokens) {
                 _tokensToTransfer = _amountInTokens.sub(_activeAmount);
