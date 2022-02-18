@@ -27,7 +27,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
     /**
      * @notice registry which maps retired strategies which were once whitelisted to true
      **/
-    mapping(address => bool) public override retiredRegistry;
+    mapping(address => bool) public retiredRegistry;
 
     /**
      * @notice used to initialize the paramters of strategy registry
@@ -120,7 +120,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         emit StrategyAdded(_newStrategy);
     }
 
-    function wasStrategy(address _strategy) external view override {
+    function wasStrategy(address _strategy) external view override returns(bool) {
         return (registry[_strategy] || retiredRegistry[_strategy]);
     }
 }
