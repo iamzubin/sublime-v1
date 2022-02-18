@@ -24,9 +24,10 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     address public strategyRegistry;
 
     /**
-     * @notice address of the credit lines contract
+     * @notice addresses which can increase allowance on behalf of any address
+     * @dev credit line contracts only will be added
      */
-    address public creditLine;
+    mapping(address => bool) public allowanceAdmin;
 
     /**
      * @notice mapping from user to token to strategy to balance of shares
@@ -41,11 +42,10 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     mapping(address => mapping(address => mapping(address => uint256))) public allowance;
 
     /**
-     * @notice modifier to check if address is the credit line
-     * @param _caller address to check if credit line
+     * @notice modifier to check if msg.sender is the credit line
      */
-    modifier onlyCreditLine(address _caller) {
-        require(_caller == creditLine, 'Invalid caller');
+    modifier onlyCreditLine {
+        require(allowanceAdmin[msg.sender], 'Invalid caller');
         _;
     }
 
@@ -53,17 +53,14 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @dev initialize the contract
      * @param _owner address of the owner of the savings account contract
      * @param _strategyRegistry address of the strategy registry
-     * @param _creditLine address of the credit line contract
      **/
     function initialize(
         address _owner,
-        address _strategyRegistry,
-        address _creditLine
+        address _strategyRegistry
     ) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
 
-        _updateCreditLine(_creditLine);
         _updateStrategyRegistry(_strategyRegistry);
     }
 
@@ -72,14 +69,14 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @dev only owner can update
      * @param _creditLine updated address of credit lines
      */
-    function updateCreditLine(address _creditLine) external onlyOwner {
-        _updateCreditLine(_creditLine);
+    function toggleAllowanceAdmin(address _creditLine) external onlyOwner {
+        _toggleAllowanceAdmin(_creditLine);
     }
 
-    function _updateCreditLine(address _creditLine) internal {
+    function _toggleAllowanceAdmin(address _creditLine) internal {
         require(_creditLine != address(0), 'SavingsAccount::initialize zero address');
-        creditLine = _creditLine;
-        emit CreditLineUpdated(_creditLine);
+        allowanceAdmin[_creditLine] = !allowanceAdmin[_creditLine];
+        emit AllowanceAdminUpdated(_creditLine, allowanceAdmin[_creditLine]);
     }
 
     /**
@@ -372,7 +369,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         address _token,
         address _from,
         uint256 _amount
-    ) external override onlyCreditLine(msg.sender) {
+    ) external override onlyCreditLine {
         allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].add(_amount);
 
         emit CreditLineAllowanceRefreshed(_token, _from, msg.sender, _amount);
