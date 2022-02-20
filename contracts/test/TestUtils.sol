@@ -207,7 +207,7 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
 
     function deployTwitterVerifier() public {
         twitterVerifier = new TwitterVerifier();
-        twitterVerifier.initialize(address(admin), address(verification),address(admin));
+        twitterVerifier.initialize(address(admin), address(verification), hevm.addr(4));
     }
 
     function SetUpCreditLines() public {
@@ -253,5 +253,11 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         deployRepayments();
         deployExtensions();
     }
-
+    function setUpTwitterVerifierContracts() public {
+        deployVerification();
+        deployTwitterVerifier();
+        admin.UpdateVerificationVerifier(address(verification),address(twitterVerifier));
+        // verification.addVerifier(address(twitterVerifier));
+        
+    }
 }

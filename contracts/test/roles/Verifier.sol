@@ -10,6 +10,7 @@ contract Verifier {
 
 
     function registerSelf(
+        address _contractAddress,
         bool _isMasterLinked,
         string memory _twitterId,
         uint256 _deadline
@@ -22,19 +23,19 @@ contract Verifier {
         bytes32 hashStruct = keccak256(
             abi.encode(
                 keccak256('set(string twitterId,address userAddr,uint256 deadline)'),
-                keccak256(bytes(_twitterId)),
-                msg.sender,
+                keccak256(bytes("1")),
+                address(this),
                 _deadline
             )
         );
         bytes32 hash = keccak256(abi.encodePacked('\x19\x01', eip712DomainHash, hashStruct));
         (uint8 v, bytes32 r, bytes32 s) = hevm.sign(4,hash);
 
-        ITwitterVerifier(address(twitterVerifier)).registerSelf(true,
+        ITwitterVerifier(address(_contractAddress)).registerSelf(true,
         v,
         r,
         s,
-        _twitterId,
+        "1" ,
         _deadline);
 
         return (v,r,s);

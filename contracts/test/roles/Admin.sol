@@ -14,6 +14,7 @@ import "../../PriceOracle.sol";
 
 import "../../interfaces/ICreditLine.sol";
 import "../../interfaces/IPriceOracle.sol";
+import "../../interfaces/IVerification.sol";
 
 contract Admin is Constants {
     using SafeERC20 for IERC20;
@@ -83,5 +84,7 @@ contract Admin is Constants {
 
         priceOracle.setUniswapFeedAddress(USDC, WETH, USDC_ETH_priceFeedUniswap);
     }
-
+    function UpdateVerificationVerifier(address _verificationContract,address _address) public {
+        IVerification(_verificationContract).addVerifier(address(_address));
+    }
 }

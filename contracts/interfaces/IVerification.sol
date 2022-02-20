@@ -52,4 +52,8 @@ interface IVerification {
     function registerMasterAddress(address _masterAddress, bool _isMasterLinked) external;
 
     function unregisterMasterAddress(address _masterAddress, address _verifier) external;
+
+    function addVerifier(address _verifier) external;
+
+    function removeVerifier(address _verifier) external;
 }

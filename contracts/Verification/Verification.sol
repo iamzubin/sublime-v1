@@ -65,7 +65,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @notice owner can add new verifier
     /// @dev Verifier can add master address or remove addresses added by it
     /// @param _verifier Address of the verifier contract
-    function addVerifier(address _verifier) external onlyOwner {
+    function addVerifier(address _verifier) external override onlyOwner {
         require(_verifier != address(0), 'V:AV-Verifier cant be 0 address');
         require(!verifiers[_verifier], 'V:AV-Verifier exists');
         verifiers[_verifier] = true;
@@ -75,7 +75,7 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
     /// @notice owner can remove exisiting verifier
     /// @dev Verifier can add master address or remove addresses added by it
     /// @param _verifier Address of the verifier contract
-    function removeVerifier(address _verifier) external onlyOwner {
+    function removeVerifier(address _verifier) external override onlyOwner {
         require(verifiers[_verifier], 'V:AV-Verifier doesnt exist');
         delete verifiers[_verifier];
         emit VerifierRemoved(_verifier);
