@@ -6,6 +6,7 @@ import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20PausableUpgradeable.sol';
 
+
 import "../CreditLine/CreditLine.sol";
 import "../PriceOracle.sol";
 import "../SavingsAccount/SavingsAccount.sol";
@@ -17,7 +18,7 @@ import "./Constants.sol";
 import "./ProtocolFeeCollector.sol";
 
 import "../Verification/Verification.sol";
-import "../Verification/adminVerifier.sol";
+import "../Verification/twitterVerifier.sol";
 
 import "../Pool/Extension.sol";
 import "../Pool/Repayments.sol";
@@ -38,11 +39,20 @@ import "../yield/StrategyRegistry.sol";
 import "../PriceOracle.sol";
 import "./ActorsUtils.sol";
 
-interface Hevm {
-    function warp(uint256) external;
-    function store(address,bytes32,bytes32) external;
-}
+// interface Hevm {
+//     function warp(uint256) external;
+//     function store(address,bytes32,bytes32) external;
+// }
+// interface Hevm {
+//     function sign(uint, bytes32 ) public returns (uint8, bytes32, bytes32 );
+// }
 
+
+// interface Hevm {
+//     function warp(uint256) external;
+//     function store(address,bytes32,bytes32) external;
+//     function sign(uint, bytes32 ) public returns (uint8, bytes32, bytes32 );
+// }
 
 contract TestUtils is DSTest, ActorsUtils, Constants {
     using SafeERC20 for IERC20;
@@ -60,7 +70,7 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
     Extension extensions;
     Verification verification;
     PoolFactory poolFactory;
-    AdminVerifier adminVerifier;
+    TwitterVerifier twitterVerifier;
 
     CompoundYield compoundYield;
     AaveYield aaveYield;
@@ -68,9 +78,10 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
     NoYield noYield;
     ProtocolFeeCollector protocolFeeCollector;
 
-    Hevm hevm;
+    // Hevm hevm;
+    Hevm hevm = Hevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
-    constructor() public { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
+    // constructor() public { hevm = Hevm(address(bytes20(uint160(uint256(keccak256("hevm cheat code")))))); }
 
     function mint(address token, address account, uint256 amt) public {
         //address addr = token;
@@ -194,9 +205,9 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         verification.initialize(address(admin), verificationActivationDelay);
     }
 
-    function deployAdminVerifier() public {
-        adminVerifier = new AdminVerifier();
-        adminVerifier.initialize(address(admin), address(verification));
+    function deployTwitterVerifier() public {
+        twitterVerifier = new TwitterVerifier();
+        twitterVerifier.initialize(address(admin), address(verification),address(admin));
     }
 
     function SetUpCreditLines() public {
@@ -210,7 +221,7 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         deployNoYield();
         deployCompoundYield();
         deployVerification();
-        deployAdminVerifier();
+        deployTwitterVerifier();
 
         admin.updateSavingsAccount(address(creditLine), address(savingsAccount));
         admin.updateDefaultStrategy(address(creditLine), address(noYield));
@@ -237,7 +248,7 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         deployNoYield();
         deployCompoundYield();
         deployVerification();
-        deployAdminVerifier();
+        deployTwitterVerifier();
         //deployPoolFactory();
         deployRepayments();
         deployExtensions();

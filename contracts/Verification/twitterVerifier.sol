@@ -95,12 +95,6 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
         emit UserUnregistered(msg.sender);
     }
 
-    function unregisterUser(address _user) external onlyOwner {
-        delete userData[_user];
-        verification.unregisterMasterAddress(_user, address(this));
-        emit UserUnregistered(msg.sender);
-    }
-
     /**
      * @notice used to register user
      * @dev ohly owner can register users

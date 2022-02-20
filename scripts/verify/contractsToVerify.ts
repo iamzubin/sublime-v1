@@ -66,7 +66,7 @@ export { contractsToVerify };
 //     "yearnYield": "0x0000000000000000000000000000000000000000",
 //     "compoundYield": "0x2106F6308edAa95F150a6dF60ae329D4E8e004c3",
 //     "verification": "0x02C7e18C75538964e867D1fccd60Ff30EFD351c0",
-//     "adminVerifier": "0x5bD975bdfEE06258a6F183C2878F3554AaA4E036",
+//     "twitterVerifier": "0x5bD975bdfEE06258a6F183C2878F3554AaA4E036",
 //     "priceOracle": "0xf3a773CF1c99FF83eD6CD8A0b2D8b435242fe0F9",
 //     "extension": "0x52CbAD007660c35eE99405D959fa00385C701eE8",
 //     "poolLogic": "0x444104deEab30bAB367b8C1476563d2735602a8f",

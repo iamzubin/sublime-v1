@@ -165,10 +165,10 @@ contract Verification is Initializable, IVerification, OwnableUpgradeable {
         LinkedAddress memory _linkedAddress = linkedAddresses[_user];
         uint256 _masterActivatesAt = masterAddresses[_linkedAddress.masterAddress][_verifier];
         if(
-            _linkedAddress.masterAddress == address(0) || 
+            _linkedAddress.masterAddress == address(0) ||
             _linkedAddress.activatesAt > block.timestamp ||
             _masterActivatesAt > block.timestamp ||
-            _masterActivatesAt == 0 
+            _masterActivatesAt == 0
         ) {
             return false;
         }

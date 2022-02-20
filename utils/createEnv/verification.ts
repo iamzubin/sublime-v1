@@ -27,10 +27,10 @@ export async function createTwitterVerifierWithInit(
     verification: Verification
 ): Promise<TwitterVerifier> {
     const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
-    let adminVerifierLogic: TwitterVerifier = await deployHelper.helper.deployTwitterVerifier();
-    let adminVerifierProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(adminVerifierLogic.address, proxyAdmin.address);
-    let adminVerifier = await deployHelper.helper.getTwitterVerifier(adminVerifierProxy.address);
-    await (await adminVerifier.connect(admin).initialize(admin.address, verification.address, admin.address)).wait();
+    let twitterVerifierLogic: TwitterVerifier = await deployHelper.helper.deployTwitterVerifier();
+    let twitterVerifierProxy: SublimeProxy = await deployHelper.helper.deploySublimeProxy(twitterVerifierLogic.address, proxyAdmin.address);
+    let twitterVerifier = await deployHelper.helper.getTwitterVerifier(twitterVerifierProxy.address);
+    await (await twitterVerifier.connect(admin).initialize(admin.address, verification.address, admin.address)).wait();
     // await verification.connect(admin).registerUser(borrower.address, sha256(Buffer.from('Borrower')));
-    return adminVerifier;
+    return twitterVerifier;
 }

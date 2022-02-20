@@ -8,6 +8,7 @@ import "./roles/PoolActor.sol";
 import "./roles/CreditLineActor.sol";
 import "./roles/SavingsAccountUser.sol";
 import "./roles/Verifier.sol";
+import "./roles/TwitterWorker.sol";
 
 import '../interfaces/IPriceOracle.sol';
 import '../interfaces/IYield.sol';
@@ -16,6 +17,9 @@ import '../interfaces/IStrategyRegistry.sol';
 import '../interfaces/IPool.sol';
 import '../interfaces/IPoolFactory.sol';
 import '../interfaces/IRepayment.sol';
+
+
+import './interface/IHevm.sol';
 
 contract ActorsUtils {
     using SafeERC20 for IERC20;
@@ -38,6 +42,11 @@ contract ActorsUtils {
     CreditLineActor creditLineBorrower;
     CreditLineActor creditLineLender;
     CreditLineActor creditLineLiquidator;
+
+    TwitterWorker twitterWorker;
+
+    Hevm twitterSigner_1;
+    Hevm twitterSigner_2;
 
     function createPoolBorrower() public {
         poolBorrower = new PoolActor();
@@ -81,6 +90,10 @@ contract ActorsUtils {
         fakeVerifier = new Verifier();
     }
 
+    function createTwitterWorker() public {
+        twitterWorker = new TwitterWorker();
+    }
+
     function createBob() public {
         bob = new SavingsAccountUser();
     }
@@ -105,6 +118,9 @@ contract ActorsUtils {
         createFakeVerifier();
 
         createBob();
+    }
+    function SetUpTwitterVerifierActors() public {
+        createTwitterWorker();
     }
 
 }
