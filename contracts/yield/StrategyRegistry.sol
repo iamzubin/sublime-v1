@@ -120,7 +120,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         emit StrategyAdded(_newStrategy);
     }
 
-    function wasStrategy(address _strategy) external view override returns(bool) {
+    function isValidStrategy(address _strategy) external view override returns(bool) {
         return (registry[_strategy] || retiredRegistry[_strategy]);
     }
 }

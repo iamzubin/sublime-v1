@@ -22,7 +22,7 @@ interface IStrategyRegistry {
 
     function registry(address strategy) external view returns (bool isValidStrategy);
 
-    function wasStrategy(address strategy) external view returns(bool wasValidStrategy);
+    function isValidStrategy(address strategy) external view returns(bool wasValidStrategy);
 
     function getStrategies() external view returns (address[] memory strategies);
 
