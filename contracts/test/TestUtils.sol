@@ -209,11 +209,7 @@ contract TestUtils is DSTest, ActorsUtils, Constants {
         twitterVerifier = new TwitterVerifier();
         twitterVerifier.initialize(address(admin), address(verification), hevm.addr(4));
     }
-    function deployAdminVerifier() public {
-        adminVerifier = new AdminVerifier();
-        adminVerifier.initialize(address(admin), address(verification), address(admin));
-    }
-
+    
     function SetUpCreditLines() public {
         //address adminAddress = address(admin);
 
