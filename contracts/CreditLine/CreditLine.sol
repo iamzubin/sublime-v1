@@ -110,14 +110,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev it is multiplied by SCALING_FACTOR
      **/
     uint256 public liquidatorRewardFraction;
-    /**
-     * @dev checks if Credit Line exists
-     * @param _id identifier for the credit line
-     **/
-    modifier ifCreditLineExists(uint256 _id) {
-        require(creditLineVariables[_id].status != CreditLineStatus.NOT_CREATED, 'Credit line does not exist');
-        _;
-    }
 
     /**
      * @dev checks if called by credit Line Borrower
@@ -627,7 +619,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _strategy,
         uint256 _amount,
         bool _fromSavingsAccount
-    ) external nonReentrant ifCreditLineExists(_id) {
+    ) external nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
         _depositCollateral(_id, _strategy, _amount, _fromSavingsAccount);
         emit CollateralDeposited(_id, _amount, _strategy);
@@ -835,7 +827,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev used to close credit line by borrower or lender
      * @param _id identifier for the credit line
      */
-    function close(uint256 _id) external ifCreditLineExists(_id) {
+    function close(uint256 _id) external {
         require(
             msg.sender == creditLineConstants[_id].borrower || msg.sender == creditLineConstants[_id].lender,
             'CreditLine: Permission denied while closing Line of credit'
@@ -854,7 +846,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @param _id identifier for the credit line
      * @return collateral ratio multiplied by SCALING_FACTOR to retain precision
      */
-    function calculateCurrentCollateralRatio(uint256 _id) public ifCreditLineExists(_id) returns (uint256) {
+    function calculateCurrentCollateralRatio(uint256 _id) public returns (uint256) {
         (uint256 _ratioOfPrices, uint256 _decimals) = IPriceOracle(priceOracle).getLatestPrice(
             creditLineConstants[_id].collateralAsset,
             creditLineConstants[_id].borrowAsset
