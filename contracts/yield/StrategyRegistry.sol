@@ -85,7 +85,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      **/
     function removeStrategy(uint256 _strategyIndex) external override onlyOwner {
         address _strategy = strategies[_strategyIndex];
-        address[] _strategies = strategies;
+        address[] memory _strategies = strategies;
         for(uint256 i = _strategyIndex; i < _strategies.length-1; ++i) {
             strategies[i] = _strategies[i+1];
         }
