@@ -410,8 +410,9 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @return interest accrued over current borrowed amount since last repayment
      */
     function calculateInterestAccrued(uint256 _id) public view returns (uint256) {
-        if (creditLineVariables[_id].lastPrincipalUpdateTime == 0) return 0;
-        uint256 _timeElapsed = (block.timestamp).sub(creditLineVariables[_id].lastPrincipalUpdateTime);
+        uint256 _lastPrincipalUpdateTime = creditLineVariables[_id].lastPrincipalUpdateTime;
+        if (_lastPrincipalUpdateTime == 0) return 0;
+        uint256 _timeElapsed = (block.timestamp).sub(_lastPrincipalUpdateTime);
         uint256 _interestAccrued = calculateInterest(creditLineVariables[_id].principal, creditLineConstants[_id].borrowRate, _timeElapsed);
         return _interestAccrued;
     }
@@ -738,7 +739,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
         for (uint256 _index; _index < _strategyList.length; ++_index) {
             uint256 _liquidityShares = _savingsAccount.balanceInShares(msg.sender, _asset, _strategyList[_index]);
-            if (_strategyList[_index] == address(0) || _liquidityShares == 0) {
+            if (_liquidityShares == 0) {
                 continue;
             }
 
@@ -776,9 +777,8 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address _lender = creditLineConstants[_id].lender;
         if (!_fromSavingsAccount) {
             IERC20(_borrowAsset).safeTransferFrom(msg.sender, address(this), _amount);
-            try _savingsAccount.deposit(_borrowAsset, _defaultStrategy, _lender, _amount) {
-                IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
-            } catch {}
+            IERC20(_borrowAsset).approve(_defaultStrategy, _amount);
+            _savingsAccount.deposit(_borrowAsset, _defaultStrategy, _lender, _amount);
         } else {
             _repayFromSavingsAccount(_borrowAsset, _lender, _amount);
         }
@@ -893,7 +893,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _amount;
         for (uint256 index; index < _strategyList.length; ++index) {
             uint256 _liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            if (_strategyList[index] == address(0) || _liquidityShares == 0) {
+            if (_liquidityShares == 0) {
                 continue;
             }
 
@@ -973,7 +973,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _activeAmount;
         for (uint256 index = 0; index < _strategyList.length; index++) {
             uint256 liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            if (_strategyList[index] == address(0) || liquidityShares == 0) {
+            if (liquidityShares == 0) {
                 continue;
             }
             uint256 _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(liquidityShares, _asset);
