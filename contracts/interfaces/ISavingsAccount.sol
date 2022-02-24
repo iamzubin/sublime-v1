@@ -96,14 +96,6 @@ interface ISavingsAccount {
      */
     event StrategyRegistryUpdated(address indexed updatedStrategyRegistry);
 
-    /**
-     * @notice emitted when credit line allowance is refreshed
-     * @param token token for which allowance is increased
-     * @param from address of user from whcih allowance is increased
-     * @param amount amount of tokens by which allowance is increased
-     */
-    event CreditLineAllowanceRefreshed(address indexed token, address indexed from, address indexed to, uint256 amount);
-
     function deposit(
         address token,
         address strategy,
@@ -198,12 +190,6 @@ interface ISavingsAccount {
         address token,
         address strategy
     ) external view returns (uint256 shareBalance);
-
-    function increaseAllowanceToCreditLine(
-        address token,
-        address from,
-        uint256 amount
-    ) external;
 
     function withdrawFrom(
         address token,
