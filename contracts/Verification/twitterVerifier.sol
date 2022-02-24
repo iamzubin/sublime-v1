@@ -11,10 +11,15 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
      */
     IVerification public verification;
 
+    struct UserStructData {
+        string twitterId;
+        string tweetId;
+    }
+
     /**
      * @notice stores the user metadata against their address
      */
-    mapping(address => string) public userData;
+    mapping(address => UserStructData) public userData;
     /**
      * @notice mapping from userData to userAddress
      */
@@ -56,7 +61,7 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
      * @param _r part signed message hash
      * @param _s part signed message hash
      * @param _timestamp timestamp for the signed message
-     * @param _userData metadata related to user :  here "twitterId/tweetId"
+     * @param _twitterId metadata related to user :  here "twitterId/tweetId"
      * @param _isMasterLinked should master address be linked to itself
      */
 
@@ -65,11 +70,12 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
         uint8 _v,
         bytes32 _r,
         bytes32 _s,
-        string memory _userData,
+        string memory _twitterId,
+        string memory _tweetId,
         uint256 _timestamp
     ) external {
-        require(bytes(userData[msg.sender]).length == 0, 'User already exists');
-        require(twitterIdMap[_userData] == address(0), 'Signed message already used');
+        require(bytes(userData[msg.sender].twitterId).length == 0, 'User already exists');
+        require(twitterIdMap[_twitterId] == address(0), 'Signed message already used');
         require(block.timestamp < _timestamp + 86400, 'Signed transaction expired');
         bytes32 eip712DomainHash = keccak256(
             abi.encode(keccak256('EIP712Domain(string name,string version)'), keccak256(bytes('SublimeTwitter')), keccak256(bytes('1')))
@@ -78,7 +84,8 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
         bytes32 hashStruct = keccak256(
             abi.encode(
                 keccak256('set(string twitterId,address userAddr,uint256 timestamp)'),
-                keccak256(bytes(_userData)),
+                keccak256(bytes(_twitterId)),
+                keccak256(bytes(_tweetId)),
                 msg.sender,
                 _timestamp
             )
@@ -90,9 +97,9 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
         require(signer == signerAddress, 'Invalid signature');
 
         verification.registerMasterAddress(msg.sender, _isMasterLinked);
-        userData[msg.sender] = _userData;
-        twitterIdMap[_userData] = msg.sender;
-        emit UserRegistered(msg.sender, _isMasterLinked, _userData);
+        userData[msg.sender] = UserStructData(_twitterId, _tweetId);
+        twitterIdMap[_twitterId] = msg.sender;
+        emit UserRegistered(msg.sender, _isMasterLinked, _twitterId);
     }
 
     /**
@@ -100,7 +107,7 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
      * @dev only owner can unregister users
      */
     function unregisterSelf() external {
-        string memory _userdata = userData[msg.sender];
+        string memory _userdata = userData[msg.sender].twitterId;
         require(bytes(_userdata).length != 0, 'User doesnt exists');
         delete twitterIdMap[_userdata];
         delete userData[msg.sender];
@@ -109,10 +116,12 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
     }
 
     function unregisterUser(address _user) external onlyOwner {
-        delete twitterIdMap[userData[_user]];
+        string memory _userdata = userData[msg.sender].twitterId;
+        require(bytes(_userdata).length != 0, 'User doesnt exists');
+        delete twitterIdMap[_userdata];
         delete userData[_user];
-        verification.unregisterMasterAddress(_user, address(this));
-        emit UserUnregistered(msg.sender);
+        verification.unregisterMasterAddress(msg.sender, address(this));
+        emit UserUnregistered(_user);
     }
 
     /**
