@@ -252,6 +252,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     event LiquidationRewardFractionUpdated(uint256 liquidatorRewardFraction);
 
     /**
+     * @notice emitted when the borrow limit is updated for the credit line
+     * @param id identifier for the credit line
+     * @param updatedBorrowLimit updated value of borrow limit
+     */
+    event BorrowLimitUpdated(uint256 id, uint128 updatedBorrowLimit);
+
+    /**
      * @notice used to initialize the contract
      * @dev can only be called once during the life cycle of the contract
      * @param _defaultStrategy default strategy used in credit lines
@@ -385,6 +392,17 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(_rewardFraction <= SCALING_FACTOR, 'Fraction has to be less than 1');
         liquidatorRewardFraction = _rewardFraction;
         emit LiquidationRewardFractionUpdated(_rewardFraction);
+    }
+
+    /**
+     * @notice used to update the borrow limit of the creditLine
+     * @dev can only be updated by lender
+     * @param _id identifier for the credit line
+     * @param _newBorrowLimit updated value of the borrow limit for the credit line
+     */
+    function updateBorrowLimit(uint256 _id, uint128 _newBorrowLimit) external onlyCreditLineLender(_id) {
+        creditLineConstants[_id].borrowLimit = _newBorrowLimit;
+        emit BorrowLimitUpdated(_id, _newBorrowLimit);
     }
 
     /**
