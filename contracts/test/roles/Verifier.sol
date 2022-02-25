@@ -19,16 +19,17 @@ contract Verifier {
         address _contractAddress,
         bool _isMasterLinked,
         string memory _twitterId,
-        uint256 _deadline
+        string memory _tweetId,
+        uint256 _timestamp
         ) public {
 
         bytes32 hashStruct = keccak256(
             abi.encode(
                 keccak256('set(string twitterId,string tweetId,address userAddr,uint256 timestamp)'),
                 keccak256(bytes(_twitterId)),
-                keccak256(bytes(_twitterId)),
+                keccak256(bytes(_tweetId)),
                 msg.sender,
-                _deadline
+                _timestamp
             )
         );
 
@@ -50,7 +51,7 @@ contract Verifier {
         s,
         _twitterId,
         _twitterId,
-        _deadline);
+        _timestamp);
     }
 
     function unresigterSelf(address _contractAddress)public {

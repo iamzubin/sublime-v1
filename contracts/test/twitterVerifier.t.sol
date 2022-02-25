@@ -19,9 +19,9 @@ contract TwitterVerifierTest is TestUtils, Scenarios {
         setUpTwitterVerifierContracts();
     }
 
-    function testFail_RegisterSelf( )public{
-        emit log_address(address(verifier));
-        verifier.registerSelf(address(twitterVerifier),true,"test", block.timestamp);
+    function test_RegisterSelf( )public{
+        emit log_address(address(twitterVerifier));
+        verifier.registerSelf(address(twitterVerifier),true,"test","test", block.timestamp);
         (string memory twitterId,string memory tweetId) = twitterVerifier.userData(address(verifier));
         assert(keccak256(abi.encode(twitterId))==keccak256(abi.encode("test")));
     }
