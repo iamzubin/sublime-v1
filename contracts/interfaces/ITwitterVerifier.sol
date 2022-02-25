@@ -8,6 +8,7 @@ interface ITwitterVerifier{
         bytes32 _r,
         bytes32 _s,
         string memory _twitterId,
+        string memory _tweetId,
         uint256 _deadline) external;
     function unregisterSelf() external;
 }

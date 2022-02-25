@@ -3,17 +3,28 @@ import "./Scenarios.sol";
 
 
 contract TwitterVerifierTest is TestUtils, Scenarios {
+
+    function _getChainId() private view returns (uint256 chainId) {
+        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            chainId := chainid()
+        }
+    }
+
     function setUp() public {
         SetUpGlobalActors();
         // SetUpAllContracts();
         SetUpTwitterVerifierActors();
         setUpTwitterVerifierContracts();
     }
-    // function test1(string memory _twitterId)public{
-    function test1()public{
-        verifier.registerSelf(address(twitterVerifier),true, "1", block.timestamp + 5000);
-        // assert(ITwitterVerifier(address(twitterVerifier)).userData(address(verifier))==_twitterId );
-        assert(keccak256(abi.encode((twitterVerifier.userData(address(verifier)))))==keccak256(abi.encode("1")));
 
+    function testFail_RegisterSelf( )public{
+        emit log_address(address(verifier));
+        verifier.registerSelf(address(twitterVerifier),true,"test", block.timestamp);
+        (string memory twitterId,string memory tweetId) = twitterVerifier.userData(address(verifier));
+        assert(keccak256(abi.encode(twitterId))==keccak256(abi.encode("test")));
     }
+
+    
 }

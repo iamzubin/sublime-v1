@@ -11,6 +11,7 @@ export DAPP_TEST_SMTTIMEOUT=500000
 # These normally default to 0 which breaks some tests.
 export DAPP_TEST_TIMESTAMP=1000000000
 export DAPP_TEST_NUMBER=10000000
+# export DAPP_SKIP_BUILD=1
 
 if [ "$DEEP_FUZZ" = "true" ]
 then 
