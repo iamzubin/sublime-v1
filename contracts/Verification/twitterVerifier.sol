@@ -2,10 +2,12 @@
 pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
+import '@openzeppelin/contracts/drafts/EIP712.sol';
+import '@openzeppelin/contracts/cryptography/ECDSA.sol';
 import '../interfaces/IVerification.sol';
 import '../interfaces/IVerifier.sol';
 
-contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
+contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712 {
     /**
      * @notice stores the verification contract instance
      */
@@ -37,6 +39,9 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
      * @param signerAddress address of the updated verification contract
      */
     event SignerUpdated(address indexed signerAddress);
+
+    constructor(string memory name, string memory version) EIP712(name, version){
+    }
 
     /// @notice Initializes the variables of the contract
     /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
@@ -77,11 +82,9 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
         require(bytes(userData[msg.sender].twitterId).length == 0, 'User already exists');
         require(twitterIdMap[_twitterId] == address(0), 'Signed message already used');
         require(block.timestamp < _timestamp + 86400, 'Signed transaction expired');
-        bytes32 eip712DomainHash = keccak256(
-            abi.encode(keccak256('EIP712Domain(string name,string version)'), keccak256(bytes('SublimeTwitter')), keccak256(bytes('1')))
-        );
 
-        bytes32 hashStruct = keccak256(
+
+        bytes32 digest = keccak256(
             abi.encode(
                 keccak256('set(string twitterId,address userAddr,uint256 timestamp)'),
                 keccak256(bytes(_twitterId)),
@@ -90,15 +93,16 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable {
                 _timestamp
             )
         );
-        require(hashAddressMap[hashStruct] == address(0), 'Hash Already Used');
+        require(hashAddressMap[digest] == address(0), 'Hash Already Used');
 
-        bytes32 hash = keccak256(abi.encodePacked('\x19\x01', eip712DomainHash, hashStruct));
-        address signer = ecrecover(hash, _v, _r, _s);
+        bytes32 hash = EIP712._hashTypedDataV4(digest);
+        address signer = ECDSA.recover(hash, _v, _r, _s);
         require(signer == signerAddress, 'Invalid signature');
 
         verification.registerMasterAddress(msg.sender, _isMasterLinked);
         userData[msg.sender] = UserStructData(_twitterId, _tweetId);
         twitterIdMap[_twitterId] = msg.sender;
+        hashAddressMap[digest] = msg.sender;
         emit UserRegistered(msg.sender, _isMasterLinked, _twitterId);
     }
 
