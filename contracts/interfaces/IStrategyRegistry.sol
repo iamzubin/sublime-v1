@@ -20,21 +20,23 @@ interface IStrategyRegistry {
      */
     event MaxStrategiesUpdated(uint256 maxStrategies);
 
-    function registry(address _strategy) external view returns (bool isValidStrategy);
+    function registry(address strategy) external view returns (bool isActiveStrategy);
+
+    function isValidStrategy(address strategy) external view returns (bool validStrategy);
 
     function getStrategies() external view returns (address[] memory strategies);
 
     /**
      * @dev Add strategies to invest in. Please ensure that number of strategies are less than maxStrategies.
-     * @param _strategy address of the owner of the savings account contract
+     * @param strategy address of the owner of the savings account contract
      **/
-    function addStrategy(address _strategy) external;
+    function addStrategy(address strategy) external;
 
     /**
      * @dev Remove strategy to invest in.
-     * @param _strategyIndex Index of the strategy to remove
+     * @param strategyIndex Index of the strategy to remove
      **/
-    function removeStrategy(uint256 _strategyIndex) external;
+    function removeStrategy(uint256 strategyIndex) external;
 
     /**
      * @dev Update strategy to invest in.

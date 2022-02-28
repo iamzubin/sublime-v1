@@ -25,6 +25,11 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
     mapping(address => bool) public override registry;
 
     /**
+     * @notice registry which maps retired strategies which were once whitelisted to true
+     **/
+    mapping(address => bool) public retiredRegistry;
+
+    /**
      * @notice used to initialize the paramters of strategy registry
      * @dev can only be called once
      * @param _owner address of the owner
@@ -80,9 +85,13 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
      **/
     function removeStrategy(uint256 _strategyIndex) external override onlyOwner {
         address _strategy = strategies[_strategyIndex];
-        strategies[_strategyIndex] = strategies[strategies.length.sub(1, 'StrategyRegistry::removeStrategy - No strategies exist')];
+        address[] memory _strategies = strategies;
+        for (uint256 i = _strategyIndex; i < _strategies.length - 1; ++i) {
+            strategies[i] = _strategies[i + 1];
+        }
         strategies.pop();
         delete registry[_strategy];
+        retiredRegistry[_strategy] = true;
 
         emit StrategyRemoved(_strategy);
     }
@@ -108,8 +117,13 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         strategies[_strategyIndex] = _newStrategy;
 
         delete registry[_oldStrategy];
+        retiredRegistry[_oldStrategy] = true;
         emit StrategyRemoved(_oldStrategy);
         registry[_newStrategy] = true;
         emit StrategyAdded(_newStrategy);
+    }
+
+    function isValidStrategy(address _strategy) external view override returns (bool) {
+        return (registry[_strategy] || retiredRegistry[_strategy]);
     }
 }

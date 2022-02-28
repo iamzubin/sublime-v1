@@ -116,8 +116,9 @@ contract CompoundYield is IYield, Initializable, OwnableUpgradeable, ReentrancyG
         uint256 received;
         uint256 amount = _amount;
 
-        if (_amount == 0) {
-            amount = IERC20(investedTo).balanceOf(address(this));
+        uint256 availableCash = ICToken(investedTo).getCash();
+        if (amount > availableCash) {
+            amount = availableCash;
         }
 
         if (_asset == weth) {
