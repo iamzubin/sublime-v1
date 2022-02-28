@@ -40,10 +40,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
      * @param _owner address of the owner of the savings account contract
      * @param _strategyRegistry address of the strategy registry
      **/
-    function initialize(
-        address _owner,
-        address _strategyRegistry
-    ) external initializer {
+    function initialize(address _owner, address _strategyRegistry) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
 
@@ -177,11 +174,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         require(_amount != 0, 'SavingsAccount::withdrawFrom Amount must be greater than zero');
         require(IStrategyRegistry(strategyRegistry).isValidStrategy(_strategy), 'SavingsAccount::_currentStrategy do not exist');
         uint256 _currentAllowance = allowance[_from][_token][msg.sender];
-        if(_currentAllowance != type(uint256).max) {
-            allowance[_from][_token][msg.sender] = _currentAllowance.sub(
-                _amount,
-                'SavingsAccount::withdrawFrom allowance limit exceeding'
-            );
+        if (_currentAllowance != type(uint256).max) {
+            allowance[_from][_token][msg.sender] = _currentAllowance.sub(_amount, 'SavingsAccount::withdrawFrom allowance limit exceeding');
         }
 
         _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
@@ -393,11 +387,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 _amount = IYield(_strategy).getTokensForShares(_shares, _token);
 
         uint256 _currentAllowance = allowance[_from][_token][msg.sender];
-        if(_currentAllowance != type(uint256).max) {
-            allowance[_from][_token][msg.sender] = _currentAllowance.sub(
-                _amount,
-                'SavingsAccount::transferFrom allowance limit exceeding'
-            );
+        if (_currentAllowance != type(uint256).max) {
+            allowance[_from][_token][msg.sender] = _currentAllowance.sub(_amount, 'SavingsAccount::transferFrom allowance limit exceeding');
         }
 
         balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
@@ -430,11 +421,8 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
         //update allowance
         uint256 _currentAllowance = allowance[_from][_token][msg.sender];
-        if(_currentAllowance != type(uint256).max) {
-            allowance[_from][_token][msg.sender] = _currentAllowance.sub(
-                _amount,
-                'SavingsAccount::transferFrom allowance limit exceeding'
-            );
+        if (_currentAllowance != type(uint256).max) {
+            allowance[_from][_token][msg.sender] = _currentAllowance.sub(_amount, 'SavingsAccount::transferFrom allowance limit exceeding');
         }
 
         _amount = IYield(_strategy).getSharesForTokens(_amount, _token);

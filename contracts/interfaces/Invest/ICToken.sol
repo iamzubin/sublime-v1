@@ -29,4 +29,6 @@ interface ICToken {
     function redeemUnderlying(uint256) external returns (uint256);
 
     function comptroller() external view returns (address);
+
+    function getCash() external returns (uint256);
 }
