@@ -57,6 +57,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         address borrower;
         address borrowAsset;
         address collateralAsset;
+        address collateralStrategy;
     }
     /**
      * @notice stores the collateral shares in a credit line per strategy
@@ -487,45 +488,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             .add(_interestAccrued);
     }
 
-    function _depositCollateralFromSavingsAccount(
-        uint256 _id,
-        address _sender,
-        uint256 _amount
-    ) internal {
-        address _collateralAsset = creditLineConstants[_id].collateralAsset;
-        address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
-        ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
-        uint256 _activeAmount;
-
-        for (uint256 _index; _index < _strategyList.length; ++_index) {
-            address _strategy = _strategyList[_index];
-            uint256 _liquidityShares = _savingsAccount.balanceInShares(_sender, _collateralAsset, _strategy);
-            if (_liquidityShares == 0 || _strategy == address(0)) {
-                continue;
-            }
-
-            uint256 _tokenInStrategy = IYield(_strategy).getTokensForShares(_liquidityShares, _collateralAsset);
-
-            uint256 _tokensToTransfer = _tokenInStrategy;
-            if (_activeAmount.add(_tokenInStrategy) >= _amount) {
-                _tokensToTransfer = (_amount.sub(_activeAmount));
-            }
-
-            try _savingsAccount.transferFrom(_collateralAsset, _strategy, _sender, address(this), _tokensToTransfer) {
-                _activeAmount = _activeAmount.add(_tokensToTransfer);
-            } catch {}
-
-            collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(
-                _liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy)
-            );
-
-            if (_amount == _activeAmount) {
-                return;
-            }
-        }
-        revert('CreditLine::_depositCollateralFromSavingsAccount - Insufficient balance');
-    }
-
     /**
      * @notice used to request a credit line either by borrower or lender
      * @param _requestTo Address to which creditLine is requested, 
@@ -549,10 +511,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _collateralRatio,
         address _borrowAsset,
         address _collateralAsset,
+        address _collateralStrategy,
         bool _requestAsLender
     ) external returns (uint256) {
         require(_borrowAsset != _collateralAsset, 'R: cant borrow lent token');
         require(IPriceOracle(priceOracle).doesFeedExist(_borrowAsset, _collateralAsset), 'R: No price feed');
+        require(IStrategyRegistry(strategyRegistry).registry(_collateralStrategy), '!strategy');
 
         address _lender = _requestTo;
         address _borrower = msg.sender;
@@ -570,6 +534,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _collateralRatio,
             _borrowAsset,
             _collateralAsset,
+            _collateralStrategy,
             _requestAsLender
         );
 
@@ -586,6 +551,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _collateralRatio,
         address _borrowAsset,
         address _collateralAsset,
+        address _collateralStrategy,
         bool _requestByLender
     ) internal returns (uint256) {
         require(_lender != _borrower, 'Lender and Borrower cannot be same addresses');
@@ -599,6 +565,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         creditLineConstants[_id].borrowRate = _borrowRate;
         creditLineConstants[_id].borrowAsset = _borrowAsset;
         creditLineConstants[_id].collateralAsset = _collateralAsset;
+        creditLineConstants[_id].collateralStrategy = _collateralStrategy;
         creditLineConstants[_id].requestByLender = _requestByLender;
         return _id;
     }
@@ -624,50 +591,36 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
 
     /**
      * @notice used to deposit collateral into the credit line
-     * @dev collateral tokens have to be approved in savingsAccount or token contract(unless ether).
-            If transferred from savings account, the tokens are transferred from strategies in the 
-            order prespecified in strategy registry
+     * @dev collateral tokens have to be approved in savingsAccount or token contract
      * @param _id identifier for the credit line
      * @param _amount amount of collateral being deposited
-     * @param _strategy strategy to which collateral is to be deposited in case transfer is not from savings account
      * @param _fromSavingsAccount if true, tokens are transferred from savingsAccount 
                                 otherwise direct from collateral token contract
      */
     function depositCollateral(
         uint256 _id,
-        address _strategy,
         uint256 _amount,
         bool _fromSavingsAccount
     ) external nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
-        _depositCollateral(_id, _strategy, _amount, _fromSavingsAccount);
-        emit CollateralDeposited(_id, _amount, _strategy);
-    }
-
-    /**
-    @dev If collateral is to be deposited from savingsAccount, then another internal function is called, otherwise
-        we transfer the collateral token to the Credit Line contract directly using the token contract, approve the 
-        _strategy to handle those tokens and then increase the collateral shares in strategy based on the number of shares received
-     */
-    function _depositCollateral(
-        uint256 _id,
-        address _strategy,
-        uint256 _amount,
-        bool _fromSavingsAccount
-    ) internal {
         require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
-        if (_fromSavingsAccount) {
-            _depositCollateralFromSavingsAccount(_id, msg.sender, _amount);
-        } else {
-            address _collateralAsset = creditLineConstants[_id].collateralAsset;
-            ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
 
+        address _collateralAsset = creditLineConstants[_id].collateralAsset;
+        address _strategy = creditLineConstants[_id].collateralStrategy;
+        ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
+        uint256 _sharesDeposited;
+
+        if (_fromSavingsAccount) {
+            _sharesDeposited = _savingsAccount.transferFrom(_collateralAsset, _strategy, msg.sender, address(this), _amount);
+        } else {
             IERC20(_collateralAsset).safeTransferFrom(msg.sender, address(this), _amount);
             IERC20(_collateralAsset).approve(_strategy, _amount);
 
-            uint256 _sharesReceived = _savingsAccount.deposit(_collateralAsset, _strategy, address(this), _amount);
-            collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_sharesReceived);
+            _sharesDeposited = _savingsAccount.deposit(_collateralAsset, _strategy, address(this), _amount);
         }
+        collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].add(_sharesDeposited);
+
+        emit CollateralDeposited(_id, _amount, _strategy);
     }
 
     /**
@@ -892,19 +845,12 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      */
     function calculateTotalCollateralTokens(uint256 _id) public returns (uint256) {
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
-        address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
-        uint256 _amount;
-        for (uint256 index; index < _strategyList.length; ++index) {
-            uint256 _liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            if (_liquidityShares == 0) {
-                continue;
-            }
+        address _strategy = creditLineConstants[_id].collateralStrategy;
 
-            uint256 _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(_liquidityShares, _collateralAsset);
+        uint256 _collateralShares = collateralShareInStrategy[_id][_strategy];
+        uint256 _collateral = IYield(_strategy).getTokensForShares(_collateralShares, _collateralAsset);
 
-            _amount = _amount.add(_tokenInStrategy);
-        }
-        return _amount;
+        return _collateral;
     }
 
     /**
@@ -972,44 +918,19 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _amountInTokens,
         bool _toSavingsAccount
     ) internal {
-        address[] memory _strategyList = IStrategyRegistry(strategyRegistry).getStrategies();
-        uint256 _activeAmount;
-        for (uint256 index = 0; index < _strategyList.length; index++) {
-            uint256 liquidityShares = collateralShareInStrategy[_id][_strategyList[index]];
-            if (liquidityShares == 0) {
-                continue;
-            }
-            uint256 _tokenInStrategy = IYield(_strategyList[index]).getTokensForShares(liquidityShares, _asset);
-            uint256 _tokensToTransfer = _tokenInStrategy;
-            if (_activeAmount.add(_tokenInStrategy) > _amountInTokens) {
-                _tokensToTransfer = _amountInTokens.sub(_activeAmount);
-                liquidityShares = liquidityShares.mul(_tokensToTransfer).div(_tokenInStrategy);
-            }
-            _activeAmount = _activeAmount.add(_tokensToTransfer);
-            collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].sub(
-                liquidityShares
-            );
-            if (_toSavingsAccount) {
-                try ISavingsAccount(savingsAccount).transfer(_asset, _strategyList[index], msg.sender, _tokensToTransfer) {} catch {
-                    _activeAmount = _activeAmount.sub(_tokensToTransfer);
-                    collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].add(
-                        liquidityShares
-                    );
-                }
-            } else {
-                try ISavingsAccount(savingsAccount).withdraw(_asset, _strategyList[index], msg.sender, _tokensToTransfer, false) {} catch {
-                    _activeAmount = _activeAmount.sub(_tokensToTransfer);
-                    collateralShareInStrategy[_id][_strategyList[index]] = collateralShareInStrategy[_id][_strategyList[index]].add(
-                        liquidityShares
-                    );
-                }
-            }
+        address _strategy = creditLineConstants[_id].collateralStrategy;
+        uint256 _amountInShares = IYield(_strategy).getSharesForTokens(_amountInTokens, _asset);
+        ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
 
-            if (_activeAmount == _amountInTokens) {
-                return;
-            }
+        collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].sub(
+            _amountInShares
+        );
+
+        if (_toSavingsAccount) {
+            _savingsAccount.transferShares(_amountInShares, _asset, _strategy, msg.sender);
+        } else {
+            _savingsAccount.withdrawShares(_asset, _strategy, msg.sender, _amountInShares, false);
         }
-        revert('insufficient collateral');
     }
 
     /**
