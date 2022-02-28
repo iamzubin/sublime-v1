@@ -924,17 +924,17 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _toSavingsAccount
     ) internal {
         address _strategy = creditLineConstants[_id].collateralStrategy;
-        uint256 _collateralShares = collateralShareInStrategy[_id][_strategy];
+        uint256 _amountInShares = IYield(_strategy).getSharesForTokens(_amountInTokens, _asset);
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
 
         collateralShareInStrategy[_id][_strategy] = collateralShareInStrategy[_id][_strategy].sub(
-            _collateralShares
+            _amountInShares
         );
 
         if (_toSavingsAccount) {
-            _savingsAccount.transfer(_asset, _strategy, msg.sender, _amountInTokens);
+            _savingsAccount.transferShares(_amountInShares, _asset, _strategy, msg.sender);
         } else {
-            _savingsAccount.withdraw(_asset, _strategy, msg.sender, _amountInTokens, false);
+            _savingsAccount.withdrawShares(_asset, _strategy, msg.sender, _amountInShares, false);
         }
     }
 

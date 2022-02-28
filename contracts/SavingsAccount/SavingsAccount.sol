@@ -172,6 +172,34 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     }
 
     /**
+     * @dev Used to withdraw token from Saving Account
+     * @param _to address to which token should be sent
+     * @param _shares amount of shares to withdraw
+     * @param _token address of the token to be withdrawn
+     * @param _strategy strategy from where token has to withdrawn(ex:- compound,Aave etc)
+     * @param _receiveShares boolean indicating to withdraw in liquidity share or underlying token
+     */
+    function withdrawShares(
+        address _token,
+        address _strategy,
+        address _to,
+        uint256 _shares,
+        bool _receiveShares
+    ) external override nonReentrant returns (uint256) {
+        require(_shares != 0, 'SavingsAccount::withdraw Amount must be greater than zero');
+
+        balanceInShares[msg.sender][_token][_strategy] = balanceInShares[msg.sender][_token][_strategy].sub(
+            _shares,
+            'SavingsAccount::withdraw Insufficient amount'
+        );
+
+        (, uint256 _amountReceived) = _withdraw(_token, _strategy, _to, _shares, _receiveShares);
+
+        emit Withdrawn(msg.sender, _to, _shares, _token, _strategy, _receiveShares);
+        return _amountReceived;
+    }
+
+    /**
      * @dev Used to withdraw token from allowance of Saving Account
      * @param _from address from which tokens will be withdrawn
      * @param _to address to which token should be withdrawn
