@@ -9,7 +9,7 @@ const contractAddresses = {
     yearnYield: '0x0000000000000000000000000000000000000000',
     compoundYield: '0x85AE94D3360bC9492A4e47A0B30B5A6a1bEE90Be',
     verification: '0xBA9526beBCaAdE4144A7E3384fb47a6CFB531534',
-    adminVerifier: '0x920CeE2DE25AFaDd1F560d48662Ca28E328CBa5a',
+    twitterVerifier: '0x920CeE2DE25AFaDd1F560d48662Ca28E328CBa5a',
     priceOracle: '0xcDdc6d5FA6657F4c093bbF1e2fd0607d59872D4B',
     extension: '0x560b713223BD8099E057aCeB218b7BEe83cdB948',
     poolLogic: '0x23cB8a0817920F4a383DEd9958098c6a67b5D7E9',
@@ -55,7 +55,7 @@ const contractsToVerify = [
     },
     {
         contract: 'adminVerifier',
-        proxy: contractAddresses.adminVerifier,
+        proxy: contractAddresses.twitterVerifier,
     },
     {
         contract: 'priceOracle',

@@ -12,7 +12,7 @@ export interface Contracts {
     aaveYield: Address;
     compoundYield: Address;
     verification: Address;
-    adminVerifier: Address;
+    twitterVerifier: Address;
     priceOracle: Address;
     extension: Address;
     poolLogic: Address;

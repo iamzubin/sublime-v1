@@ -1,7 +1,7 @@
 import { Signer } from 'ethers';
 
 import { Verification } from '../../typechain/Verification';
-import { AdminVerifier } from '../../typechain/AdminVerifier';
+import { TwitterVerifier } from '../../typechain/TwitterVerifier';
 import { PriceOracle } from '../../typechain/PriceOracle';
 import { SublimeProxy } from '../../typechain/SublimeProxy';
 import { IWETH9 } from '../../typechain/IWETH9';
@@ -12,7 +12,7 @@ import { Beacon } from '../../typechain/Beacon';
 import { MinimumBeaconProxy } from '../../typechain/MinimumBeaconProxy';
 
 import { Verification__factory } from '../../typechain/factories/Verification__factory';
-import { AdminVerifier__factory } from '../../typechain/factories/AdminVerifier__factory';
+import { TwitterVerifier__factory } from '../../typechain/factories/TwitterVerifier__factory';
 import { PriceOracle__factory } from '../../typechain/factories/PriceOracle__factory';
 import { SublimeProxy__factory } from '../../typechain/factories/SublimeProxy__factory';
 import { IWETH9__factory } from '../../typechain/factories/IWETH9__factory';
@@ -75,12 +75,12 @@ export default class DeployHelperContracts {
         return await new Verification__factory(this._deployerSigner).attach(verificationAddress);
     }
 
-    public async deployAdminVerifier(): Promise<AdminVerifier> {
-        return await (await new AdminVerifier__factory(this._deployerSigner).deploy()).deployed();
+    public async deployTwitterVerifier(): Promise<TwitterVerifier> {
+        return await (await new TwitterVerifier__factory(this._deployerSigner).deploy()).deployed();
     }
 
-    public async getAdminVerifier(adminVerifierAddress: Address): Promise<AdminVerifier> {
-        return await new AdminVerifier__factory(this._deployerSigner).attach(adminVerifierAddress);
+    public async getTwitterVerifier(twitterVerifierAddress: Address): Promise<TwitterVerifier> {
+        return await new TwitterVerifier__factory(this._deployerSigner).attach(twitterVerifierAddress);
     }
 
     public async deployPriceOracle(): Promise<PriceOracle> {

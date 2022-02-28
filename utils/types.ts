@@ -17,13 +17,14 @@ import { Beacon } from '@typechain/Beacon';
 import { PoolUtils } from '@typechain/PoolUtils';
 import { CreditLineUtils } from '@typechain/CreditLineUtils';
 import { SavingsAccountEthUtils } from '@typechain/SavingsAccountEthUtils';
+import { TwitterVerifier } from '@typechain/TwitterVerifier';
 
 export interface Environment {
     savingsAccount: SavingsAccount;
     strategyRegistry: StrategyRegistry;
     yields: Yields;
     verification: Verification;
-    adminVerifier: AdminVerifier;
+    twitterVerifier: TwitterVerifier;
     priceOracle: PriceOracle;
     extenstion: Extension;
     repayments: Repayments;

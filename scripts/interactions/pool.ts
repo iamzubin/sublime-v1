@@ -55,7 +55,7 @@ export async function deployPool(poolFactory: PoolFactory, poolData: PoolData, c
                 poolCreateParams._collateralAmount,
                 transferFromSavingsAccount,
                 salt,
-                contracts.adminVerifier,
+                contracts.twitterVerifier,
                 zeroAddress,
                 { value: collateralToken === zeroAddress ? poolCreateParams._collateralAmount : 0 }
             )

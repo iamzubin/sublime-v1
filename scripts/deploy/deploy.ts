@@ -21,7 +21,7 @@ import {
     createYearnYieldWithInit,
     createNoYieldWithInit,
 } from '../../utils/createEnv/yields';
-import { createAdminVerifierWithInit, createVerificationWithInit } from '../../utils/createEnv/verification';
+import { createTwitterVerifierWithInit, createVerificationWithInit } from '../../utils/createEnv/verification';
 import { createPriceOracle, setPriceOracleFeeds } from '../../utils/createEnv/priceOracle';
 import {
     addSupportedTokens,
@@ -45,7 +45,7 @@ import { PoolFactory } from '../../typechain/PoolFactory';
 import { PriceOracle } from '../../typechain/PriceOracle';
 import { Extension } from '../../typechain/Extension';
 import { Repayments } from '../../typechain/Repayments';
-import { AdminVerifier } from '../../typechain/AdminVerifier';
+import { TwitterVerifier } from '../../typechain/TwitterVerifier';
 import { CreditLine } from '../../typechain/CreditLine';
 import { IYield } from '../../typechain/IYield';
 import { zeroAddress } from '../../config/constants';
@@ -134,9 +134,8 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     console.log('Deploying verification');
 
     const verification: Verification = await createVerificationWithInit(proxyAdmin, admin, verificationParams);
-    const adminVerifier: AdminVerifier = await createAdminVerifierWithInit(proxyAdmin, admin, verification);
-    await (await verification.connect(admin).addVerifier(adminVerifier.address)).wait();
-    await adminVerifier.connect(admin).registerUser(admin.address, 'Dragoon', true);
+    const twitterVerifier: TwitterVerifier = await createTwitterVerifierWithInit(proxyAdmin, admin, verification, "Sublime", "v1");
+    await (await verification.connect(admin).addVerifier(twitterVerifier.address)).wait();
 
     console.log('Deploying price oracle');
 
@@ -229,7 +228,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
         yearnYield: yearnYield ? yearnYield.address : 'Contract not deployed in this network',
         compoundYield: compoundYield ? compoundYield.address : 'Contract not deployed in this network',
         verification: verification.address,
-        adminVerifier: adminVerifier.address,
+        twitterVerifier: twitterVerifier.address,
         priceOracle: priceOracle.address,
         extension: extension.address,
         poolLogic: poolLogic.address,
