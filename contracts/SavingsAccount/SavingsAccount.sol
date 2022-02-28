@@ -80,29 +80,11 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 _amount
     ) external override nonReentrant returns (uint256) {
         require(_to != address(0), 'SavingsAccount::deposit receiver address should not be zero address');
-        uint256 _sharesReceived = _deposit(_token, _strategy, _amount);
-        balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_sharesReceived);
-        emit Deposited(_to, _sharesReceived, _token, _strategy);
-        return _sharesReceived;
-    }
-
-    function _deposit(
-        address _token,
-        address _strategy,
-        uint256 _amount
-    ) internal returns (uint256) {
         require(_amount != 0, 'SavingsAccount::_deposit Amount must be greater than zero');
-        uint256 _sharesReceived = _depositToYield(_token, _strategy, _amount);
-        return _sharesReceived;
-    }
-
-    function _depositToYield(
-        address _token,
-        address _strategy,
-        uint256 _amount
-    ) internal returns (uint256) {
         require(IStrategyRegistry(strategyRegistry).registry(_strategy), 'SavingsAccount::deposit strategy do not exist');
         uint256 _sharesReceived = IYield(_strategy).lockTokens(msg.sender, _token, _amount);
+        balanceInShares[_to][_token][_strategy] = balanceInShares[_to][_token][_strategy].add(_sharesReceived);
+        emit Deposited(_to, _sharesReceived, _token, _strategy);
         return _sharesReceived;
     }
 
@@ -120,7 +102,9 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         uint256 _amount
     ) external override nonReentrant {
         require(_currentStrategy != _newStrategy, 'SavingsAccount::switchStrategy Same strategy');
-        require(IStrategyRegistry(strategyRegistry).registry(_newStrategy), 'SavingsAccount::_newStrategy do not exist');
+        IStrategyRegistry _registry = IStrategyRegistry(strategyRegistry);
+        require(_registry.registry(_newStrategy), 'SavingsAccount::_newStrategy do not exist');
+        require(_registry.isValidStrategy(_currentStrategy), 'SavingsAccount::_currentStrategy do not exist');
         require(_amount != 0, 'SavingsAccount::switchStrategy Amount must be greater than zero');
 
         IYield currentStrategy = IYield(_currentStrategy);
@@ -157,6 +141,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) external override nonReentrant returns (uint256) {
         require(_amount != 0, 'SavingsAccount::withdraw Amount must be greater than zero');
+        require(IStrategyRegistry(strategyRegistry).isValidStrategy(_strategy), 'SavingsAccount::_currentStrategy do not exist');
 
         _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
 
@@ -190,6 +175,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         bool _withdrawShares
     ) external override nonReentrant returns (uint256) {
         require(_amount != 0, 'SavingsAccount::withdrawFrom Amount must be greater than zero');
+        require(IStrategyRegistry(strategyRegistry).isValidStrategy(_strategy), 'SavingsAccount::_currentStrategy do not exist');
         uint256 _currentAllowance = allowance[_from][_token][msg.sender];
         if(_currentAllowance != type(uint256).max) {
             allowance[_from][_token][msg.sender] = _currentAllowance.sub(
@@ -265,6 +251,7 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     }
 
     function withdrawAll(address _token, address _strategy) external override nonReentrant returns (uint256) {
+        require(IStrategyRegistry(strategyRegistry).isValidStrategy(_strategy), 'SavingsAccount::_currentStrategy do not exist');
         uint256 _sharesBalance = balanceInShares[msg.sender][_token][_strategy];
 
         if (_sharesBalance == 0) return 0;
