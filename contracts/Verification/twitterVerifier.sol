@@ -2,17 +2,20 @@
 pragma solidity 0.7.6;
 
 import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts/drafts/EIP712.sol';
+import '@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol';
 import '@openzeppelin/contracts/cryptography/ECDSA.sol';
 import '../interfaces/IVerification.sol';
 import '../interfaces/IVerifier.sol';
 
-contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712 {
+
+contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712Upgradeable {
     /**
      * @notice stores the verification contract instance
      */
     IVerification public verification;
-
+    /**
+     * @notice Structure for the user data
+     */
     struct UserStructData {
         string twitterId;
         string tweetId;
@@ -23,10 +26,13 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712
      */
     mapping(address => UserStructData) public userData;
     /**
-     * @notice mapping from userData to userAddress
+     * @notice stores the user address against twitterId
      */
     mapping(string => address) public twitterIdMap;
     mapping(bytes32 => address) private hashAddressMap;
+    /**
+     * @notice stores the signer address
+     */
     address public signerAddress;
 
     /**
@@ -40,23 +46,26 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712
      */
     event SignerUpdated(address indexed signerAddress);
 
-    constructor(string memory name, string memory version) EIP712(name, version){
-    }
 
     /// @notice Initializes the variables of the contract
     /// @dev Contract follows proxy pattern and this function is used to initialize the variables for the contract in the proxy
     /// @param _admin Admin of the verification contract who can add verifiers and remove masterAddresses deemed invalid
     /// @param _verification Verification contract address
-    /// @param _signerAddress Address of the signer bot who'll verify twitter account and sign messages off-chain
+    /// @param _signerAddress Address of the signer bot verifying users and signing off-chain messages 
+    /// @param _name name of the verifier (used in domain seperator)
+    /// @param _version version of the verifier (used in domain seperator)
     function initialize(
         address _admin,
         address _verification,
-        address _signerAddress
+        address _signerAddress,
+        string memory _name,
+        string memory _version
     ) external initializer {
         super.__Ownable_init();
         super.transferOwnership(_admin);
         _updateVerification(_verification);
         _updateSignerAddress(_signerAddress);
+        __EIP712_init( _name, _version);
     }
 
     /**
@@ -66,7 +75,8 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712
      * @param _r part signed message hash
      * @param _s part signed message hash
      * @param _timestamp timestamp for the signed message
-     * @param _twitterId metadata related to user :  here "twitterId/tweetId"
+     * @param _twitterId metadata related to user :  here "twitterId"
+     * @param _tweetId metadata related to user :  here "tweetId"
      * @param _isMasterLinked should master address be linked to itself
      */
 
@@ -86,7 +96,7 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712
 
         bytes32 digest = keccak256(
             abi.encode(
-                keccak256('set(string twitterId,address userAddr,uint256 timestamp)'),
+                keccak256('set(string twitterId,string tweetId,address userAddr,uint256 timestamp)'),
                 keccak256(bytes(_twitterId)),
                 keccak256(bytes(_tweetId)),
                 msg.sender,
@@ -95,7 +105,7 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712
         );
         require(hashAddressMap[digest] == address(0), 'Hash Already Used');
 
-        bytes32 hash = EIP712._hashTypedDataV4(digest);
+        bytes32 hash = _hashTypedDataV4(digest);
         address signer = ECDSA.recover(hash, _v, _r, _s);
         require(signer == signerAddress, 'Invalid signature');
 
@@ -107,8 +117,8 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712
     }
 
     /**
-     * @notice used to unregister user
-     * @dev only owner can unregister users
+     * @notice used to unregister self
+     * @dev users themselves can unregister themself
      */
     function unregisterSelf() external {
         string memory _userdata = userData[msg.sender].twitterId;
@@ -118,13 +128,16 @@ contract TwitterVerifier is Initializable, IVerifier, OwnableUpgradeable, EIP712
         verification.unregisterMasterAddress(msg.sender, address(this));
         emit UserUnregistered(msg.sender);
     }
-
+    /**
+     * @notice used to unregister user
+     * @dev owners can unregister users
+     */
     function unregisterUser(address _user) external onlyOwner {
-        string memory _userdata = userData[msg.sender].twitterId;
-        require(bytes(_userdata).length != 0, 'User doesnt exists');
+        string memory _userdata = userData[_user].twitterId;
+        require(bytes(_userdata).length != 0, 'User does not exists');
         delete twitterIdMap[_userdata];
         delete userData[_user];
-        verification.unregisterMasterAddress(msg.sender, address(this));
+        verification.unregisterMasterAddress(_user, address(this));
         emit UserUnregistered(_user);
     }
 
