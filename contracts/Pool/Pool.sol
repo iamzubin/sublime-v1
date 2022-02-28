@@ -39,7 +39,7 @@ contract Pool is Initializable, ReentrancyGuardUpgradeable, ERC20PausableUpgrade
     address immutable savingsAccount;
     address immutable extensions;
     address immutable repaymentImpl;
-    uint256 constant SCALING_FACTOR = 1e30;
+    uint256 constant SCALING_FACTOR = 1e18;
 
     struct LendingDetails {
         uint256 marginCallEndTime;

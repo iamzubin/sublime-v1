@@ -13,7 +13,7 @@ contract PriceOracle is Initializable, OwnableUpgradeable, IPriceOracle {
     using SafeMath for uint256;
 
     uint32 uniswapPriceAveragingPeriod;
-    uint256 constant SCALING_EXPONENT = 30;
+    uint256 constant SCALING_EXPONENT = 18;
     uint256 constant SCALING_FACTOR = 10**(SCALING_EXPONENT);
 
     struct PriceData {

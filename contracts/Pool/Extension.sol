@@ -33,7 +33,7 @@ contract Extension is Initializable, IExtension {
      * @notice used to store voting pass ratio for approving extension
      */
     uint256 public votingPassRatio;
-    uint256 constant SCALING_FACTOR = 1e30;
+    uint256 constant SCALING_FACTOR = 1e18;
 
     /**
      * @notice checks if the msg.sender is pool's valid owner

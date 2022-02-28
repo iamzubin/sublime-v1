@@ -37,7 +37,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     uint256 public creditLineCounter;
 
     uint256 constant YEAR_IN_SECONDS = 365 days;
-    uint256 constant SCALING_FACTOR = 1e30;
+    uint256 constant SCALING_FACTOR = 1e18;
 
     struct CreditLineVariables {
         CreditLineStatus status;
@@ -682,7 +682,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         uint256 _tokenDiffBalance = _balanceAfter.sub(_balanceBefore);
         creditLineVariables[_id].principal = creditLineVariables[_id].principal.add(_tokenDiffBalance);
 
-        uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(10**30);
+        uint256 _protocolFee = _tokenDiffBalance.mul(protocolFeeFraction).div(SCALING_FACTOR);
         _tokenDiffBalance = _tokenDiffBalance.sub(_protocolFee);
 
         IERC20(_borrowAsset).safeTransfer(protocolFeeCollector, _protocolFee);

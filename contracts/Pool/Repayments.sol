@@ -22,7 +22,7 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
 
     uint256 constant MAX_INT = 2**256 - 1;
     uint256 constant YEAR_IN_SECONDS = 365 days;
-    uint256 constant SCALING_FACTOR = 1e30;
+    uint256 constant SCALING_FACTOR = 1e18;
 
     IPoolFactory poolFactory;
 
@@ -163,10 +163,10 @@ contract Repayments is Initializable, IRepayment, ReentrancyGuard {
         _repaymentConstants.gracePenaltyRate = gracePenaltyRate;
         _repaymentConstants.gracePeriodFraction = gracePeriodFraction;
         _repaymentConstants.numberOfTotalRepayments = numberOfTotalRepayments;
-        _repaymentConstants.loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(10**30);
-        _repaymentConstants.repaymentInterval = repaymentInterval.mul(10**30);
+        _repaymentConstants.loanDuration = repaymentInterval.mul(numberOfTotalRepayments).mul(SCALING_FACTOR);
+        _repaymentConstants.repaymentInterval = repaymentInterval.mul(SCALING_FACTOR);
         _repaymentConstants.borrowRate = borrowRate;
-        _repaymentConstants.loanStartTime = loanStartTime.mul(10**30);
+        _repaymentConstants.loanStartTime = loanStartTime.mul(SCALING_FACTOR);
         _repaymentConstants.repayAsset = lentAsset;
     }
 
