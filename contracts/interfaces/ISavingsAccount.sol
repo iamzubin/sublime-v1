@@ -85,24 +85,10 @@ interface ISavingsAccount {
     event TransferShares(address indexed token, address strategy, address indexed from, address indexed to, uint256 shares);
 
     /**
-     * @notice emitted when credit line address is updated
-     * @param updatedCreditLine updated credit line contract address
-     */
-    event CreditLineUpdated(address indexed updatedCreditLine);
-
-    /**
      * @notice emitted when strategy registry is updated
      * @param updatedStrategyRegistry updated strategy registry address
      */
     event StrategyRegistryUpdated(address indexed updatedStrategyRegistry);
-
-    /**
-     * @notice emitted when credit line allowance is refreshed
-     * @param token token for which allowance is increased
-     * @param from address of user from whcih allowance is increased
-     * @param amount amount of tokens by which allowance is increased
-     */
-    event CreditLineAllowanceRefreshed(address indexed token, address indexed from, address indexed to, uint256 amount);
 
     function deposit(
         address token,
@@ -198,12 +184,6 @@ interface ISavingsAccount {
         address token,
         address strategy
     ) external view returns (uint256 shareBalance);
-
-    function increaseAllowanceToCreditLine(
-        address token,
-        address from,
-        uint256 amount
-    ) external;
 
     function withdrawFrom(
         address token,

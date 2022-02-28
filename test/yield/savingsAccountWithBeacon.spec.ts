@@ -27,7 +27,7 @@ describe('Beacon Testing on Non Hardhat', async () => {
         savingsAccount = await deployHelper.core.getSavingsAccount(savingsAccountProxy.address);
         savingsAccount = savingsAccount.connect(admin);
         console.log('5');
-        await (await savingsAccount.initialize(admin.address, strategyRegistry.address, admin.address)).wait(1);
+        await (await savingsAccount.initialize(admin.address, strategyRegistry.address)).wait(1);
 
         let noYieldLogic = await deployHelper.core.deployNoYield();
         console.log('6');

@@ -244,6 +244,13 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     event LiquidationRewardFractionUpdated(uint256 liquidatorRewardFraction);
 
     /**
+     * @notice emitted when the borrow limit is updated for the credit line
+     * @param id identifier for the credit line
+     * @param updatedBorrowLimit updated value of borrow limit
+     */
+    event BorrowLimitUpdated(uint256 id, uint128 updatedBorrowLimit);
+
+    /**
      * @notice used to initialize the contract
      * @dev can only be called once during the life cycle of the contract
      * @param _defaultStrategy default strategy used in credit lines
@@ -378,6 +385,17 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         require(_rewardFraction <= SCALING_FACTOR, 'Fraction has to be less than 1');
         liquidatorRewardFraction = _rewardFraction;
         emit LiquidationRewardFractionUpdated(_rewardFraction);
+    }
+
+    /**
+     * @notice used to update the borrow limit of the creditLine
+     * @dev can only be updated by lender
+     * @param _id identifier for the credit line
+     * @param _newBorrowLimit updated value of the borrow limit for the credit line
+     */
+    function updateBorrowLimit(uint256 _id, uint128 _newBorrowLimit) external onlyCreditLineLender(_id) {
+        creditLineConstants[_id].borrowLimit = _newBorrowLimit;
+        emit BorrowLimitUpdated(_id, _newBorrowLimit);
     }
 
     /**
@@ -759,7 +777,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
     function _repay(
         uint256 _id,
         uint256 _amount,
-        uint256 _principalPaid,
         bool _fromSavingsAccount
     ) internal {
         ISavingsAccount _savingsAccount = ISavingsAccount(savingsAccount);
@@ -772,9 +789,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             _savingsAccount.deposit(_borrowAsset, _defaultStrategy, _lender, _amount);
         } else {
             _repayFromSavingsAccount(_borrowAsset, _lender, _amount);
-        }
-        if (_principalPaid != 0) {
-            _savingsAccount.increaseAllowanceToCreditLine(_borrowAsset, _lender, _principalPaid);
         }
     }
 
@@ -799,7 +813,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         );
         uint256 _interestToPay = _totalInterestAccrued.sub(creditLineVariables[_id].totalInterestRepaid);
         uint256 _totalCurrentDebt = _interestToPay.add(creditLineVariables[_id].principal);
-        uint256 _principalPaid;
 
         if (_amount >= _totalCurrentDebt) {
             _amount = _totalCurrentDebt;
@@ -813,12 +826,11 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
             creditLineVariables[_id].interestAccruedTillLastPrincipalUpdate = _totalInterestAccrued;
             creditLineVariables[_id].lastPrincipalUpdateTime = block.timestamp;
             creditLineVariables[_id].totalInterestRepaid = _totalInterestAccrued;
-            _principalPaid = _amount.sub(_interestToPay);
         } else {
             creditLineVariables[_id].totalInterestRepaid = creditLineVariables[_id].totalInterestRepaid.add(_amount);
         }
 
-        _repay(_id, _amount, _principalPaid, _fromSavingsAccount);
+        _repay(_id, _amount, _fromSavingsAccount);
 
         if (creditLineVariables[_id].principal == 0) {
             _resetCreditLine(_id);

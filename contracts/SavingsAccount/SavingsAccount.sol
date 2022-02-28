@@ -24,11 +24,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     address public strategyRegistry;
 
     /**
-     * @notice address of the credit lines contract
-     */
-    address public creditLine;
-
-    /**
      * @notice mapping from user to token to strategy to balance of shares
      * @dev user -> token -> strategy (underlying address) -> amount (shares)
      */
@@ -41,45 +36,18 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     mapping(address => mapping(address => mapping(address => uint256))) public allowance;
 
     /**
-     * @notice modifier to check if address is the credit line
-     * @param _caller address to check if credit line
-     */
-    modifier onlyCreditLine(address _caller) {
-        require(_caller == creditLine, 'Invalid caller');
-        _;
-    }
-
-    /**
      * @dev initialize the contract
      * @param _owner address of the owner of the savings account contract
      * @param _strategyRegistry address of the strategy registry
-     * @param _creditLine address of the credit line contract
      **/
     function initialize(
         address _owner,
-        address _strategyRegistry,
-        address _creditLine
+        address _strategyRegistry
     ) external initializer {
         __Ownable_init();
         super.transferOwnership(_owner);
 
-        _updateCreditLine(_creditLine);
         _updateStrategyRegistry(_strategyRegistry);
-    }
-
-    /**
-     * @notice used to update credit line contract address
-     * @dev only owner can update
-     * @param _creditLine updated address of credit lines
-     */
-    function updateCreditLine(address _creditLine) external onlyOwner {
-        _updateCreditLine(_creditLine);
-    }
-
-    function _updateCreditLine(address _creditLine) internal {
-        require(_creditLine != address(0), 'SavingsAccount::initialize zero address');
-        creditLine = _creditLine;
-        emit CreditLineUpdated(_creditLine);
     }
 
     /**
@@ -208,11 +176,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     ) external override nonReentrant returns (uint256) {
         require(_amount != 0, 'SavingsAccount::withdrawFrom Amount must be greater than zero');
         require(IStrategyRegistry(strategyRegistry).isValidStrategy(_strategy), 'SavingsAccount::_currentStrategy do not exist');
-
-        allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
-            _amount,
-            'SavingsAccount::withdrawFrom allowance limit exceeding'
-        );
+        uint256 _currentAllowance = allowance[_from][_token][msg.sender];
+        if(_currentAllowance != type(uint256).max) {
+            allowance[_from][_token][msg.sender] = _currentAllowance.sub(
+                _amount,
+                'SavingsAccount::withdrawFrom allowance limit exceeding'
+            );
+        }
 
         _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
 
@@ -350,22 +320,6 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     }
 
     /**
-     * @notice used by credit lines to replenish the allowance once the credit line pricinpal is repaid
-     * @param _amount amount of tokens allowance is increased by
-     * @param _token address of token approved
-     * @param _from address of the lender of the credit line which is being replenished
-     */
-    function increaseAllowanceToCreditLine(
-        address _token,
-        address _from,
-        uint256 _amount
-    ) external override onlyCreditLine(msg.sender) {
-        allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].add(_amount);
-
-        emit CreditLineAllowanceRefreshed(_token, _from, msg.sender, _amount);
-    }
-
-    /**
      * @notice used to transfer tokens
      * @param _shares shares of tokens transferred
      * @param _token address of token transferred
@@ -438,10 +392,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
         require(_shares != 0, 'SavingsAccount::transfer zero amount');
         uint256 _amount = IYield(_strategy).getTokensForShares(_shares, _token);
 
-        allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
-            _amount,
-            'SavingsAccount::transferFrom allowance limit exceeding'
-        );
+        uint256 _currentAllowance = allowance[_from][_token][msg.sender];
+        if(_currentAllowance != type(uint256).max) {
+            allowance[_from][_token][msg.sender] = _currentAllowance.sub(
+                _amount,
+                'SavingsAccount::transferFrom allowance limit exceeding'
+            );
+        }
 
         balanceInShares[_from][_token][_strategy] = balanceInShares[_from][_token][_strategy].sub(
             _shares,
@@ -472,10 +429,13 @@ contract SavingsAccount is ISavingsAccount, Initializable, OwnableUpgradeable, R
     ) external override returns (uint256) {
         require(_amount != 0, 'SavingsAccount::transferFrom zero amount');
         //update allowance
-        allowance[_from][_token][msg.sender] = allowance[_from][_token][msg.sender].sub(
-            _amount,
-            'SavingsAccount::transferFrom allowance limit exceeding'
-        );
+        uint256 _currentAllowance = allowance[_from][_token][msg.sender];
+        if(_currentAllowance != type(uint256).max) {
+            allowance[_from][_token][msg.sender] = _currentAllowance.sub(
+                _amount,
+                'SavingsAccount::transferFrom allowance limit exceeding'
+            );
+        }
 
         _amount = IYield(_strategy).getSharesForTokens(_amount, _token);
 
