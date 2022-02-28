@@ -85,12 +85,6 @@ interface ISavingsAccount {
     event TransferShares(address indexed token, address strategy, address indexed from, address indexed to, uint256 shares);
 
     /**
-     * @notice emitted when credit line address is added as allowance admin
-     * @param creditLine updated credit line contract address
-     */
-    event AllowanceAdminUpdated(address indexed creditLine, bool isAdded);
-
-    /**
      * @notice emitted when strategy registry is updated
      * @param updatedStrategyRegistry updated strategy registry address
      */
