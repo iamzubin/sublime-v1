@@ -603,21 +603,6 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
         bool _fromSavingsAccount
     ) external nonReentrant {
         require(creditLineVariables[_id].status == CreditLineStatus.ACTIVE, 'CreditLine not active');
-        _depositCollateral(_id, _strategy, _amount, _fromSavingsAccount);
-        emit CollateralDeposited(_id, _amount, _strategy);
-    }
-
-    /**
-    @dev If collateral is to be deposited from savingsAccount, then another internal function is called, otherwise
-        we transfer the collateral token to the Credit Line contract directly using the token contract, approve the 
-        _strategy to handle those tokens and then increase the collateral shares in strategy based on the number of shares received
-     */
-    function _depositCollateral(
-        uint256 _id,
-        address _strategy,
-        uint256 _amount,
-        bool _fromSavingsAccount
-    ) internal {
         require(creditLineConstants[_id].lender != msg.sender, 'lender cant deposit collateral');
 
         address _collateralAsset = creditLineConstants[_id].collateralAsset;
