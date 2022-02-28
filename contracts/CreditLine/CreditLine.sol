@@ -110,7 +110,7 @@ contract CreditLine is ReentrancyGuard, OwnableUpgradeable {
      * @dev it is multiplied by SCALING_FACTOR
      **/
     uint256 public liquidatorRewardFraction;
-    
+
     /**
      * @dev checks if called by credit Line Borrower
      * @param _id identifier for the credit line

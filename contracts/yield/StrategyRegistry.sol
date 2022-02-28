@@ -86,8 +86,8 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
     function removeStrategy(uint256 _strategyIndex) external override onlyOwner {
         address _strategy = strategies[_strategyIndex];
         address[] memory _strategies = strategies;
-        for(uint256 i = _strategyIndex; i < _strategies.length-1; ++i) {
-            strategies[i] = _strategies[i+1];
+        for (uint256 i = _strategyIndex; i < _strategies.length - 1; ++i) {
+            strategies[i] = _strategies[i + 1];
         }
         strategies.pop();
         delete registry[_strategy];
@@ -123,7 +123,7 @@ contract StrategyRegistry is Initializable, OwnableUpgradeable, IStrategyRegistr
         emit StrategyAdded(_newStrategy);
     }
 
-    function isValidStrategy(address _strategy) external view override returns(bool) {
+    function isValidStrategy(address _strategy) external view override returns (bool) {
         return (registry[_strategy] || retiredRegistry[_strategy]);
     }
 }
