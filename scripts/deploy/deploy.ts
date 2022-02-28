@@ -121,7 +121,7 @@ export async function deployer(signers: SignerWithAddress[], config: DeploymentP
     console.log('Deploying verification');
 
     const verification: Verification = await createVerificationWithInit(proxyAdmin, admin, verificationParams);
-    const twitterVerifier: TwitterVerifier = await createTwitterVerifierWithInit(proxyAdmin, admin, verification);
+    const twitterVerifier: TwitterVerifier = await createTwitterVerifierWithInit(proxyAdmin, admin, verification, "Sublime", "v1");
     await (await verification.connect(admin).addVerifier(twitterVerifier.address)).wait();
 
     console.log('Deploying price oracle');

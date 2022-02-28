@@ -24,7 +24,9 @@ export async function createVerificationWithInit(
 export async function createTwitterVerifierWithInit(
     proxyAdmin: SignerWithAddress,
     admin: SignerWithAddress,
-    verification: Verification
+    verification: Verification,
+    name: String,
+    version: String
 ): Promise<TwitterVerifier> {
     const deployHelper: DeployHelper = new DeployHelper(proxyAdmin);
     let adminVerifierLogic: TwitterVerifier = await deployHelper.helper.deployTwitterVerifier();
